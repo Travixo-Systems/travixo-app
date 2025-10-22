@@ -1,0 +1,94 @@
+.
+├── .env.local
+├── .gitignore
+├── README.md
+├── app
+│   ├── (auth)
+│   │   ├── login
+│   │   │   └── page.tsx
+│   │   └── signup
+│   │       └── page.tsx
+│   ├── (dashboard)
+│   │   ├── assets
+│   │   │   └── page.tsx
+│   │   ├── audits
+│   │   ├── dashboard
+│   │   │   └── page.tsx
+│   │   ├── layout.tsx
+│   │   ├── qr-codes
+│   │   │   └── page.tsx
+│   │   ├── settings
+│   │   └── vgp
+│   │       ├── page copy.tsx
+│   │       └── page.tsx
+│   ├── api
+│   │   ├── assets
+│   │   │   ├── import
+│   │   │   │   └── route.ts
+│   │   │   └── preview-import
+│   │   │       └── route.ts
+│   │   ├── auth
+│   │   ├── file-tree.txt
+│   │   └── vgp
+│   │       ├── alerts
+│   │       │   └── route.ts
+│   │       ├── compliance-summary
+│   │       │   └── route.ts
+│   │       ├── equipment-types
+│   │       │   └── route.ts
+│   │       ├── inspections
+│   │       │   └── route.ts
+│   │       └── schedules
+│   │           └── route.ts
+│   ├── favicon.ico
+│   ├── globals.css
+│   ├── layout.tsx
+│   ├── page.tsx
+│   └── scan
+│       └── [code]
+│           └── page.tsx
+├── components
+│   ├── Sidebar.tsx
+│   ├── assets
+│   │   ├── AddAssetButton.tsx
+│   │   ├── AddAssetModal.tsx
+│   │   ├── AssetsPageClient.tsx
+│   │   ├── AssetsTableClient.tsx
+│   │   ├── BulkQRGenerator.tsx
+│   │   ├── DeleteAssetDialog.tsx
+│   │   ├── EditAssetModal.tsx
+│   │   ├── ImportAssetsButton.tsx
+│   │   ├── ImportAssetsModal.tsx
+│   │   ├── QRCodesPageClient.tsx
+│   │   └── ViewQRModal.tsx
+│   ├── auth
+│   ├── ui
+│   └── vgp
+│       └── AddVGPScheduleModal.tsx
+├── eslint.config.mjs
+├── file-tree.txt
+├── hooks
+├── lib
+│   ├── supabase
+│   │   ├── client.ts
+│   │   └── server.ts
+│   └── utils
+├── middleware.ts
+├── next-env.d.ts
+├── next.config.ts
+├── package-lock.json
+├── package.json
+├── pnpm-lock.yaml
+├── postcss.config.mjs
+├── public
+│   ├── file.svg
+│   ├── globe.svg
+│   ├── next.svg
+│   ├── vercel.svg
+│   └── window.svg
+├── tsconfig.json
+├── types
+│   └── database.ts
+└── yarn.lock
+
+36 directories, 56 files
