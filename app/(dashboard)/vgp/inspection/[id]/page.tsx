@@ -1,24 +1,59 @@
-// app/(dashboard)/vgp/inspection/[id]/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { use, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
-import { ArrowLeft, CheckCircle, XCircle, AlertTriangle, Upload, FileText } from 'lucide-react';
+import { AlertCircle, Save, CheckCircle, X, Upload, FileText } from 'lucide-react';
+import { useUploadThing } from '@/lib/uploadthing';
 
-interface InspectionRecorderProps {
-  params: { id: string };
+interface Schedule {
+  id: string;
+  asset_id: string;
+  interval_months: number;
+  last_inspection_date: string | null;
+  next_due_date: string;
+  assets: {
+    id: string;
+    name: string;
+    serial_number: string;
+    current_location: string;
+    asset_categories: {
+      name: string;
+    } | null;
+  };
 }
 
-export default function InspectionRecorder({ params }: InspectionRecorderProps) {
+export default function InspectionRecorderPage({
+  params
+}: {
+  params: Promise<{ id: string }>
+}) {
   const router = useRouter();
-  const supabase = createClient();
+  const resolvedParams = use(params);
+  const scheduleId = resolvedParams.id;
+
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [schedule, setSchedule] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [certificateFile, setCertificateFile] = useState<File | null>(null);
-  
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [schedule, setSchedule] = useState<Schedule | null>(null);
+  const [error, setError] = useState('');
+
+  // File stored locally, not uploaded yet
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  // UploadThing hook for manual upload
+  const { startUpload, isUploading } = useUploadThing("vgpCertificate", {
+    onClientUploadComplete: (res) => {
+      console.log('Upload completed:', res);
+    },
+    onUploadError: (error: Error) => {
+      console.error('Upload error:', error);
+      setError(`Erreur de téléchargement: ${error.message}`);
+    },
+    onUploadProgress: (progress) => {
+      setUploadProgress(progress);
+    },
+  });
+
   const [formData, setFormData] = useState({
     inspection_date: new Date().toISOString().split('T')[0],
     inspector_name: '',
@@ -29,14 +64,14 @@ export default function InspectionRecorder({ params }: InspectionRecorderProps) 
   });
 
   useEffect(() => {
-    loadSchedule();
-  }, [params.id]);
+    fetchSchedule();
+  }, [scheduleId]);
 
-  const loadSchedule = async () => {
+  const fetchSchedule = async () => {
     try {
-      const res = await fetch(`/api/vgp/schedules/${params.id}`);
-      if (!res.ok) throw new Error('Schedule not found');
-      
+      const res = await fetch(`/api/vgp/schedules/${scheduleId}`);
+      if (!res.ok) throw new Error('Échec du chargement du calendrier');
+
       const data = await res.json();
       setSchedule(data.schedule);
     } catch (err: any) {
@@ -46,135 +81,146 @@ export default function InspectionRecorder({ params }: InspectionRecorderProps) 
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.type !== 'application/pdf') {
-        setError('Le certificat doit être au format PDF');
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        setError('Le fichier ne doit pas dépasser 5 MB');
-        return;
-      }
-      setCertificateFile(file);
-      setError(null);
+    if (!file) return;
+
+    // Validate file type
+    if (file.type !== 'application/pdf') {
+      setError('Seuls les fichiers PDF sont acceptés');
+      return;
     }
+
+    // Validate file size (4MB = 4 * 1024 * 1024 bytes)
+    const maxSize = 4 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setError('Le fichier est trop volumineux (max 4 MB)');
+      return;
+    }
+
+    setSelectedFile(file);
+    setError('');
   };
 
-  const uploadCertificate = async (): Promise<{ url: string; fileName: string } | null> => {
-    if (!certificateFile) return null;
-
-    try {
-      const fileExt = certificateFile.name.split('.').pop();
-      const fileName = `${params.id}-${Date.now()}.${fileExt}`;
-      const filePath = `vgp-certificates/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('certificates')
-        .upload(filePath, certificateFile);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('certificates')
-        .getPublicUrl(filePath);
-
-      return { url: publicUrl, fileName: certificateFile.name };
-    } catch (err) {
-      console.error('Certificate upload failed:', err);
-      return null;
-    }
+  const removeFile = () => {
+    setSelectedFile(null);
+    setUploadProgress(0);
   };
 
-  const calculateNextDueDate = (inspectionDate: string, result: string): string => {
-    const date = new Date(inspectionDate);
-    
-    switch (result) {
-      case 'passed':
-        date.setMonth(date.getMonth() + (schedule?.interval_months || 12));
-        break;
-      case 'conditional':
-        date.setMonth(date.getMonth() + 6);
-        break;
-      case 'failed':
-        date.setDate(date.getDate() + 30);
-        break;
+  const calculateNextInspectionDate = (result: string, intervalMonths: number): string => {
+    const today = new Date();
+    let nextDate: Date;
+
+    if (result === 'failed') {
+      nextDate = new Date(today.setDate(today.getDate() + 30));
+    } else if (result === 'conditional') {
+      nextDate = new Date(today.setMonth(today.getMonth() + 6));
+    } else {
+      nextDate = new Date(today.setMonth(today.getMonth() + intervalMonths));
     }
-    
-    return date.toISOString().split('T')[0];
+
+    return nextDate.toISOString().split('T')[0];
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate required fields
+    if (!formData.inspector_name || !formData.inspector_company) {
+      setError('Veuillez remplir tous les champs obligatoires');
+      return;
+    }
+
+    if (!selectedFile) {
+      setError(
+        'Le certificat VGP est obligatoire pour la conformité DIRECCTE.\n\n' +
+        'Sans certificat officiel, l\'inspection n\'est pas conforme à la réglementation ' +
+        'française (Article R4323-23) et votre équipement reste exposé aux amendes.'
+      );
+      return;
+    }
+
     setSubmitting(true);
-    setError(null);
+    setError('');
 
     try {
-      let certificateData = null;
-      if (certificateFile) {
-        certificateData = await uploadCertificate();
+      // Step 1: Upload certificate if file selected
+      let certificateUrl: string | null = null;
+      let certificateFileName: string | null = null;
+
+      if (selectedFile) {
+        console.log('Uploading certificate file:', selectedFile.name);
+
+        const uploadResult = await startUpload([selectedFile]);
+
+        if (!uploadResult || uploadResult.length === 0) {
+          throw new Error('Échec du téléchargement du certificat');
+        }
+
+        certificateUrl = uploadResult[0].ufsUrl;
+        certificateFileName = uploadResult[0].name;
+
+        console.log('Certificate uploaded:', certificateUrl);
       }
 
-      const nextDueDate = calculateNextDueDate(formData.inspection_date, formData.result);
+      // Step 2: Calculate next inspection date
+      const next_inspection_date = calculateNextInspectionDate(
+        formData.result,
+        schedule!.interval_months
+      );
 
-      const inspectionPayload = {
-        asset_id: schedule.asset_id,
-        schedule_id: params.id,
+      // Step 3: Create inspection payload
+      const payload = {
+        asset_id: schedule!.asset_id,
+        schedule_id: schedule!.id,
         inspection_date: formData.inspection_date,
         inspector_name: formData.inspector_name,
         inspector_company: formData.inspector_company,
         certification_number: formData.certification_number || null,
         result: formData.result,
         findings: formData.findings || null,
-        next_inspection_date: nextDueDate,
-        certificate_url: certificateData?.url || null,
-        certificate_file_name: certificateData?.fileName || null,
+        interval_months: schedule!.interval_months,
+        next_inspection_date,
+        certificate_url: certificateUrl,
+        certificate_file_name: certificateFileName,
       };
 
+      console.log('Submitting inspection:', payload);
+
+      // Step 4: Save inspection to database
       const res = await fetch('/api/vgp/inspections', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(inspectionPayload),
+        body: JSON.stringify(payload),
       });
+
+      const responseData = await res.json();
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to record inspection');
+        throw new Error(responseData.error || 'Échec de l\'enregistrement');
       }
 
-      const updateSchedulePayload = {
-        status: formData.result === 'failed' ? 'failed' : 'completed',
-        last_inspection_date: formData.inspection_date,
-        next_due_date: nextDueDate,
-      };
+      console.log('Inspection saved successfully:', responseData);
 
-      await fetch(`/api/vgp/schedules/${params.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updateSchedulePayload),
-      });
-
-      if (formData.result === 'failed') {
-        await fetch(`/api/assets/${schedule.asset_id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'out_of_service' }),
-        });
-      }
-
+      // Step 5: Redirect to VGP dashboard
       router.push('/vgp');
+
     } catch (err: any) {
+      console.error('Inspection submission error:', err);
       setError(err.message);
     } finally {
       setSubmitting(false);
+      setUploadProgress(0);
     }
   };
 
   if (loading) {
     return (
-      <div className="p-8 flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Chargement...</p>
+        </div>
       </div>
     );
   }
@@ -182,16 +228,8 @@ export default function InspectionRecorder({ params }: InspectionRecorderProps) 
   if (error && !schedule) {
     return (
       <div className="p-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <XCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-red-900 mb-2">Erreur</h2>
-          <p className="text-red-700">{error}</p>
-          <button
-            onClick={() => router.push('/vgp')}
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-          >
-            Retour au tableau de bord
-          </button>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-800">{error}</p>
         </div>
       </div>
     );
@@ -199,46 +237,51 @@ export default function InspectionRecorder({ params }: InspectionRecorderProps) 
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
-      <button
-        onClick={() => router.push('/vgp')}
-        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Retour au tableau de bord VGP
-      </button>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900">Enregistrer une Inspection VGP</h1>
+        <p className="text-gray-600 mt-2">
+          Enregistrement de l'inspection pour {schedule?.assets?.name}
+        </p>
+      </div>
 
-      <div className="bg-white rounded-lg shadow-lg">
-        <div className="p-6 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-gray-900">Enregistrer Inspection VGP</h1>
-          <p className="text-gray-600 mt-1">
-            Renseigner les détails de l'inspection effectuée
-          </p>
-        </div>
-
-        {schedule && (
-          <div className="p-6 bg-blue-50 border-b border-blue-100">
-            <h3 className="font-semibold text-blue-900">{schedule.assets?.name}</h3>
-            <div className="flex items-center gap-4 mt-1 text-sm text-blue-700">
-              {schedule.assets?.serial_number && (
-                <span>N° Série: {schedule.assets.serial_number}</span>
-              )}
-              <span>
-                Échéance: {new Date(schedule.next_due_date).toLocaleDateString('fr-FR')}
-              </span>
-            </div>
+      {/* Asset Info Card */}
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-4">Informations sur l'Équipement</h2>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-sm text-gray-600">Équipement</p>
+            <p className="font-semibold">{schedule?.assets?.name}</p>
           </div>
-        )}
+          <div>
+            <p className="text-sm text-gray-600">Numéro de Série</p>
+            <p className="font-semibold">{schedule?.assets?.serial_number || 'N/A'}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-600">Catégorie</p>
+            <p className="font-semibold">
+              {schedule?.assets?.asset_categories?.name || 'Non catégorisé'}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-600">Localisation</p>
+            <p className="font-semibold">{schedule?.assets?.current_location || 'N/A'}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Inspection Form */}
+      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6">
+        <h2 className="text-xl font-semibold mb-6">Détails de l'Inspection</h2>
 
         {error && (
-          <div className="p-6 bg-red-50 border-b border-red-100">
-            <div className="flex items-center gap-2 text-red-800">
-              <XCircle className="w-5 h-5" />
-              <span>{error}</span>
-            </div>
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <p className="text-red-800">{error}</p>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        {/* Form Fields */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Date d'Inspection <span className="text-red-500">*</span>
@@ -246,9 +289,8 @@ export default function InspectionRecorder({ params }: InspectionRecorderProps) 
             <input
               type="date"
               value={formData.inspection_date}
-              max={new Date().toISOString().split('T')[0]}
               onChange={(e) => setFormData({ ...formData, inspection_date: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             />
           </div>
@@ -261,8 +303,8 @@ export default function InspectionRecorder({ params }: InspectionRecorderProps) 
               type="text"
               value={formData.inspector_name}
               onChange={(e) => setFormData({ ...formData, inspector_name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              placeholder="Ex: Jean Dupont"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Jean Dupont"
               required
             />
           </div>
@@ -275,8 +317,8 @@ export default function InspectionRecorder({ params }: InspectionRecorderProps) 
               type="text"
               value={formData.inspector_company}
               onChange={(e) => setFormData({ ...formData, inspector_company: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              placeholder="Ex: APAVE, Bureau Veritas, SOCOTEC"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Bureau Veritas, DEKRA, Apave..."
               required
             />
           </div>
@@ -289,145 +331,181 @@ export default function InspectionRecorder({ params }: InspectionRecorderProps) 
               type="text"
               value={formData.certification_number}
               onChange={(e) => setFormData({ ...formData, certification_number: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              placeholder="Ex: VGP-2025-12345"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="VGP-2025-12345"
             />
           </div>
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Résultat de l'Inspection <span className="text-red-500">*</span>
-            </label>
-            <div className="grid grid-cols-3 gap-3">
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, result: 'passed' })}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  formData.result === 'passed'
-                    ? 'border-green-500 bg-green-50'
-                    : 'border-gray-300 hover:border-green-300'
+        {/* Result Selection */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Résultat de l'Inspection <span className="text-red-500">*</span>
+          </label>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, result: 'passed' })}
+              className={`p-4 rounded-lg border-2 transition-colors ${formData.result === 'passed'
+                  ? 'border-green-500 bg-green-50 text-green-900'
+                  : 'border-gray-300 hover:border-green-300'
                 }`}
-              >
-                <CheckCircle className={`w-8 h-8 mx-auto mb-2 ${
-                  formData.result === 'passed' ? 'text-green-600' : 'text-gray-400'
-                }`} />
-                <p className="font-semibold text-center">Conforme</p>
-                <p className="text-xs text-gray-600 text-center mt-1">
-                  Prochaine: {schedule?.interval_months || 12} mois
-                </p>
-              </button>
+            >
+              <div className="text-center">
+                <p className="font-semibold">✓ Conforme</p>
+                <p className="text-sm mt-1">Prochaine inspection : selon l'intervalle</p>
+              </div>
+            </button>
 
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, result: 'conditional' })}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  formData.result === 'conditional'
-                    ? 'border-yellow-500 bg-yellow-50'
-                    : 'border-gray-300 hover:border-yellow-300'
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, result: 'conditional' })}
+              className={`p-4 rounded-lg border-2 transition-colors ${formData.result === 'conditional'
+                  ? 'border-yellow-500 bg-yellow-50 text-yellow-900'
+                  : 'border-gray-300 hover:border-yellow-300'
                 }`}
-              >
-                <AlertTriangle className={`w-8 h-8 mx-auto mb-2 ${
-                  formData.result === 'conditional' ? 'text-yellow-600' : 'text-gray-400'
-                }`} />
-                <p className="font-semibold text-center">Conditionnel</p>
-                <p className="text-xs text-gray-600 text-center mt-1">
-                  Prochaine: 6 mois
-                </p>
-              </button>
+            >
+              <div className="text-center">
+                <p className="font-semibold">⚠ Conditionnel</p>
+                <p className="text-sm mt-1">Prochaine inspection : 6 mois</p>
+              </div>
+            </button>
 
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, result: 'failed' })}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  formData.result === 'failed'
-                    ? 'border-red-500 bg-red-50'
-                    : 'border-gray-300 hover:border-red-300'
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, result: 'failed' })}
+              className={`p-4 rounded-lg border-2 transition-colors ${formData.result === 'failed'
+                  ? 'border-red-500 bg-red-50 text-red-900'
+                  : 'border-gray-300 hover:border-red-300'
                 }`}
-              >
-                <XCircle className={`w-8 h-8 mx-auto mb-2 ${
-                  formData.result === 'failed' ? 'text-red-600' : 'text-gray-400'
-                }`} />
-                <p className="font-semibold text-center">Non Conforme</p>
-                <p className="text-xs text-gray-600 text-center mt-1">
-                  Ré-inspection: 30 jours
-                </p>
-              </button>
-            </div>
+            >
+              <div className="text-center">
+                <p className="font-semibold">✗ Non Conforme</p>
+                <p className="text-sm mt-1">Équipement hors service - Réinspection : 30 jours</p>
+              </div>
+            </button>
           </div>
+        </div>
 
-          {formData.result === 'failed' && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-900 font-semibold">
-                Attention: L'équipement sera marqué "Hors Service"
-              </p>
-              <p className="text-xs text-red-700 mt-1">
-                Une ré-inspection devra être effectuée après réparations (planifiée dans 30 jours)
+        {/* Findings */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Constatations / Remarques
+          </label>
+          <textarea
+            value={formData.findings}
+            onChange={(e) => setFormData({ ...formData, findings: e.target.value })}
+            rows={4}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="Observations, anomalies détectées, recommandations..."
+          />
+        </div>
+
+        {/* Certificate Upload - Manual File Selection */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Certificat VGP (PDF) <span className="text-red-500">*</span>
+          </label>
+
+          {selectedFile ? (
+            // File selected - show preview
+            <div className="border-2 border-green-300 bg-green-50 rounded-lg p-4">
+              <div className="flex items-center gap-3">
+                <FileText className="w-8 h-8 text-green-600" />
+                <div className="flex-1">
+                  <p className="font-semibold text-green-900">{selectedFile.name}</p>
+                  <p className="text-sm text-green-700">
+                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={removeFile}
+                  disabled={submitting}
+                  className="text-red-600 hover:text-red-700 disabled:opacity-50"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            // No file selected - show upload button
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+              <Upload className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+              <label htmlFor="certificate-upload" className="cursor-pointer">
+                <span className="text-blue-600 hover:text-blue-700 font-medium">
+                  Choisir un fichier
+                </span>
+                <span className="text-gray-600"> ou glissez-déposez</span>
+                <input
+                  id="certificate-upload"
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  disabled={submitting}
+                />
+              </label>
+              <p className="text-sm text-gray-500 mt-2">
+                PDF uniquement, maximum 4 MB
               </p>
             </div>
           )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Observations / Anomalies
-            </label>
-            <textarea
-              value={formData.findings}
-              onChange={(e) => setFormData({ ...formData, findings: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              rows={4}
-              placeholder="Détails des anomalies, recommandations, observations..."
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Certificat VGP (PDF)
-            </label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
-              <input
-                type="file"
-                accept="application/pdf"
-                onChange={handleFileChange}
-                className="hidden"
-                id="certificate-upload"
-              />
-              <label htmlFor="certificate-upload" className="cursor-pointer">
-                {certificateFile ? (
-                  <div className="flex items-center justify-center gap-2 text-green-600">
-                    <FileText className="w-6 h-6" />
-                    <span className="font-medium">{certificateFile.name}</span>
-                  </div>
-                ) : (
-                  <>
-                    <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                    <p className="text-sm text-gray-600">
-                      Cliquez pour télécharger le certificat (PDF, max 5 MB)
-                    </p>
-                  </>
-                )}
-              </label>
+          {uploadProgress > 0 && uploadProgress < 100 && (
+            <div className="mt-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm text-gray-600">Téléchargement...</span>
+                <span className="text-sm font-medium text-blue-600">{uploadProgress}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="flex gap-3 pt-4 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={() => router.push('/vgp')}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-              disabled={submitting}
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-            >
-              {submitting ? 'Enregistrement...' : 'Enregistrer Inspection'}
-            </button>
-          </div>
-        </form>
-      </div>
+          <p className="text-sm text-gray-600 mt-2">
+            <strong className="text-red-600">Obligatoire:</strong> Le certificat VGP est exigé par DIRECCTE.
+            Sans certificat officiel de l'organisme de contrôle, l'inspection n'est pas conforme
+            et votre équipement reste exposé aux amendes (€3K-€15K par violation).
+          </p>
+        </div>
+
+        {/* Submit Buttons */}
+        <div className="flex gap-4">
+          <button
+            type="button"
+            onClick={() => router.push('/vgp')}
+            disabled={submitting}
+            className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            disabled={submitting || isUploading}
+            className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {submitting ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                {uploadProgress > 0 && uploadProgress < 100
+                  ? `Téléchargement... ${uploadProgress}%`
+                  : 'Enregistrement...'
+                }
+              </>
+            ) : (
+              <>
+                <Save className="w-5 h-5" />
+                Enregistrer l'Inspection
+              </>
+            )}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
