@@ -41,7 +41,7 @@ function isoDateOnly(d: Date) {
   return d.toISOString().split('T')[0];
 }
 
-// GET /api/vgp/schedules?status=&due_before=&due_after=&page=&limit=
+// GET /api/vgp/schedules?status=&due_before=&due_after=&page=&limit=&include_archived=
 export async function GET(request: Request) {
   try {
     const supabase = await createClient();
@@ -62,8 +62,9 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') || undefined;
-    const dueBefore = searchParams.get('due_before') || undefined; // yyyy-mm-dd
-    const dueAfter = searchParams.get('due_after') || undefined; // yyyy-mm-dd
+    const dueBefore = searchParams.get('due_before') || undefined;
+    const dueAfter = searchParams.get('due_after') || undefined;
+    const includeArchived = searchParams.get('include_archived') === 'true';
     const page = Math.max(1, parseIntSafe(searchParams.get('page')) || 1);
     const limit = Math.min(100, Math.max(1, parseIntSafe(searchParams.get('limit')) || 50));
     const from = (page - 1) * limit;
@@ -80,6 +81,8 @@ export async function GET(request: Request) {
         last_inspection_date,
         next_due_date,
         status,
+        notes,
+        archived_at,
         created_at,
         updated_at,
         assets (
@@ -98,6 +101,11 @@ export async function GET(request: Request) {
       .eq('organization_id', userRow.organization_id)
       .order('next_due_date', { ascending: true })
       .order('id', { ascending: true });
+
+    // Filter out archived by default
+    if (!includeArchived) {
+      query = query.is('archived_at', null);
+    }
 
     if (status) query = query.eq('status', status);
     if (dueBefore) query = query.lte('next_due_date', dueBefore);
