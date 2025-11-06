@@ -1,15 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Calendar, Search, Trash2, Eye, Filter, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { Calendar, Search, Archive, Eye, Filter, AlertCircle, CheckCircle, Clock, Edit } from 'lucide-react';
+import { EditScheduleModal } from './EditScheduleModal';
 
 interface Asset {
   id: string;
   name: string;
   serial_number: string;
-  category: string;
-  location: string;
+  current_location: string;
   qr_code: string;
+  asset_categories?: { name: string } | null;
 }
 
 interface Schedule {
@@ -20,6 +21,7 @@ interface Schedule {
   next_due_date: string;
   inspector_name: string | null;
   status: string;
+  notes: string | null;
   created_at: string;
   assets: Asset;
 }
@@ -31,6 +33,8 @@ export default function VGPSchedulesManager() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     fetchSchedules();
@@ -45,7 +49,9 @@ export default function VGPSchedulesManager() {
       
       const res = await fetch(url);
       const data = await res.json();
-      setSchedules(data.schedules || []);
+      // Filter out archived schedules
+      const active = (data.schedules || []).filter((s: any) => !s.archived_at);
+      setSchedules(active);
     } catch (error) {
       console.error('Failed to fetch schedules:', error);
       setSchedules([]);
@@ -54,24 +60,32 @@ export default function VGPSchedulesManager() {
     }
   };
 
-  const handleDelete = async (scheduleId: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce calendrier VGP ?')) return;
+  const handleArchive = async (scheduleId: string) => {
+    const reason = prompt('Raison de l\'archivage (requis pour conformité):');
+    if (!reason) return;
     
     try {
       const res = await fetch(`/api/vgp/schedules/${scheduleId}`, {
         method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason })
       });
       
       if (res.ok) {
-        alert('Calendrier VGP supprimé avec succès');
+        alert('Calendrier archivé avec succès');
         fetchSchedules();
       } else {
-        throw new Error('Failed to delete schedule');
+        throw new Error('Failed to archive schedule');
       }
     } catch (error) {
-      console.error('Delete error:', error);
-      alert('Erreur lors de la suppression');
+      console.error('Archive error:', error);
+      alert('Erreur lors de l\'archivage');
     }
+  };
+
+  const handleEdit = (schedule: Schedule) => {
+    setEditingSchedule(schedule);
+    setShowEditModal(true);
   };
 
   const filteredSchedules = schedules.filter(schedule => 
@@ -223,15 +237,15 @@ export default function VGPSchedulesManager() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredSchedules.map((schedule) => (
-                <tr key={schedule.id} className="hover:bg-gray-50 cursor-pointer">
+                <tr key={schedule.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
                     <div>
                       <p className="font-semibold text-gray-900">{schedule.assets?.name || 'N/A'}</p>
                       <p className="text-sm text-gray-500">S/N: {schedule.assets?.serial_number || 'N/A'}</p>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-gray-700">{schedule.assets?.category || 'N/A'}</td>
-                  <td className="px-6 py-4 text-gray-700">{schedule.assets?.location || 'N/A'}</td>
+                  <td className="px-6 py-4 text-gray-700">{schedule.assets?.asset_categories?.name || 'N/A'}</td>
+                  <td className="px-6 py-4 text-gray-700">{schedule.assets?.current_location || 'N/A'}</td>
                   <td className="px-6 py-4 text-gray-700">{schedule.interval_months} mois</td>
                   <td className="px-6 py-4">
                     <p className="font-semibold text-gray-900">
@@ -245,21 +259,28 @@ export default function VGPSchedulesManager() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <button
+                        onClick={() => handleEdit(schedule)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                        title="Modifier"
+                      >
+                        <Edit className="w-5 h-5" />
+                      </button>
+                      <button
                         onClick={() => {
                           setSelectedSchedule(schedule);
                           setShowDetails(true);
                         }}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                        className="p-2 text-gray-600 hover:bg-gray-50 rounded"
                         title="Voir les détails"
                       >
                         <Eye className="w-5 h-5" />
                       </button>
                       <button
-                        onClick={() => handleDelete(schedule.id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded"
-                        title="Supprimer"
+                        onClick={() => handleArchive(schedule.id)}
+                        className="p-2 text-orange-600 hover:bg-orange-50 rounded"
+                        title="Archiver"
                       >
-                        <Trash2 className="w-5 h-5" />
+                        <Archive className="w-5 h-5" />
                       </button>
                     </div>
                   </td>
@@ -269,6 +290,23 @@ export default function VGPSchedulesManager() {
           </table>
         )}
       </div>
+
+      {/* Edit Modal */}
+      {editingSchedule && (
+        <EditScheduleModal
+          schedule={editingSchedule}
+          isOpen={showEditModal}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingSchedule(null);
+          }}
+          onSuccess={() => {
+            fetchSchedules();
+            setShowEditModal(false);
+            setEditingSchedule(null);
+          }}
+        />
+      )}
 
       {/* Details Modal */}
       {showDetails && selectedSchedule && (
@@ -296,11 +334,11 @@ export default function VGPSchedulesManager() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Catégorie</p>
-                  <p className="font-semibold text-gray-900">{selectedSchedule.assets?.category}</p>
+                  <p className="font-semibold text-gray-900">{selectedSchedule.assets?.asset_categories?.name || 'N/A'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Emplacement</p>
-                  <p className="font-semibold text-gray-900">{selectedSchedule.assets?.location}</p>
+                  <p className="font-semibold text-gray-900">{selectedSchedule.assets?.current_location}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Intervalle</p>
@@ -327,6 +365,13 @@ export default function VGPSchedulesManager() {
                   </div>
                 )}
               </div>
+
+              {selectedSchedule.notes && (
+                <div className="pt-4 border-t border-gray-200">
+                  <p className="text-sm text-gray-600 mb-2">Notes</p>
+                  <p className="text-gray-900">{selectedSchedule.notes}</p>
+                </div>
+              )}
 
               <div className="pt-4 border-t border-gray-200">
                 <p className="text-sm text-gray-600 mb-2">Code QR</p>
