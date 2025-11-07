@@ -467,15 +467,15 @@ export default function VGPSchedulesManager() {
                       </td>
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-1">
-                          {status === 'overdue' && (
+                          
                             <button
                               onClick={() => window.location.href = `/vgp/inspection/${schedule.id}`}
-                              className="px-2 py-1 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded transition-colors"
+                              className="px-2 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-red-700 rounded transition-colors"
                               title="Enregistrer inspection"
                             >
                               Inspection
                             </button>
-                          )}
+                        
                           <button
                             onClick={() => handleEdit(schedule)}
                             className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
