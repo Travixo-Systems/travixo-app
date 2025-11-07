@@ -1,5 +1,6 @@
 // app/api/vgp/compliance-summary/route.ts
-// REPLACE YOUR ENTIRE FILE WITH THIS - FIXED DATE LOGIC
+// - FIXED DATE LOGIC
+// - EXCLUDES ARCHIVED SCHEDULES
 
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
@@ -62,7 +63,7 @@ export async function GET(request: Request) {
 
     console.log('✅ User org:', userData.organization_id);
 
-    // Fetch ALL schedules with asset details
+    // Fetch ALL NON-ARCHIVED schedules with asset details
     const { data: allSchedules, error: schedulesError } = await supabase
       .from('vgp_schedules')
       .select(`
@@ -78,6 +79,7 @@ export async function GET(request: Request) {
         )
       `)
       .eq('organization_id', userData.organization_id)
+      .is('archived_at', null) // ✅ Exclude archived schedules
       .order('next_due_date', { ascending: true });
 
     if (schedulesError) {
@@ -85,7 +87,7 @@ export async function GET(request: Request) {
       throw schedulesError;
     }
 
-    console.log(`📊 Found ${allSchedules?.length || 0} total schedules`);
+    console.log(`📊 Found ${allSchedules?.length || 0} active schedules (archived excluded)`);
 
     // Calculate dates
     const today = new Date();
