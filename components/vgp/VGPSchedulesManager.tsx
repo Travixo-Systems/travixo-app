@@ -15,8 +15,12 @@ const BRAND_COLORS = {
   primary: '#1e3a5f',     // Deep slate blue
   danger: '#b91c1c',      // Red
   warning: '#d97706',     // Safety orange
+  warningYellow: '#eab308', // Yellow
   success: '#047857',     // Forest green
 } as const;
+
+// Org-modular: Toggle between bordered cards or filled cards
+const CARD_STYLE = 'bordered'; // 'bordered' | 'filled'
 
 // ============================================================================
 // TYPES
@@ -322,7 +326,7 @@ export default function VGPSchedulesManager() {
         <p className="text-gray-600 mt-1">Planification et suivi des inspections périodiques</p>
       </div>
 
-      {/* 4 Cards - No Total */}
+      {/* 4 Cards - White with colored borders */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={<AlertCircle className="w-5 h-5" />}
@@ -331,8 +335,6 @@ export default function VGPSchedulesManager() {
           active={statusFilter === 'overdue'}
           onClick={() => handleFilterChange('overdue')}
           color={BRAND_COLORS.danger}
-          bgClass="bg-red-50"
-          borderClass="border-red-200"
         />
         <StatCard
           icon={<Clock className="w-5 h-5" />}
@@ -340,9 +342,7 @@ export default function VGPSchedulesManager() {
           value={summary.upcoming}
           active={statusFilter === 'upcoming'}
           onClick={() => handleFilterChange('upcoming')}
-          color="#eab308"
-          bgClass="bg-yellow-50"
-          borderClass="border-yellow-200"
+          color={BRAND_COLORS.warningYellow}
         />
         <StatCard
           icon={<Clock className="w-5 h-5" />}
@@ -351,8 +351,6 @@ export default function VGPSchedulesManager() {
           active={statusFilter === 'soon'}
           onClick={() => handleFilterChange('soon')}
           color={BRAND_COLORS.warning}
-          bgClass="bg-orange-50"
-          borderClass="border-orange-200"
         />
         <StatCard
           icon={<CheckCircle className="w-5 h-5" />}
@@ -361,8 +359,6 @@ export default function VGPSchedulesManager() {
           active={statusFilter === 'compliant'}
           onClick={() => handleFilterChange('compliant')}
           color={BRAND_COLORS.success}
-          bgClass="bg-green-50"
-          borderClass="border-green-200"
         />
       </div>
 
@@ -439,7 +435,6 @@ export default function VGPSchedulesManager() {
                   <TableHeader>Équipement</TableHeader>
                   <TableHeader>Catégorie</TableHeader>
                   <TableHeader>Emplacement</TableHeader>
-                  <TableHeader>Intervalle</TableHeader>
                   <TableHeader>Prochaine</TableHeader>
                   <TableHeader>Statut</TableHeader>
                   <TableHeader>Actions</TableHeader>
@@ -464,9 +459,6 @@ export default function VGPSchedulesManager() {
                       <td className="px-3 py-2 text-sm text-gray-700">
                         {schedule.assets?.current_location || 'Non spécifié'}
                       </td>
-                      <td className="px-3 py-2 text-sm text-gray-700">
-                        {schedule.interval_months} mois
-                      </td>
                       <td className="px-3 py-2">
                         <p className="font-semibold text-gray-900 text-sm">{formatDateFR(schedule.next_due_date)}</p>
                       </td>
@@ -475,6 +467,15 @@ export default function VGPSchedulesManager() {
                       </td>
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-1">
+                          {status === 'overdue' && (
+                            <button
+                              onClick={() => window.location.href = `/vgp/inspection/${schedule.id}`}
+                              className="px-2 py-1 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded transition-colors"
+                              title="Enregistrer inspection"
+                            >
+                              Inspection
+                            </button>
+                          )}
                           <button
                             onClick={() => handleEdit(schedule)}
                             className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
@@ -555,8 +556,6 @@ function StatCard({
   active,
   onClick,
   color,
-  bgClass,
-  borderClass,
 }: {
   icon: React.ReactNode;
   title: string;
@@ -564,13 +563,33 @@ function StatCard({
   active: boolean;
   onClick: () => void;
   color: string;
-  bgClass: string;
-  borderClass: string;
 }) {
+  if (CARD_STYLE === 'bordered') {
+    return (
+      <button
+        onClick={onClick}
+        className={`bg-white rounded-lg p-4 text-left hover:shadow-md transition-all hover:scale-[1.02] cursor-pointer border-l-4 ${
+          active ? 'shadow-lg ring-2 ring-offset-1' : 'shadow-sm border-r border-t border-b border-gray-200'
+        }`}
+        style={{ 
+          borderLeftColor: color,
+          ...(active ? { '--tw-ring-color': color } as any : {})
+        }}
+      >
+        <div className="flex items-start justify-between mb-2">
+          <div style={{ color }}>{icon}</div>
+          <p className="text-3xl font-bold text-gray-900">{value}</p>
+        </div>
+        <p className="text-sm font-medium text-gray-700">{title}</p>
+      </button>
+    );
+  }
+
+  // Filled style (for org modularity)
   return (
     <button
       onClick={onClick}
-      className={`${bgClass} ${borderClass} border-2 rounded-lg p-4 text-left hover:shadow-md transition-all hover:scale-[1.02] cursor-pointer ${
+      className={`rounded-lg p-4 text-left hover:shadow-md transition-all hover:scale-[1.02] cursor-pointer border-2 ${
         active ? 'ring-2 ring-offset-2' : ''
       }`}
       style={active ? { borderColor: color, '--tw-ring-color': color } as any : {}}
