@@ -1,8 +1,26 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Calendar, Search, Archive, Eye, Filter, AlertCircle, CheckCircle, Clock, Edit } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import {
+  Calendar, Search, Archive, Eye, Edit, AlertCircle, CheckCircle, Clock, X,
+} from 'lucide-react';
 import { EditScheduleModal } from './EditScheduleModal';
+
+// ============================================================================
+// B2B PROFESSIONAL BRAND COLORS (Org-Modular)
+// ============================================================================
+
+const BRAND_COLORS = {
+  primary: '#1e3a5f',     // Deep slate blue
+  danger: '#b91c1c',      // Red
+  warning: '#d97706',     // Safety orange
+  success: '#047857',     // Forest green
+} as const;
+
+// ============================================================================
+// TYPES
+// ============================================================================
 
 interface Asset {
   id: string;
@@ -23,373 +41,628 @@ interface Schedule {
   status: string;
   notes: string | null;
   created_at: string;
+  archived_at?: string | null;
   assets: Asset;
 }
 
+// 4-card layout - removed total
+type StatusFilter = 'all' | 'overdue' | 'upcoming' | 'soon' | 'compliant';
+
+// ============================================================================
+// DATE UTILITIES
+// ============================================================================
+
+function parseDateOnly(dateStr: string): Date {
+  const [y, m, d] = dateStr.split('-').map(n => parseInt(n, 10));
+  const date = new Date(y, m - 1, d);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function todayStart(): Date {
+  const t = new Date();
+  t.setHours(0, 0, 0, 0);
+  return t;
+}
+
+function daysUntilDue(nextDueISO: string): number {
+  const due = parseDateOnly(nextDueISO);
+  const today = todayStart();
+  const diffMs = due.getTime() - today.getTime();
+  return Math.ceil(diffMs / 86_400_000);
+}
+
+// Must match dashboard
+function deriveStatus(nextDueISO: string): StatusFilter {
+  const days = daysUntilDue(nextDueISO);
+  if (days < 0) return 'overdue';
+  if (days <= 30) return 'upcoming';
+  if (days <= 90) return 'soon';
+  return 'compliant';
+}
+
+function formatDateFR(iso: string): string {
+  try {
+    return new Intl.DateTimeFormat('fr-FR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(parseDateOnly(iso));
+  } catch {
+    return iso;
+  }
+}
+
+// ============================================================================
+// UI COMPONENTS
+// ============================================================================
+
+function StatusBadge({ status }: { status: StatusFilter }) {
+  const config: Record<StatusFilter, { label: string; bg: string; text: string }> = {
+    all: { label: 'Tous', bg: 'bg-slate-100', text: 'text-slate-800' },
+    overdue: { label: 'En retard', bg: 'bg-red-100', text: 'text-red-800' },
+    upcoming: { label: 'À venir', bg: 'bg-yellow-100', text: 'text-yellow-800' },
+    soon: { label: 'Bientôt', bg: 'bg-orange-100', text: 'text-orange-800' },
+    compliant: { label: 'Conforme', bg: 'bg-green-100', text: 'text-green-800' },
+  };
+
+  const { label, bg, text } = config[status];
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${bg} ${text}`}>
+      {label}
+    </span>
+  );
+}
+
+function Toast({ message, type, onClose }: { message: string; type: 'success' | 'error'; onClose: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 4000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-6 py-3 rounded-lg shadow-lg animate-slide-in ${
+      type === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
+    }`}>
+      <div className={`${type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+        {type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+      </div>
+      <p className={`font-medium text-sm ${type === 'success' ? 'text-green-900' : 'text-red-900'}`}>{message}</p>
+      <button onClick={onClose} className="ml-2 text-gray-400 hover:text-gray-600">
+        <X className="w-4 h-4" />
+      </button>
+    </div>
+  );
+}
+
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
+
 export default function VGPSchedulesManager() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Data
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [error, setError] = useState<string | null>(null);
+
+  // Filters
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+
+  // UI state
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
 
+  const fetchCtrl = useRef<AbortController | null>(null);
+
+  // Initialize filter from URL
   useEffect(() => {
-    fetchSchedules();
-  }, [statusFilter]);
-
-  const fetchSchedules = async () => {
-    try {
-      setLoading(true);
-      const url = statusFilter !== 'all' 
-        ? `/api/vgp/schedules?status=${statusFilter}`
-        : '/api/vgp/schedules';
-      
-      const res = await fetch(url);
-      const data = await res.json();
-      // Filter out archived schedules
-      const active = (data.schedules || []).filter((s: any) => !s.archived_at);
-      setSchedules(active);
-    } catch (error) {
-      console.error('Failed to fetch schedules:', error);
-      setSchedules([]);
-    } finally {
-      setLoading(false);
+    const urlStatus = searchParams.get('status') as StatusFilter;
+    if (urlStatus && ['overdue', 'upcoming', 'compliant'].includes(urlStatus)) {
+      setStatusFilter(urlStatus);
     }
+  }, [searchParams]);
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search.trim().toLowerCase()), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Fetch schedules
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        if (fetchCtrl.current) fetchCtrl.current.abort();
+        fetchCtrl.current = new AbortController();
+
+        const res = await fetch('/api/vgp/schedules?include_archived=false&limit=1000', {
+          signal: fetchCtrl.current.signal,
+        });
+
+        if (!res.ok) {
+          const json = await res.json().catch(() => ({}));
+          throw new Error(json?.error || `HTTP ${res.status}`);
+        }
+
+        const json = await res.json();
+        const allSchedules: Schedule[] = (json?.schedules || []).filter((s: any) => !s.archived_at);
+
+        setSchedules(allSchedules);
+      } catch (e: any) {
+        if (e?.name === 'AbortError') return;
+        console.error('Fetch schedules error:', e);
+        setError(e?.message || 'Erreur de chargement');
+        setSchedules([]);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  // Calculate summary stats
+  const summary = useMemo(() => {
+    const counts = {
+      overdue: 0,
+      upcoming: 0,
+      soon: 0,
+      compliant: 0,
+    };
+
+    for (const schedule of schedules) {
+      const status = deriveStatus(schedule.next_due_date);
+      if (status !== 'all') counts[status]++;
+    }
+
+    return counts;
+  }, [schedules]);
+
+  // Filter schedules
+  const filteredSchedules = useMemo(() => {
+    let filtered = schedules;
+
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(s => deriveStatus(s.next_due_date) === statusFilter);
+    }
+
+    if (debouncedSearch) {
+      const query = debouncedSearch;
+      filtered = filtered.filter(s => 
+        s.assets?.name?.toLowerCase().includes(query) ||
+        s.assets?.serial_number?.toLowerCase().includes(query) ||
+        s.assets?.current_location?.toLowerCase().includes(query) ||
+        s.assets?.asset_categories?.name?.toLowerCase().includes(query) ||
+        s.notes?.toLowerCase().includes(query)
+      );
+    }
+
+    return filtered;
+  }, [schedules, statusFilter, debouncedSearch]);
+
+  // Update URL when filter changes
+  const handleFilterChange = (newStatus: StatusFilter) => {
+    setStatusFilter(newStatus);
+    
+    const params = new URLSearchParams(searchParams.toString());
+    if (newStatus === 'all') {
+      params.delete('status');
+    } else {
+      params.set('status', newStatus);
+    }
+    
+    const newUrl = params.toString() ? `?${params.toString()}` : '';
+    router.push(`/vgp/schedules${newUrl}`, { scroll: false });
   };
 
+  // Archive schedule
   const handleArchive = async (scheduleId: string) => {
-    const reason = prompt('Raison de l\'archivage (requis pour conformité):');
-    if (!reason) return;
-    
+    const reason = prompt("Raison de l'archivage (requis) :");
+    if (!reason?.trim()) return;
+
     try {
       const res = await fetch(`/api/vgp/schedules/${scheduleId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason })
+        body: JSON.stringify({ reason: reason.trim() }),
       });
-      
-      if (res.ok) {
-        alert('Calendrier archivé avec succès');
-        fetchSchedules();
-      } else {
-        throw new Error('Failed to archive schedule');
+
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json?.error || 'Échec de l\'archivage');
       }
-    } catch (error) {
-      console.error('Archive error:', error);
-      alert('Erreur lors de l\'archivage');
+
+      setSchedules(prev => prev.filter(s => s.id !== scheduleId));
+      setToast({ message: 'Calendrier archivé avec succès', type: 'success' });
+    } catch (e: any) {
+      console.error('Archive error:', e);
+      setToast({ message: e?.message || 'Erreur lors de l\'archivage', type: 'error' });
     }
   };
 
+  // Edit schedule
   const handleEdit = (schedule: Schedule) => {
     setEditingSchedule(schedule);
-    setShowEditModal(true);
+    setShowEdit(true);
   };
 
-  const filteredSchedules = schedules.filter(schedule => 
-    schedule.assets?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    schedule.assets?.serial_number?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const getStatusBadge = (schedule: Schedule) => {
-    const daysUntil = Math.ceil((new Date(schedule.next_due_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+  const handleEditSuccess = async () => {
+    setShowEdit(false);
+    setEditingSchedule(null);
+    setToast({ message: 'Calendrier mis à jour avec succès', type: 'success' });
     
-    if (daysUntil < 0) {
-      return <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-semibold">En retard</span>;
-    } else if (daysUntil <= 7) {
-      return <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-semibold">Urgent</span>;
-    } else if (daysUntil <= 30) {
-      return <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-semibold">À venir</span>;
-    } else {
-      return <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">OK</span>;
+    try {
+      const res = await fetch('/api/vgp/schedules?include_archived=false&limit=1000');
+      if (res.ok) {
+        const json = await res.json();
+        const allSchedules: Schedule[] = (json?.schedules || []).filter((s: any) => !s.archived_at);
+        setSchedules(allSchedules);
+      }
+    } catch (e) {
+      console.error('Refetch error:', e);
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="p-8 space-y-6">
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Calendriers VGP</h1>
-          <p className="text-gray-600 mt-1">Gérez les inspections périodiques de vos équipements</p>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Suivi VGP</h1>
+        <p className="text-gray-600 mt-1">Planification et suivi des inspections périodiques</p>
       </div>
 
-      {/* Stats Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-100 p-3 rounded-lg">
-              <Calendar className="w-6 h-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Total</p>
-              <p className="text-2xl font-bold">{schedules.length}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center gap-3">
-            <div className="bg-red-100 p-3 rounded-lg">
-              <AlertCircle className="w-6 h-6 text-red-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">En retard</p>
-              <p className="text-2xl font-bold">
-                {schedules.filter(s => new Date(s.next_due_date) < new Date()).length}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center gap-3">
-            <div className="bg-yellow-100 p-3 rounded-lg">
-              <Clock className="w-6 h-6 text-yellow-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">À venir (30j)</p>
-              <p className="text-2xl font-bold">
-                {schedules.filter(s => {
-                  const days = Math.ceil((new Date(s.next_due_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                  return days >= 0 && days <= 30;
-                }).length}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center gap-3">
-            <div className="bg-green-100 p-3 rounded-lg">
-              <CheckCircle className="w-6 h-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Conforme</p>
-              <p className="text-2xl font-bold">
-                {schedules.filter(s => {
-                  const days = Math.ceil((new Date(s.next_due_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                  return days > 30;
-                }).length}
-              </p>
-            </div>
-          </div>
-        </div>
+      {/* 4 Cards - No Total */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          icon={<AlertCircle className="w-5 h-5" />}
+          title="En retard"
+          value={summary.overdue}
+          active={statusFilter === 'overdue'}
+          onClick={() => handleFilterChange('overdue')}
+          color={BRAND_COLORS.danger}
+          bgClass="bg-red-50"
+          borderClass="border-red-200"
+        />
+        <StatCard
+          icon={<Clock className="w-5 h-5" />}
+          title="À venir"
+          value={summary.upcoming}
+          active={statusFilter === 'upcoming'}
+          onClick={() => handleFilterChange('upcoming')}
+          color="#eab308"
+          bgClass="bg-yellow-50"
+          borderClass="border-yellow-200"
+        />
+        <StatCard
+          icon={<Clock className="w-5 h-5" />}
+          title="Bientôt"
+          value={summary.soon}
+          active={statusFilter === 'soon'}
+          onClick={() => handleFilterChange('soon')}
+          color={BRAND_COLORS.warning}
+          bgClass="bg-orange-50"
+          borderClass="border-orange-200"
+        />
+        <StatCard
+          icon={<CheckCircle className="w-5 h-5" />}
+          title="Conforme"
+          value={summary.compliant}
+          active={statusFilter === 'compliant'}
+          onClick={() => handleFilterChange('compliant')}
+          color={BRAND_COLORS.success}
+          bgClass="bg-green-50"
+          borderClass="border-green-200"
+        />
       </div>
 
-      {/* Search & Filter */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Rechercher par nom d'équipement ou numéro de série..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Filter className="w-5 h-5 text-gray-400" />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+      {/* Search Bar */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Rechercher par nom, numéro de série, emplacement..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
-              <option value="all">Tous les statuts</option>
-              <option value="active">Actif</option>
-              <option value="overdue">En retard</option>
-              <option value="completed">Terminé</option>
-            </select>
-          </div>
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Schedules Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      {/* Results */}
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-gray-600">
+          {filteredSchedules.length} résultat{filteredSchedules.length !== 1 ? 's' : ''}
+        </span>
+        {statusFilter !== 'all' && (
+          <button
+            onClick={() => handleFilterChange('all')}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            Tout afficher
+          </button>
+        )}
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         {loading ? (
           <div className="p-12 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Chargement des calendriers...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
+            <p className="mt-4 text-gray-600">Chargement...</p>
+          </div>
+        ) : error ? (
+          <div className="p-8 text-center">
+            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <p className="text-red-700 font-semibold">{error}</p>
           </div>
         ) : filteredSchedules.length === 0 ? (
           <div className="p-12 text-center">
             <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600">Aucun calendrier VGP trouvé</p>
+            <p className="text-gray-600 text-lg">Aucun résultat</p>
+            {(statusFilter !== 'all' || debouncedSearch) && (
+              <button
+                onClick={() => {
+                  setSearch('');
+                  handleFilterChange('all');
+                }}
+                className="mt-4 text-blue-600 hover:underline"
+              >
+                Réinitialiser
+              </button>
+            )}
           </div>
         ) : (
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Équipement</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Catégorie</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Emplacement</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Intervalle</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prochaine inspection</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredSchedules.map((schedule) => (
-                <tr key={schedule.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div>
-                      <p className="font-semibold text-gray-900">{schedule.assets?.name || 'N/A'}</p>
-                      <p className="text-sm text-gray-500">S/N: {schedule.assets?.serial_number || 'N/A'}</p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-gray-700">{schedule.assets?.asset_categories?.name || 'N/A'}</td>
-                  <td className="px-6 py-4 text-gray-700">{schedule.assets?.current_location || 'N/A'}</td>
-                  <td className="px-6 py-4 text-gray-700">{schedule.interval_months} mois</td>
-                  <td className="px-6 py-4">
-                    <p className="font-semibold text-gray-900">
-                      {new Date(schedule.next_due_date).toLocaleDateString('fr-FR')}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {Math.ceil((new Date(schedule.next_due_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} jours
-                    </p>
-                  </td>
-                  <td className="px-6 py-4">{getStatusBadge(schedule)}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleEdit(schedule)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded"
-                        title="Modifier"
-                      >
-                        <Edit className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedSchedule(schedule);
-                          setShowDetails(true);
-                        }}
-                        className="p-2 text-gray-600 hover:bg-gray-50 rounded"
-                        title="Voir les détails"
-                      >
-                        <Eye className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => handleArchive(schedule.id)}
-                        className="p-2 text-orange-600 hover:bg-orange-50 rounded"
-                        title="Archiver"
-                      >
-                        <Archive className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <TableHeader>Équipement</TableHeader>
+                  <TableHeader>Catégorie</TableHeader>
+                  <TableHeader>Emplacement</TableHeader>
+                  <TableHeader>Intervalle</TableHeader>
+                  <TableHeader>Prochaine</TableHeader>
+                  <TableHeader>Statut</TableHeader>
+                  <TableHeader>Actions</TableHeader>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {filteredSchedules.map((schedule) => {
+                  const days = daysUntilDue(schedule.next_due_date);
+                  const status = deriveStatus(schedule.next_due_date);
+
+                  return (
+                    <tr key={schedule.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-3 py-2">
+                        <div>
+                          <p className="font-semibold text-gray-900 text-sm">{schedule.assets?.name || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">S/N: {schedule.assets?.serial_number || 'N/A'}</p>
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 text-sm text-gray-700">
+                        {schedule.assets?.asset_categories?.name || 'Non catégorisé'}
+                      </td>
+                      <td className="px-3 py-2 text-sm text-gray-700">
+                        {schedule.assets?.current_location || 'Non spécifié'}
+                      </td>
+                      <td className="px-3 py-2 text-sm text-gray-700">
+                        {schedule.interval_months} mois
+                      </td>
+                      <td className="px-3 py-2">
+                        <p className="font-semibold text-gray-900 text-sm">{formatDateFR(schedule.next_due_date)}</p>
+                      </td>
+                      <td className="px-3 py-2">
+                        <StatusBadge status={status} />
+                      </td>
+                      <td className="px-3 py-2">
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleEdit(schedule)}
+                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                            title="Modifier"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedSchedule(schedule);
+                              setShowDetails(true);
+                            }}
+                            className="p-1.5 text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                            title="Détails"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleArchive(schedule.id)}
+                            className="p-1.5 text-orange-600 hover:bg-orange-50 rounded transition-colors"
+                            title="Archiver"
+                          >
+                            <Archive className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
-      {/* Edit Modal */}
+      {/* Modals */}
       {editingSchedule && (
         <EditScheduleModal
           schedule={editingSchedule}
-          isOpen={showEditModal}
+          isOpen={showEdit}
           onClose={() => {
-            setShowEditModal(false);
+            setShowEdit(false);
             setEditingSchedule(null);
           }}
-          onSuccess={() => {
-            fetchSchedules();
-            setShowEditModal(false);
-            setEditingSchedule(null);
-          }}
+          onSuccess={handleEditSuccess}
         />
       )}
 
-      {/* Details Modal */}
       {showDetails && selectedSchedule && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Détails du calendrier VGP</h2>
-              <button
-                onClick={() => setShowDetails(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                ✕
-              </button>
-            </div>
+        <DetailsModal
+          schedule={selectedSchedule}
+          onClose={() => {
+            setShowDetails(false);
+            setSelectedSchedule(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
 
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600">Équipement</p>
-                  <p className="font-semibold text-gray-900">{selectedSchedule.assets?.name}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Numéro de série</p>
-                  <p className="font-semibold text-gray-900">{selectedSchedule.assets?.serial_number}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Catégorie</p>
-                  <p className="font-semibold text-gray-900">{selectedSchedule.assets?.asset_categories?.name || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Emplacement</p>
-                  <p className="font-semibold text-gray-900">{selectedSchedule.assets?.current_location}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Intervalle</p>
-                  <p className="font-semibold text-gray-900">{selectedSchedule.interval_months} mois</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Prochaine inspection</p>
-                  <p className="font-semibold text-gray-900">
-                    {new Date(selectedSchedule.next_due_date).toLocaleDateString('fr-FR')}
-                  </p>
-                </div>
-                {selectedSchedule.last_inspection_date && (
-                  <div>
-                    <p className="text-sm text-gray-600">Dernière inspection</p>
-                    <p className="font-semibold text-gray-900">
-                      {new Date(selectedSchedule.last_inspection_date).toLocaleDateString('fr-FR')}
-                    </p>
-                  </div>
-                )}
-                {selectedSchedule.inspector_name && (
-                  <div>
-                    <p className="text-sm text-gray-600">Inspecteur</p>
-                    <p className="font-semibold text-gray-900">{selectedSchedule.inspector_name}</p>
-                  </div>
-                )}
-              </div>
+// ============================================================================
+// HELPER COMPONENTS
+// ============================================================================
 
-              {selectedSchedule.notes && (
-                <div className="pt-4 border-t border-gray-200">
-                  <p className="text-sm text-gray-600 mb-2">Notes</p>
-                  <p className="text-gray-900">{selectedSchedule.notes}</p>
-                </div>
+function TableHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+      {children}
+    </th>
+  );
+}
+
+function StatCard({
+  icon,
+  title,
+  value,
+  active,
+  onClick,
+  color,
+  bgClass,
+  borderClass,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  value: number;
+  active: boolean;
+  onClick: () => void;
+  color: string;
+  bgClass: string;
+  borderClass: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`${bgClass} ${borderClass} border-2 rounded-lg p-4 text-left hover:shadow-md transition-all hover:scale-[1.02] cursor-pointer ${
+        active ? 'ring-2 ring-offset-2' : ''
+      }`}
+      style={active ? { borderColor: color, '--tw-ring-color': color } as any : {}}
+    >
+      <div className="flex items-start justify-between mb-2">
+        <div style={{ color }}>{icon}</div>
+        <p className="text-3xl font-bold text-gray-900">{value}</p>
+      </div>
+      <p className="text-sm font-medium text-gray-700">{title}</p>
+    </button>
+  );
+}
+
+function DetailsModal({ schedule, onClose }: { schedule: Schedule; onClose: () => void }) {
+  const status = deriveStatus(schedule.next_due_date);
+  const days = daysUntilDue(schedule.next_due_date);
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900">Détails du calendrier VGP</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          <div className="flex items-center gap-3">
+            <StatusBadge status={status} />
+            <span className={`text-sm font-medium ${
+              days < 0 ? 'text-red-600' : days <= 30 ? 'text-orange-600' : 'text-gray-500'
+            }`}>
+              {days < 0 ? `${Math.abs(days)} jours de retard` : `dans ${days} jours`}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <InfoField label="Équipement" value={schedule.assets?.name} />
+            <InfoField label="Numéro de série" value={schedule.assets?.serial_number} />
+            <InfoField label="Catégorie" value={schedule.assets?.asset_categories?.name || 'Non catégorisé'} />
+            <InfoField label="Emplacement" value={schedule.assets?.current_location || 'Non spécifié'} />
+          </div>
+
+          <div className="pt-4 border-t border-gray-200">
+            <h3 className="font-semibold text-gray-900 mb-4">Calendrier d'inspection</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <InfoField label="Intervalle" value={`${schedule.interval_months} mois`} />
+              <InfoField label="Prochaine inspection" value={formatDateFR(schedule.next_due_date)} />
+              {schedule.last_inspection_date && (
+                <InfoField label="Dernière inspection" value={formatDateFR(schedule.last_inspection_date)} />
               )}
-
-              <div className="pt-4 border-t border-gray-200">
-                <p className="text-sm text-gray-600 mb-2">Code QR</p>
-                <p className="font-mono text-sm bg-gray-100 p-2 rounded">{selectedSchedule.assets?.qr_code}</p>
-              </div>
-            </div>
-
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={() => setShowDetails(false)}
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
-              >
-                Fermer
-              </button>
+              {schedule.inspector_name && (
+                <InfoField label="Inspecteur attitré" value={schedule.inspector_name} />
+              )}
             </div>
           </div>
+
+          {schedule.notes && (
+            <div className="pt-4 border-t border-gray-200">
+              <h3 className="font-semibold text-gray-900 mb-2">Notes</h3>
+              <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{schedule.notes}</p>
+            </div>
+          )}
+
+          <div className="pt-4 border-t border-gray-200">
+            <h3 className="font-semibold text-gray-900 mb-2">Code QR</h3>
+            <p className="font-mono text-sm bg-gray-100 p-3 rounded-lg">{schedule.assets?.qr_code}</p>
+          </div>
         </div>
-      )}
+
+        <div className="sticky bottom-0 bg-gray-50 px-6 py-4 flex justify-end border-t border-gray-200">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-medium transition-colors"
+          >
+            Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InfoField({ label, value }: { label: string; value?: string | number | null }) {
+  return (
+    <div>
+      <p className="text-sm text-gray-600 mb-1">{label}</p>
+      <p className="font-semibold text-gray-900">{value || 'N/A'}</p>
     </div>
   );
 }
