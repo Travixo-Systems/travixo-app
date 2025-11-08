@@ -1,80 +1,373 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from "@/lib/supabase/server"
+import Link from "next/link"
 
 export default async function DashboardPage() {
-  // Check if user is authenticated
   const supabase = await createClient()
+  
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
 
-  if (!user) {
-    redirect('/login')
-  }
-
-  // Get user's organization info
-  const { data: userData } = await supabase
+  // Get user profile and org
+  const { data: profile } = await supabase
     .from('users')
-    .select(`
-      *,
-      organizations (
-        name,
-        subscription_tier
-      )
-    `)
+    .select('organization_id, organizations(name)')
     .eq('id', user.id)
     .single()
 
+  const orgId = profile?.organization_id
+  const orgName = profile?.organizations?.name || 'Votre Organisation'
+
+  // Get asset counts
+  const { count: totalAssets } = await supabase
+    .from('assets')
+    .select('*', { count: 'only', head: true })
+    .eq('organization_id', orgId)
+
+  const { count: inUseAssets } = await supabase
+    .from('assets')
+    .select('*', { count: 'only', head: true })
+    .eq('organization_id', orgId)
+    .eq('status', 'in_use')
+
+  // Get VGP schedules
+  const { data: vgpSchedules } = await supabase
+    .from('vgp_schedules')
+    .select(`
+      id,
+      next_due_date,
+      status,
+      assets (
+        id,
+        name,
+        serial_number,
+        current_location,
+        asset_categories (name)
+      )
+    `)
+    .eq('organization_id', orgId)
+
+  // Calculate VGP stats
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
+  let vgpOverdue = 0
+  let vgpUpcoming = 0
+  let vgpCompliant = 0
+
+  vgpSchedules?.forEach(schedule => {
+    const dueDate = new Date(schedule.next_due_date)
+    const daysUntil = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+    
+    if (daysUntil < 0) {
+      vgpOverdue++
+    } else if (daysUntil <= 30) {
+      vgpUpcoming++
+    } else {
+      vgpCompliant++
+    }
+  })
+
+  const vgpTotal = vgpSchedules?.length || 0
+  const vgpComplianceRate = vgpTotal > 0 ? Math.round((vgpCompliant / vgpTotal) * 100) : 100
+
+  // Get recent scans
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+  
+  const { count: recentScans } = await supabase
+    .from('scans')
+    .select('*', { count: 'only', head: true })
+    .gte('scanned_at', sevenDaysAgo.toISOString())
+
+  // Calculate metrics
+  const utilizationRate = totalAssets && inUseAssets 
+    ? Math.round((inUseAssets / totalAssets) * 100) 
+    : 0
+
+  const assetsValue = (totalAssets || 0) * 14500
+  const savingsFromLossPrevention = assetsValue * 0.012
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Simple Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-gray-900">
-              Dashboard
-            </h1>
-            <button
-              onClick={async () => {
-                'use server'
-                const supabase = await createClient()
-                await supabase.auth.signOut()
-                redirect('/login')
-              }}
-              className="text-sm text-gray-500 hover:text-gray-700"
-            >
-              Sign Out
-            </button>
+    <div className="space-y-6 p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">{orgName}</h1>
+          <p className="text-slate-600 mt-1 text-sm">
+            Aperçu en temps réel de votre parc d'équipements
+          </p>
+        </div>
+        <form action="/login" method="post">
+          <button
+            type="submit"
+            className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Déconnexion
+          </button>
+        </form>
+      </div>
+
+      {/* Critical Alert */}
+      {vgpOverdue > 0 && (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-semibold text-red-800">
+                {vgpOverdue} Équipement{vgpOverdue > 1 ? 's' : ''} VGP en Retard
+              </h3>
+              <p className="text-sm text-red-700 mt-1">
+                Risque de sanctions DIRECCTE: €{(vgpOverdue * 15000).toLocaleString()} - €{(vgpOverdue * 75000).toLocaleString()}
+                <Link href="/vgp/schedules?filter=overdue" className="font-medium underline ml-2">
+                  Traiter maintenant →
+                </Link>
+              </p>
+            </div>
           </div>
         </div>
-      </header>
+      )}
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">
-            Welcome to TraviXO!
-          </h2>
+      {/* Key Metrics */}
+      <div className="grid gap-3 md:grid-cols-3">
+        <div className="bg-white border border-slate-200 rounded-lg p-5">
+          <p className="text-xs text-slate-600 uppercase tracking-wide">Perte d'Équipements</p>
+          <p className="text-3xl font-bold text-green-600 mt-1">0.8%</p>
+          <p className="text-xs text-slate-600 mt-2">vs 2-5% industrie</p>
+          <p className="text-xs font-semibold text-green-600 mt-1">
+            €{Math.round(savingsFromLossPrevention).toLocaleString()} économisés cette année
+          </p>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-lg p-5">
+          <p className="text-xs text-slate-600 uppercase tracking-wide">Conformité VGP</p>
+          <p className="text-3xl font-bold text-blue-600 mt-1">{vgpComplianceRate}%</p>
+          <p className="text-xs text-slate-600 mt-2">
+            {vgpOverdue} retard{vgpOverdue !== 1 ? 's' : ''}, {vgpUpcoming} à venir
+          </p>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-lg p-5">
+          <p className="text-xs text-slate-600 uppercase tracking-wide">Taux d'Utilisation</p>
+          <p className="text-3xl font-bold text-green-600 mt-1">{utilizationRate}%</p>
+          <p className="text-xs text-slate-600 mt-2">vs 65% objectif</p>
+          <p className="text-xs text-slate-500 mt-1">
+            €{Math.round(assetsValue * (utilizationRate / 100)).toLocaleString()} en location
+          </p>
+        </div>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid gap-3 md:grid-cols-4">
+        <div className="bg-white border border-slate-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-slate-600">Total Équipements</p>
+            <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+          </div>
+          <p className="text-2xl font-bold text-slate-900 mt-2">{totalAssets || 0}</p>
+          <p className="text-xs text-slate-500 mt-1">
+            Valeur: €{(assetsValue / 1000000).toFixed(1)}M
+          </p>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-slate-600">Conformité VGP</p>
+            <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p className="text-2xl font-bold text-slate-900 mt-2">{vgpComplianceRate}%</p>
+          <div className="w-full bg-slate-200 rounded-full h-2 mt-2">
+            <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${vgpComplianceRate}%` }}></div>
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-slate-600">Scans (7j)</p>
+            <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+            </svg>
+          </div>
+          <p className="text-2xl font-bold text-slate-900 mt-2">{recentScans || 0}</p>
+          <p className="text-xs text-slate-500 mt-1">Activité de traçage</p>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-slate-600">Utilisation</p>
+            <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+          </div>
+          <p className="text-2xl font-bold text-slate-900 mt-2">{utilizationRate}%</p>
+          <div className="w-full bg-slate-200 rounded-full h-2 mt-2">
+            <div className="bg-green-600 h-2 rounded-full" style={{ width: `${utilizationRate}%` }}></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="bg-white border border-slate-200 rounded-lg p-5">
+        <h2 className="text-base font-semibold text-slate-900">Actions Rapides</h2>
+        <p className="text-xs text-slate-600 mt-0.5">Tâches courantes pour gérer votre parc</p>
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4 mt-4">
+          <Link href="/assets/new" className="flex items-center gap-2 px-3 py-2.5 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+            <span className="text-sm font-medium">Ajouter Équipement</span>
+          </Link>
           
-          <div className="space-y-2 text-gray-600">
-            <p>Signed in as: <span className="font-medium">{user.email}</span></p>
-            {userData?.organizations && (
-              <p>Organization: <span className="font-medium">{userData.organizations.name}</span></p>
-            )}
-            <p>Plan: <span className="font-medium">{userData?.organizations?.subscription_tier || 'Trial'}</span></p>
+          <Link href="/qr-codes" className="flex items-center gap-2 px-3 py-2.5 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+            </svg>
+            <span className="text-sm font-medium">Générer QR Codes</span>
+          </Link>
+
+          <Link href="/vgp/inspections/new" className="flex items-center gap-2 px-3 py-2.5 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span className="text-sm font-medium">Enregistrer VGP</span>
+          </Link>
+
+          <Link href="/audits/new" className="flex items-center gap-2 px-3 py-2.5 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-sm font-medium">Lancer Audit</span>
+          </Link>
+        </div>
+      </div>
+
+      {/* VGP Compliance Details */}
+      <div className="bg-white border border-slate-200 rounded-lg p-5">
+        <h2 className="text-base font-semibold text-slate-900">Conformité VGP (Réglementaire)</h2>
+        <p className="text-xs text-slate-600 mt-0.5">
+          Suivi des inspections obligatoires pour éviter les sanctions DIRECCTE
+        </p>
+        
+        <div className="space-y-3 mt-4">
+          <div className="flex items-center justify-between py-2 border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                <svg className="h-4 w-4 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-medium text-sm text-slate-900">En Retard</p>
+                <p className="text-xs text-slate-600">Risque de sanction immédiat</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-xl font-bold text-red-600">{vgpOverdue}</p>
+              {vgpOverdue > 0 && (
+                <Link href="/vgp/schedules?filter=overdue" className="text-xs text-blue-600 hover:underline">
+                  Traiter maintenant
+                </Link>
+              )}
+            </div>
           </div>
 
-          <div className="mt-8 p-4 bg-orange-50 rounded-lg">
-            <h3 className="font-semibold text-orange-900 mb-2">
-              Next Steps:
-            </h3>
-            <ul className="space-y-1 text-sm text-orange-800">
-              <li>• Add your first asset</li>
-              <li>• Generate QR codes</li>
-              <li>• Invite team members</li>
-              <li>• Run your first audit</li>
-            </ul>
+          <div className="flex items-center justify-between py-2 border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                <svg className="h-4 w-4 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-medium text-sm text-slate-900">À venir (30j)</p>
+                <p className="text-xs text-slate-600">Planifier avant échéance</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-xl font-bold text-yellow-600">{vgpUpcoming}</p>
+              {vgpUpcoming > 0 && (
+                <Link href="/vgp/schedules?filter=upcoming" className="text-xs text-blue-600 hover:underline">
+                  Planifier
+                </Link>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between py-2">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                <svg className="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-medium text-sm text-slate-900">Conformes</p>
+                <p className="text-xs text-slate-600">Inspections à jour</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-xl font-bold text-green-600">{vgpCompliant}</p>
+            </div>
           </div>
         </div>
-      </main>
+
+        <div className="mt-4 pt-4 border-t border-slate-200">
+          <Link href="/vgp" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Accéder au Module VGP
+          </Link>
+        </div>
+      </div>
+
+      {/* ROI Impact */}
+      <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <h2 className="text-base font-semibold text-slate-900">Impact ROI TraviXO</h2>
+        </div>
+        
+        <div className="grid gap-3 md:grid-cols-3">
+          <div>
+            <p className="text-xs text-slate-600">Pertes Évitées (vs 2%)</p>
+            <p className="text-2xl font-bold text-green-600">
+              €{Math.round(savingsFromLossPrevention).toLocaleString()}
+            </p>
+            <p className="text-xs text-slate-500 mt-0.5">Cette année</p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-600">Gain Audit (75% plus rapide)</p>
+            <p className="text-2xl font-bold text-blue-600">32 heures</p>
+            <p className="text-xs text-slate-500 mt-0.5">Par trimestre</p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-600">Sanctions VGP Évitées</p>
+            <p className="text-2xl font-bold text-green-600">€0</p>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {vgpComplianceRate === 100 ? 'Conformité 100%' : `${vgpComplianceRate}% conformité`}
+            </p>
+          </div>
+        </div>
+        <p className="text-xs text-slate-600 mt-3">
+          <strong>Coût TraviXO:</strong> €750/mois (Growth Pack) • 
+          <strong className="text-green-700 ml-2">
+            ROI: {Math.round(savingsFromLossPrevention / (750 * 12))}x
+          </strong>
+        </p>
+      </div>
     </div>
   )
 }
