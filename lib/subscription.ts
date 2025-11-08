@@ -188,7 +188,7 @@ export async function getSubscriptionInfo(): Promise<SubscriptionInfo | null> {
 export async function updateSubscription(
   planSlug: string,
   billingCycle: 'monthly' | 'yearly'
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; message?: string }> {  // ADD message here
   try {
     const response = await fetch('/api/subscriptions', {
       method: 'POST',
@@ -199,7 +199,11 @@ export async function updateSubscription(
     const data = await response.json();
 
     if (!response.ok) {
-      return { success: false, error: data.error || data.message };
+      return { 
+        success: false, 
+        error: data.error,
+        message: data.message  // ADD this line
+      };
     }
 
     return { success: true };

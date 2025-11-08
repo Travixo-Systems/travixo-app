@@ -21,31 +21,42 @@ export default function SubscriptionPage() {
   const isTrial = subscriptionInfo?.is_trial;
   const daysRemaining = subscriptionInfo?.days_remaining;
 
-  const handleUpgrade = async (planSlug: string) => {
-    if (planSlug === currentPlan?.slug) {
-      toast.error('You are already on this plan');
-      return;
-    }
+const handleUpgrade = async (planSlug: string) => {
+  if (planSlug === currentPlan?.slug) {
+    toast.error('You are already on this plan');
+    return;
+  }
 
-    setSelectedPlan(planSlug);
+  setSelectedPlan(planSlug);
+  
+  try {
+    console.log('CALLING MUTATION with:', { planSlug, billingCycle });
+    const result = await mutateAsync({ planSlug, billingCycle });
     
-    try {
-      const result = await mutateAsync({ planSlug, billingCycle });
-      
-      if (result.success) {
-        toast.success('Subscription updated! Refreshing page...');
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-      } else {
-        toast.error(result.error || 'Failed to update subscription');
-        setSelectedPlan(null);
-      }
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to update subscription');
+    console.log('MUTATION RESULT:', result);
+    console.log('result.success:', result.success);
+    console.log('result.error:', result.error);
+    console.log('result.message:', result.message);
+    
+    if (result.success) {
+      toast.success('Subscription updated! Refreshing page...');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } else {
+      console.log('ABOUT TO SHOW ERROR TOAST');
+      toast.error(result.message || result.error || 'Failed to update subscription', {
+        duration: 5000
+      });
       setSelectedPlan(null);
     }
-  };
+  } catch (error: any) {
+    console.log('CAUGHT IN CATCH BLOCK:', error);
+    const errorMsg = error.message || error.error || 'Failed to update subscription';
+    toast.error(errorMsg, { duration: 5000 });
+    setSelectedPlan(null);
+  }
+};
 
   if (subLoading || plansLoading) {
     return (

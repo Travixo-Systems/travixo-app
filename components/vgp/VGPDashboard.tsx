@@ -2,8 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { AlertCircle, CheckCircle, Clock, FileText, Calendar, TrendingUp, ArrowRight } from 'lucide-react';
+import FeatureGate from '@/components/subscription/FeatureGate';
 
 export default function VGPComplianceDashboard() {
+  return (
+    <FeatureGate feature="vgp_compliance">
+      <VGPContent />
+    </FeatureGate>
+  );
+}
+
+function VGPContent() {
   const [summary, setSummary] = useState<any>(null);
   const [upcoming, setUpcoming] = useState<any[]>([]);
   const [overdue, setOverdue] = useState<any[]>([]);
