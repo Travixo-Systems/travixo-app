@@ -1,6 +1,4 @@
 // app/api/vgp/compliance-summary/route.ts
-// - FIXED DATE LOGIC
-// - EXCLUDES ARCHIVED SCHEDULES
 
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
@@ -41,12 +39,13 @@ export async function GET(request: Request) {
   try {
     const supabase = await createClient();
     
-    console.log('🔐 Starting VGP compliance summary fetch...');
+    // TODO: REMOVE before live demo - debug logging
+    console.log('[VGP] Compliance summary request initiated');
     
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
-      console.error('Auth error:', authError);
+      console.error('[VGP] Auth failed:', authError?.message);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -57,11 +56,12 @@ export async function GET(request: Request) {
       .single();
 
     if (userError || !userData?.organization_id) {
-      console.error('User lookup error:', userError);
+      console.error('[VGP] Organization lookup failed:', userError?.message);
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
-    console.log('✅ User org:', userData.organization_id);
+    // TODO: REMOVE before live demo - debug logging
+    console.log('[VGP] Org ID:', userData.organization_id);
 
     // Fetch ALL NON-ARCHIVED schedules with asset details
     const { data: allSchedules, error: schedulesError } = await supabase
@@ -79,28 +79,28 @@ export async function GET(request: Request) {
         )
       `)
       .eq('organization_id', userData.organization_id)
-      .is('archived_at', null) // ✅ Exclude archived schedules
+      .is('archived_at', null)
       .order('next_due_date', { ascending: true });
 
     if (schedulesError) {
-      console.error('❌ Schedules error:', schedulesError);
+      console.error('[VGP] Schedule fetch failed:', schedulesError.message);
       throw schedulesError;
     }
 
-    console.log(`📊 Found ${allSchedules?.length || 0} active schedules (archived excluded)`);
+    const scheduleCount = allSchedules?.length || 0;
+    
+    // TODO: REMOVE before live demo - debug logging
+    console.log('[VGP] Loaded schedules:', scheduleCount);
 
     // Calculate dates
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Start of today
+    today.setHours(0, 0, 0, 0);
     
     const thirtyDaysFromNow = new Date();
     thirtyDaysFromNow.setDate(today.getDate() + 30);
-    thirtyDaysFromNow.setHours(23, 59, 59, 999); // End of day 30
+    thirtyDaysFromNow.setHours(23, 59, 59, 999);
 
-    console.log('📅 Today:', today.toISOString().split('T')[0]);
-    console.log('📅 30 days from now:', thirtyDaysFromNow.toISOString().split('T')[0]);
-
-    // Categorize schedules based on dates (IGNORE status field for now)
+    // Categorize schedules based on dates
     const upcomingSchedules: any[] = [];
     const overdueSchedules: any[] = [];
     let compliantCount = 0;
@@ -110,30 +110,19 @@ export async function GET(request: Request) {
       dueDate.setHours(0, 0, 0, 0);
       
       const daysUntil = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      
-      console.log(`📋 Schedule ${schedule.id}:`, {
-        asset: schedule.assets?.name,
-        due_date: schedule.next_due_date,
-        days_until: daysUntil,
-        status: schedule.status
-      });
 
       if (daysUntil < 0) {
-        // Overdue
         overdueSchedules.push(schedule);
       } else if (daysUntil >= 0 && daysUntil <= 30) {
-        // Upcoming (next 30 days)
         upcomingSchedules.push(schedule);
       } else if (daysUntil > 30 && daysUntil <= 90) {
-        // Soon (31-90 days) - also show in upcoming for better visibility
         upcomingSchedules.push(schedule);
       } else {
-        // Future (more than 90 days away) = compliant
         compliantCount++;
       }
     });
 
-    const total_assets_with_vgp = allSchedules?.length || 0;
+    const total_assets_with_vgp = scheduleCount;
     const compliance_rate = total_assets_with_vgp > 0 
       ? Math.round((compliantCount / total_assets_with_vgp) * 100) 
       : 100;
@@ -146,9 +135,14 @@ export async function GET(request: Request) {
       compliance_rate
     };
 
-    console.log('📊 Summary:', summary);
-    console.log(`📅 Upcoming: ${upcomingSchedules.length} schedules`);
-    console.log(`⚠️  Overdue: ${overdueSchedules.length} schedules`);
+    // TODO: REMOVE before live demo - debug logging
+    console.log('[VGP] Summary breakdown:', {
+      total: summary.total_assets_with_vgp,
+      compliant: summary.compliant_assets,
+      overdue: summary.overdue_assets,
+      upcoming: summary.due_soon_assets,
+      rate: summary.compliance_rate + '%'
+    });
 
     return NextResponse.json({
       summary,
@@ -157,9 +151,9 @@ export async function GET(request: Request) {
     });
 
   } catch (error: any) {
-    console.error('❌ VGP Compliance Summary Error:', error);
+    console.error('[VGP] Compliance summary error:', error?.message || 'Unknown error');
     return NextResponse.json(
-      { error: error.message }, 
+      { error: error.message || 'Internal server error' }, 
       { status: 500 }
     );
   }
