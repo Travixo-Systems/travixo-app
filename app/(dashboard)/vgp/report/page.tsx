@@ -1,8 +1,8 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
 import { FileText, Download, Calendar, AlertCircle, CheckCircle, XCircle, AlertTriangle, FileSpreadsheet } from 'lucide-react';
+import FeatureGate from '@/components/subscription/FeatureGate';
 
 interface Inspection {
   id: string;
@@ -38,7 +38,7 @@ interface DateRange {
   total_inspections: number;
 }
 
-export default function VGPReportPage() {
+function VGPReportContent() {
   const [loadingDates, setLoadingDates] = useState(true);
   const [loadingInspections, setLoadingInspections] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -621,7 +621,6 @@ export default function VGPReportPage() {
 
           <button
             onClick={handleGenerateReport}
-            disabled={generating || inspections.length === 0}
             className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {generating ? (
@@ -666,5 +665,13 @@ export default function VGPReportPage() {
         </ul>
       </div>
     </div>
+  );
+}
+
+export default function VGPReportPage() {
+  return (
+    <FeatureGate feature="vgp_compliance">
+      <VGPReportContent />
+    </FeatureGate>
   );
 }
