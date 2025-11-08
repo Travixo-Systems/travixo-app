@@ -6,6 +6,7 @@ import {
   Calendar, Search, Archive, Eye, Edit, AlertCircle, CheckCircle, Clock, X,
 } from 'lucide-react';
 import { EditScheduleModal } from './EditScheduleModal';
+import FeatureGate from '@/components/subscription/FeatureGate';
 
 // ============================================================================
 // B2B PROFESSIONAL BRAND COLORS (Org-Modular)
@@ -143,7 +144,7 @@ function Toast({ message, type, onClose }: { message: string; type: 'success' | 
 // MAIN COMPONENT
 // ============================================================================
 
-export default function VGPSchedulesManager() {
+function VGPSchedulesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -534,6 +535,14 @@ export default function VGPSchedulesManager() {
         />
       )}
     </div>
+  );
+}
+
+export default function VGPSchedulesManager() {
+  return (
+    <FeatureGate feature="vgp_compliance">
+      <VGPSchedulesContent />
+    </FeatureGate>
   );
 }
 
