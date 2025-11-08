@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { FileText, Download, ExternalLink } from 'lucide-react';
+import FeatureGate from '@/components/subscription/FeatureGate';
 
 interface Inspection {
   id: string;
@@ -23,7 +24,7 @@ const RESULT_CONFIG = {
   failed: { label: 'Non Conforme', color: 'bg-red-50 text-red-700 border-red-200' }
 };
 
-export default function VGPInspectionsPage() {
+function VGPInspectionsContent() {
   const [inspections, setInspections] = useState<Inspection[]>([]);
   const [filteredInspections, setFilteredInspections] = useState<Inspection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -305,5 +306,13 @@ export default function VGPInspectionsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function VGPInspectionsPage() {
+  return (
+    <FeatureGate feature="vgp_compliance">
+      <VGPInspectionsContent />
+    </FeatureGate>
   );
 }
