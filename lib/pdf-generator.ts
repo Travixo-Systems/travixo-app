@@ -229,7 +229,37 @@ export function generateVGPReport(data: ReportData): jsPDF {
       6: { cellWidth: 20 },
       7: { cellWidth: 20 },
       8: { cellWidth: 20 },
-    },margin: { top: 10, right: 10, bottom: 28, left: 10 },
+    },
+    margin: { top: 10, right: 10, bottom: 28, left: 10 },
+    
+    //  ADD CLICKABLE LINKS AND UNDERLINE (after cell is drawn)
+    didDrawCell: (data) => {
+      // Certificate column (index 6) in body rows only
+      if (data.section === 'body' && data.column.index === 6) {
+        const inspection = inspections[data.row.index];
+        
+        if (inspection?.certificate_url) {
+          // Add invisible clickable link over the entire cell
+          doc.link(
+            data.cell.x,
+            data.cell.y,
+            data.cell.width,
+            data.cell.height,
+            { url: inspection.certificate_url }
+          );
+          
+          // Add blue underline to indicate it's clickable
+          const textWidth = doc.getTextWidth(data.cell.text[0] || '');
+          const textX = data.cell.x + 2;
+          const textY = data.cell.y + data.cell.height / 2 + 2.5;
+          
+          doc.setDrawColor(15, 95, 166); // blue
+          doc.setLineWidth(0.2);
+          doc.line(textX, textY, textX + textWidth, textY);
+        }
+      }
+    },
+    
     didDrawPage: (data) => {
       const pageCount = (doc as any).internal.getNumberOfPages();
       const currentPage = (doc as any).internal.getCurrentPageInfo().pageNumber;
@@ -260,6 +290,26 @@ export function generateVGPReport(data: ReportData): jsPDF {
       );
     },
   });
+  // GRAY BAR AFTER TABLE HEADERS (only if no inspections)
+  if (inspections.length === 0) {
+    const finalY = (doc as any).lastAutoTable.finalY + 2;
+    
+    // Gray bar background
+    doc.setFillColor(243, 244, 246); // #F3F4F6
+    doc.setDrawColor(209, 213, 219); // #D1D5DB border
+    doc.rect(10, finalY, pageWidth - 20, 12, 'FD');
+    
+    // Centered text with date range
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(55, 65, 81); // #374151
+    doc.text(
+      `Aucune inspection enregistrée durant la période du ${formatDateFR(period.start_date)} au ${formatDateFR(period.end_date)}`,
+      pageWidth / 2,
+      finalY + 7.5,
+      { align: 'center' }
+    );
+  }
 
   return doc;
 }
