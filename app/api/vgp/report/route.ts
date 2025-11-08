@@ -1,4 +1,5 @@
 // app/api/vgp/report/route.ts
+// FIXED: Compliance rate now only counts "passed" (not conditional)
 
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
@@ -98,7 +99,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // inspections de l’org sur la période
+    // inspections de l'org sur la période
     const { data: inspections, error: inspectionsError } = await supabase
       .from('vgp_inspections')
       .select(INSPECTION_FIELDS)
@@ -115,14 +116,63 @@ export async function POST(request: Request) {
       );
     }
 
+    // ✅ ALLOW 0 INSPECTIONS - Generate empty report
     if (!inspections || inspections.length === 0) {
-      return NextResponse.json(
-        { error: `Aucune inspection trouvée entre ${start_date} et ${end_date}` },
-        { status: 404 }
-      );
+      let orgName = 'Organisation';
+      
+      const { data: orgRow } = await supabase
+        .from('organizations')
+        .select('name')
+        .eq('id', profile.organization_id)
+        .maybeSingle();
+      
+      if (orgRow?.name) {
+        orgName = orgRow.name;
+      }
+
+      const orgInfo = {
+        name: orgName,
+        address: '',
+        city: '',
+        postal_code: '',
+        siret: '',
+      };
+
+      const todayIso = new Date().toISOString().split('T')[0];
+
+      const reportData = {
+        organization: orgInfo,
+        period: {
+          start_date: formatFR(start_date),
+          end_date: formatFR(end_date),
+        },
+        inspections: [],
+        summary: {
+          total_assets: 0,
+          total_inspections: 0,
+          passed: 0,
+          conditional: 0,
+          failed: 0,
+          compliance_rate: 0,
+          overdue_count: 0,
+        },
+        generated_at: formatFR(todayIso),
+      };
+
+      const pdf = generateVGPReport(reportData);
+      const pdfBuffer = Buffer.from(pdf.output('arraybuffer'));
+
+      return new Response(pdfBuffer, {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="rapport-vgp-direccte-${start_date}-${end_date}.pdf"`,
+          'Content-Length': pdfBuffer.length.toString(),
+        },
+      });
     }
 
-    // priorité 1: org via jointure sur l’inspection
+    // priorité 1: org via jointure sur l'inspection
     let orgName = (inspections[0] as any).organizations?.name as string | undefined;
 
     // priorité 2: si pas trouvé, on tente la table organizations (name only)
@@ -160,6 +210,7 @@ export async function POST(request: Request) {
       .eq('organization_id', profile.organization_id)
       .lt('next_due_date', todayIso);
 
+    //  FIXED: Only count "passed" as compliant (not conditional)
     const summary = {
       total_assets: uniqueAssets.size,
       total_inspections: inspections.length,
@@ -167,7 +218,7 @@ export async function POST(request: Request) {
       conditional,
       failed,
       compliance_rate:
-        inspections.length > 0 ? ((passed + conditional) / inspections.length) * 100 : 0,
+        inspections.length > 0 ? (passed / inspections.length) * 100 : 0,
       overdue_count: overdueSchedules?.length || 0,
     };
 
