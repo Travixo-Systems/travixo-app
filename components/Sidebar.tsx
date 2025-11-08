@@ -11,7 +11,8 @@ import {
   UsersIcon,
   Cog6ToothIcon,
   ChevronDownIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  CreditCardIcon
 } from '@heroicons/react/24/outline';
 import { AlertCircle, Calendar, FileText, History } from 'lucide-react';
 
@@ -21,6 +22,7 @@ const navigation = [
   { name: 'Audits', href: '/audits', icon: ClipboardDocumentListIcon },
   { name: 'Team', href: '/team', icon: UsersIcon },
   { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
+  { name: 'Subscription', href: '/settings/subscription', icon: CreditCardIcon },
 ];
 
 const vgpNavigation = [
@@ -108,10 +110,10 @@ export default function Sidebar() {
           )}
         </div>
 
-        {/* Audits, Team, Settings */}
+        {/* Audits, Team, Settings, Subscription */}
         {navigation.slice(2).map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href;
+          const isActive = pathname === item.href || (item.href === '/settings/subscription' && pathname === '/settings/subscription');
           
           return (
             <Link
