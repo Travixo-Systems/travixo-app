@@ -1,9 +1,9 @@
+// middleware.ts
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import type { CookieOptions } from '@supabase/ssr'
 
 export async function middleware(request: NextRequest) {
-   console.log('🔥 MIDDLEWARE HIT:', request.nextUrl.pathname);
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -57,18 +57,17 @@ export async function middleware(request: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
-    // ✅ ADD THIS DEBUG LOG
-  console.log('👤 USER IN MIDDLEWARE:', user ? user.id : 'NO USER');
 
+  // Redirect unauthenticated users to login
   if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
+  // Redirect authenticated users away from auth pages
   if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup')) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
-    // ✅ ADD THIS DEBUG LOG
-  console.log('✅ MIDDLEWARE COMPLETE');
+
   return response
 }
 

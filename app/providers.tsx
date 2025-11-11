@@ -3,7 +3,8 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Toaster } from 'react-hot-toast';  // Make sure this is imported
+import { Toaster } from 'react-hot-toast';
+import { LanguageProvider } from '@/lib/LanguageContext';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -16,9 +17,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }));
 
   return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-      <Toaster position="top-right" />  {/* Make sure this is here */}
-    </QueryClientProvider>
+    <LanguageProvider>
+      <QueryClientProvider client={queryClient}>
+        {children}
+        <Toaster position="top-right" />
+      </QueryClientProvider>
+    </LanguageProvider>
   );
 }

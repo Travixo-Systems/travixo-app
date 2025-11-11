@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
+import { redirect } from "next/navigation"
 import Link from "next/link"
 
 export default async function DashboardPage() {
@@ -97,17 +98,20 @@ export default async function DashboardPage() {
             Aperçu en temps réel de votre parc d'équipements
           </p>
         </div>
-        <form action="/login" method="post">
-          <button
-            type="submit"
-            className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200"
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            Déconnexion
-          </button>
-        </form>
+        <button
+          onClick={async () => {
+            'use server'
+            const supabase = await createClient()
+            await supabase.auth.signOut()
+            redirect('/login')
+          }}
+          className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          Déconnexion
+        </button>
       </div>
 
       {/* Critical Alert */}
@@ -221,7 +225,7 @@ export default async function DashboardPage() {
         <h2 className="text-base font-semibold text-slate-900">Actions Rapides</h2>
         <p className="text-xs text-slate-600 mt-0.5">Tâches courantes pour gérer votre parc</p>
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4 mt-4">
-          <Link href="/assets/new" className="flex items-center gap-2 px-3 py-2.5 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+          <Link href="/assets" className="flex items-center gap-2 px-3 py-2.5 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>

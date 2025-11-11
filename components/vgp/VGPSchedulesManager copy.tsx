@@ -5,10 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Calendar, Search, Archive, Eye, Edit, AlertCircle, CheckCircle, Clock, X,
 } from 'lucide-react';
-import { useLanguage } from '@/lib/LanguageContext';
-import { createTranslator, Language } from '@/lib/i18n';
 import { EditScheduleModal } from './EditScheduleModal';
-import FeatureGate from '@/components/subscription/FeatureGate';
 
 // ============================================================================
 // B2B PROFESSIONAL BRAND COLORS (Org-Modular)
@@ -104,19 +101,19 @@ function formatDateFR(iso: string): string {
 // UI COMPONENTS
 // ============================================================================
 
-function StatusBadge({ status, t }: { status: StatusFilter; t: (key: string) => string }) {
-  const config: Record<StatusFilter, { key: string; bg: string; text: string }> = {
-    all: { key: 'vgpSchedules.all', bg: 'bg-slate-100', text: 'text-slate-800' },
-    overdue: { key: 'vgpSchedules.overdue', bg: 'bg-red-100', text: 'text-red-800' },
-    upcoming: { key: 'vgpSchedules.upcoming', bg: 'bg-yellow-100', text: 'text-yellow-800' },
-    soon: { key: 'vgpSchedules.soon', bg: 'bg-orange-100', text: 'text-orange-800' },
-    compliant: { key: 'vgpSchedules.compliant', bg: 'bg-green-100', text: 'text-green-800' },
+function StatusBadge({ status }: { status: StatusFilter }) {
+  const config: Record<StatusFilter, { label: string; bg: string; text: string }> = {
+    all: { label: 'Tous', bg: 'bg-slate-100', text: 'text-slate-800' },
+    overdue: { label: 'En retard', bg: 'bg-red-100', text: 'text-red-800' },
+    upcoming: { label: 'À venir', bg: 'bg-yellow-100', text: 'text-yellow-800' },
+    soon: { label: 'Bientôt', bg: 'bg-orange-100', text: 'text-orange-800' },
+    compliant: { label: 'Conforme', bg: 'bg-green-100', text: 'text-green-800' },
   };
 
-  const { key, bg, text } = config[status];
+  const { label, bg, text } = config[status];
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${bg} ${text}`}>
-      {t(key)}
+      {label}
     </span>
   );
 }
@@ -146,7 +143,7 @@ function Toast({ message, type, onClose }: { message: string; type: 'success' | 
 // MAIN COMPONENT
 // ============================================================================
 
-function VGPSchedulesContent({ language, t }: { language: Language; t: (key: string) => string }) {
+export default function VGPSchedulesManager() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -209,13 +206,13 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
       } catch (e: any) {
         if (e?.name === 'AbortError') return;
         console.error('Fetch schedules error:', e);
-        setError(e?.message || t('vgpSchedules.error.loadingFailed'));
+        setError(e?.message || 'Erreur de chargement');
         setSchedules([]);
       } finally {
         setLoading(false);
       }
     })();
-  }, [t]);
+  }, []);
 
   // Calculate summary stats
   const summary = useMemo(() => {
@@ -273,7 +270,7 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
 
   // Archive schedule
   const handleArchive = async (scheduleId: string) => {
-    const reason = prompt(t('vgpSchedules.archiveReason'));
+    const reason = prompt("Raison de l'archivage (requis) :");
     if (!reason?.trim()) return;
 
     try {
@@ -285,14 +282,14 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
 
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
-        throw new Error(json?.error || t('vgpSchedules.error.archiveFailed'));
+        throw new Error(json?.error || 'Échec de l\'archivage');
       }
 
       setSchedules(prev => prev.filter(s => s.id !== scheduleId));
-      setToast({ message: t('vgpSchedules.success.archived'), type: 'success' });
+      setToast({ message: 'Calendrier archivé avec succès', type: 'success' });
     } catch (e: any) {
       console.error('Archive error:', e);
-      setToast({ message: e?.message || t('vgpSchedules.error.archiveError'), type: 'error' });
+      setToast({ message: e?.message || 'Erreur lors de l\'archivage', type: 'error' });
     }
   };
 
@@ -305,7 +302,7 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
   const handleEditSuccess = async () => {
     setShowEdit(false);
     setEditingSchedule(null);
-    setToast({ message: t('vgpSchedules.success.updated'), type: 'success' });
+    setToast({ message: 'Calendrier mis à jour avec succès', type: 'success' });
     
     try {
       const res = await fetch('/api/vgp/schedules?include_archived=false&limit=1000');
@@ -325,15 +322,15 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
 
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">{t('vgpSchedules.pageTitle')}</h1>
-        <p className="text-gray-600 mt-1">{t('vgpSchedules.pageSubtitle')}</p>
+        <h1 className="text-3xl font-bold text-gray-900">Suivi VGP</h1>
+        <p className="text-gray-600 mt-1">Planification et suivi des inspections périodiques</p>
       </div>
 
       {/* 4 Cards - White with colored borders */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={<AlertCircle className="w-5 h-5" />}
-          title={t('vgpSchedules.overdue')}
+          title="En retard"
           value={summary.overdue}
           active={statusFilter === 'overdue'}
           onClick={() => handleFilterChange('overdue')}
@@ -341,7 +338,7 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
         />
         <StatCard
           icon={<Clock className="w-5 h-5" />}
-          title={t('vgpSchedules.upcoming')}
+          title="À venir"
           value={summary.upcoming}
           active={statusFilter === 'upcoming'}
           onClick={() => handleFilterChange('upcoming')}
@@ -349,7 +346,7 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
         />
         <StatCard
           icon={<Clock className="w-5 h-5" />}
-          title={t('vgpSchedules.soon')}
+          title="Bientôt"
           value={summary.soon}
           active={statusFilter === 'soon'}
           onClick={() => handleFilterChange('soon')}
@@ -357,7 +354,7 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
         />
         <StatCard
           icon={<CheckCircle className="w-5 h-5" />}
-          title={t('vgpSchedules.compliant')}
+          title="Conforme"
           value={summary.compliant}
           active={statusFilter === 'compliant'}
           onClick={() => handleFilterChange('compliant')}
@@ -371,7 +368,7 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
-            placeholder={t('vgpSchedules.search')}
+            placeholder="Rechercher par nom, numéro de série, emplacement..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -390,14 +387,14 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
       {/* Results */}
       <div className="flex items-center justify-between">
         <span className="text-sm text-gray-600">
-          {filteredSchedules.length} {filteredSchedules.length !== 1 ? t('vgpSchedules.resultsPlural') : t('vgpSchedules.results')}
+          {filteredSchedules.length} résultat{filteredSchedules.length !== 1 ? 's' : ''}
         </span>
         {statusFilter !== 'all' && (
           <button
             onClick={() => handleFilterChange('all')}
             className="text-sm text-blue-600 hover:underline"
           >
-            {t('vgpSchedules.showAll')}
+            Tout afficher
           </button>
         )}
       </div>
@@ -407,7 +404,7 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
         {loading ? (
           <div className="p-12 text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
-            <p className="mt-4 text-gray-600">{t('vgpSchedules.loading')}</p>
+            <p className="mt-4 text-gray-600">Chargement...</p>
           </div>
         ) : error ? (
           <div className="p-8 text-center">
@@ -417,7 +414,7 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
         ) : filteredSchedules.length === 0 ? (
           <div className="p-12 text-center">
             <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600 text-lg">{t('vgpSchedules.noResults')}</p>
+            <p className="text-gray-600 text-lg">Aucun résultat</p>
             {(statusFilter !== 'all' || debouncedSearch) && (
               <button
                 onClick={() => {
@@ -426,7 +423,7 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
                 }}
                 className="mt-4 text-blue-600 hover:underline"
               >
-                {t('vgpSchedules.reset')}
+                Réinitialiser
               </button>
             )}
           </div>
@@ -435,12 +432,12 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <TableHeader>{t('vgpSchedules.equipment')}</TableHeader>
-                  <TableHeader>{t('vgpSchedules.category')}</TableHeader>
-                  <TableHeader>{t('vgpSchedules.location')}</TableHeader>
-                  <TableHeader>{t('vgpSchedules.nextInspection')}</TableHeader>
-                  <TableHeader>{t('vgpSchedules.status')}</TableHeader>
-                  <TableHeader>{t('vgpSchedules.actions')}</TableHeader>
+                  <TableHeader>Équipement</TableHeader>
+                  <TableHeader>Catégorie</TableHeader>
+                  <TableHeader>Emplacement</TableHeader>
+                  <TableHeader>Prochaine</TableHeader>
+                  <TableHeader>Statut</TableHeader>
+                  <TableHeader>Actions</TableHeader>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -453,20 +450,20 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
                       <td className="px-3 py-2">
                         <div>
                           <p className="font-semibold text-gray-900 text-sm">{schedule.assets?.name || 'N/A'}</p>
-                          <p className="text-xs text-gray-500">{t('vgpSchedules.serialNumber')}: {schedule.assets?.serial_number || 'N/A'}</p>
+                          <p className="text-xs text-gray-500">S/N: {schedule.assets?.serial_number || 'N/A'}</p>
                         </div>
                       </td>
                       <td className="px-3 py-2 text-sm text-gray-700">
-                        {schedule.assets?.asset_categories?.name || t('vgpSchedules.uncategorized')}
+                        {schedule.assets?.asset_categories?.name || 'Non catégorisé'}
                       </td>
                       <td className="px-3 py-2 text-sm text-gray-700">
-                        {schedule.assets?.current_location || t('vgpSchedules.notSpecified')}
+                        {schedule.assets?.current_location || 'Non spécifié'}
                       </td>
                       <td className="px-3 py-2">
                         <p className="font-semibold text-gray-900 text-sm">{formatDateFR(schedule.next_due_date)}</p>
                       </td>
                       <td className="px-3 py-2">
-                        <StatusBadge status={status} t={t} />
+                        <StatusBadge status={status} />
                       </td>
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-1">
@@ -474,15 +471,15 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
                             <button
                               onClick={() => window.location.href = `/vgp/inspection/${schedule.id}`}
                               className="px-2 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-red-700 rounded transition-colors"
-                              title={t('vgpSchedules.inspection')}
+                              title="Enregistrer inspection"
                             >
-                              {t('vgpSchedules.inspection')}
+                              Inspection
                             </button>
                         
                           <button
                             onClick={() => handleEdit(schedule)}
                             className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                            title={t('vgpSchedules.edit')}
+                            title="Modifier"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
@@ -492,14 +489,14 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
                               setShowDetails(true);
                             }}
                             className="p-1.5 text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                            title={t('vgpSchedules.details')}
+                            title="Détails"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleArchive(schedule.id)}
                             className="p-1.5 text-orange-600 hover:bg-orange-50 rounded transition-colors"
-                            title={t('vgpSchedules.archive')}
+                            title="Archiver"
                           >
                             <Archive className="w-4 h-4" />
                           </button>
@@ -534,22 +531,9 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
             setShowDetails(false);
             setSelectedSchedule(null);
           }}
-          t={t}
         />
       )}
     </div>
-  );
-}
-
-export default function VGPSchedulesManager() {
-  //  Hook called HERE, outside FeatureGate
-  const { language } = useLanguage();
-  const t = createTranslator(language);
-  
-  return (
-    <FeatureGate feature="vgp_compliance">
-      <VGPSchedulesContent language={language} t={t} />
-    </FeatureGate>
   );
 }
 
@@ -619,7 +603,7 @@ function StatCard({
   );
 }
 
-function DetailsModal({ schedule, onClose, t }: { schedule: Schedule; onClose: () => void; t: (key: string) => string }) {
+function DetailsModal({ schedule, onClose }: { schedule: Schedule; onClose: () => void }) {
   const status = deriveStatus(schedule.next_due_date);
   const days = daysUntilDue(schedule.next_due_date);
 
@@ -627,7 +611,7 @@ function DetailsModal({ schedule, onClose, t }: { schedule: Schedule; onClose: (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">{t('vgpSchedules.detailsModal.title')}</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Détails du calendrier VGP</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100"
@@ -638,44 +622,44 @@ function DetailsModal({ schedule, onClose, t }: { schedule: Schedule; onClose: (
 
         <div className="p-6 space-y-6">
           <div className="flex items-center gap-3">
-            <StatusBadge status={status} t={t} />
+            <StatusBadge status={status} />
             <span className={`text-sm font-medium ${
               days < 0 ? 'text-red-600' : days <= 30 ? 'text-orange-600' : 'text-gray-500'
             }`}>
-              {days < 0 ? t('vgpSchedules.detailsModal.overdueBy').replace('{days}', Math.abs(days).toString()) : t('vgpSchedules.detailsModal.daysUntil').replace('{days}', days.toString())}
+              {days < 0 ? `${Math.abs(days)} jours de retard` : `dans ${days} jours`}
             </span>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <InfoField label={t('vgpSchedules.equipment')} value={schedule.assets?.name} />
-            <InfoField label={t('vgpSchedules.serialNumber')} value={schedule.assets?.serial_number} />
-            <InfoField label={t('vgpSchedules.category')} value={schedule.assets?.asset_categories?.name || t('vgpSchedules.uncategorized')} />
-            <InfoField label={t('vgpSchedules.location')} value={schedule.assets?.current_location || t('vgpSchedules.notSpecified')} />
+            <InfoField label="Équipement" value={schedule.assets?.name} />
+            <InfoField label="Numéro de série" value={schedule.assets?.serial_number} />
+            <InfoField label="Catégorie" value={schedule.assets?.asset_categories?.name || 'Non catégorisé'} />
+            <InfoField label="Emplacement" value={schedule.assets?.current_location || 'Non spécifié'} />
           </div>
 
           <div className="pt-4 border-t border-gray-200">
-            <h3 className="font-semibold text-gray-900 mb-4">{t('vgpSchedules.detailsModal.inspectionSchedule')}</h3>
+            <h3 className="font-semibold text-gray-900 mb-4">Calendrier d'inspection</h3>
             <div className="grid grid-cols-2 gap-4">
-              <InfoField label={t('vgpSchedules.detailsModal.interval')} value={`${schedule.interval_months} ${t('vgpSchedules.detailsModal.months')}`} />
-              <InfoField label={t('vgpSchedules.detailsModal.nextInspection')} value={formatDateFR(schedule.next_due_date)} />
+              <InfoField label="Intervalle" value={`${schedule.interval_months} mois`} />
+              <InfoField label="Prochaine inspection" value={formatDateFR(schedule.next_due_date)} />
               {schedule.last_inspection_date && (
-                <InfoField label={t('vgpSchedules.detailsModal.lastInspection')} value={formatDateFR(schedule.last_inspection_date)} />
+                <InfoField label="Dernière inspection" value={formatDateFR(schedule.last_inspection_date)} />
               )}
               {schedule.inspector_name && (
-                <InfoField label={t('vgpSchedules.detailsModal.assignedInspector')} value={schedule.inspector_name} />
+                <InfoField label="Inspecteur attitré" value={schedule.inspector_name} />
               )}
             </div>
           </div>
 
           {schedule.notes && (
             <div className="pt-4 border-t border-gray-200">
-              <h3 className="font-semibold text-gray-900 mb-2">{t('vgpSchedules.detailsModal.notes')}</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">Notes</h3>
               <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{schedule.notes}</p>
             </div>
           )}
 
           <div className="pt-4 border-t border-gray-200">
-            <h3 className="font-semibold text-gray-900 mb-2">{t('vgpSchedules.detailsModal.qrCode')}</h3>
+            <h3 className="font-semibold text-gray-900 mb-2">Code QR</h3>
             <p className="font-mono text-sm bg-gray-100 p-3 rounded-lg">{schedule.assets?.qr_code}</p>
           </div>
         </div>
@@ -685,7 +669,7 @@ function DetailsModal({ schedule, onClose, t }: { schedule: Schedule; onClose: (
             onClick={onClose}
             className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-medium transition-colors"
           >
-            {t('vgpSchedules.detailsModal.close')}
+            Fermer
           </button>
         </div>
       </div>
