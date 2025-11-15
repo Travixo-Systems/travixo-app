@@ -5,6 +5,8 @@ import { useSubscription, usePlans, useUpdateSubscription } from '@/hooks/useSub
 import { formatPrice, getPlanBadgeColor, getStatusBadgeColor } from '@/lib/subscription';
 import { CheckIcon, XMarkIcon, SparklesIcon, ClockIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
+import { useLanguage } from '@/lib/LanguageContext';
+import { createTranslator } from '@/lib/i18n';
 
 // B2B Professional brand colors
 const BRAND = {
@@ -14,45 +16,10 @@ const BRAND = {
   danger: '#b91c1c',
 };
 
-// Feature labels
-const featureLabels: Record<string, string> = {
-  qr_tracking: "QR Code Tracking",
-  excel_import: "Excel Import",
-  public_scanning: "Public Scanning",
-  basic_reporting: "Basic Reporting",
-  csv_export: "CSV Export",
-  email_support: "Email Support",
-  vgp_compliance: "VGP Compliance Automation",
-  vgp_email_alerts: "VGP Email Alerts",
-  multi_location: "Multi-location Support",
-  priority_support: "Priority Support",
-  dedicated_support: "Dedicated Account Manager",
-  team_management: "Team Management",
-  digital_audits: "Digital Inventory Audits",
-  api_access: "API Access",
-  custom_branding: "Custom Branding",
-  white_label: "White-Label Branding",
-  custom_integrations: "Custom Integrations"
-};
-
-// On-demand tooltips
-const onDemandTooltips: Record<string, string> = {
-  digital_audits: "Quarterly audits digitized. Contact us to enable - setup takes 1-2 weeks.",
-  api_access: "REST API for custom integrations. Contact us for API documentation and access.",
-  custom_branding: "Custom logos and colors in reports. Contact us to configure.",
-  white_label: "Full white-label branding. Contact us for setup.",
-  custom_integrations: "ServiceNow, SAP, or custom ERP integrations. Built during implementation."
-};
-
-// Basic features to show for Starter
-const starterBasicFeatures = [
-  'qr_tracking',
-  'excel_import',
-  'public_scanning',
-  'email_support'
-];
-
 export default function SubscriptionPage() {
+  const { language } = useLanguage();
+  const t = createTranslator(language);
+
   const { data: subscriptionInfo, isLoading: subLoading } = useSubscription();
   const { data: plansData, isLoading: plansLoading } = usePlans();
   const { mutateAsync, isPending } = useUpdateSubscription();
@@ -67,12 +34,12 @@ export default function SubscriptionPage() {
 
   const handleUpgrade = async (planSlug: string) => {
     if (planSlug === currentPlan?.slug) {
-      toast.error('You are already on this plan');
+      toast.error(t('subscription.errors.alreadyOnPlan'));
       return;
     }
 
     if (planSlug === 'enterprise') {
-      toast.error('Please contact sales for Enterprise pricing: contact@travixosystems.com');
+      toast.error(t('subscription.errors.contactEnterprise'));
       return;
     }
 
@@ -82,18 +49,18 @@ export default function SubscriptionPage() {
       const result = await mutateAsync({ planSlug, billingCycle: 'yearly' });
       
       if (result.success) {
-        toast.success('Subscription updated! Refreshing page...');
+        toast.success(t('subscription.success.updated'));
         setTimeout(() => {
           window.location.reload();
         }, 1000);
       } else {
-        toast.error(result.message || result.error || 'Failed to update subscription', {
+        toast.error(result.message || result.error || t('subscription.errors.updateFailed'), {
           duration: 5000
         });
         setSelectedPlan(null);
       }
     } catch (error: any) {
-      const errorMsg = error.message || error.error || 'Failed to update subscription';
+      const errorMsg = error.message || error.error || t('subscription.errors.updateFailed');
       toast.error(errorMsg, { duration: 5000 });
       setSelectedPlan(null);
     }
@@ -135,8 +102,8 @@ export default function SubscriptionPage() {
         {/* Header */}
         <div className="flex items-end justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Plans & Billing</h1>
-            <p className="text-sm text-gray-600 mt-0.5">Manage your subscription and usage</p>
+            <h1 className="text-2xl font-bold text-gray-900">{t('subscription.pageTitle')}</h1>
+            <p className="text-sm text-gray-600 mt-0.5">{t('subscription.pageSubtitle')}</p>
           </div>
         </div>
 
@@ -145,21 +112,23 @@ export default function SubscriptionPage() {
           <div className="flex items-center gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="font-semibold text-gray-900">{currentPlan?.name || 'No Plan'}</span>
+                <span className="font-semibold text-gray-900">{currentPlan?.name || t('subscription.noPlan')}</span>
                 {subscriptionInfo?.subscription?.status && (
                   <span className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusBadgeColor(subscriptionInfo.subscription.status)}`}>
-                    {subscriptionInfo.subscription.status === 'trialing' ? 'Trial' : subscriptionInfo.subscription.status}
+                    {subscriptionInfo.subscription.status === 'trialing' 
+                      ? t('subscription.status.trialing')
+                      : t('subscription.status.active')}
                   </span>
                 )}
               </div>
-              <p className="text-xs text-gray-600">For mid-size operations</p>
+              <p className="text-xs text-gray-600">{t('subscription.forMidSizeOps')}</p>
             </div>
           </div>
 
           {usage && (
             <div className="flex items-center gap-6">
               <div className="text-right">
-                <div className="text-xs text-gray-600 mb-1">Assets Used</div>
+                <div className="text-xs text-gray-600 mb-1">{t('subscription.assetsUsed')}</div>
                 <div className="flex items-baseline gap-1">
                   <span className="text-lg font-bold text-gray-900">{usage.assets}</span>
                   <span className="text-xs text-gray-500">/ {usage.max_assets === 999999 ? '∞' : usage.max_assets}</span>
@@ -176,8 +145,8 @@ export default function SubscriptionPage() {
 
           {isTrial && daysRemaining !== null && (
             <div className="text-right border-l border-gray-200 pl-6">
-              <div className="text-xs text-gray-600">Trial Ends In</div>
-              <div className="text-lg font-bold text-gray-900">{daysRemaining} days</div>
+              <div className="text-xs text-gray-600">{t('subscription.trialEndsIn')}</div>
+              <div className="text-lg font-bold text-gray-900">{daysRemaining} {t('subscription.days')}</div>
             </div>
           )}
         </div>
@@ -186,8 +155,8 @@ export default function SubscriptionPage() {
           <div className="bg-purple-50 border-l-4 border-purple-600 rounded-lg p-4 flex items-start gap-3">
             <SparklesIcon className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-semibold text-purple-900">Pilot Access</p>
-              <p className="text-xs text-purple-700 mt-0.5">Full feature access during pilot period</p>
+              <p className="text-sm font-semibold text-purple-900">{t('subscription.pilotAccess')}</p>
+              <p className="text-xs text-purple-700 mt-0.5">{t('subscription.pilotDescription')}</p>
             </div>
           </div>
         )}
@@ -215,6 +184,14 @@ export default function SubscriptionPage() {
               hasLoyaltyDiscount = true;
             }
 
+            // Starter basic features
+            const starterBasicFeatures = [
+              'qr_tracking',
+              'excel_import',
+              'public_scanning',
+              'email_support'
+            ];
+
             return (
               <div
                 key={plan.id}
@@ -238,11 +215,13 @@ export default function SubscriptionPage() {
                       <p className="text-xs text-gray-600 mt-1">{plan.description}</p>
                     </div>
                     {isCurrentPlan && (
-                      <span className="px-2 py-1 bg-gray-900 text-white text-xs font-semibold rounded">Current</span>
+                      <span className="px-2 py-1 bg-gray-900 text-white text-xs font-semibold rounded">
+                        {t('subscription.current')}
+                      </span>
                     )}
                     {isRecommended && (
                       <span className="px-2 py-1 rounded text-xs font-semibold text-white" style={{ backgroundColor: BRAND.warning }}>
-                        Recommended
+                        {t('subscription.recommended')}
                       </span>
                     )}
                   </div>
@@ -252,10 +231,10 @@ export default function SubscriptionPage() {
                     {isEnterprise ? (
                       <>
                         <div className="text-2xl font-bold text-gray-900">
-                          Tarif sur mesure
+                          {t('subscription.customPricing')}
                         </div>
                         <div className="text-xs text-gray-600 mt-1">
-                          Contactez-nous pour un devis
+                          {t('subscription.contactForQuote')}
                         </div>
                       </>
                     ) : (
@@ -264,7 +243,7 @@ export default function SubscriptionPage() {
                           {formatEuro(displayYearlyPrice)} €
                         </div>
                         <div className="text-sm font-medium text-gray-700 mt-0.5">
-                          par an
+                          {t('subscription.perYear')}
                         </div>
                         
                         {/* Show strikethrough + loyalty badge if discounted */}
@@ -274,14 +253,14 @@ export default function SubscriptionPage() {
                               {formatEuro(plan.price_yearly)} €
                             </span>
                             <span className="px-1.5 py-0.5 bg-green-50 text-green-700 text-xs font-semibold rounded">
-                              -10% loyalty
+                              {t('subscription.loyaltyDiscount')}
                             </span>
                           </div>
                         )}
                         
                         {/* Always show ORIGINAL monthly price */}
                         <div className="text-xs text-gray-500 mt-2">
-                          ou {formatEuro(plan.price_monthly)} €/mois
+                          {t('subscription.orMonthly')} {formatEuro(plan.price_monthly)} €/{t('subscription.month')}
                         </div>
                       </>
                     )}
@@ -293,7 +272,7 @@ export default function SubscriptionPage() {
                       href="mailto:contact@travixosystems.com?subject=Enterprise Plan Inquiry"
                       className="w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-colors bg-gray-900 text-white hover:bg-gray-800 text-center block"
                     >
-                      Contact Sales
+                      {t('subscription.contactSales')}
                     </a>
                   ) : (
                     <button
@@ -309,10 +288,10 @@ export default function SubscriptionPage() {
                       style={isRecommended && !isCurrentPlan ? { backgroundColor: BRAND.warning } : {}}
                     >
                       {isPending && selectedPlan === plan.slug
-                        ? 'Updating...'
+                        ? t('subscription.updating')
                         : isCurrentPlan
-                        ? 'Current Plan'
-                        : 'Select Plan'}
+                        ? t('subscription.currentPlan')
+                        : t('subscription.selectPlan')}
                     </button>
                   )}
                 </div>
@@ -322,7 +301,9 @@ export default function SubscriptionPage() {
                 {/* Features */}
                 <div className="p-6 pt-4">
                   <div className="text-xs font-semibold text-gray-700 mb-3 uppercase tracking-wide">
-                    {plan.max_assets === 999999 ? 'UNLIMITED ASSETS' : `${plan.max_assets.toLocaleString()} ASSETS`}
+                    {plan.max_assets === 999999 
+                      ? t('subscription.unlimitedAssets')
+                      : `${plan.max_assets.toLocaleString()} ${t('subscription.assetsLabel')}`}
                   </div>
                   
                   <div className="space-y-2.5">
@@ -332,7 +313,9 @@ export default function SubscriptionPage() {
                         <FeatureItem
                           key={key}
                           value={true}
-                          text={featureLabels[key]}
+                          text={t(`subscription.featureLabels.${key}`)}
+                          language={language}
+                          translator={t}
                         />
                       ))
                     ) : (
@@ -347,7 +330,9 @@ export default function SubscriptionPage() {
                             <FeatureItem
                               key={key}
                               value={value}
-                              text={featureLabels[key] || key}
+                              text={t(`subscription.featureLabels.${key}`)}
+                              language={language}
+                              translator={t}
                             />
                           ))}
                         
@@ -358,8 +343,10 @@ export default function SubscriptionPage() {
                             <FeatureItem
                               key={key}
                               value={value}
-                              text={featureLabels[key] || key}
-                              tooltip={onDemandTooltips[key]}
+                              text={t(`subscription.featureLabels.${key}`)}
+                              tooltip={t(`subscription.tooltips.${key}`)}
+                              language={language}
+                              translator={t}
                             />
                           ))}
                         
@@ -372,7 +359,9 @@ export default function SubscriptionPage() {
                             <FeatureItem
                               key={key}
                               value={value}
-                              text={featureLabels[key] || key}
+                              text={t(`subscription.featureLabels.${key}`)}
+                              language={language}
+                              translator={t}
                             />
                           ))}
                       </>
@@ -387,7 +376,9 @@ export default function SubscriptionPage() {
         {/* Footer */}
         <div className="text-center pt-4">
           <p className="text-sm text-gray-600">
-            Questions? <a href="mailto:support@travixosystems.com" className="font-medium hover:underline" style={{ color: BRAND.warning }}>Contact support</a>
+            {t('subscription.questions')} <a href="mailto:support@travixosystems.com" className="font-medium hover:underline" style={{ color: BRAND.warning }}>
+              {t('subscription.contactSupport')}
+            </a>
           </p>
         </div>
       </div>
@@ -398,11 +389,15 @@ export default function SubscriptionPage() {
 function FeatureItem({ 
   value, 
   text,
-  tooltip 
+  tooltip,
+  language,
+  translator: t
 }: { 
   value: boolean | string; 
   text: string;
   tooltip?: string;
+  language: string;
+  translator: (key: string) => string;
 }) {
   const isAvailable = value === true;
   const isOnDemand = value === 'on_demand';
@@ -427,7 +422,7 @@ function FeatureItem({
       {isOnDemand && (
         <>
           <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-xs font-medium rounded">
-            On-demand
+            {t('subscription.onDemand')}
           </span>
           {tooltip && (
             <>
@@ -442,7 +437,7 @@ function FeatureItem({
       
       {isComingSoon && (
         <span className="px-1.5 py-0.5 bg-gray-100 text-gray-500 text-xs font-medium rounded">
-          Coming Soon
+          {t('subscription.comingSoon')}
         </span>
       )}
     </div>

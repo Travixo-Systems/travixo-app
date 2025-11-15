@@ -99,6 +99,10 @@ export const translations = {
       en: "Current Plan",
       fr: "Plan Actuel",
     },
+    current: {
+      en: "Current",
+      fr: "Actuel",
+    },
     recommended: {
       en: "Recommended",
       fr: "Recommandé",
@@ -106,6 +110,10 @@ export const translations = {
     selectPlan: {
       en: "Select Plan",
       fr: "Sélectionner le Plan",
+    },
+    updating: {
+      en: "Updating...",
+      fr: "Mise à jour...",
     },
     upgrading: {
       en: "Updating...",
@@ -124,12 +132,12 @@ export const translations = {
       fr: "-10%",
     },
     assetsUsed: {
-      en: "Equipment in use",
-      fr: "Équipements en service",
+      en: "Assets Used",
+      fr: "Équipements Utilisés",
     },
     trialEndsIn: {
       en: "Trial Ends In",
-      fr: "L'essai se termine dans",
+      fr: "Fin d'Essai Dans",
     },
     days: {
       en: "days",
@@ -152,8 +160,8 @@ export const translations = {
       fr: "par mois (facturé annuellement)",
     },
     perYear: {
-      en: "/ year",
-      fr: "/ an",
+      en: "per year",
+      fr: "par an",
     },
     unlimited: {
       en: "Unlimited",
@@ -206,6 +214,10 @@ export const translations = {
         en: "You are already on this plan",
         fr: "Vous êtes déjà sur ce plan",
       },
+      contactEnterprise: {
+        en: "Please contact sales for Enterprise pricing: contact@travixosystems.com",
+        fr: "Veuillez contacter les ventes pour les tarifs Entreprise : contact@travixosystems.com",
+      },
       updateFailed: {
         en: "Failed to update subscription",
         fr: "Échec de la mise à jour de l'abonnement",
@@ -217,6 +229,179 @@ export const translations = {
         fr: "Abonnement mis à jour ! Actualisation de la page...",
       },
     },
+    noPlan: {
+      en: "No Plan",
+      fr: "Aucun Plan",
+    },
+    forMidSizeOps: {
+      en: "For mid-size operations",
+      fr: "Pour opérations moyennes",
+    },
+    forMidSizeOperations: {
+      en: "For mid-size operations",
+      fr: "Pour les opérations de taille moyenne",
+    },
+    customPricing: {
+      en: "Custom pricing",
+      fr: "Tarif sur mesure",
+    },
+    contactForQuote: {
+      en: "Contact us for a quote",
+      fr: "Contactez-nous pour un devis",
+    },
+    perYear: {
+      en: "per year",
+      fr: "par an",
+    },
+    or: {
+      en: "or",
+      fr: "ou",
+    },
+    orMonthly: {
+      en: "or",
+      fr: "ou",
+    },
+    month: {
+      en: "month",
+      fr: "mois",
+    },
+    loyaltyDiscount: {
+      en: "-10% loyalty",
+      fr: "-10% fidélité",
+    },
+    contactSales: {
+      en: "Contact Sales",
+      fr: "Contacter les Ventes",
+    },
+    unlimitedAssets: {
+      en: "UNLIMITED ASSETS",
+      fr: "ÉQUIPEMENTS ILLIMITÉS",
+    },
+    assetsLabel: {
+      en: "ASSETS",
+      fr: "ÉQUIPEMENTS",
+    },
+    onDemand: {
+      en: "On-demand",
+      fr: "Sur demande",
+    },
+    comingSoon: {
+      en: "Coming Soon",
+      fr: "Bientôt disponible",
+    },
+    enterpriseContactError: {
+      en: "Please contact sales for Enterprise pricing: contact@travixosystems.com",
+      fr: "Veuillez contacter les ventes pour les tarifs Enterprise : contact@travixosystems.com",
+    },
+
+    // Status badges
+    status: {
+      trialing: {
+        en: "Trial",
+        fr: "Essai",
+      },
+      active: {
+        en: "Active",
+        fr: "Actif",
+      },
+    },
+
+    // Feature labels (all plan features)
+    featureLabels: {
+      qr_tracking: {
+        en: "QR Code Tracking",
+        fr: "Suivi par QR Code",
+      },
+      excel_import: {
+        en: "Excel Import",
+        fr: "Import Excel",
+      },
+      public_scanning: {
+        en: "Public Scanning",
+        fr: "Scan Public",
+      },
+      basic_reporting: {
+        en: "Basic Reporting",
+        fr: "Rapports de Base",
+      },
+      csv_export: {
+        en: "CSV Export",
+        fr: "Export CSV",
+      },
+      email_support: {
+        en: "Email Support",
+        fr: "Support Email",
+      },
+      vgp_compliance: {
+        en: "VGP Compliance Automation",
+        fr: "Automatisation de la Conformité VGP",
+      },
+      vgp_email_alerts: {
+        en: "VGP Email Alerts",
+        fr: "Alertes Email VGP",
+      },
+      multi_location: {
+        en: "Multi-location Support",
+        fr: "Support Multi-sites",
+      },
+      priority_support: {
+        en: "Priority Support",
+        fr: "Support Prioritaire",
+      },
+      dedicated_support: {
+        en: "Dedicated Account Manager",
+        fr: "Gestionnaire de Compte Dédié",
+      },
+      team_management: {
+        en: "Team Management",
+        fr: "Gestion d'Équipe",
+      },
+      digital_audits: {
+        en: "Digital Inventory Audits",
+        fr: "Audits d'Inventaire Numériques",
+      },
+      api_access: {
+        en: "API Access",
+        fr: "Accès API",
+      },
+      custom_branding: {
+        en: "Custom Branding",
+        fr: "Marque Personnalisée",
+      },
+      white_label: {
+        en: "White-Label Branding",
+        fr: "Marque Blanche",
+      },
+      custom_integrations: {
+        en: "Custom Integrations",
+        fr: "Intégrations Personnalisées",
+      },
+    },
+
+    // On-demand feature tooltips
+    tooltips: {
+      digital_audits: {
+        en: "Quarterly audits digitized. Contact us to enable - setup takes 1-2 weeks.",
+        fr: "Audits trimestriels numérisés. Contactez-nous pour activer - configuration en 1-2 semaines.",
+      },
+      api_access: {
+        en: "REST API for custom integrations. Contact us for API documentation and access.",
+        fr: "API REST pour intégrations personnalisées. Contactez-nous pour la documentation API et l'accès.",
+      },
+      custom_branding: {
+        en: "Custom logos and colors in reports. Contact us to configure.",
+        fr: "Logos et couleurs personnalisés dans les rapports. Contactez-nous pour configurer.",
+      },
+      white_label: {
+        en: "Full white-label branding. Contact us for setup.",
+        fr: "Marque blanche complète. Contactez-nous pour la configuration.",
+      },
+      custom_integrations: {
+        en: "ServiceNow, SAP, or custom ERP integrations. Built during implementation.",
+        fr: "Intégrations ServiceNow, SAP ou ERP personnalisées. Construites pendant la mise en œuvre.",
+      },
+    },
+
   },
 
   // ============================================================================
