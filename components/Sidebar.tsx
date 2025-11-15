@@ -15,33 +15,43 @@ import {
   CreditCardIcon
 } from '@heroicons/react/24/outline';
 import { AlertCircle, Calendar, FileText, History } from 'lucide-react';
-
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-  { name: 'Assets', href: '/assets', icon: CubeIcon },
-  { name: 'Audits', href: '/audits', icon: ClipboardDocumentListIcon },
-  { name: 'Team', href: '/team', icon: UsersIcon },
-  { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
-  { name: 'Subscription', href: '/settings/subscription', icon: CreditCardIcon },
-];
-
-const vgpNavigation = [
-  { name: "Vue d'ensemble", href: '/vgp', icon: AlertCircle },
-  { name: 'Suivi', href: '/vgp/schedules', icon: Calendar },
-  { name: 'Rapport DIRECCTE', href: '/vgp/report', icon: FileText },
-  { name: 'Historique', href: '/vgp/inspections', icon: History },
-];
+import { useLanguage } from '@/lib/LanguageContext';
+import { createTranslator } from '@/lib/i18n';
+import { LanguageToggle } from './LanguageToggle';
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { language } = useLanguage();
+  const t = createTranslator(language);
   const [vgpOpen, setVgpOpen] = useState(pathname.startsWith('/vgp'));
 
+  // Main navigation with translations
+  const navigation = [
+    { name: t('navigation.dashboard'), href: '/dashboard', icon: HomeIcon },
+    { name: t('navigation.assets'), href: '/assets', icon: CubeIcon },
+    { name: t('navigation.audits'), href: '/audits', icon: ClipboardDocumentListIcon },
+    { name: t('navigation.team'), href: '/team', icon: UsersIcon },
+    { name: t('navigation.settings'), href: '/settings', icon: Cog6ToothIcon },
+    { name: t('navigation.subscription'), href: '/settings/subscription', icon: CreditCardIcon },
+  ];
+
+  // VGP navigation with translations
+  const vgpNavigation = [
+    { name: t('navigation.vgpOverview'), href: '/vgp', icon: AlertCircle },
+    { name: t('navigation.vgpSchedules'), href: '/vgp/schedules', icon: Calendar },
+    { name: t('navigation.vgpReport'), href: '/vgp/report', icon: FileText },
+    { name: t('navigation.vgpInspections'), href: '/vgp/inspections', icon: History },
+  ];
+
   return (
-    <div className="flex flex-col w-64 bg-gray-900">
+    <div className="flex flex-col w-64 bg-gray-900 h-screen">
+      {/* Logo */}
       <div className="flex items-center h-16 px-4 bg-gray-900 border-b border-gray-800">
         <h1 className="text-xl font-bold text-white">TraviXO</h1>
       </div>
-      <nav className="flex-1 px-2 py-4 space-y-1">
+
+      {/* Navigation */}
+      <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
         {/* Dashboard and Assets */}
         {navigation.slice(0, 2).map((item) => {
           const Icon = item.icon;
@@ -75,7 +85,7 @@ export default function Sidebar() {
           >
             <div className="flex items-center">
               <AlertCircle className="w-5 h-5 mr-3" />
-              VGP Compliance
+              {t('navigation.vgp')}
             </div>
             {vgpOpen ? (
               <ChevronDownIcon className="w-4 h-4" />
@@ -131,6 +141,11 @@ export default function Sidebar() {
           );
         })}
       </nav>
+
+      {/* Language Toggle - Bottom of Sidebar */}
+      <div className="p-4 border-t border-gray-800">
+        <LanguageToggle />
+      </div>
     </div>
   );
 }

@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { FileText, Download, ExternalLink } from 'lucide-react';
 import FeatureGate from '@/components/subscription/FeatureGate';
+import { useLanguage } from '@/lib/LanguageContext';
+import { createTranslator } from '@/lib/i18n';
 
 interface Inspection {
   id: string;
@@ -18,13 +20,10 @@ interface Inspection {
   next_inspection_date: string;
 }
 
-const RESULT_CONFIG = {
-  passed: { label: 'Conforme', color: 'bg-green-50 text-green-700 border-green-200' },
-  conditional: { label: 'Conditionnel', color: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
-  failed: { label: 'Non Conforme', color: 'bg-red-50 text-red-700 border-red-200' }
-};
-
 function VGPInspectionsContent() {
+  const { language } = useLanguage();
+  const t = createTranslator(language);
+
   const [inspections, setInspections] = useState<Inspection[]>([]);
   const [filteredInspections, setFilteredInspections] = useState<Inspection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,6 +37,22 @@ function VGPInspectionsContent() {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
+
+  // Result configuration with translations
+  const RESULT_CONFIG = {
+    passed: { 
+      label: t('vgpInspections.resultPassed'), 
+      color: 'bg-green-50 text-green-700 border-green-200' 
+    },
+    conditional: { 
+      label: t('vgpInspections.resultConditional'), 
+      color: 'bg-yellow-50 text-yellow-700 border-yellow-200' 
+    },
+    failed: { 
+      label: t('vgpInspections.resultFailed'), 
+      color: 'bg-red-50 text-red-700 border-red-200' 
+    }
+  };
 
   useEffect(() => {
     fetchInspections();
@@ -112,7 +127,7 @@ function VGPInspectionsContent() {
       a.click();
     } catch (error) {
       console.error('Export error:', error);
-      alert('Erreur lors de l\'export');
+      alert(t('vgpInspections.exportError'));
     }
   }
 
@@ -134,13 +149,18 @@ function VGPInspectionsContent() {
     );
   }
 
+  // Dynamic count text
+  const countText = filteredInspections.length === 1 
+    ? t('vgpInspections.inspectionsFound')
+    : t('vgpInspections.inspectionsFoundPlural');
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="mb-6 flex justify-between items-start">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Historique des Inspections VGP</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('vgpInspections.pageTitle')}</h1>
           <p className="text-sm text-gray-600 mt-1">
-            {filteredInspections.length} inspection{filteredInspections.length !== 1 ? 's' : ''} trouvée{filteredInspections.length !== 1 ? 's' : ''}
+            {filteredInspections.length} {countText}
           </p>
         </div>
         <button
@@ -148,7 +168,7 @@ function VGPInspectionsContent() {
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
         >
           <Download className="w-4 h-4" />
-          Exporter CSV
+          {t('vgpInspections.exportCSV')}
         </button>
       </div>
 
@@ -157,36 +177,36 @@ function VGPInspectionsContent() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Rechercher
+              {t('vgpInspections.search')}
             </label>
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Équipement ou inspecteur"
+              placeholder={t('vgpInspections.searchPlaceholder')}
               className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Résultat
+              {t('vgpInspections.result')}
             </label>
             <select
               value={resultFilter}
               onChange={(e) => setResultFilter(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="all">Tous</option>
-              <option value="passed">Conforme</option>
-              <option value="conditional">Conditionnel</option>
-              <option value="failed">Non Conforme</option>
+              <option value="all">{t('vgpInspections.all')}</option>
+              <option value="passed">{t('vgpInspections.resultPassed')}</option>
+              <option value="conditional">{t('vgpInspections.resultConditional')}</option>
+              <option value="failed">{t('vgpInspections.resultFailed')}</option>
             </select>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Date début
+              {t('vgpInspections.startDate')}
             </label>
             <input
               type="date"
@@ -198,7 +218,7 @@ function VGPInspectionsContent() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Date fin
+              {t('vgpInspections.endDate')}
             </label>
             <input
               type="date"
@@ -216,20 +236,34 @@ function VGPInspectionsContent() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Équipement</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Date</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Inspecteur</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Société</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Résultat</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Certificat</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Prochaine</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  {t('vgpInspections.equipment')}
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  {t('vgpInspections.date')}
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  {t('vgpInspections.inspector')}
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  {t('vgpInspections.company')}
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  {t('vgpInspections.result')}
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  {t('vgpInspections.certificate')}
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  {t('vgpInspections.nextInspection')}
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {paginatedInspections.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-12 text-center text-gray-500">
-                    Aucune inspection trouvée
+                    {t('vgpInspections.noResults')}
                   </td>
                 </tr>
               ) : (
@@ -238,7 +272,9 @@ function VGPInspectionsContent() {
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-900">{inspection.asset_name}</div>
                       <div className="text-xs text-gray-500">{inspection.asset_category}</div>
-                      <div className="text-xs text-gray-400">S/N: {inspection.asset_serial}</div>
+                      <div className="text-xs text-gray-400">
+                        {t('vgpInspections.serialNumber')}: {inspection.asset_serial}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
                       {format(new Date(inspection.inspection_date), 'dd/MM/yyyy')}
@@ -263,11 +299,13 @@ function VGPInspectionsContent() {
                           className="flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm"
                         >
                           <FileText className="w-4 h-4" />
-                          Voir PDF
+                          {t('vgpInspections.viewPDF')}
                           <ExternalLink className="w-3 h-3" />
                         </a>
                       ) : (
-                        <span className="text-xs text-gray-400">Aucun</span>
+                        <span className="text-xs text-gray-400">
+                          {t('vgpInspections.noCertificate')}
+                        </span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
@@ -284,7 +322,9 @@ function VGPInspectionsContent() {
         {totalPages > 1 && (
           <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
             <div className="text-sm text-gray-700">
-              Page {currentPage} sur {totalPages}
+              {t('vgpInspections.pageOf')
+                .replace('{current}', String(currentPage))
+                .replace('{total}', String(totalPages))}
             </div>
             <div className="flex gap-2">
               <button
@@ -292,14 +332,14 @@ function VGPInspectionsContent() {
                 disabled={currentPage === 1}
                 className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               >
-                Précédent
+                {t('vgpInspections.previous')}
               </button>
               <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
                 className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               >
-                Suivant
+                {t('vgpInspections.next')}
               </button>
             </div>
           </div>

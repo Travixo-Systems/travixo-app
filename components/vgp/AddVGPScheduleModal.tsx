@@ -1,9 +1,10 @@
 // components/vgp/AddVGPScheduleModal.tsx
-// REPLACE YOUR ENTIRE FILE WITH THIS
 'use client';
 
 import { useState, useEffect } from 'react';
 import { X, AlertCircle, CheckCircle } from 'lucide-react';
+import { useLanguage } from '@/lib/LanguageContext';
+import { createTranslator } from '@/lib/i18n';
 
 interface Asset {
   id: string;
@@ -19,6 +20,9 @@ interface AddVGPScheduleModalProps {
 }
 
 export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVGPScheduleModalProps) {
+  const { language } = useLanguage();
+  const t = createTranslator(language);
+
   const [equipmentTypes, setEquipmentTypes] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     interval_months: 12,
@@ -55,33 +59,33 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
     const errors: string[] = [];
 
     if (!formData.interval_months || formData.interval_months < 1) {
-      errors.push('Intervalle de vérification est requis');
+      errors.push(t('vgpScheduleModal.errorIntervalRequired'));
     }
 
     if (!formData.last_inspection_date) {
-      errors.push('Date de dernière inspection est requise');
+      errors.push(t('vgpScheduleModal.errorDateRequired'));
     } else {
       const inspectionDate = new Date(formData.last_inspection_date);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
       if (inspectionDate > today) {
-        errors.push('La date de dernière inspection ne peut pas être dans le futur');
+        errors.push(t('vgpScheduleModal.errorDateFuture'));
       }
 
       const fiveYearsAgo = new Date();
       fiveYearsAgo.setFullYear(today.getFullYear() - 5);
       if (inspectionDate < fiveYearsAgo) {
-        errors.push('La date de dernière inspection semble trop ancienne (plus de 5 ans)');
+        errors.push(t('vgpScheduleModal.errorDateTooOld'));
       }
     }
 
     if (!formData.created_by || formData.created_by.trim().length === 0) {
-      errors.push('Le champ "Créé par" est requis');
+      errors.push(t('vgpScheduleModal.errorCreatedByRequired'));
     }
 
     if (!asset || !asset.id) {
-      errors.push('Équipement invalide');
+      errors.push(t('vgpScheduleModal.errorEquipmentInvalid'));
     }
 
     setValidationErrors(errors);
@@ -118,14 +122,14 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Échec de la création du calendrier VGP');
+        throw new Error(data.error || t('vgpScheduleModal.errorCreationFailed'));
       }
 
       console.log('VGP schedule created:', data);
       onSuccess();
     } catch (error: any) {
       console.error('Failed to create VGP schedule:', error);
-      setError(error.message || 'Une erreur est survenue lors de la création du calendrier');
+      setError(error.message || t('vgpScheduleModal.errorGeneric'));
     } finally {
       setSubmitting(false);
     }
@@ -154,9 +158,9 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Ajouter Surveillance VGP</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{t('vgpScheduleModal.title')}</h2>
             <p className="text-sm text-gray-600 mt-1">
-              Configurer les vérifications périodiques pour cet équipement
+              {t('vgpScheduleModal.subtitle')}
             </p>
           </div>
           <button
@@ -171,8 +175,8 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
         <div className="p-6 bg-blue-50 border-b border-blue-100">
           <h3 className="font-semibold text-blue-900">{asset.name}</h3>
           <div className="flex items-center gap-4 mt-1 text-sm text-blue-700">
-            {asset.serial_number && <span>N° Série: {asset.serial_number}</span>}
-            {asset.category && <span>Catégorie: {asset.category}</span>}
+            {asset.serial_number && <span>{t('vgpScheduleModal.serialNumber')}: {asset.serial_number}</span>}
+            {asset.category && <span>{t('vgpScheduleModal.category')}: {asset.category}</span>}
           </div>
         </div>
 
@@ -182,7 +186,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
             <div className="flex items-start gap-2">
               <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
               <div>
-                <h4 className="font-semibold text-red-900 mb-1">Erreurs de validation:</h4>
+                <h4 className="font-semibold text-red-900 mb-1">{t('vgpScheduleModal.validationErrors')}</h4>
                 <ul className="list-disc list-inside space-y-1">
                   {validationErrors.map((err, idx) => (
                     <li key={idx} className="text-sm text-red-700">{err}</li>
@@ -208,7 +212,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
           {/* Interval Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Intervalle de Vérification <span className="text-red-500">*</span>
+              {t('vgpScheduleModal.intervalLabel')} <span className="text-red-500">*</span>
             </label>
             <select
               value={formData.interval_months}
@@ -219,19 +223,19 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               required
             >
-              <option value={6}>6 mois (Semestriel)</option>
-              <option value={12}>12 mois (Annuel)</option>
-              <option value={24}>24 mois (Biennal)</option>
+              <option value={6}>{t('vgpScheduleModal.interval6Months')}</option>
+              <option value={12}>{t('vgpScheduleModal.interval12Months')}</option>
+              <option value={24}>{t('vgpScheduleModal.interval24Months')}</option>
             </select>
             <p className="text-xs text-gray-500 mt-1">
-              Fréquence des inspections selon la réglementation DIRECCTE
+              {t('vgpScheduleModal.intervalHelp')}
             </p>
           </div>
 
           {/* Last Inspection Date */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Date de Dernière Inspection <span className="text-red-500">*</span>
+              {t('vgpScheduleModal.lastInspectionDate')} <span className="text-red-500">*</span>
             </label>
             <input
               type="date"
@@ -245,7 +249,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
               required
             />
             <p className="text-xs text-gray-500 mt-1">
-              Date de la dernière vérification VGP effectuée
+              {t('vgpScheduleModal.lastInspectionHelp')}
             </p>
           </div>
 
@@ -256,17 +260,17 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
                 <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-green-900">
-                    Prochaine Inspection Due:
+                    {t('vgpScheduleModal.nextInspectionDue')}
                   </p>
                   <p className="text-lg font-bold text-green-600">
-                    {nextDueDate.toLocaleDateString('fr-FR', { 
+                    {nextDueDate.toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', { 
                       day: 'numeric', 
                       month: 'long', 
                       year: 'numeric' 
                     })}
                   </p>
                   <p className="text-xs text-green-700 mt-1">
-                    {Math.ceil((nextDueDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} jours à partir d'aujourd'hui
+                    {Math.ceil((nextDueDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} {t('vgpScheduleModal.daysFromToday')}
                   </p>
                 </div>
               </div>
@@ -276,7 +280,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
           {/* Created By */}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">
-              Créé par <span className="text-red-500">*</span>
+              {t('vgpScheduleModal.createdBy')} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -286,28 +290,28 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
                 setValidationErrors([]);
               }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Ex: Chef de Parc - Jean Dupont"
+              placeholder={t('vgpScheduleModal.createdByPlaceholder')}
               required
             />
             <p className="text-xs text-gray-500 mt-1">
-              Responsable ayant configuré cette surveillance
+              {t('vgpScheduleModal.createdByHelp')}
             </p>
           </div>
 
           {/* Notes */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Notes
+              {t('vgpScheduleModal.notes')}
             </label>
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               rows={3}
-              placeholder="Contexte, raison de la surveillance, observations..."
+              placeholder={t('vgpScheduleModal.notesPlaceholder')}
             />
             <p className="text-xs text-gray-500 mt-1">
-              Notes supplémentaires sur la configuration de cette surveillance
+              {t('vgpScheduleModal.notesHelp')}
             </p>
           </div>
 
@@ -319,20 +323,20 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
               className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
               disabled={submitting}
             >
-              Annuler
+              {t('vgpScheduleModal.cancel')}
             </button>
             <button
               type="submit"
               disabled={submitting || !isFormValid}
               className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitting ? 'Enregistrement...' : 'Activer Surveillance VGP'}
+              {submitting ? t('vgpScheduleModal.submitting') : t('vgpScheduleModal.submit')}
             </button>
           </div>
 
           {/* Helper text */}
           <p className="text-xs text-gray-500 text-center">
-            <span className="text-red-500">*</span> Champs obligatoires
+            <span className="text-red-500">*</span> {t('vgpScheduleModal.requiredFields')}
           </p>
         </form>
       </div>

@@ -1,11 +1,10 @@
 'use client'
 
-import { useEffect, useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { useLanguage } from "@/lib/LanguageContext"
 import { createTranslator } from "@/lib/i18n"
 import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
 
 interface DashboardData {
   orgName: string
@@ -21,138 +20,16 @@ interface DashboardData {
   savingsFromLossPrevention: number
 }
 
-export default function DashboardPage() {
+export default function DashboardClient({ data }: { data: DashboardData }) {
   const { language } = useLanguage()
   const t = createTranslator(language)
   const router = useRouter()
-  const [data, setData] = useState<DashboardData | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetchDashboardData()
-  }, [])
-
-  const fetchDashboardData = async () => {
-    const supabase = createClient()
-    
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      router.push('/login')
-      return
-    }
-
-    // Get user profile and org
-    const { data: profile } = await supabase
-      .from('users')
-      .select('organization_id, organizations(name)')
-      .eq('id', user.id)
-      .single()
-
-    const orgId = profile?.organization_id
-    const orgName = profile?.organizations?.name || 'Your Organization'
-
-    // Get asset counts
-    const { count: totalAssets } = await supabase
-      .from('assets')
-      .select('*', { count: 'only', head: true })
-      .eq('organization_id', orgId)
-
-    const { count: inUseAssets } = await supabase
-      .from('assets')
-      .select('*', { count: 'only', head: true })
-      .eq('organization_id', orgId)
-      .eq('status', 'in_use')
-
-    // Get VGP schedules
-    const { data: vgpSchedules } = await supabase
-      .from('vgp_schedules')
-      .select(`
-        id,
-        next_due_date,
-        status,
-        assets (
-          id,
-          name,
-          serial_number,
-          current_location,
-          asset_categories (name)
-        )
-      `)
-      .eq('organization_id', orgId)
-
-    // Calculate VGP stats
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    
-    let vgpOverdue = 0
-    let vgpUpcoming = 0
-    let vgpCompliant = 0
-
-    vgpSchedules?.forEach(schedule => {
-      const dueDate = new Date(schedule.next_due_date)
-      const daysUntil = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-      
-      if (daysUntil < 0) {
-        vgpOverdue++
-      } else if (daysUntil <= 30) {
-        vgpUpcoming++
-      } else {
-        vgpCompliant++
-      }
-    })
-
-    const vgpTotal = vgpSchedules?.length || 0
-    const vgpComplianceRate = vgpTotal > 0 ? Math.round((vgpCompliant / vgpTotal) * 100) : 100
-
-    // Get recent scans
-    const sevenDaysAgo = new Date()
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-    
-    const { count: recentScans } = await supabase
-      .from('scans')
-      .select('*', { count: 'only', head: true })
-      .gte('scanned_at', sevenDaysAgo.toISOString())
-
-    // Calculate metrics
-    const utilizationRate = totalAssets && inUseAssets 
-      ? Math.round((inUseAssets / totalAssets) * 100) 
-      : 0
-
-    const assetsValue = (totalAssets || 0) * 14500
-    const savingsFromLossPrevention = assetsValue * 0.012
-
-    setData({
-      orgName,
-      totalAssets: totalAssets || 0,
-      inUseAssets: inUseAssets || 0,
-      vgpOverdue,
-      vgpUpcoming,
-      vgpCompliant,
-      vgpComplianceRate,
-      recentScans: recentScans || 0,
-      utilizationRate,
-      assetsValue,
-      savingsFromLossPrevention,
-    })
-    
-    setLoading(false)
-  }
 
   const handleLogout = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/login')
   }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    )
-  }
-
-  if (!data) return null
 
   const {
     orgName,

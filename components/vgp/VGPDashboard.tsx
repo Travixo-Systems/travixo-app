@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AlertCircle, CheckCircle, Clock, FileText, Calendar, TrendingUp, ArrowRight } from 'lucide-react';
+import { AlertCircle, CheckCircle, Calendar, FileText, TrendingUp, ArrowRight } from 'lucide-react';
 import FeatureGate from '@/components/subscription/FeatureGate';
+import { useLanguage } from '@/lib/LanguageContext';
+import { createTranslator } from '@/lib/i18n';
 
 export default function VGPComplianceDashboard() {
   return (
@@ -13,6 +15,9 @@ export default function VGPComplianceDashboard() {
 }
 
 function VGPContent() {
+  const { language } = useLanguage();
+  const t = createTranslator(language);
+
   const [summary, setSummary] = useState<any>(null);
   const [upcoming, setUpcoming] = useState<any[]>([]);
   const [overdue, setOverdue] = useState<any[]>([]);
@@ -49,7 +54,6 @@ function VGPContent() {
     return diffDays;
   };
 
-  // TODO: API needs to exclude archived schedules
   const totalEquipments = summary?.total_assets_with_vgp || 0;
 
   // Calculate financial risk
@@ -69,9 +73,9 @@ function VGPContent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Conformité VGP</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('vgpDashboard.pageTitle')}</h1>
           <p className="text-gray-600 mt-1">
-            Vérifications Générales Périodiques - Article R4323-23
+            {t('vgpDashboard.pageSubtitle')}
           </p>
         </div>
         <button
@@ -79,13 +83,13 @@ function VGPContent() {
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           <FileText className="w-4 h-4" />
-          Rapport DIRECCTE
+          {t('vgpDashboard.generateReport')}
         </button>
       </div>
 
-      {/* 4 Cards - EXACT original size */}
+      {/* 4 Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Taux de Conformité - Green */}
+        {/* Compliance Rate - Green */}
         <div
           onClick={() => (window.location.href = '/vgp/schedules')}
           className="bg-white rounded-lg shadow p-6 border-l-4 border-b-4 border-t border-r border-gray-200 hover:shadow-lg transition-all cursor-pointer"
@@ -97,13 +101,13 @@ function VGPContent() {
               {summary?.compliance_rate || 0}%
             </span>
           </div>
-          <h3 className="text-sm font-semibold text-gray-700">Taux de Conformité</h3>
+          <h3 className="text-sm font-semibold text-gray-700">{t('vgpDashboard.complianceRate')}</h3>
           <p className="text-xs text-gray-500 mt-1">
-            {summary?.compliant_assets || 0} équipements conformes
+            {summary?.compliant_assets || 0} {t('vgpDashboard.compliantEquipment')}
           </p>
         </div>
 
-        {/* À venir - Yellow */}
+        {/* Upcoming - Yellow */}
         <div
           onClick={() => (window.location.href = '/vgp/schedules?status=upcoming')}
           className="bg-white rounded-lg shadow p-6 border-l-4 border-b-4 border-t border-r border-gray-200 hover:shadow-lg transition-all cursor-pointer"
@@ -113,11 +117,11 @@ function VGPContent() {
             <Calendar className="w-8 h-8 text-yellow-600" />
             <span className="text-2xl font-bold text-yellow-600">{upcoming.length}</span>
           </div>
-          <h3 className="text-sm font-semibold text-gray-700">À venir (30 jours)</h3>
-          <p className="text-xs text-gray-500 mt-1">Inspections prévues</p>
+          <h3 className="text-sm font-semibold text-gray-700">{t('vgpDashboard.upcoming')}</h3>
+          <p className="text-xs text-gray-500 mt-1">{t('vgpDashboard.plannedInspections')}</p>
         </div>
 
-        {/* En Retard - Red */}
+        {/* Overdue - Red */}
         <div
           onClick={() => (window.location.href = '/vgp/schedules?status=overdue')}
           className="bg-white rounded-lg shadow p-6 border-l-4 border-b-4 border-t border-r border-gray-200 hover:shadow-lg transition-all cursor-pointer"
@@ -127,11 +131,11 @@ function VGPContent() {
             <AlertCircle className="w-8 h-8 text-red-600" />
             <span className="text-2xl font-bold text-red-600">{overdue.length}</span>
           </div>
-          <h3 className="text-sm font-semibold text-gray-700">En Retard</h3>
-          <p className="text-xs text-gray-500 mt-1">Action immédiate requise</p>
+          <h3 className="text-sm font-semibold text-gray-700">{t('vgpDashboard.overdue')}</h3>
+          <p className="text-xs text-gray-500 mt-1">{t('vgpDashboard.immediateAction')}</p>
         </div>
 
-        {/* Total Équipements - Gray */}
+        {/* Total Equipment - Gray */}
         <div
           onClick={() => (window.location.href = '/vgp/schedules')}
           className="bg-white rounded-lg shadow p-6 border-l-4 border-b-4 border-t border-r border-gray-200 hover:shadow-lg transition-all cursor-pointer"
@@ -143,12 +147,12 @@ function VGPContent() {
               {totalEquipments}
             </span>
           </div>
-          <h3 className="text-sm font-semibold text-gray-700">Total Équipements</h3>
-          <p className="text-xs text-gray-500 mt-1">Sous surveillance VGP</p>
+          <h3 className="text-sm font-semibold text-gray-700">{t('vgpDashboard.totalEquipment')}</h3>
+          <p className="text-xs text-gray-500 mt-1">{t('vgpDashboard.underVGPMonitoring')}</p>
         </div>
       </div>
 
-      {/* EN RETARD Section - 5px top+right red borders */}
+      {/* OVERDUE Section */}
       {overdue.length > 0 && (
         <div 
           className="bg-white rounded-lg shadow-sm p-4 border-t-[5px] border-r-[5px] border-l border-b border-gray-200"
@@ -158,7 +162,7 @@ function VGPContent() {
           <div className="flex items-center gap-2 mb-3">
             <AlertCircle className="w-5 h-5 text-red-600" />
             <h2 className="text-base font-bold text-red-900">
-              EN RETARD ({overdue.length}) - Risque: €{financialRiskMin.toLocaleString()}-€{financialRiskMax.toLocaleString()}
+              {t('vgpDashboard.overdueSection')} ({overdue.length}) - {t('vgpDashboard.risk')}: €{financialRiskMin.toLocaleString()}-€{financialRiskMax.toLocaleString()}
             </h2>
           </div>
 
@@ -184,20 +188,20 @@ function VGPContent() {
             })}
           </div>
 
-          {/* Full-width "Voir autre" button */}
+          {/* View more button */}
           {overdue.length > 4 && (
             <button
               onClick={() => window.location.href = '/vgp/schedules?status=overdue'}
               className="mt-3 w-full py-2 px-4 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700 transition-colors flex items-center justify-center gap-2"
             >
-              + {overdue.length - 4} autres équipements • Voir tout dans Suivi
+              + {overdue.length - 4} {t('vgpDashboard.otherEquipment')} • {t('vgpDashboard.viewAll')}
               <ArrowRight className="w-4 h-4" />
             </button>
           )}
         </div>
       )}
 
-      {/* À VENIR Section - 5px top+right yellow borders */}
+      {/* UPCOMING Section */}
       {upcoming.length > 0 && (
         <div 
           className="bg-white rounded-lg shadow-sm p-4 border-t-[5px] border-r-[5px] border-l border-b border-gray-200"
@@ -207,7 +211,7 @@ function VGPContent() {
           <div className="flex items-center gap-2 mb-3">
             <Calendar className="w-5 h-5 text-yellow-600" />
             <h2 className="text-base font-bold text-gray-900">
-              À VENIR ({upcoming.length}) - Prochains 30 jours
+              {t('vgpDashboard.upcomingSection')} ({upcoming.length}) - {t('vgpDashboard.next30Days')}
             </h2>
           </div>
 
@@ -223,20 +227,20 @@ function VGPContent() {
                     </span>
                   </div>
                   <div className="flex-shrink-0">
-                    <span className="text-gray-600 text-xs">dans {daysUntil}j</span>
+                    <span className="text-gray-600 text-xs">{t('vgpDashboard.in')} {daysUntil}j</span>
                   </div>
                 </div>
               );
             })}
           </div>
 
-          {/* Full-width "Voir autre" button */}
+          {/* View more button */}
           {upcoming.length > 3 && (
             <button
               onClick={() => window.location.href = '/vgp/schedules?status=upcoming'}
               className="mt-3 w-full py-2 px-4 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700 transition-colors flex items-center justify-center gap-2"
             >
-              Voir tout dans Suivi
+              {t('vgpDashboard.viewAllInTracking')}
               <ArrowRight className="w-4 h-4" />
             </button>
           )}
