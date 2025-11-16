@@ -21,7 +21,8 @@ export default function ViewQRModal({ isOpen, onClose, asset }: ViewQRModalProps
 
   useEffect(() => {
     if (isOpen && canvasRef.current) {
-      const fullUrl = `${window.location.origin}${asset.qr_code}`
+      // FIXED: Added /scan/ path between origin and qr_code
+      const fullUrl = `${window.location.origin}/scan/${asset.qr_code}`
       QRCode.toCanvas(canvasRef.current, fullUrl, {
         width: 300,
         margin: 2,
