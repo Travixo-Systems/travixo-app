@@ -58,9 +58,27 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Redirect unauthenticated users to login
-  if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
-    return NextResponse.redirect(new URL('/login', request.url))
+  // Define protected routes (all routes except public ones)
+  const protectedRoutes = [
+    '/dashboard',
+    '/assets',
+    '/vgp',
+    '/subscription',
+    '/settings',
+    '/team',
+    '/audits',
+  ]
+
+  // Check if current path is protected
+  const isProtectedRoute = protectedRoutes.some(route => 
+    request.nextUrl.pathname.startsWith(route)
+  )
+
+  // Redirect unauthenticated users trying to access protected routes
+  if (!user && isProtectedRoute) {
+    const redirectUrl = new URL('/login', request.url)
+    redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname)
+    return NextResponse.redirect(redirectUrl)
   }
 
   // Redirect authenticated users away from auth pages
@@ -78,7 +96,8 @@ export const config = {
     '/audits/:path*', 
     '/team/:path*',
     '/settings/:path*',
-    '/vgp/:path*',  
+    '/vgp/:path*',
+    '/subscription/:path*',
     '/api/:path*',
     '/login',
     '/signup'
