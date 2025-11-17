@@ -14,7 +14,8 @@ import {
   Clock,
   Navigation,
   Wrench,
-  CircleSlash
+  CircleSlash,
+  Lock
 } from 'lucide-react'
 
 interface Asset {
@@ -45,17 +46,15 @@ export default function ScanPage({ params }: PageProps) {
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
   const [showLocationForm, setShowLocationForm] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   
-  // Form state
   const [location, setLocation] = useState('')
   const [notes, setNotes] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('')
   
-  // Message state
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
 
-  // Resolve params
   useEffect(() => {
     async function resolveParams() {
       const resolvedParams = await Promise.resolve(params)
@@ -67,17 +66,16 @@ export default function ScanPage({ params }: PageProps) {
   useEffect(() => {
     if (qr_code) {
       fetchAsset()
+      checkAuth()
     }
   }, [qr_code])
 
-  // Auto-log scan when asset loads
   useEffect(() => {
     if (asset && qr_code) {
       autoLogScan()
     }
   }, [asset])
 
-  // Auto-dismiss messages
   useEffect(() => {
     if (successMessage) {
       const timer = setTimeout(() => setSuccessMessage(''), 3000)
@@ -91,6 +89,12 @@ export default function ScanPage({ params }: PageProps) {
       return () => clearTimeout(timer)
     }
   }, [errorMessage])
+
+  async function checkAuth() {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    setIsAuthenticated(!!user)
+  }
 
   async function fetchAsset() {
     if (!qr_code) return
@@ -142,7 +146,7 @@ export default function ScanPage({ params }: PageProps) {
           latitude = position.coords.latitude
           longitude = position.coords.longitude
         } catch (error) {
-          // Silent fail - GPS optional
+          // Silent fail
         }
       }
 
@@ -158,11 +162,16 @@ export default function ScanPage({ params }: PageProps) {
         }),
       })
     } catch (error) {
-      // Silent fail - non-critical background logging
+      // Silent fail
     }
   }
 
   async function handleStatusUpdate(newStatus: string) {
+    if (!isAuthenticated) {
+      setErrorMessage('Please log in to update asset status')
+      return
+    }
+
     if (!asset) return
     
     setUpdating(true)
@@ -193,6 +202,11 @@ export default function ScanPage({ params }: PageProps) {
   }
 
   async function handleLocationUpdate() {
+    if (!isAuthenticated) {
+      setErrorMessage('Please log in to update location')
+      return
+    }
+
     if (!asset || !location.trim()) {
       setErrorMessage('Please enter a location')
       return
@@ -260,7 +274,6 @@ export default function ScanPage({ params }: PageProps) {
   }
 
   function getStatusBadgeClass(status: string): string {
-    // Traffic light system per charte graphique
     const classes: Record<string, string> = {
       available: 'bg-green-50 text-green-700 border-2 border-green-500',
       in_use: 'bg-blue-50 text-blue-700 border-2 border-blue-500',
@@ -344,7 +357,6 @@ export default function ScanPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 pb-20">
-      {/* Success Message - Charte Graphique Compliant */}
       {successMessage && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4">
           <div className="bg-green-500 rounded-lg p-4 shadow-xl">
@@ -356,7 +368,6 @@ export default function ScanPage({ params }: PageProps) {
         </div>
       )}
 
-      {/* Error Message */}
       {errorMessage && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4">
           <div className="bg-red-500 rounded-lg p-4 shadow-xl">
@@ -369,14 +380,13 @@ export default function ScanPage({ params }: PageProps) {
       )}
 
       <div className="max-w-2xl mx-auto">
-        {/* Header */}
         <div className="mb-6">
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push(isAuthenticated ? '/dashboard' : '/')}
             className="text-[#f26f00] hover:text-[#d96200] font-semibold mb-4 flex items-center"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
-            Back
+            {isAuthenticated ? 'Back to Dashboard' : 'Go to Homepage'}
           </button>
           <h1 className="text-3xl font-bold text-[#00252b]">{asset.name}</h1>
           {asset.asset_categories && (
@@ -384,7 +394,6 @@ export default function ScanPage({ params }: PageProps) {
           )}
         </div>
 
-        {/* Asset Info Card - Signature Pattern: Left + Bottom Border */}
         <div className="bg-white rounded-lg shadow-md border-l-4 border-b-4 border-blue-500 p-6 mb-6">
           <div className="grid grid-cols-2 gap-4 mb-4">
             <InfoCard 
@@ -431,132 +440,151 @@ export default function ScanPage({ params }: PageProps) {
           )}
         </div>
 
-        {/* Quick Status Update - Command Section Pattern: Top + Right Border */}
-        <div className="bg-gray-50 rounded-lg shadow-md border-t-[5px] border-r-[5px] border-[#f26f00] p-6 mb-6">
-          <h2 className="text-xl font-bold text-[#00252b] mb-4">Quick Status Update</h2>
-          <div className="grid grid-cols-2 gap-3">
+        {!isAuthenticated && (
+          <div className="bg-blue-50 border-2 border-blue-500 rounded-lg p-6 mb-6 text-center">
+            <Lock className="w-12 h-12 text-blue-600 mx-auto mb-3" />
+            <h2 className="text-xl font-bold text-[#00252b] mb-2">
+              Login Required to Update
+            </h2>
+            <p className="text-gray-700 mb-4 font-medium">
+              You can view asset information, but status and location updates require authentication.
+            </p>
             <button
-              onClick={() => handleStatusUpdate('available')}
-              disabled={updating || selectedStatus === 'available'}
-              className={`p-4 rounded-lg font-bold transition-all flex items-center justify-center gap-2 ${getStatusButtonClass('available', selectedStatus === 'available')} disabled:opacity-50`}
-              style={{ minHeight: '48px' }}
+              onClick={() => router.push(`/login?redirectTo=/scan/${qr_code}`)}
+              className="px-6 py-3 bg-[#f26f00] text-white rounded-lg hover:bg-[#d96200] font-bold transition-all"
             >
-              <CheckCircle className="w-5 h-5" />
-              Available
-            </button>
-            <button
-              onClick={() => handleStatusUpdate('in_use')}
-              disabled={updating || selectedStatus === 'in_use'}
-              className={`p-4 rounded-lg font-bold transition-all flex items-center justify-center gap-2 ${getStatusButtonClass('in_use', selectedStatus === 'in_use')} disabled:opacity-50`}
-              style={{ minHeight: '48px' }}
-            >
-              <Package className="w-5 h-5" />
-              In Use
-            </button>
-            <button
-              onClick={() => handleStatusUpdate('maintenance')}
-              disabled={updating || selectedStatus === 'maintenance'}
-              className={`p-4 rounded-lg font-bold transition-all flex items-center justify-center gap-2 ${getStatusButtonClass('maintenance', selectedStatus === 'maintenance')} disabled:opacity-50`}
-              style={{ minHeight: '48px' }}
-            >
-              <Wrench className="w-5 h-5" />
-              Maintenance
-            </button>
-            <button
-              onClick={() => handleStatusUpdate('out_of_service')}
-              disabled={updating || selectedStatus === 'out_of_service'}
-              className={`p-4 rounded-lg font-bold transition-all flex items-center justify-center gap-2 ${getStatusButtonClass('out_of_service', selectedStatus === 'out_of_service')} disabled:opacity-50`}
-              style={{ minHeight: '48px' }}
-            >
-              <CircleSlash className="w-5 h-5" />
-              Out of Service
+              Login to Update
             </button>
           </div>
-        </div>
+        )}
 
-        {/* Location Update */}
-        <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-[#00252b] flex items-center gap-2">
-              <MapPin className="w-6 h-6 text-[#f26f00]" />
-              Update Location
-            </h2>
-            {!showLocationForm && (
+        {isAuthenticated && (
+          <div className="bg-gray-50 rounded-lg shadow-md border-t-[5px] border-r-[5px] border-[#f26f00] p-6 mb-6">
+            <h2 className="text-xl font-bold text-[#00252b] mb-4">Quick Status Update</h2>
+            <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => setShowLocationForm(true)}
-                className="px-4 py-2 bg-[#f26f00] text-white rounded-lg hover:bg-[#d96200] font-semibold transition-all"
+                onClick={() => handleStatusUpdate('available')}
+                disabled={updating || selectedStatus === 'available'}
+                className={`p-4 rounded-lg font-bold transition-all flex items-center justify-center gap-2 ${getStatusButtonClass('available', selectedStatus === 'available')} disabled:opacity-50`}
+                style={{ minHeight: '48px' }}
               >
-                Update
+                <CheckCircle className="w-5 h-5" />
+                Available
               </button>
+              <button
+                onClick={() => handleStatusUpdate('in_use')}
+                disabled={updating || selectedStatus === 'in_use'}
+                className={`p-4 rounded-lg font-bold transition-all flex items-center justify-center gap-2 ${getStatusButtonClass('in_use', selectedStatus === 'in_use')} disabled:opacity-50`}
+                style={{ minHeight: '48px' }}
+              >
+                <Package className="w-5 h-5" />
+                In Use
+              </button>
+              <button
+                onClick={() => handleStatusUpdate('maintenance')}
+                disabled={updating || selectedStatus === 'maintenance'}
+                className={`p-4 rounded-lg font-bold transition-all flex items-center justify-center gap-2 ${getStatusButtonClass('maintenance', selectedStatus === 'maintenance')} disabled:opacity-50`}
+                style={{ minHeight: '48px' }}
+              >
+                <Wrench className="w-5 h-5" />
+                Maintenance
+              </button>
+              <button
+                onClick={() => handleStatusUpdate('out_of_service')}
+                disabled={updating || selectedStatus === 'out_of_service'}
+                className={`p-4 rounded-lg font-bold transition-all flex items-center justify-center gap-2 ${getStatusButtonClass('out_of_service', selectedStatus === 'out_of_service')} disabled:opacity-50`}
+                style={{ minHeight: '48px' }}
+              >
+                <CircleSlash className="w-5 h-5" />
+                Out of Service
+              </button>
+            </div>
+          </div>
+        )}
+
+        {isAuthenticated && (
+          <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-[#00252b] flex items-center gap-2">
+                <MapPin className="w-6 h-6 text-[#f26f00]" />
+                Update Location
+              </h2>
+              {!showLocationForm && (
+                <button
+                  onClick={() => setShowLocationForm(true)}
+                  className="px-4 py-2 bg-[#f26f00] text-white rounded-lg hover:bg-[#d96200] font-semibold transition-all"
+                >
+                  Update
+                </button>
+              )}
+            </div>
+
+            {showLocationForm && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-[#00252b] mb-2">
+                    Location
+                  </label>
+                  <input
+                    type="text"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    placeholder="Enter location"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
+                    style={{ fontSize: '16px' }}
+                    maxLength={255}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-[#00252b] mb-2">
+                    Notes (Optional)
+                  </label>
+                  <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Add notes..."
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00]"
+                    style={{ fontSize: '16px' }}
+                    rows={3}
+                    maxLength={500}
+                  />
+                  <p className="text-xs text-gray-600 mt-1 font-medium">{notes.length}/500</p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={handleUseMyLocation}
+                    disabled={updating}
+                    className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-bold disabled:opacity-50 min-h-[48px] flex items-center justify-center gap-2"
+                  >
+                    <Navigation className="w-5 h-5" />
+                    Use GPS
+                  </button>
+                  <button
+                    onClick={handleLocationUpdate}
+                    disabled={updating || !location.trim()}
+                    className="flex-1 px-4 py-3 bg-[#f26f00] text-white rounded-lg hover:bg-[#d96200] font-bold disabled:opacity-50 min-h-[48px]"
+                  >
+                    {updating ? 'Saving...' : 'Save'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowLocationForm(false)
+                      setLocation('')
+                      setNotes('')
+                    }}
+                    disabled={updating}
+                    className="px-4 py-3 bg-white text-[#00252b] border-2 border-[#00252b] rounded-lg hover:bg-[#00252b] hover:text-white font-bold disabled:opacity-50 min-h-[48px] transition-all"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
             )}
           </div>
+        )}
 
-          {showLocationForm && (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-bold text-[#00252b] mb-2">
-                  Location
-                </label>
-                <input
-                  type="text"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="Enter location"
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
-                  style={{ fontSize: '16px' }}
-                  maxLength={255}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-[#00252b] mb-2">
-                  Notes (Optional)
-                </label>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Add notes..."
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00]"
-                  style={{ fontSize: '16px' }}
-                  rows={3}
-                  maxLength={500}
-                />
-                <p className="text-xs text-gray-600 mt-1 font-medium">{notes.length}/500</p>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={handleUseMyLocation}
-                  disabled={updating}
-                  className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-bold disabled:opacity-50 min-h-[48px] flex items-center justify-center gap-2"
-                >
-                  <Navigation className="w-5 h-5" />
-                  Use GPS
-                </button>
-                <button
-                  onClick={handleLocationUpdate}
-                  disabled={updating || !location.trim()}
-                  className="flex-1 px-4 py-3 bg-[#f26f00] text-white rounded-lg hover:bg-[#d96200] font-bold disabled:opacity-50 min-h-[48px]"
-                >
-                  {updating ? 'Saving...' : 'Save'}
-                </button>
-                <button
-                  onClick={() => {
-                    setShowLocationForm(false)
-                    setLocation('')
-                    setNotes('')
-                  }}
-                  disabled={updating}
-                  className="px-4 py-3 bg-white text-[#00252b] border-2 border-[#00252b] rounded-lg hover:bg-[#00252b] hover:text-white font-bold disabled:opacity-50 min-h-[48px] transition-all"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Last Scanned - Status Card Pattern */}
         {asset.last_seen_at && (
           <div className="bg-white rounded-lg shadow-md border-l-4 border-b-4 border-gray-400 p-6 mb-6">
             <h2 className="text-xl font-bold text-[#00252b] mb-4 flex items-center gap-2">
@@ -578,7 +606,6 @@ export default function ScanPage({ params }: PageProps) {
           </div>
         )}
 
-        {/* Footer */}
         <div className="text-center mt-6 space-y-2">
           <p className="text-xs text-gray-600 font-medium">Asset ID: {asset.id.substring(0, 8)}...</p>
           <p className="text-xs text-gray-600 font-medium">
