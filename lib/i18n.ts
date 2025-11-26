@@ -1073,6 +1073,536 @@ export const translations = {
   },
 
   // ============================================================================
+  // ASSETS PAGE
+  // ============================================================================
+assets: {
+  // Page Header
+  pageTitle: {
+    en: "Equipment",
+    fr: "Équipements",
+  },
+  pageSubtitle: {
+    en: "Manage and track your equipment inventory",
+    fr: "Gérez et suivez votre parc d'équipements",
+  },
+  bulkQrCodes: {
+    en: "Bulk QR Codes",
+    fr: "QR Codes en Masse",
+  },
+
+  // Empty State
+  noAssets: {
+    en: "No equipment",
+    fr: "Aucun équipement",
+  },
+  noAssetsDescription: {
+    en: "Get started by adding your first piece of equipment.",
+    fr: "Commencez par ajouter votre premier équipement.",
+  },
+
+  // Search & Filters
+  searchPlaceholder: {
+    en: "Search by name, serial, location...",
+    fr: "Rechercher par nom, série, emplacement...",
+  },
+  allStatus: {
+    en: "All Status",
+    fr: "Tous les Statuts",
+  },
+  allCategories: {
+    en: "All Categories",
+    fr: "Toutes les Catégories",
+  },
+  noAssetsFound: {
+    en: "No equipment found",
+    fr: "Aucun équipement trouvé",
+  },
+  adjustFilters: {
+    en: "Try adjusting your search or filters",
+    fr: "Essayez d'ajuster votre recherche ou vos filtres",
+  },
+
+  // Pagination
+  showing: {
+    en: "Showing",
+    fr: "Affichage",
+  },
+  to: {
+    en: "to",
+    fr: "à",
+  },
+  of: {
+    en: "of",
+    fr: "sur",
+  },
+  results: {
+    en: "results",
+    fr: "résultats",
+  },
+  previous: {
+    en: "Previous",
+    fr: "Précédent",
+  },
+  next: {
+    en: "Next",
+    fr: "Suivant",
+  },
+
+  // Table Headers
+  tableHeaderName: {
+    en: "Name",
+    fr: "Nom",
+  },
+  tableHeaderSerial: {
+    en: "Serial",
+    fr: "N° Série",
+  },
+  tableHeaderStatus: {
+    en: "Status",
+    fr: "Statut",
+  },
+  tableHeaderLocation: {
+    en: "Location",
+    fr: "Emplacement",
+  },
+  tableHeaderActions: {
+    en: "Actions",
+    fr: "Actions",
+  },
+
+  // Status Values
+  statusAvailable: {
+    en: "Available",
+    fr: "Disponible",
+  },
+  statusInUse: {
+    en: "In Use",
+    fr: "En Utilisation",
+  },
+  statusMaintenance: {
+    en: "Maintenance",
+    fr: "Maintenance",
+  },
+  statusRetired: {
+    en: "Retired",
+    fr: "Retiré",
+  },
+
+  // Action Tooltips
+  tooltipAddVgp: {
+    en: "Add VGP Schedule",
+    fr: "Ajouter Planning VGP",
+  },
+  tooltipViewQr: {
+    en: "View QR Code",
+    fr: "Voir QR Code",
+  },
+  tooltipEdit: {
+    en: "Edit",
+    fr: "Modifier",
+  },
+  tooltipDelete: {
+    en: "Delete",
+    fr: "Supprimer",
+  },
+
+  // Add Equipment Modal
+  addAssetTitle: {
+    en: "Add New Equipment",
+    fr: "Ajouter un Équipement",
+  },
+  labelAssetName: {
+    en: "Equipment Name",
+    fr: "Nom de l'Équipement",
+  },
+  labelSerialNumber: {
+    en: "Serial Number",
+    fr: "Numéro de Série",
+  },
+  labelCurrentLocation: {
+    en: "Current Location",
+    fr: "Emplacement Actuel",
+  },
+  labelStatus: {
+    en: "Status",
+    fr: "Statut",
+  },
+  labelPurchaseDate: {
+    en: "Purchase Date",
+    fr: "Date d'Achat",
+  },
+  labelPurchasePrice: {
+    en: "Purchase Price",
+    fr: "Prix d'Achat",
+  },
+  labelCurrentValue: {
+    en: "Current Value",
+    fr: "Valeur Actuelle",
+  },
+  labelDescription: {
+    en: "Description",
+    fr: "Description",
+  },
+
+  // Placeholders
+  placeholderAssetName: {
+    en: "e.g., Excavator CAT 320",
+    fr: "ex: Pelleteuse CAT 320",
+  },
+  placeholderSerial: {
+    en: "e.g., SN123456",
+    fr: "ex: SN123456",
+  },
+  placeholderLocation: {
+    en: "e.g., Warehouse A",
+    fr: "ex: Entrepôt A",
+  },
+  placeholderDescription: {
+    en: "Additional information about this equipment...",
+    fr: "Informations supplémentaires sur cet équipement...",
+  },
+  placeholderPrice: {
+    en: "0.00",
+    fr: "0,00",
+  },
+
+  // Buttons
+  buttonCancel: {
+    en: "Cancel",
+    fr: "Annuler",
+  },
+  buttonAdding: {
+    en: "Adding...",
+    fr: "Ajout...",
+  },
+  buttonAddAsset: {
+    en: "Add Equipment",
+    fr: "Ajouter",
+  },
+  buttonSaving: {
+    en: "Saving...",
+    fr: "Enregistrement...",
+  },
+  buttonSaveChanges: {
+    en: "Save Changes",
+    fr: "Enregistrer",
+  },
+
+  // Edit Equipment Modal
+  editAssetTitle: {
+    en: "Edit Equipment",
+    fr: "Modifier l'Équipement",
+  },
+
+  // Import Modal
+  importFromExcel: {
+    en: "Import from Excel",
+    fr: "Importer depuis Excel",
+  },
+  importTitle: {
+    en: "Import Equipment from Excel/CSV",
+    fr: "Importer des Équipements depuis Excel/CSV",
+  },
+  importDropzone: {
+    en: "Drop your file here or click to browse",
+    fr: "Déposez votre fichier ici ou cliquez pour parcourir",
+  },
+  importSupportedFormats: {
+    en: "Supports .xlsx, .xls, .csv",
+    fr: "Formats supportés : .xlsx, .xls, .csv",
+  },
+  importProcessing: {
+    en: "Processing...",
+    fr: "Traitement...",
+  },
+  importPreview: {
+    en: "Preview Import",
+    fr: "Prévisualiser l'Import",
+  },
+  importSmartDetection: {
+    en: "Smart Column Detection",
+    fr: "Détection Intelligente des Colonnes",
+  },
+  importSmartDetectionDesc: {
+    en: "We automatically detect columns like \"Name\", \"Serial Number\", \"Location\", etc. Even if your headers are different, we'll figure it out!",
+    fr: "Nous détectons automatiquement les colonnes comme \"Nom\", \"Numéro de Série\", \"Emplacement\", etc. Même si vos en-têtes sont différents, nous nous en chargeons !",
+  },
+  importValidRows: {
+    en: "Valid Rows",
+    fr: "Lignes Valides",
+  },
+  importInvalidRows: {
+    en: "Invalid Rows",
+    fr: "Lignes Invalides",
+  },
+  importTotalRows: {
+    en: "Total Rows",
+    fr: "Total Lignes",
+  },
+  importDetectedColumns: {
+    en: "Detected Columns:",
+    fr: "Colonnes Détectées :",
+  },
+  importChooseDifferent: {
+    en: "Choose Different File",
+    fr: "Choisir un Autre Fichier",
+  },
+  importImporting: {
+    en: "Importing...",
+    fr: "Import en cours...",
+  },
+  importCount: {
+    en: "Import",
+    fr: "Importer",
+  },
+  importEquipmentUnit: {
+    en: "items",
+    fr: "équipements",
+  },
+
+  // Toast Messages
+  toastAssetAdded: {
+    en: "Equipment added successfully!",
+    fr: "Équipement ajouté avec succès !",
+  },
+  toastAssetUpdated: {
+    en: "Equipment updated successfully!",
+    fr: "Équipement mis à jour avec succès !",
+  },
+  toastImportSuccess: {
+    en: "items imported successfully!",
+    fr: "équipements importés avec succès !",
+  },
+  toastVgpScheduleCreated: {
+    en: "VGP schedule created! Check the VGP Compliance dashboard.",
+    fr: "Planning VGP créé ! Consultez le tableau de bord Conformité VGP.",
+  },
+
+  // Error Messages
+  errorNotAuthenticated: {
+    en: "Not authenticated",
+    fr: "Non authentifié",
+  },
+  errorNoOrganization: {
+    en: "No organization found. Please complete your profile setup.",
+    fr: "Aucune organisation trouvée. Veuillez compléter la configuration de votre profil.",
+  },
+  errorAddFailed: {
+    en: "Failed to add equipment",
+    fr: "Échec de l'ajout de l'équipement",
+  },
+  errorUpdateFailed: {
+    en: "Failed to update equipment",
+    fr: "Échec de la mise à jour de l'équipement",
+  },
+  errorImportFailed: {
+    en: "Failed to import equipment",
+    fr: "Échec de l'import des équipements",
+  },
+  errorProcessFailed: {
+    en: "Failed to process file",
+    fr: "Échec du traitement du fichier",
+  },
+  errorFileEmpty: {
+    en: "File is empty",
+    fr: "Le fichier est vide",
+  },
+  errorNameRequired: {
+    en: "Name is required",
+    fr: "Le nom est requis",
+  },
+  errorInvalidData: {
+    en: "Invalid data",
+    fr: "Données invalides",
+  },
+  errorDeleteFailed: {
+    en: "Failed to delete equipment",
+    fr: "Échec de la suppression de l'équipement",
+  },
+  errorSelectAtLeastOne: {
+    en: "Please select at least one item",
+    fr: "Veuillez sélectionner au moins un élément",
+  },
+  errorQrGenerationFailed: {
+    en: "Failed to generate QR codes",
+    fr: "Échec de la génération des QR codes",
+  },
+
+  // Delete Dialog
+  deleteTitle: {
+    en: "Delete Equipment",
+    fr: "Supprimer l'Équipement",
+  },
+  deleteWarning: {
+    en: "This action cannot be undone.",
+    fr: "Cette action est irréversible.",
+  },
+  deleteConfirmation: {
+    en: "Are you sure you want to delete",
+    fr: "Êtes-vous sûr de vouloir supprimer",
+  },
+  deleteConsequence: {
+    en: "This will permanently remove the equipment and its QR code.",
+    fr: "Cela supprimera définitivement l'équipement et son QR code.",
+  },
+  buttonDelete: {
+    en: "Delete",
+    fr: "Supprimer",
+  },
+  buttonDeleting: {
+    en: "Deleting...",
+    fr: "Suppression...",
+  },
+  toastDeleted: {
+    en: "Equipment deleted successfully",
+    fr: "Équipement supprimé avec succès",
+  },
+
+  // QR Code Modal
+  qrCodeTitle: {
+    en: "QR Code",
+    fr: "QR Code",
+  },
+  qrScanInstruction: {
+    en: "Scan this code to view equipment details",
+    fr: "Scannez ce code pour voir les détails de l'équipement",
+  },
+  qrDownload: {
+    en: "Download QR Code",
+    fr: "Télécharger le QR Code",
+  },
+
+  // QR Codes Page
+  qrGeneratorTitle: {
+    en: "QR Code Generator",
+    fr: "Générateur de QR Codes",
+  },
+  qrGeneratorSubtitle: {
+    en: "Generate and print QR code labels for your equipment",
+    fr: "Générez et imprimez des étiquettes QR pour vos équipements",
+  },
+  backToEquipment: {
+    en: "Back to Equipment",
+    fr: "Retour aux Équipements",
+  },
+  addEquipmentFirst: {
+    en: "Add some equipment first to generate QR codes.",
+    fr: "Ajoutez d'abord des équipements pour générer des QR codes.",
+  },
+
+  // Bulk QR Generator
+  bulkQrTitle: {
+    en: "Bulk QR Code Generator",
+    fr: "Générateur de QR Codes en Masse",
+  },
+  bulkQrSubtitle: {
+    en: "Select equipment to generate printable QR codes (30 per page)",
+    fr: "Sélectionnez les équipements pour générer des QR codes imprimables (30 par page)",
+  },
+  selectAll: {
+    en: "Select All",
+    fr: "Tout Sélectionner",
+  },
+  clearSelection: {
+    en: "Clear",
+    fr: "Effacer",
+  },
+  exportCsv: {
+    en: "Export CSV",
+    fr: "Exporter CSV",
+  },
+  itemSelected: {
+    en: "item selected",
+    fr: "élément sélectionné",
+  },
+  itemsSelected: {
+    en: "items selected",
+    fr: "éléments sélectionnés",
+  },
+  pages: {
+    en: "pages",
+    fr: "pages",
+  },
+  generating: {
+    en: "Generating...",
+    fr: "Génération...",
+  },
+  generatePdf: {
+    en: "Generate PDF",
+    fr: "Générer PDF",
+  },
+  qrCategory: {
+    en: "Category",
+    fr: "Catégorie",
+  },
+  toastCsvExported: {
+    en: "CSV exported successfully!",
+    fr: "CSV exporté avec succès !",
+  },
+  toastQrGenerated: {
+    en: "QR codes generated!",
+    fr: "QR codes générés !",
+  },
+
+  // Print Instructions
+  printInstructionsTitle: {
+    en: "Print Instructions",
+    fr: "Instructions d'Impression",
+  },
+  printStep1: {
+    en: "Select the equipment you want to print QR codes for",
+    fr: "Sélectionnez les équipements pour lesquels vous voulez imprimer des QR codes",
+  },
+  printStep2: {
+    en: "Click \"Generate PDF\" to download a printable PDF (30 QR codes per A4 page)",
+    fr: "Cliquez sur \"Générer PDF\" pour télécharger un PDF imprimable (30 QR codes par page A4)",
+  },
+  printStep3: {
+    en: "Print on adhesive label sheets (recommended: Avery 5160 or equivalent)",
+    fr: "Imprimez sur des feuilles d'étiquettes adhésives (recommandé : Avery 5160 ou équivalent)",
+  },
+  printStep4: {
+    en: "Cut and stick labels on your equipment",
+    fr: "Découpez et collez les étiquettes sur vos équipements",
+  },
+  printStep5: {
+    en: "Use \"Export CSV\" to get a spreadsheet of all selected equipment with URLs",
+    fr: "Utilisez \"Exporter CSV\" pour obtenir un tableur de tous les équipements sélectionnés avec URLs",
+  },
+  proTip: {
+    en: "Pro Tip",
+    fr: "Astuce",
+  },
+  proTipText: {
+    en: "Each QR code links directly to the equipment tracking page",
+    fr: "Chaque QR code renvoie directement vers la page de suivi de l'équipement",
+  },
+},
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  // ============================================================================
   // DASHBOARD (MAIN LANDING PAGE)
   // ============================================================================
   dashboard: {

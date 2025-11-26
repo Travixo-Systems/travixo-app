@@ -67,6 +67,57 @@ export type Database = {
           updated_at: string
         }
       }
+      vgp_inspections: {
+        Row: {
+          id: string
+          organization_id: string
+          asset_id: string
+          schedule_id?: string
+          inspection_date: string
+          inspector_name: string
+          inspector_company: string
+          inspector_accreditation?: string
+          
+         
+          verification_type: 'PERIODIQUE' | 'INITIALE' | 'REMISE_SERVICE'
+          observations: string
+          
+          result: 'passed' | 'conditional' | 'failed'
+          certification_number?: string
+          certificate_url?: string
+          next_inspection_date: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          asset_id: string
+          schedule_id?: string
+          inspection_date: string
+          inspector_name: string
+          inspector_company: string
+          inspector_accreditation?: string
+          verification_type?: 'PERIODIQUE' | 'INITIALE' | 'REMISE_SERVICE'
+          observations?: string
+          result: 'passed' | 'conditional' | 'failed'
+          certification_number?: string
+          certificate_url?: string
+          next_inspection_date: string
+        }
+        Update: {
+          inspection_date?: string
+          inspector_name?: string
+          inspector_company?: string
+          inspector_accreditation?: string
+          verification_type?: 'PERIODIQUE' | 'INITIALE' | 'REMISE_SERVICE'
+          observations?: string
+          result?: 'passed' | 'conditional' | 'failed'
+          certification_number?: string
+          certificate_url?: string
+          next_inspection_date?: string
+        }
+      }
     }
   }
 }

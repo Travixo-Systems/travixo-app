@@ -5,6 +5,8 @@ import { Dialog, Transition } from '@headlessui/react'
 import { XMarkIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'
 import { useEffect, useRef } from 'react'
 import QRCode from 'qrcode'
+import { useLanguage } from '@/lib/LanguageContext'
+import { createTranslator } from '@/lib/i18n'
 
 interface ViewQRModalProps {
   isOpen: boolean
@@ -18,10 +20,11 @@ interface ViewQRModalProps {
 
 export default function ViewQRModal({ isOpen, onClose, asset }: ViewQRModalProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const { language } = useLanguage()
+  const t = createTranslator(language)
 
   useEffect(() => {
     if (isOpen && canvasRef.current) {
-      // FIXED: Added /scan/ path between origin and qr_code
       const fullUrl = `${window.location.origin}/scan/${asset.qr_code}`
       QRCode.toCanvas(canvasRef.current, fullUrl, {
         width: 300,
@@ -73,7 +76,7 @@ export default function ViewQRModal({ isOpen, onClose, asset }: ViewQRModalProps
               <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 shadow-xl transition-all">
                 <div className="flex justify-between items-center mb-4">
                   <Dialog.Title className="text-xl font-bold text-gray-900">
-                    QR Code
+                    {t('assets.qrCodeTitle')}
                   </Dialog.Title>
                   <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
                     <XMarkIcon className="h-6 w-6" />
@@ -90,7 +93,7 @@ export default function ViewQRModal({ isOpen, onClose, asset }: ViewQRModalProps
                   </div>
 
                   <p className="text-sm text-gray-600 mb-4">
-                    Scan this code to view asset details
+                    {t('assets.qrScanInstruction')}
                   </p>
 
                   <button
@@ -98,7 +101,7 @@ export default function ViewQRModal({ isOpen, onClose, asset }: ViewQRModalProps
                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
                   >
                     <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
-                    Download QR Code
+                    {t('assets.qrDownload')}
                   </button>
                 </div>
               </Dialog.Panel>

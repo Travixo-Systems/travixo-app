@@ -6,6 +6,8 @@ import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
+import { useLanguage } from '@/lib/LanguageContext'
+import { createTranslator } from '@/lib/i18n'
 
 interface DeleteAssetDialogProps {
   isOpen: boolean
@@ -19,6 +21,8 @@ interface DeleteAssetDialogProps {
 export default function DeleteAssetDialog({ isOpen, onClose, asset }: DeleteAssetDialogProps) {
   const router = useRouter()
   const supabase = createClient()
+  const { language } = useLanguage()
+  const t = createTranslator(language)
   const [isDeleting, setIsDeleting] = useState(false)
 
   const handleDelete = async () => {
@@ -32,12 +36,12 @@ export default function DeleteAssetDialog({ isOpen, onClose, asset }: DeleteAsse
 
       if (error) throw error
 
-      toast.success('Asset deleted successfully')
+      toast.success(t('assets.toastDeleted'))
       router.refresh()
       onClose()
     } catch (error) {
       console.error('Error deleting asset:', error)
-      toast.error(error instanceof Error ? error.message : 'Failed to delete asset')
+      toast.error(error instanceof Error ? error.message : t('assets.errorDeleteFailed'))
     } finally {
       setIsDeleting(false)
     }
@@ -76,16 +80,16 @@ export default function DeleteAssetDialog({ isOpen, onClose, asset }: DeleteAsse
                   </div>
                   <div>
                     <Dialog.Title className="text-lg font-semibold text-gray-900">
-                      Delete Asset
+                      {t('assets.deleteTitle')}
                     </Dialog.Title>
                     <p className="text-sm text-gray-500 mt-1">
-                      This action cannot be undone.
+                      {t('assets.deleteWarning')}
                     </p>
                   </div>
                 </div>
 
                 <p className="text-gray-700 mb-6">
-                  Are you sure you want to delete <strong>{asset.name}</strong>? This will permanently remove the asset and its QR code.
+                  {t('assets.deleteConfirmation')} <strong>{asset.name}</strong>? {t('assets.deleteConsequence')}
                 </p>
 
                 <div className="flex justify-end space-x-3">
@@ -95,7 +99,7 @@ export default function DeleteAssetDialog({ isOpen, onClose, asset }: DeleteAsse
                     disabled={isDeleting}
                     className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
                   >
-                    Cancel
+                    {t('assets.buttonCancel')}
                   </button>
                   <button
                     type="button"
@@ -103,7 +107,7 @@ export default function DeleteAssetDialog({ isOpen, onClose, asset }: DeleteAsse
                     disabled={isDeleting}
                     className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isDeleting ? 'Deleting...' : 'Delete Asset'}
+                    {isDeleting ? t('assets.buttonDeleting') : t('assets.buttonDelete')}
                   </button>
                 </div>
               </Dialog.Panel>

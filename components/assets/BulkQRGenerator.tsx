@@ -4,6 +4,8 @@ import { useState } from 'react'
 import toast from 'react-hot-toast'
 import QRCode from 'qrcode'
 import { jsPDF } from 'jspdf'
+import { useLanguage } from '@/lib/LanguageContext'
+import { createTranslator } from '@/lib/i18n'
 
 interface Asset {
   id: string
@@ -19,6 +21,8 @@ interface BulkQRGeneratorProps {
 }
 
 export default function BulkQRGenerator({ assets }: BulkQRGeneratorProps) {
+  const { language } = useLanguage()
+  const t = createTranslator(language)
   const [selectedAssets, setSelectedAssets] = useState<Set<string>>(new Set())
   const [isGenerating, setIsGenerating] = useState(false)
 
@@ -43,7 +47,7 @@ export default function BulkQRGenerator({ assets }: BulkQRGeneratorProps) {
   const exportToCSV = () => {
     const selectedAssetList = assets.filter(a => selectedAssets.has(a.id))
     const csvContent = [
-      ['Asset Name', 'Serial Number', 'Category', 'Location', 'QR Code', 'Scan URL'],
+      [t('assets.tableHeaderName'), t('assets.tableHeaderSerial'), t('assets.qrCategory'), t('assets.tableHeaderLocation'), 'QR Code', 'URL'],
       ...selectedAssetList.map(a => [
         a.name,
         a.serial_number || '',
@@ -58,15 +62,15 @@ export default function BulkQRGenerator({ assets }: BulkQRGeneratorProps) {
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `TraviXO-Assets-${new Date().toISOString().split('T')[0]}.csv`
+    link.download = `TraviXO-${t('assets.pageTitle')}-${new Date().toISOString().split('T')[0]}.csv`
     link.click()
     window.URL.revokeObjectURL(url)
-    toast.success('CSV exported successfully!')
+    toast.success(t('assets.toastCsvExported'))
   }
 
   const generateBulkQRCodes = async () => {
     if (selectedAssets.size === 0) {
-      toast.error('Please select at least one asset')
+      toast.error(t('assets.errorSelectAtLeastOne'))
       return
     }
 
@@ -147,12 +151,12 @@ export default function BulkQRGenerator({ assets }: BulkQRGeneratorProps) {
       // Download PDF
       pdf.save(`TraviXO-QR-Codes-${new Date().toISOString().split('T')[0]}.pdf`)
       
-      toast.success(`Generated ${selectedAssets.size} QR codes!`)
+      toast.success(`${selectedAssets.size} ${t('assets.toastQrGenerated')}`)
       deselectAll()
 
     } catch (error) {
       console.error('Error generating QR codes:', error)
-      toast.error('Failed to generate QR codes')
+      toast.error(t('assets.errorQrGenerationFailed'))
     } finally {
       setIsGenerating(false)
     }
@@ -162,9 +166,9 @@ export default function BulkQRGenerator({ assets }: BulkQRGeneratorProps) {
     <div className="bg-white rounded-lg shadow p-6">
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Bulk QR Code Generator</h2>
+          <h2 className="text-xl font-bold text-gray-900">{t('assets.bulkQrTitle')}</h2>
           <p className="text-sm text-gray-600 mt-1">
-            Select assets to generate printable QR codes (30 per page)
+            {t('assets.bulkQrSubtitle')}
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -172,20 +176,20 @@ export default function BulkQRGenerator({ assets }: BulkQRGeneratorProps) {
             onClick={selectAll}
             className="px-3 py-1.5 text-sm bg-indigo-100 text-indigo-700 hover:bg-indigo-200 rounded-md font-medium"
           >
-            Select All ({assets.length})
+            {t('assets.selectAll')} ({assets.length})
           </button>
           <button
             onClick={deselectAll}
             className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-md font-medium"
           >
-            Clear
+            {t('assets.clearSelection')}
           </button>
           {selectedAssets.size > 0 && (
             <button
               onClick={exportToCSV}
               className="px-3 py-1.5 text-sm bg-green-100 text-green-700 hover:bg-green-200 rounded-md font-medium"
             >
-              Export CSV
+              {t('assets.exportCsv')}
             </button>
           )}
         </div>
@@ -195,10 +199,10 @@ export default function BulkQRGenerator({ assets }: BulkQRGeneratorProps) {
         <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-4">
           <div className="flex justify-between items-center flex-wrap gap-2">
             <p className="text-indigo-900 font-medium">
-              {selectedAssets.size} asset{selectedAssets.size !== 1 ? 's' : ''} selected
+              {selectedAssets.size} {selectedAssets.size !== 1 ? t('assets.itemsSelected') : t('assets.itemSelected')}
               {selectedAssets.size > 30 && (
                 <span className="ml-2 text-sm text-indigo-700">
-                  ({Math.ceil(selectedAssets.size / 30)} pages)
+                  ({Math.ceil(selectedAssets.size / 30)} {t('assets.pages')})
                 </span>
               )}
             </p>
@@ -207,14 +211,14 @@ export default function BulkQRGenerator({ assets }: BulkQRGeneratorProps) {
                 onClick={exportToCSV}
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
               >
-                Export CSV
+                {t('assets.exportCsv')}
               </button>
               <button
                 onClick={generateBulkQRCodes}
                 disabled={isGenerating}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 font-medium"
               >
-                {isGenerating ? 'Generating...' : 'Generate PDF'}
+                {isGenerating ? t('assets.generating') : t('assets.generatePdf')}
               </button>
             </div>
           </div>
@@ -233,10 +237,10 @@ export default function BulkQRGenerator({ assets }: BulkQRGeneratorProps) {
                   className="w-4 h-4 text-indigo-600 rounded"
                 />
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Asset Name</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Serial Number</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('assets.tableHeaderName')}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('assets.tableHeaderSerial')}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('assets.qrCategory')}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('assets.tableHeaderLocation')}</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -267,17 +271,17 @@ export default function BulkQRGenerator({ assets }: BulkQRGeneratorProps) {
       </div>
 
       <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-semibold text-blue-900 mb-2">Print Instructions</h4>
+        <h4 className="font-semibold text-blue-900 mb-2">{t('assets.printInstructionsTitle')}</h4>
         <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
-          <li>Select the assets you want to print QR codes for</li>
-          <li>Click "Generate PDF" to download a printable PDF (30 QR codes per A4 page)</li>
-          <li>Print on adhesive label sheets (recommended: Avery 5160 or equivalent)</li>
-          <li>Cut and stick labels on your equipment</li>
-          <li>Use "Export CSV" to get a spreadsheet of all selected assets with URLs</li>
+          <li>{t('assets.printStep1')}</li>
+          <li>{t('assets.printStep2')}</li>
+          <li>{t('assets.printStep3')}</li>
+          <li>{t('assets.printStep4')}</li>
+          <li>{t('assets.printStep5')}</li>
         </ol>
         <div className="mt-3 pt-3 border-t border-blue-300">
           <p className="text-xs text-blue-700">
-            <strong>Pro Tip:</strong> Each QR code links to {typeof window !== 'undefined' ? window.location.origin : ''}/scan/[code] for easy asset tracking
+            <strong>{t('assets.proTip')}:</strong> {t('assets.proTipText')}
           </p>
         </div>
       </div>

@@ -11,6 +11,9 @@ interface Inspection {
   inspection_date: string;
   inspector_name: string;
   inspector_company: string;
+  inspector_accreditation?: string;
+  verification_type: 'PERIODIQUE' | 'INITIALE' | 'REMISE_SERVICE';  
+  observations: string;                                             
   certification_number: string | null;
   result: 'passed' | 'conditional' | 'failed';
   next_inspection_date: string;

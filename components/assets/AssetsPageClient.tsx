@@ -8,10 +8,15 @@ import ImportAssetsButton from '@/components/assets/ImportAssetsButton'
 import AssetsTableClient from '@/components/assets/AssetsTableClient'
 import Link from 'next/link'
 import { MagnifyingGlassIcon, FunnelIcon } from '@heroicons/react/24/outline'
+import { useLanguage } from '@/lib/LanguageContext'
+import { createTranslator } from '@/lib/i18n'
 
 export default function AssetsPageClient() {
     const router = useRouter()
     const supabase = createClient()
+    const { language } = useLanguage()
+    const t = createTranslator(language)
+    
     const [assets, setAssets] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     
@@ -136,6 +141,17 @@ export default function AssetsPageClient() {
         return Array.from(catMap.values()).sort((a, b) => a.name.localeCompare(b.name))
     }, [assets])
 
+    // Helper to get translated status
+    const getStatusLabel = (status: string) => {
+        switch (status) {
+            case 'available': return t('assets.statusAvailable')
+            case 'in_use': return t('assets.statusInUse')
+            case 'maintenance': return t('assets.statusMaintenance')
+            case 'retired': return t('assets.statusRetired')
+            default: return status
+        }
+    }
+
     if (loading) {
         return (
             <div className="p-8 flex justify-center items-center h-64">
@@ -148,9 +164,9 @@ export default function AssetsPageClient() {
         <div className="p-8">
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Assets</h1>
+                    <h1 className="text-3xl font-bold text-gray-900">{t('assets.pageTitle')}</h1>
                     <p className="text-gray-600 mt-1">
-                        Manage and track your equipment inventory
+                        {t('assets.pageSubtitle')}
                     </p>
                 </div>
                 <div className="flex gap-3">
@@ -166,15 +182,15 @@ export default function AssetsPageClient() {
                             <rect x="14" y="14" width="7" height="7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             <rect x="3" y="14" width="7" height="7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
-                        Bulk QR Codes
+                        {t('assets.bulkQrCodes')}
                     </Link>
                 </div>
             </div>
 
             {assets.length === 0 ? (
                 <div className="text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300">
-                    <h3 className="mt-2 text-sm font-semibold text-gray-900">No assets</h3>
-                    <p className="mt-1 text-sm text-gray-500">Get started by adding your first piece of equipment.</p>
+                    <h3 className="mt-2 text-sm font-semibold text-gray-900">{t('assets.noAssets')}</h3>
+                    <p className="mt-1 text-sm text-gray-500">{t('assets.noAssetsDescription')}</p>
                 </div>
             ) : (
                 <>
@@ -186,7 +202,7 @@ export default function AssetsPageClient() {
                                 <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                                 <input
                                     type="text"
-                                    placeholder="Search by name, serial, location..."
+                                    placeholder={t('assets.searchPlaceholder')}
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
@@ -201,11 +217,11 @@ export default function AssetsPageClient() {
                                     onChange={(e) => setStatusFilter(e.target.value)}
                                     className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                 >
-                                    <option value="all">All Status ({statusCounts.all})</option>
-                                    <option value="available">Available ({statusCounts.available})</option>
-                                    <option value="in_use">In Use ({statusCounts.in_use})</option>
-                                    <option value="maintenance">Maintenance ({statusCounts.maintenance})</option>
-                                    <option value="retired">Retired ({statusCounts.retired})</option>
+                                    <option value="all">{t('assets.allStatus')} ({statusCounts.all})</option>
+                                    <option value="available">{t('assets.statusAvailable')} ({statusCounts.available})</option>
+                                    <option value="in_use">{t('assets.statusInUse')} ({statusCounts.in_use})</option>
+                                    <option value="maintenance">{t('assets.statusMaintenance')} ({statusCounts.maintenance})</option>
+                                    <option value="retired">{t('assets.statusRetired')} ({statusCounts.retired})</option>
                                 </select>
                             </div>
 
@@ -215,7 +231,7 @@ export default function AssetsPageClient() {
                                 onChange={(e) => setCategoryFilter(e.target.value)}
                                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                             >
-                                <option value="all">All Categories ({assets.length})</option>
+                                <option value="all">{t('assets.allCategories')} ({assets.length})</option>
                                 {categories.map(cat => (
                                     <option key={cat.id} value={cat.id}>
                                         {cat.name} ({cat.count})
@@ -228,8 +244,8 @@ export default function AssetsPageClient() {
                     {/* Assets Table */}
                     {filteredAssets.length === 0 ? (
                         <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-                            <h3 className="text-sm font-semibold text-gray-900">No assets found</h3>
-                            <p className="mt-1 text-sm text-gray-500">Try adjusting your search or filters</p>
+                            <h3 className="text-sm font-semibold text-gray-900">{t('assets.noAssetsFound')}</h3>
+                            <p className="mt-1 text-sm text-gray-500">{t('assets.adjustFilters')}</p>
                         </div>
                     ) : (
                         <>
@@ -239,7 +255,7 @@ export default function AssetsPageClient() {
                             {totalPages > 1 && (
                                 <div className="mt-4 flex items-center justify-between bg-white px-4 py-3 rounded-lg shadow">
                                     <div className="text-sm text-gray-700">
-                                        Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredAssets.length)} of {filteredAssets.length} results
+                                        {t('assets.showing')} {((currentPage - 1) * itemsPerPage) + 1} {t('assets.to')} {Math.min(currentPage * itemsPerPage, filteredAssets.length)} {t('assets.of')} {filteredAssets.length} {t('assets.results')}
                                     </div>
                                     <div className="flex gap-2">
                                         <button
@@ -247,7 +263,7 @@ export default function AssetsPageClient() {
                                             disabled={currentPage === 1}
                                             className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                                         >
-                                            Previous
+                                            {t('assets.previous')}
                                         </button>
                                         <div className="flex items-center gap-1">
                                             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -281,7 +297,7 @@ export default function AssetsPageClient() {
                                             disabled={currentPage === totalPages}
                                             className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                                         >
-                                            Next
+                                            {t('assets.next')}
                                         </button>
                                     </div>
                                 </div>

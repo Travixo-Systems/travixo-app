@@ -57,6 +57,8 @@ export async function GET(request: Request) {
         inspection_date,
         inspector_name,
         inspector_company,
+        verification_type,   
+        observations,  
         result,
         certificate_url,
         next_inspection_date,
@@ -84,6 +86,8 @@ export async function GET(request: Request) {
       inspection_date: i.inspection_date,
       inspector_name: i.inspector_name,
       inspector_company: i.inspector_company,
+      verification_type: inspection.verification_type,  
+      observations: inspection.observations, 
       result: i.result,
       certificate_url: i.certificate_url,
       next_inspection_date: i.next_inspection_date

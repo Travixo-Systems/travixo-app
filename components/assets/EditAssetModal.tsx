@@ -6,6 +6,8 @@ import { XMarkIcon } from '@heroicons/react/24/outline'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
+import { useLanguage } from '@/lib/LanguageContext'
+import { createTranslator } from '@/lib/i18n'
 
 interface Asset {
   id: string
@@ -28,6 +30,8 @@ interface EditAssetModalProps {
 export default function EditAssetModal({ isOpen, onClose, asset }: EditAssetModalProps) {
   const router = useRouter()
   const supabase = createClient()
+  const { language } = useLanguage()
+  const t = createTranslator(language)
   const [isLoading, setIsLoading] = useState(false)
 
   const [formData, setFormData] = useState({
@@ -78,12 +82,12 @@ export default function EditAssetModal({ isOpen, onClose, asset }: EditAssetModa
 
       if (error) throw error
 
-      toast.success('Asset updated successfully!')
+      toast.success(t('assets.toastAssetUpdated'))
       router.refresh()
       onClose()
     } catch (error) {
       console.error('Error updating asset:', error)
-      toast.error(error instanceof Error ? error.message : 'Failed to update asset')
+      toast.error(error instanceof Error ? error.message : t('assets.errorUpdateFailed'))
     } finally {
       setIsLoading(false)
     }
@@ -118,7 +122,7 @@ export default function EditAssetModal({ isOpen, onClose, asset }: EditAssetModa
               <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 shadow-xl transition-all">
                 <div className="flex justify-between items-center mb-4">
                   <Dialog.Title className="text-2xl font-bold text-gray-900">
-                    Edit Asset
+                    {t('assets.editAssetTitle')}
                   </Dialog.Title>
                   <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
                     <XMarkIcon className="h-6 w-6" />
@@ -129,7 +133,7 @@ export default function EditAssetModal({ isOpen, onClose, asset }: EditAssetModa
                   <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Asset Name *
+                        {t('assets.labelAssetName')} *
                       </label>
                       <input
                         type="text"
@@ -142,7 +146,7 @@ export default function EditAssetModal({ isOpen, onClose, asset }: EditAssetModa
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Serial Number
+                        {t('assets.labelSerialNumber')}
                       </label>
                       <input
                         type="text"
@@ -154,7 +158,7 @@ export default function EditAssetModal({ isOpen, onClose, asset }: EditAssetModa
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Current Location
+                        {t('assets.labelCurrentLocation')}
                       </label>
                       <input
                         type="text"
@@ -166,23 +170,23 @@ export default function EditAssetModal({ isOpen, onClose, asset }: EditAssetModa
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Status
+                        {t('assets.labelStatus')}
                       </label>
                       <select
                         value={formData.status}
                         onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                       >
-                        <option value="available">Available</option>
-                        <option value="in_use">In Use</option>
-                        <option value="maintenance">Maintenance</option>
-                        <option value="retired">Retired</option>
+                        <option value="available">{t('assets.statusAvailable')}</option>
+                        <option value="in_use">{t('assets.statusInUse')}</option>
+                        <option value="maintenance">{t('assets.statusMaintenance')}</option>
+                        <option value="retired">{t('assets.statusRetired')}</option>
                       </select>
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Purchase Date
+                        {t('assets.labelPurchaseDate')}
                       </label>
                       <input
                         type="date"
@@ -194,7 +198,7 @@ export default function EditAssetModal({ isOpen, onClose, asset }: EditAssetModa
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Purchase Price (€)
+                        {t('assets.labelPurchasePrice')} (EUR)
                       </label>
                       <input
                         type="number"
@@ -207,7 +211,7 @@ export default function EditAssetModal({ isOpen, onClose, asset }: EditAssetModa
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Current Value (€)
+                        {t('assets.labelCurrentValue')} (EUR)
                       </label>
                       <input
                         type="number"
@@ -220,7 +224,7 @@ export default function EditAssetModal({ isOpen, onClose, asset }: EditAssetModa
 
                     <div className="col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Description
+                        {t('assets.labelDescription')}
                       </label>
                       <textarea
                         value={formData.description}
@@ -237,14 +241,14 @@ export default function EditAssetModal({ isOpen, onClose, asset }: EditAssetModa
                       onClick={onClose}
                       className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
                     >
-                      Cancel
+                      {t('assets.buttonCancel')}
                     </button>
                     <button
                       type="submit"
                       disabled={isLoading}
                       className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isLoading ? 'Saving...' : 'Save Changes'}
+                      {isLoading ? t('assets.buttonSaving') : t('assets.buttonSaveChanges')}
                     </button>
                   </div>
                 </form>

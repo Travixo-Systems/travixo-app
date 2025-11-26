@@ -2,8 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 // POST /api/scan/update
-// Purpose: Update asset location, status, and log scan
-// Public endpoint (no auth required) - RLS policies protect data
+// OPTION 2 SECURITY: Requires authentication for status/location updates
+// Public scan logging still allowed (for automatic GPS tracking)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -47,6 +47,40 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient()
 
+    // OPTION 2 AUTH CHECK: Status or Location updates require authentication
+    const isUpdateRequest = status || location
+    
+    if (isUpdateRequest) {
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      
+      if (authError || !user) {
+        return NextResponse.json(
+          { success: false, message: 'Authentication required to update asset status or location' },
+          { status: 401 }
+        )
+      }
+
+      // Verify user belongs to the same organization as the asset
+      const { data: userData } = await supabase
+        .from('users')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single()
+
+      const { data: assetData } = await supabase
+        .from('assets')
+        .select('organization_id')
+        .eq('id', asset_id)
+        .single()
+
+      if (userData?.organization_id !== assetData?.organization_id) {
+        return NextResponse.json(
+          { success: false, message: 'Unauthorized: Cannot update assets from another organization' },
+          { status: 403 }
+        )
+      }
+    }
+
     // STEP 1: Verify asset exists and QR code matches
     const { data: asset, error: assetError } = await supabase
       .from('assets')
@@ -54,14 +88,6 @@ export async function POST(request: NextRequest) {
       .eq('id', asset_id)
       .eq('qr_code', qr_code)
       .single()
-
-    // DEBUG LOGGING
-    console.log('=== SCAN UPDATE DEBUG ===')
-    console.log('Looking for asset_id:', asset_id)
-    console.log('Looking for qr_code:', qr_code)
-    console.log('Query result - asset:', asset)
-    console.log('Query result - error:', assetError)
-    console.log('=========================')
 
     if (assetError || !asset) {
       return NextResponse.json(
@@ -78,12 +104,9 @@ export async function POST(request: NextRequest) {
       last_seen_at: new Date().toISOString(),
     }
 
-    // Note: last_seen_by is UUID in database, set to null for public scans
-    // In future, could create a system user UUID for "Public Scan"
     assetUpdates.last_seen_by = null
 
     if (location) {
-      // No last_seen_location column, just update current_location
       assetUpdates.current_location = location.trim().substring(0, 255)
     }
 
@@ -109,16 +132,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // STEP 4: Create scan record (match actual scans table schema)
+    // STEP 4: Create scan record
     const scanRecord: any = {
       asset_id: asset_id,
       scanned_at: new Date().toISOString(),
       location_name: location?.trim().substring(0, 255) || null,
       notes: notes?.trim().substring(0, 500) || null,
-      scanned_by: null, // UUID - null for public scans
+      scanned_by: null,
       latitude: latitude || null,
       longitude: longitude || null,
-      scan_type: 'check', // Default scan type
+      scan_type: 'check',
     }
 
     const { data: scan, error: scanError } = await supabase
@@ -129,8 +152,6 @@ export async function POST(request: NextRequest) {
 
     if (scanError) {
       console.error('Error creating scan record:', scanError)
-      // Asset update succeeded but scan logging failed - not critical
-      // Return success anyway since main update worked
     }
 
     // STEP 5: Build response message

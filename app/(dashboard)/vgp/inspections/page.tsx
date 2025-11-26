@@ -15,6 +15,8 @@ interface Inspection {
   inspection_date: string;
   inspector_name: string;
   inspector_company: string;
+  verification_type: 'PERIODIQUE' | 'INITIALE' | 'REMISE_SERVICE';
+  observations: string;
   result: 'passed' | 'conditional' | 'failed';
   certificate_url: string | null;
   next_inspection_date: string;
@@ -27,7 +29,7 @@ function VGPInspectionsContent() {
   const [inspections, setInspections] = useState<Inspection[]>([]);
   const [filteredInspections, setFilteredInspections] = useState<Inspection[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [resultFilter, setResultFilter] = useState<string>('all');
@@ -40,17 +42,17 @@ function VGPInspectionsContent() {
 
   // Result configuration with translations
   const RESULT_CONFIG = {
-    passed: { 
-      label: t('vgpInspections.resultPassed'), 
-      color: 'bg-green-50 text-green-700 border-green-200' 
+    passed: {
+      label: t('vgpInspections.resultPassed'),
+      color: 'bg-green-50 text-green-700 border-green-200'
     },
-    conditional: { 
-      label: t('vgpInspections.resultConditional'), 
-      color: 'bg-yellow-50 text-yellow-700 border-yellow-200' 
+    conditional: {
+      label: t('vgpInspections.resultConditional'),
+      color: 'bg-yellow-50 text-yellow-700 border-yellow-200'
     },
-    failed: { 
-      label: t('vgpInspections.resultFailed'), 
-      color: 'bg-red-50 text-red-700 border-red-200' 
+    failed: {
+      label: t('vgpInspections.resultFailed'),
+      color: 'bg-red-50 text-red-700 border-red-200'
     }
   };
 
@@ -85,7 +87,7 @@ function VGPInspectionsContent() {
 
     // Search filter
     if (searchTerm) {
-      filtered = filtered.filter(i => 
+      filtered = filtered.filter(i =>
         i.asset_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         i.inspector_name.toLowerCase().includes(searchTerm.toLowerCase())
       );
@@ -118,7 +120,7 @@ function VGPInspectionsContent() {
 
       const res = await fetch(`/api/vgp/inspections/export?${params}`);
       if (!res.ok) throw new Error('Export failed');
-      
+
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -150,7 +152,7 @@ function VGPInspectionsContent() {
   }
 
   // Dynamic count text
-  const countText = filteredInspections.length === 1 
+  const countText = filteredInspections.length === 1
     ? t('vgpInspections.inspectionsFound')
     : t('vgpInspections.inspectionsFoundPlural');
 
@@ -249,6 +251,12 @@ function VGPInspectionsContent() {
                   {t('vgpInspections.company')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  Type vérif.
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  Observations
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
                   {t('vgpInspections.result')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
@@ -262,7 +270,7 @@ function VGPInspectionsContent() {
             <tbody className="divide-y divide-gray-200">
               {paginatedInspections.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-gray-500">
+                  <td colSpan={9} className="px-4 py-12 text-center text-gray-500">
                     {t('vgpInspections.noResults')}
                   </td>
                 </tr>
@@ -284,6 +292,19 @@ function VGPInspectionsContent() {
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
                       {inspection.inspector_company}
+                    </td>
+                    {/*ADD: Verification Type Cell */}
+                    <td className="px-4 py-3 text-sm text-gray-700">
+                      {inspection.verification_type === 'PERIODIQUE' && 'Périodique'}
+                      {inspection.verification_type === 'INITIALE' && 'Initiale'}
+                      {inspection.verification_type === 'REMISE_SERVICE' && 'Remise service'}
+                    </td>
+
+                    {/* ADD: Observations Cell */}
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      <div className="max-w-[200px] truncate" title={inspection.observations || 'RAS'}>
+                        {inspection.observations || 'RAS'}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-medium border ${RESULT_CONFIG[inspection.result].color}`}>

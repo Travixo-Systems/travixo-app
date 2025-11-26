@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
 import { v4 as uuidv4 } from 'uuid'
+import { useLanguage } from '@/lib/LanguageContext'
+import { createTranslator } from '@/lib/i18n'
 
 interface AddAssetModalProps {
   isOpen: boolean
@@ -16,6 +18,8 @@ interface AddAssetModalProps {
 export default function AddAssetModal({ isOpen, onClose }: AddAssetModalProps) {
   const router = useRouter()
   const supabase = createClient()
+  const { language } = useLanguage()
+  const t = createTranslator(language)
   const [isLoading, setIsLoading] = useState(false)
 
   const [formData, setFormData] = useState({
@@ -35,9 +39,8 @@ export default function AddAssetModal({ isOpen, onClose }: AddAssetModalProps) {
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
+      if (!user) throw new Error(t('assets.errorNotAuthenticated'))
 
-      // Fixed: Properly destructure error from the query
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('organization_id')
@@ -45,7 +48,7 @@ export default function AddAssetModal({ isOpen, onClose }: AddAssetModalProps) {
         .single()
 
       if (userError || !userData?.organization_id) {
-        throw new Error('No organization found. Please complete your profile setup.')
+        throw new Error(t('assets.errorNoOrganization'))
       }
 
       const qrCode = uuidv4()
@@ -69,7 +72,7 @@ export default function AddAssetModal({ isOpen, onClose }: AddAssetModalProps) {
 
       if (insertError) throw insertError
 
-      toast.success('Asset added successfully!')
+      toast.success(t('assets.toastAssetAdded'))
       router.refresh()
       onClose()
 
@@ -85,7 +88,7 @@ export default function AddAssetModal({ isOpen, onClose }: AddAssetModalProps) {
       })
     } catch (error) {
       console.error('Error adding asset:', error)
-      toast.error(error instanceof Error ? error.message : 'Failed to add asset')
+      toast.error(error instanceof Error ? error.message : t('assets.errorAddFailed'))
     } finally {
       setIsLoading(false)
     }
@@ -120,7 +123,7 @@ export default function AddAssetModal({ isOpen, onClose }: AddAssetModalProps) {
               <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 shadow-xl transition-all">
                 <div className="flex justify-between items-center mb-4">
                   <Dialog.Title className="text-2xl font-bold text-gray-900">
-                    Add New Asset
+                    {t('assets.addAssetTitle')}
                   </Dialog.Title>
                   <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
                     <XMarkIcon className="h-6 w-6" />
@@ -131,7 +134,7 @@ export default function AddAssetModal({ isOpen, onClose }: AddAssetModalProps) {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Asset Name *
+                        {t('assets.labelAssetName')} *
                       </label>
                       <input
                         type="text"
@@ -139,55 +142,55 @@ export default function AddAssetModal({ isOpen, onClose }: AddAssetModalProps) {
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                        placeholder="e.g., Excavator CAT 320"
+                        placeholder={t('assets.placeholderAssetName')}
                       />
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Serial Number
+                        {t('assets.labelSerialNumber')}
                       </label>
                       <input
                         type="text"
                         value={formData.serial_number}
                         onChange={(e) => setFormData({ ...formData, serial_number: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                        placeholder="e.g., SN123456"
+                        placeholder={t('assets.placeholderSerial')}
                       />
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Current Location
+                        {t('assets.labelCurrentLocation')}
                       </label>
                       <input
                         type="text"
                         value={formData.current_location}
                         onChange={(e) => setFormData({ ...formData, current_location: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                        placeholder="e.g., Warehouse A"
+                        placeholder={t('assets.placeholderLocation')}
                       />
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Status
+                        {t('assets.labelStatus')}
                       </label>
                       <select
                         value={formData.status}
                         onChange={(e) => setFormData({ ...formData, status: e.target.value as typeof formData.status })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                       >
-                        <option value="available">Available</option>
-                        <option value="in_use">In Use</option>
-                        <option value="maintenance">Maintenance</option>
-                        <option value="retired">Retired</option>
+                        <option value="available">{t('assets.statusAvailable')}</option>
+                        <option value="in_use">{t('assets.statusInUse')}</option>
+                        <option value="maintenance">{t('assets.statusMaintenance')}</option>
+                        <option value="retired">{t('assets.statusRetired')}</option>
                       </select>
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Purchase Date
+                        {t('assets.labelPurchaseDate')}
                       </label>
                       <input
                         type="date"
@@ -199,7 +202,7 @@ export default function AddAssetModal({ isOpen, onClose }: AddAssetModalProps) {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Purchase Price (€)
+                        {t('assets.labelPurchasePrice')} (EUR)
                       </label>
                       <input
                         type="number"
@@ -207,13 +210,13 @@ export default function AddAssetModal({ isOpen, onClose }: AddAssetModalProps) {
                         value={formData.purchase_price}
                         onChange={(e) => setFormData({ ...formData, purchase_price: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                        placeholder="0.00"
+                        placeholder={t('assets.placeholderPrice')}
                       />
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Current Value (€)
+                        {t('assets.labelCurrentValue')} (EUR)
                       </label>
                       <input
                         type="number"
@@ -221,20 +224,20 @@ export default function AddAssetModal({ isOpen, onClose }: AddAssetModalProps) {
                         value={formData.current_value}
                         onChange={(e) => setFormData({ ...formData, current_value: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                        placeholder="0.00"
+                        placeholder={t('assets.placeholderPrice')}
                       />
                     </div>
 
                     <div className="col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Description
+                        {t('assets.labelDescription')}
                       </label>
                       <textarea
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         rows={3}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                        placeholder="Additional information about this asset..."
+                        placeholder={t('assets.placeholderDescription')}
                       />
                     </div>
                   </div>
@@ -245,14 +248,14 @@ export default function AddAssetModal({ isOpen, onClose }: AddAssetModalProps) {
                       onClick={onClose}
                       className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
                     >
-                      Cancel
+                      {t('assets.buttonCancel')}
                     </button>
                     <button
                       type="submit"
                       disabled={isLoading}
                       className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isLoading ? 'Adding...' : 'Add Asset'}
+                      {isLoading ? t('assets.buttonAdding') : t('assets.buttonAddAsset')}
                     </button>
                   </div>
                 </form>
