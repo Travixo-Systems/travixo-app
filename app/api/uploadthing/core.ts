@@ -31,6 +31,7 @@ async function createClient() {
 }
 
 export const ourFileRouter = {
+  // VGP Certificate uploads (PDF)
   vgpCertificate: f({ 
     pdf: { 
       maxFileSize: "4MB",
@@ -54,6 +55,63 @@ export const ourFileRouter = {
     })
     .onUploadComplete(async ({ metadata, file }) => {
       console.log("Certificate uploaded:", file.url);
+
+      return { 
+        uploadedBy: metadata.userId,
+        fileUrl: file.url 
+      };
+    }),
+
+  // Organization logo uploads (Image)
+  organizationLogo: f({ 
+    image: { 
+      maxFileSize: "2MB",
+      maxFileCount: 1,
+    } 
+  })
+    .middleware(async () => {
+      const supabase = await createClient();
+      const { data: { user }, error } = await supabase.auth.getUser();
+
+      if (error || !user) {
+        throw new Error("Unauthorized");
+      }
+
+      // Get user's organization
+      const { data: userData } = await supabase
+        .from('users')
+        .select('organization_id, role')
+        .eq('id', user.id)
+        .single();
+
+      if (!userData?.organization_id) {
+        throw new Error("No organization found");
+      }
+
+      // Only owners and admins can upload logo
+      if (!['owner', 'admin'].includes(userData.role)) {
+        throw new Error("Permission denied");
+      }
+
+      console.log("Logo upload by user:", user.id, "for org:", userData.organization_id);
+
+      return { 
+        userId: user.id,
+        organizationId: userData.organization_id 
+      };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      console.log("Logo uploaded:", file.url);
+
+      // Update organization with new logo URL
+      const supabase = await createClient();
+      await supabase
+        .from('organizations')
+        .update({ 
+          logo_url: file.ufsUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', metadata.organizationId);
 
       return { 
         uploadedBy: metadata.userId,
