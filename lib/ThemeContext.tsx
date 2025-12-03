@@ -74,6 +74,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.style.setProperty('--color-danger-rgb', hexToRgb(colors.danger));
   }, [colors]);
 
+  // Show loading spinner until colors are loaded
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
   return (
     <ThemeContext.Provider value={{ colors, logo, orgName, isLoading }}>
       {children}
