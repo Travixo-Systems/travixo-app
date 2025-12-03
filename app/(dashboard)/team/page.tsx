@@ -7,65 +7,51 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useLanguage } from '@/lib/LanguageContext';
+import { createTranslator } from '@/lib/i18n';
+import { createClient } from '@/lib/supabase/client';
 import {
   Users,
-  UserPlus,
-  Search,
-  Mail,
   Shield,
   ShieldCheck,
-  ShieldAlert,
   Eye,
+  Search,
+  UserPlus,
+  Mail,
   MoreHorizontal,
-  X,
-  Trash2,
   Edit,
-  Clock,
-  CheckCircle,
+  Trash2,
   AlertCircle,
-  ChevronDown,
+  X,
+  Check,
 } from 'lucide-react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 // ============================================================================
-// B2B PROFESSIONAL BRAND COLORS (Matching VGP Module)
+// BRAND COLORS
 // ============================================================================
 
 const BRAND_COLORS = {
   primary: '#1e3a5f',
   danger: '#b91c1c',
   warning: '#d97706',
-  warningYellow: '#eab308',
   success: '#047857',
   gray: '#6b7280',
-} as const;
+};
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
+type RoleType = 'owner' | 'admin' | 'member' | 'viewer';
+
 interface TeamMember {
   id: string;
   email: string;
   full_name: string | null;
-  role: 'owner' | 'admin' | 'member' | 'viewer';
+  role: RoleType;
+  organization_id: string;
   created_at: string;
-  updated_at: string;
-  last_login?: string | null;
-}
-
-interface Invitation {
-  id: string;
-  email: string;
-  role: 'admin' | 'member' | 'viewer';
-  invited_by: string | null;
-  expires_at: string;
-  created_at: string;
-  status: 'pending' | 'accepted' | 'expired';
-  inviter?: {
-    full_name: string | null;
-    email: string;
-  } | null;
+  updated_at: string | null;
 }
 
 interface TeamStats {
@@ -76,242 +62,31 @@ interface TeamStats {
   pendingInvites: number;
 }
 
-type RoleType = 'owner' | 'admin' | 'member' | 'viewer';
-
 // ============================================================================
-// TRANSLATIONS
+// ROLE CONFIG
 // ============================================================================
 
-type Language = 'en' | 'fr';
-
-const translations = {
-  pageTitle: {
-    en: 'Team Management',
-    fr: 'Gestion de l\'Equipe',
-  },
-  pageSubtitle: {
-    en: 'Manage team members and permissions',
-    fr: 'Gerez les membres de l\'equipe et les permissions',
-  },
-  inviteMember: {
-    en: 'Invite Member',
-    fr: 'Inviter un Membre',
-  },
-  searchPlaceholder: {
-    en: 'Search members...',
-    fr: 'Rechercher des membres...',
-  },
-  // Stats
-  totalMembers: {
-    en: 'Total Members',
-    fr: 'Total Membres',
-  },
-  activeUsers: {
-    en: 'Active users',
-    fr: 'Utilisateurs actifs',
-  },
-  administrators: {
-    en: 'Administrators',
-    fr: 'Administrateurs',
-  },
-  fullAccess: {
-    en: 'Full access',
-    fr: 'Acces complet',
-  },
-  teamMembers: {
-    en: 'Team Members',
-    fr: 'Membres d\'Equipe',
-  },
-  standardAccess: {
-    en: 'Standard access',
-    fr: 'Acces standard',
-  },
-  pendingInvites: {
-    en: 'Pending Invites',
-    fr: 'Invitations en Attente',
-  },
-  awaitingResponse: {
-    en: 'Awaiting response',
-    fr: 'En attente de reponse',
-  },
-  // Table headers
-  member: {
-    en: 'Member',
-    fr: 'Membre',
-  },
-  role: {
-    en: 'Role',
-    fr: 'Role',
-  },
-  status: {
-    en: 'Status',
-    fr: 'Statut',
-  },
-  joinedDate: {
-    en: 'Joined',
-    fr: 'Membre Depuis',
-  },
-  lastActive: {
-    en: 'Last Active',
-    fr: 'Derniere Activite',
-  },
-  actions: {
-    en: 'Actions',
-    fr: 'Actions',
-  },
-  // Roles
-  roleOwner: {
-    en: 'Owner',
-    fr: 'Proprietaire',
-  },
-  roleAdmin: {
-    en: 'Administrator',
-    fr: 'Administrateur',
-  },
-  roleMember: {
-    en: 'Member',
-    fr: 'Membre',
-  },
-  roleViewer: {
-    en: 'Viewer',
-    fr: 'Lecteur',
-  },
-  // Role descriptions
-  roleOwnerDesc: {
-    en: 'Full control including billing and settings',
-    fr: 'Controle total incluant facturation et parametres',
-  },
-  roleAdminDesc: {
-    en: 'Manage assets, VGP, audits, and team',
-    fr: 'Gerer equipements, VGP, audits et equipe',
-  },
-  roleMemberDesc: {
-    en: 'View and edit assets, record inspections',
-    fr: 'Consulter et modifier equipements, enregistrer inspections',
-  },
-  roleViewerDesc: {
-    en: 'Read-only access to dashboard and reports',
-    fr: 'Acces en lecture seule au tableau de bord et rapports',
-  },
-  // Status labels
-  statusActive: {
-    en: 'Active',
-    fr: 'Actif',
-  },
-  statusPending: {
-    en: 'Pending',
-    fr: 'En Attente',
-  },
-  statusExpired: {
-    en: 'Expired',
-    fr: 'Expire',
-  },
-  // Actions
-  changeRole: {
-    en: 'Change Role',
-    fr: 'Changer le Role',
-  },
-  resendInvite: {
-    en: 'Resend Invite',
-    fr: 'Renvoyer l\'Invitation',
-  },
-  cancelInvite: {
-    en: 'Cancel Invite',
-    fr: 'Annuler l\'Invitation',
-  },
-  removeMember: {
-    en: 'Remove Member',
-    fr: 'Retirer le Membre',
-  },
-  // Empty states
-  noMembers: {
-    en: 'No team members yet',
-    fr: 'Aucun membre d\'equipe',
-  },
-  noMembersDesc: {
-    en: 'Invite team members to collaborate',
-    fr: 'Invitez des membres pour collaborer',
-  },
-  noPending: {
-    en: 'No pending invitations',
-    fr: 'Aucune invitation en attente',
-  },
-  // Modal
-  inviteNewMember: {
-    en: 'Invite New Member',
-    fr: 'Inviter un Nouveau Membre',
-  },
-  emailAddress: {
-    en: 'Email Address',
-    fr: 'Adresse Email',
-  },
-  emailPlaceholder: {
-    en: 'colleague@company.com',
-    fr: 'collegue@entreprise.com',
-  },
-  selectRole: {
-    en: 'Select Role',
-    fr: 'Selectionner un Role',
-  },
-  cancel: {
-    en: 'Cancel',
-    fr: 'Annuler',
-  },
-  sendInvite: {
-    en: 'Send Invitation',
-    fr: 'Envoyer l\'Invitation',
-  },
-  sending: {
-    en: 'Sending...',
-    fr: 'Envoi...',
-  },
-  inviteSent: {
-    en: 'Invitation sent successfully',
-    fr: 'Invitation envoyee avec succes',
-  },
-  // Confirm dialogs
-  confirmRemove: {
-    en: 'Are you sure you want to remove this member?',
-    fr: 'Etes-vous sur de vouloir retirer ce membre ?',
-  },
-  confirmRemoveDesc: {
-    en: 'They will lose access to the organization immediately.',
-    fr: 'Il perdra immediatement l\'acces a l\'organisation.',
-  },
-  confirm: {
-    en: 'Confirm',
-    fr: 'Confirmer',
-  },
-  loading: {
-    en: 'Loading...',
-    fr: 'Chargement...',
-  },
-  you: {
-    en: '(You)',
-    fr: '(Vous)',
-  },
-  expiresIn: {
-    en: 'Expires in',
-    fr: 'Expire dans',
-  },
-  days: {
-    en: 'days',
-    fr: 'jours',
-  },
-  // Sections
-  activeMembers: {
-    en: 'Active Members',
-    fr: 'Membres Actifs',
-  },
-  pendingInvitations: {
-    en: 'Pending Invitations',
-    fr: 'Invitations en Attente',
-  },
+const ROLE_CONFIG: Record<RoleType, { icon: React.ElementType; color: string; bgColor: string }> = {
+  owner: { icon: ShieldCheck, color: BRAND_COLORS.primary, bgColor: 'bg-blue-50' },
+  admin: { icon: Shield, color: BRAND_COLORS.success, bgColor: 'bg-green-50' },
+  member: { icon: Users, color: BRAND_COLORS.warning, bgColor: 'bg-orange-50' },
+  viewer: { icon: Eye, color: BRAND_COLORS.gray, bgColor: 'bg-gray-50' },
 };
 
 // ============================================================================
 // UTILITIES
 // ============================================================================
+
+function getInitials(name: string | null, email: string): string {
+  if (name) {
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  }
+  return email.substring(0, 2).toUpperCase();
+}
 
 function formatDateFR(iso: string | null): string {
   if (!iso) return '-';
@@ -319,91 +94,30 @@ function formatDateFR(iso: string | null): string {
     const date = new Date(iso);
     return new Intl.DateTimeFormat('fr-FR', {
       year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
     }).format(date);
   } catch {
     return iso;
   }
 }
 
-function formatRelativeTime(iso: string | null, lang: Language): string {
+function formatRelativeTime(iso: string | null, language: 'en' | 'fr'): string {
   if (!iso) return '-';
   try {
     const date = new Date(iso);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) return lang === 'fr' ? 'Aujourd\'hui' : 'Today';
-    if (diffDays === 1) return lang === 'fr' ? 'Hier' : 'Yesterday';
-    if (diffDays < 7) return lang === 'fr' ? `Il y a ${diffDays} jours` : `${diffDays} days ago`;
-    if (diffDays < 30) {
-      const weeks = Math.floor(diffDays / 7);
-      return lang === 'fr' ? `Il y a ${weeks} semaine${weeks > 1 ? 's' : ''}` : `${weeks} week${weeks > 1 ? 's' : ''} ago`;
-    }
-    return formatDateFR(iso);
+
+    if (diffDays === 0) return language === 'fr' ? "Aujourd'hui" : 'Today';
+    if (diffDays === 1) return language === 'fr' ? 'Hier' : 'Yesterday';
+    if (diffDays < 7) return `${diffDays} ${language === 'fr' ? 'jours' : 'days ago'}`;
+    const weeks = Math.floor(diffDays / 7);
+    return `${weeks} ${language === 'fr' ? 'semaines' : 'weeks ago'}`;
   } catch {
-    return iso || '-';
+    return iso;
   }
-}
-
-function getRoleConfig(role: RoleType, t: typeof translations, lang: Language) {
-  switch (role) {
-    case 'owner':
-      return {
-        label: t.roleOwner[lang],
-        description: t.roleOwnerDesc[lang],
-        color: BRAND_COLORS.primary,
-        bgColor: 'bg-blue-50',
-        textColor: 'text-blue-700',
-        Icon: ShieldCheck,
-      };
-    case 'admin':
-      return {
-        label: t.roleAdmin[lang],
-        description: t.roleAdminDesc[lang],
-        color: BRAND_COLORS.success,
-        bgColor: 'bg-green-50',
-        textColor: 'text-green-700',
-        Icon: Shield,
-      };
-    case 'member':
-      return {
-        label: t.roleMember[lang],
-        description: t.roleMemberDesc[lang],
-        color: BRAND_COLORS.warning,
-        bgColor: 'bg-amber-50',
-        textColor: 'text-amber-700',
-        Icon: Users,
-      };
-    case 'viewer':
-      return {
-        label: t.roleViewer[lang],
-        description: t.roleViewerDesc[lang],
-        color: BRAND_COLORS.gray,
-        bgColor: 'bg-gray-50',
-        textColor: 'text-gray-700',
-        Icon: Eye,
-      };
-    default:
-      return {
-        label: role,
-        description: '',
-        color: BRAND_COLORS.gray,
-        bgColor: 'bg-gray-50',
-        textColor: 'text-gray-700',
-        Icon: Users,
-      };
-  }
-}
-
-function getInitials(name: string | null, email: string): string {
-  if (name) {
-    const parts = name.split(' ');
-    return parts.map(p => p[0]).slice(0, 2).join('').toUpperCase();
-  }
-  return email.substring(0, 2).toUpperCase();
 }
 
 // ============================================================================
@@ -411,13 +125,12 @@ function getInitials(name: string | null, email: string): string {
 // ============================================================================
 
 export default function TeamPage() {
-  const supabase = createClientComponentClient();
+  const { language } = useLanguage();
+  const t = createTranslator(language);
+  const supabase = createClient();
   
   // State
-  const [mounted, setMounted] = useState(false);
-  const [language, setLanguage] = useState<Language>('fr');
   const [members, setMembers] = useState<TeamMember[]>([]);
-  const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [stats, setStats] = useState<TeamStats>({ total: 0, admins: 0, members: 0, viewers: 0, pendingInvites: 0 });
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -433,36 +146,22 @@ export default function TeamPage() {
   // Form states
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'admin' | 'member' | 'viewer'>('member');
+  const [newRole, setNewRole] = useState<RoleType>('member');
   const [sending, setSending] = useState(false);
-
-  const t = translations;
-
-  // ============================================================================
-  // HYDRATION FIX - Must mount before accessing localStorage
-  // ============================================================================
-
-  useEffect(() => {
-    setMounted(true);
-    // Get language from localStorage only on client
-    const savedLang = localStorage.getItem('travixo-language') as Language;
-    if (savedLang) setLanguage(savedLang);
-  }, []);
 
   // ============================================================================
   // DATA FETCHING
   // ============================================================================
 
   useEffect(() => {
-    if (mounted) {
-      fetchTeamData();
-    }
-  }, [mounted]);
+    fetchTeamData();
+  }, []);
 
   async function fetchTeamData() {
-    setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+
       setCurrentUserId(user.id);
 
       const { data: userData } = await supabase
@@ -475,14 +174,14 @@ export default function TeamPage() {
       setCurrentUserRole(userData.role as RoleType);
 
       // Fetch team members
-      const { data: membersData, error: membersError } = await supabase
+      const { data: membersData, error } = await supabase
         .from('users')
         .select('*')
         .eq('organization_id', userData.organization_id)
         .order('role', { ascending: true })
         .order('created_at', { ascending: true });
 
-      if (membersError) throw membersError;
+      if (error) throw error;
 
       const teamMembers = (membersData || []) as TeamMember[];
       setMembers(teamMembers);
@@ -490,38 +189,13 @@ export default function TeamPage() {
       // Calculate stats
       setStats({
         total: teamMembers.length,
-        admins: teamMembers.filter(m => m.role === 'admin' || m.role === 'owner').length,
+        admins: teamMembers.filter(m => m.role === 'owner' || m.role === 'admin').length,
         members: teamMembers.filter(m => m.role === 'member').length,
         viewers: teamMembers.filter(m => m.role === 'viewer').length,
-        pendingInvites: 0, // Will update from invitations
+        pendingInvites: 0, // Would come from team_invitations table
       });
-
-      // Note: team_invitations table may not exist yet
-      // This is prepared for when it's created
-      try {
-        const { data: invitesData } = await supabase
-          .from('team_invitations')
-          .select(`
-            *,
-            inviter:invited_by (
-              full_name,
-              email
-            )
-          `)
-          .eq('organization_id', userData.organization_id)
-          .eq('status', 'pending')
-          .order('created_at', { ascending: false });
-
-        if (invitesData) {
-          setInvitations(invitesData as Invitation[]);
-          setStats(prev => ({ ...prev, pendingInvites: invitesData.length }));
-        }
-      } catch {
-        // Table doesn't exist yet, that's okay
-        setInvitations([]);
-      }
     } catch (err) {
-      console.error('Error fetching team data:', err);
+      console.error('Error fetching team:', err);
     } finally {
       setLoading(false);
     }
@@ -531,449 +205,359 @@ export default function TeamPage() {
   // ACTIONS
   // ============================================================================
 
-  async function handleInvite() {
-    if (!inviteEmail.trim()) return;
+  async function handleChangeRole() {
+    if (!selectedMember || !newRole) return;
 
     setSending(true);
-    try {
-      // For now, show a message that the feature needs backend setup
-      // In production, this would call the invite API
-      alert(language === 'fr' 
-        ? 'Fonctionnalite en cours de developpement. L\'API d\'invitation sera bientot disponible.'
-        : 'Feature in development. Invitation API coming soon.');
-      
-      setInviteEmail('');
-      setInviteRole('member');
-      setShowInviteModal(false);
-    } catch (err) {
-      console.error('Error sending invite:', err);
-    } finally {
-      setSending(false);
-    }
-  }
-
-  async function handleChangeRole(memberId: string, newRole: RoleType) {
     try {
       const { error } = await supabase
         .from('users')
         .update({ role: newRole, updated_at: new Date().toISOString() })
-        .eq('id', memberId);
+        .eq('id', selectedMember.id);
 
       if (error) throw error;
-      
+
       setShowRoleModal(false);
       setSelectedMember(null);
       fetchTeamData();
     } catch (err) {
       console.error('Error changing role:', err);
+    } finally {
+      setSending(false);
     }
   }
 
   async function handleRemoveMember() {
     if (!selectedMember) return;
 
+    setSending(true);
     try {
-      // Remove the user from the organization
       const { error } = await supabase
         .from('users')
-        .update({ organization_id: null, updated_at: new Date().toISOString() })
+        .update({ organization_id: null })
         .eq('id', selectedMember.id);
 
       if (error) throw error;
-      
+
       setShowRemoveModal(false);
       setSelectedMember(null);
       fetchTeamData();
     } catch (err) {
       console.error('Error removing member:', err);
+    } finally {
+      setSending(false);
     }
   }
 
   // ============================================================================
-  // FILTERED DATA
+  // PERMISSIONS
   // ============================================================================
 
-  const filteredMembers = members.filter(member =>
-    (member.full_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-    member.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   const canManageTeam = currentUserRole === 'owner' || currentUserRole === 'admin';
+
+  function canEditMember(member: TeamMember): boolean {
+    if (!canManageTeam) return false;
+    if (member.id === currentUserId) return false;
+    if (member.role === 'owner') return false;
+    if (currentUserRole === 'admin' && member.role === 'admin') return false;
+    return true;
+  }
+
+  // ============================================================================
+  // FILTER
+  // ============================================================================
+
+  const filteredMembers = members.filter(m =>
+    (m.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+     m.email.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   // ============================================================================
   // RENDER
   // ============================================================================
 
-  if (!mounted || loading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
-        <span className="ml-3 text-gray-600">{t.loading[language]}</span>
+        <span className="ml-3 text-gray-600">{t('common.loading')}</span>
       </div>
     );
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="space-y-6 p-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t.pageTitle[language]}</h1>
-          <p className="text-sm text-gray-500 mt-1">{t.pageSubtitle[language]}</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('team.pageTitle')}</h1>
+          <p className="text-gray-600 mt-1">{t('team.pageSubtitle')}</p>
         </div>
         {canManageTeam && (
           <button
             onClick={() => setShowInviteModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 text-white rounded-lg font-medium"
             style={{ backgroundColor: BRAND_COLORS.primary }}
           >
             <UserPlus className="w-4 h-4" />
-            {t.inviteMember[language]}
+            {t('team.inviteMember')}
           </button>
         )}
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {/* Total Members */}
-        <div className="bg-white rounded-lg p-5 shadow-sm border-l-4 border-b-4 border-gray-400">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">{t.totalMembers[language]}</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{stats.total}</p>
-              <p className="text-xs text-gray-400 mt-1">{t.activeUsers[language]}</p>
-            </div>
-            <div className="p-3 rounded-full bg-gray-100">
-              <Users className="w-6 h-6 text-gray-600" />
-            </div>
-          </div>
-        </div>
-
-        {/* Administrators */}
-        <div 
-          className="bg-white rounded-lg p-5 shadow-sm border-l-4 border-b-4"
-          style={{ borderColor: BRAND_COLORS.success }}
+      {/* Stats */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <div
+          className="bg-white rounded-lg p-5"
+          style={{ borderLeft: `4px solid ${BRAND_COLORS.gray}`, borderBottom: `4px solid ${BRAND_COLORS.gray}` }}
         >
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">{t.administrators[language]}</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{stats.admins}</p>
-              <p className="text-xs text-gray-400 mt-1">{t.fullAccess[language]}</p>
-            </div>
-            <div className="p-3 rounded-full" style={{ backgroundColor: `${BRAND_COLORS.success}15` }}>
-              <ShieldCheck className="w-6 h-6" style={{ color: BRAND_COLORS.success }} />
-            </div>
+            <p className="text-sm font-medium text-gray-600">{t('team.totalMembers')}</p>
+            <Users className="w-5 h-5 text-gray-400" />
           </div>
+          <p className="text-3xl font-bold text-gray-900 mt-2">{stats.total}</p>
+          <p className="text-xs text-gray-500 mt-1">{t('team.teamSize')}</p>
         </div>
 
-        {/* Team Members */}
-        <div 
-          className="bg-white rounded-lg p-5 shadow-sm border-l-4 border-b-4"
-          style={{ borderColor: BRAND_COLORS.warning }}
+        <div
+          className="bg-white rounded-lg p-5"
+          style={{ borderLeft: `4px solid ${BRAND_COLORS.success}`, borderBottom: `4px solid ${BRAND_COLORS.success}` }}
         >
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">{t.teamMembers[language]}</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{stats.members + stats.viewers}</p>
-              <p className="text-xs text-gray-400 mt-1">{t.standardAccess[language]}</p>
-            </div>
-            <div className="p-3 rounded-full" style={{ backgroundColor: `${BRAND_COLORS.warning}15` }}>
-              <Users className="w-6 h-6" style={{ color: BRAND_COLORS.warning }} />
-            </div>
+            <p className="text-sm font-medium text-gray-600">{t('team.administrators')}</p>
+            <Shield className="w-5 h-5" style={{ color: BRAND_COLORS.success }} />
           </div>
+          <p className="text-3xl font-bold mt-2" style={{ color: BRAND_COLORS.success }}>{stats.admins}</p>
+          <p className="text-xs text-gray-500 mt-1">{t('team.fullAccess')}</p>
         </div>
 
-        {/* Pending Invites */}
-        <div 
-          className="bg-white rounded-lg p-5 shadow-sm border-l-4 border-b-4"
-          style={{ borderColor: BRAND_COLORS.primary }}
+        <div
+          className="bg-white rounded-lg p-5"
+          style={{ borderLeft: `4px solid ${BRAND_COLORS.warning}`, borderBottom: `4px solid ${BRAND_COLORS.warning}` }}
         >
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">{t.pendingInvites[language]}</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{stats.pendingInvites}</p>
-              <p className="text-xs text-gray-400 mt-1">{t.awaitingResponse[language]}</p>
-            </div>
-            <div className="p-3 rounded-full" style={{ backgroundColor: `${BRAND_COLORS.primary}15` }}>
-              <Clock className="w-6 h-6" style={{ color: BRAND_COLORS.primary }} />
-            </div>
+            <p className="text-sm font-medium text-gray-600">{t('team.teamMembers')}</p>
+            <Users className="w-5 h-5" style={{ color: BRAND_COLORS.warning }} />
           </div>
+          <p className="text-3xl font-bold mt-2" style={{ color: BRAND_COLORS.warning }}>{stats.members + stats.viewers}</p>
+          <p className="text-xs text-gray-500 mt-1">{t('team.standardAccess')}</p>
+        </div>
+
+        <div
+          className="bg-white rounded-lg p-5"
+          style={{ borderLeft: `4px solid ${BRAND_COLORS.primary}`, borderBottom: `4px solid ${BRAND_COLORS.primary}` }}
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-gray-600">{t('team.pendingInvites')}</p>
+            <Mail className="w-5 h-5" style={{ color: BRAND_COLORS.primary }} />
+          </div>
+          <p className="text-3xl font-bold mt-2" style={{ color: BRAND_COLORS.primary }}>{stats.pendingInvites}</p>
+          <p className="text-xs text-gray-500 mt-1">{t('team.awaitingResponse')}</p>
         </div>
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+      <div className="bg-white rounded-lg shadow-sm p-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
-            placeholder={t.searchPlaceholder[language]}
+            placeholder={t('team.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
           />
         </div>
       </div>
 
-      {/* Active Members Section */}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">{t.activeMembers[language]}</h2>
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          {filteredMembers.length === 0 ? (
-            <div className="text-center py-16">
-              <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-1">{t.noMembers[language]}</h3>
-              <p className="text-sm text-gray-500 mb-4">{t.noMembersDesc[language]}</p>
-              {canManageTeam && (
-                <button
-                  onClick={() => setShowInviteModal(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg"
-                  style={{ backgroundColor: BRAND_COLORS.primary }}
-                >
-                  <UserPlus className="w-4 h-4" />
-                  {t.inviteMember[language]}
-                </button>
-              )}
-            </div>
-          ) : (
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
-                    {t.member[language]}
-                  </th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
-                    {t.role[language]}
-                  </th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
-                    {t.joinedDate[language]}
-                  </th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
-                    {t.lastActive[language]}
-                  </th>
-                  {canManageTeam && (
-                    <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
-                      {t.actions[language]}
-                    </th>
-                  )}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {filteredMembers.map((member) => {
-                  const roleConfig = getRoleConfig(member.role, t, language);
-                  const isCurrentUser = member.id === currentUserId;
-                  const canEdit = canManageTeam && !isCurrentUser && member.role !== 'owner';
-
-                  return (
-                    <tr key={member.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div 
-                            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium text-sm"
-                            style={{ backgroundColor: roleConfig.color }}
-                          >
-                            {getInitials(member.full_name, member.email)}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium text-gray-900">
-                                {member.full_name || member.email.split('@')[0]}
-                              </p>
-                              {isCurrentUser && (
-                                <span className="text-xs text-gray-500">{t.you[language]}</span>
-                              )}
-                            </div>
-                            <p className="text-sm text-gray-500">{member.email}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full ${roleConfig.bgColor} ${roleConfig.textColor}`}>
-                            <roleConfig.Icon className="w-3.5 h-3.5" />
-                            {roleConfig.label}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {formatDateFR(member.created_at)}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {formatRelativeTime(member.updated_at, language)}
-                      </td>
-                      {canManageTeam && (
-                        <td className="px-6 py-4">
-                          {canEdit && (
-                            <div className="flex items-center justify-end gap-2">
-                              <button
-                                onClick={() => {
-                                  setSelectedMember(member);
-                                  setShowRoleModal(true);
-                                }}
-                                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                                title={t.changeRole[language]}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setSelectedMember(member);
-                                  setShowRemoveModal(true);
-                                }}
-                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                title={t.removeMember[language]}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          )}
-                        </td>
-                      )}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+      {/* Members List */}
+      {filteredMembers.length === 0 ? (
+        <div className="bg-white rounded-lg shadow-sm p-12 text-center">
+          <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900">{t('team.noMembers')}</h3>
+          <p className="text-gray-500 mt-1">{t('team.noMembersDesc')}</p>
+          {canManageTeam && (
+            <button
+              onClick={() => setShowInviteModal(true)}
+              className="mt-4 px-4 py-2 text-white rounded-lg text-sm font-medium"
+              style={{ backgroundColor: BRAND_COLORS.primary }}
+            >
+              {t('team.inviteMember')}
+            </button>
           )}
         </div>
-      </div>
+      ) : (
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {t('team.member')}
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {t('team.role')}
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {t('team.joined')}
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {t('team.lastActive')}
+                </th>
+                {canManageTeam && (
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('team.actions')}
+                  </th>
+                )}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {filteredMembers.map((member) => {
+                const roleConfig = ROLE_CONFIG[member.role];
+                const RoleIcon = roleConfig.icon;
+                const isCurrentUser = member.id === currentUserId;
 
-      {/* Pending Invitations Section */}
-      {invitations.length > 0 && (
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">{t.pendingInvitations[language]}</h2>
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
-                    {t.emailAddress[language]}
-                  </th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
-                    {t.role[language]}
-                  </th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
-                    {t.status[language]}
-                  </th>
-                  {canManageTeam && (
-                    <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
-                      {t.actions[language]}
-                    </th>
-                  )}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {invitations.map((invite) => {
-                  const roleConfig = getRoleConfig(invite.role, t, language);
-
-                  return (
-                    <tr key={invite.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-full bg-gray-100">
-                            <Mail className="w-4 h-4 text-gray-500" />
-                          </div>
-                          <span className="text-gray-900">{invite.email}</span>
+                return (
+                  <tr key={member.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium"
+                          style={{ backgroundColor: BRAND_COLORS.primary }}
+                        >
+                          {getInitials(member.full_name, member.email)}
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full ${roleConfig.bgColor} ${roleConfig.textColor}`}>
-                          <roleConfig.Icon className="w-3.5 h-3.5" />
-                          {roleConfig.label}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-amber-50 text-amber-700">
-                          <Clock className="w-3.5 h-3.5" />
-                          {t.statusPending[language]}
-                        </span>
-                      </td>
-                      {canManageTeam && (
-                        <td className="px-6 py-4">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-gray-900">
+                              {member.full_name || member.email}
+                            </span>
+                            {isCurrentUser && (
+                              <span className="px-1.5 py-0.5 text-xs bg-gray-100 text-gray-600 rounded">
+                                {language === 'fr' ? 'Vous' : 'You'}
+                              </span>
+                            )}
+                          </div>
+                          {member.full_name && (
+                            <span className="text-sm text-gray-500">{member.email}</span>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full ${roleConfig.bgColor}`}
+                        style={{ color: roleConfig.color }}
+                      >
+                        <RoleIcon className="w-3.5 h-3.5" />
+                        {t(`team.role${member.role.charAt(0).toUpperCase() + member.role.slice(1)}`)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {formatDateFR(member.created_at)}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {formatRelativeTime(member.updated_at || member.created_at, language)}
+                    </td>
+                    {canManageTeam && (
+                      <td className="px-6 py-4 text-right">
+                        {canEditMember(member) && (
                           <div className="flex items-center justify-end gap-2">
                             <button
-                              className="px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              onClick={() => {
+                                setSelectedMember(member);
+                                setNewRole(member.role);
+                                setShowRoleModal(true);
+                              }}
+                              className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
+                              title={t('team.changeRole')}
                             >
-                              {t.resendInvite[language]}
+                              <Edit className="w-4 h-4" />
                             </button>
                             <button
-                              className="px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              onClick={() => {
+                                setSelectedMember(member);
+                                setShowRemoveModal(true);
+                              }}
+                              className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                              title={t('team.removeMember')}
                             >
-                              {t.cancelInvite[language]}
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
-                        </td>
-                      )}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
       {/* Invite Modal */}
       {showInviteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div 
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setShowInviteModal(false)}
-          />
-          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">{t.inviteNewMember[language]}</h2>
+              <h2 className="text-xl font-semibold text-gray-900">{t('team.inviteMemberTitle')}</h2>
               <button
                 onClick={() => setShowInviteModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+                className="p-2 hover:bg-gray-100 rounded-lg"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
 
-            <div className="space-y-5">
-              {/* Email */}
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  {t.emailAddress[language]}
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('team.emailAddress')}
                 </label>
                 <input
                   type="email"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
-                  placeholder={t.emailPlaceholder[language]}
-                  className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  placeholder={t('team.emailPlaceholder')}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
-              {/* Role Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  {t.selectRole[language]}
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t('team.selectRole')}
                 </label>
                 <div className="space-y-2">
                   {(['admin', 'member', 'viewer'] as const).map((role) => {
-                    const config = getRoleConfig(role, t, language);
+                    const config = ROLE_CONFIG[role];
+                    const Icon = config.icon;
                     return (
                       <button
                         key={role}
                         onClick={() => setInviteRole(role)}
-                        className={`w-full flex items-start gap-3 p-3 rounded-lg border transition-colors ${
+                        className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-colors ${
                           inviteRole === role
                             ? 'border-blue-500 bg-blue-50'
                             : 'border-gray-200 hover:bg-gray-50'
                         }`}
                       >
-                        <div 
-                          className="p-2 rounded-lg"
+                        <div
+                          className="w-10 h-10 rounded-lg flex items-center justify-center"
                           style={{ backgroundColor: `${config.color}15` }}
                         >
-                          <config.Icon className="w-4 h-4" style={{ color: config.color }} />
+                          <Icon className="w-5 h-5" style={{ color: config.color }} />
                         </div>
-                        <div className="text-left">
-                          <p className="font-medium text-gray-900">{config.label}</p>
-                          <p className="text-xs text-gray-500">{config.description}</p>
+                        <div className="flex-1 text-left">
+                          <p className="font-medium text-gray-900">
+                            {t(`team.role${role.charAt(0).toUpperCase() + role.slice(1)}`)}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {t(`team.role${role.charAt(0).toUpperCase() + role.slice(1)}Desc`)}
+                          </p>
                         </div>
+                        {inviteRole === role && (
+                          <Check className="w-5 h-5 text-blue-600" />
+                        )}
                       </button>
                     );
                   })}
@@ -981,20 +565,19 @@ export default function TeamPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 mt-6 pt-4 border-t border-gray-200">
+            <div className="flex gap-3 mt-6 pt-4 border-t">
               <button
                 onClick={() => setShowInviteModal(false)}
-                className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="flex-1 px-4 py-2.5 text-gray-700 bg-gray-100 rounded-lg font-medium hover:bg-gray-200"
               >
-                {t.cancel[language]}
+                {t('common.cancel')}
               </button>
               <button
-                onClick={handleInvite}
                 disabled={!inviteEmail.trim() || sending}
-                className="flex-1 px-4 py-2.5 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2.5 text-white rounded-lg font-medium disabled:opacity-50"
                 style={{ backgroundColor: BRAND_COLORS.primary }}
               >
-                {sending ? t.sending[language] : t.sendInvite[language]}
+                {sending ? t('team.sending') : t('team.sendInvite')}
               </button>
             </div>
           </div>
@@ -1003,109 +586,122 @@ export default function TeamPage() {
 
       {/* Change Role Modal */}
       {showRoleModal && selectedMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div 
-            className="absolute inset-0 bg-black/50"
-            onClick={() => { setShowRoleModal(false); setSelectedMember(null); }}
-          />
-          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">{t.changeRole[language]}</h2>
+              <h2 className="text-xl font-semibold text-gray-900">{t('team.changeRoleTitle')}</h2>
               <button
                 onClick={() => { setShowRoleModal(false); setSelectedMember(null); }}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+                className="p-2 hover:bg-gray-100 rounded-lg"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
 
-            <p className="text-sm text-gray-600 mb-4">
-              {selectedMember.full_name || selectedMember.email}
-            </p>
+            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-600">{selectedMember.full_name || selectedMember.email}</p>
+              <p className="text-xs text-gray-500">{t('team.currentRole')}: {t(`team.role${selectedMember.role.charAt(0).toUpperCase() + selectedMember.role.slice(1)}`)}</p>
+            </div>
 
             <div className="space-y-2">
               {(['admin', 'member', 'viewer'] as const).map((role) => {
-                const config = getRoleConfig(role, t, language);
-                const isCurrentRole = selectedMember.role === role;
+                const config = ROLE_CONFIG[role];
+                const Icon = config.icon;
+                const isDisabled = currentUserRole === 'admin' && role === 'admin';
+                
                 return (
                   <button
                     key={role}
-                    onClick={() => handleChangeRole(selectedMember.id, role)}
-                    disabled={isCurrentRole}
-                    className={`w-full flex items-start gap-3 p-3 rounded-lg border transition-colors ${
-                      isCurrentRole
-                        ? 'border-blue-500 bg-blue-50 cursor-default'
+                    onClick={() => !isDisabled && setNewRole(role)}
+                    disabled={isDisabled}
+                    className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+                      newRole === role
+                        ? 'border-blue-500 bg-blue-50'
+                        : isDisabled
+                        ? 'border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed'
                         : 'border-gray-200 hover:bg-gray-50'
                     }`}
                   >
-                    <div 
-                      className="p-2 rounded-lg"
+                    <div
+                      className="w-10 h-10 rounded-lg flex items-center justify-center"
                       style={{ backgroundColor: `${config.color}15` }}
                     >
-                      <config.Icon className="w-4 h-4" style={{ color: config.color }} />
+                      <Icon className="w-5 h-5" style={{ color: config.color }} />
                     </div>
-                    <div className="text-left">
+                    <div className="flex-1 text-left">
                       <p className="font-medium text-gray-900">
-                        {config.label}
-                        {isCurrentRole && <span className="text-xs text-gray-500 ml-2">(Current)</span>}
+                        {t(`team.role${role.charAt(0).toUpperCase() + role.slice(1)}`)}
                       </p>
-                      <p className="text-xs text-gray-500">{config.description}</p>
+                      <p className="text-xs text-gray-500">
+                        {t(`team.role${role.charAt(0).toUpperCase() + role.slice(1)}Desc`)}
+                      </p>
                     </div>
+                    {newRole === role && (
+                      <Check className="w-5 h-5 text-blue-600" />
+                    )}
                   </button>
                 );
               })}
+            </div>
+
+            <div className="flex gap-3 mt-6 pt-4 border-t">
+              <button
+                onClick={() => { setShowRoleModal(false); setSelectedMember(null); }}
+                className="flex-1 px-4 py-2.5 text-gray-700 bg-gray-100 rounded-lg font-medium hover:bg-gray-200"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                onClick={handleChangeRole}
+                disabled={newRole === selectedMember.role || sending}
+                className="flex-1 px-4 py-2.5 text-white rounded-lg font-medium disabled:opacity-50"
+                style={{ backgroundColor: BRAND_COLORS.primary }}
+              >
+                {t('team.saveChanges')}
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Remove Member Confirmation Modal */}
+      {/* Remove Modal */}
       {showRemoveModal && selectedMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div 
-            className="absolute inset-0 bg-black/50"
-            onClick={() => { setShowRemoveModal(false); setSelectedMember(null); }}
-          />
-          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 rounded-full bg-red-100">
-                <AlertCircle className="w-6 h-6 text-red-600" />
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900">{t.removeMember[language]}</h2>
-              </div>
-            </div>
-
-            <p className="text-gray-600 mb-2">{t.confirmRemove[language]}</p>
-            <p className="text-sm text-gray-500 mb-6">{t.confirmRemoveDesc[language]}</p>
-
-            <div className="bg-gray-50 rounded-lg p-4 mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-medium">
-                  {getInitials(selectedMember.full_name, selectedMember.email)}
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">
-                    {selectedMember.full_name || selectedMember.email.split('@')[0]}
-                  </p>
-                  <p className="text-sm text-gray-500">{selectedMember.email}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">{t('team.removeMemberTitle')}</h2>
               <button
                 onClick={() => { setShowRemoveModal(false); setSelectedMember(null); }}
-                className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-lg"
               >
-                {t.cancel[language]}
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="flex items-start gap-3 p-4 bg-red-50 rounded-lg mb-4">
+              <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
+              <p className="text-sm text-red-800">{t('team.removeMemberDesc')}</p>
+            </div>
+
+            <div className="p-3 bg-gray-50 rounded-lg mb-6">
+              <p className="font-medium text-gray-900">{selectedMember.full_name || selectedMember.email}</p>
+              <p className="text-sm text-gray-500">{selectedMember.email}</p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowRemoveModal(false); setSelectedMember(null); }}
+                className="flex-1 px-4 py-2.5 text-gray-700 bg-gray-100 rounded-lg font-medium hover:bg-gray-200"
+              >
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleRemoveMember}
-                className="flex-1 px-4 py-2.5 text-sm font-medium text-white rounded-lg transition-colors"
+                disabled={sending}
+                className="flex-1 px-4 py-2.5 text-white rounded-lg font-medium disabled:opacity-50"
                 style={{ backgroundColor: BRAND_COLORS.danger }}
               >
-                {t.confirm[language]}
+                {t('team.removeConfirm')}
               </button>
             </div>
           </div>

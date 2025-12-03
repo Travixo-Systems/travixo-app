@@ -72,7 +72,7 @@ export function useUpdateOrganization() {
   return useMutation({
     mutationFn: async (data: Partial<OrganizationData>) => {
       const response = await fetch('/api/settings/organization', {
-        method: 'PUT',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
@@ -97,9 +97,9 @@ export function useUpdateBranding() {
   return useMutation({
     mutationFn: async (colors: BrandingColors) => {
       const response = await fetch('/api/settings/branding', {
-        method: 'PUT',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ branding_colors: colors }),
+        body: JSON.stringify({ colors }),
       });
       if (!response.ok) {
         const error = await response.json();
@@ -122,9 +122,9 @@ export function useUpdateNotifications() {
   return useMutation({
     mutationFn: async (preferences: NotificationPreferences) => {
       const response = await fetch('/api/settings/notifications', {
-        method: 'PUT',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notification_preferences: preferences }),
+        body: JSON.stringify({ preferences }),
       });
       if (!response.ok) {
         const error = await response.json();

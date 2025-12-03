@@ -1,41 +1,40 @@
 // ============================================================================
-// FILE: app/(dashboard)/audits/page.tsx
-// PURPOSE: Audits list page - create, view, manage inventory audits
-// COPY TO: your-project/app/(dashboard)/audits/page.tsx
+// FILE: app/(dashboard)/audits/[id]/page.tsx
+// PURPOSE: Audit detail/execution page - verify assets, track progress
+// COPY TO: your-project/app/(dashboard)/audits/[id]/page.tsx
 // ============================================================================
 
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useLanguage } from '@/lib/LanguageContext';
 import { createTranslator } from '@/lib/i18n';
 import { createClient } from '@/lib/supabase/client';
 import {
+  ArrowLeft,
   ClipboardCheck,
   Calendar,
   Clock,
   CheckCircle,
+  XCircle,
   Search,
-  Plus,
   Play,
-  Eye,
+  Download,
   Package,
   MapPin,
-  Filter,
+  AlertCircle,
   X,
-  ChevronDown,
 } from 'lucide-react';
 
 // ============================================================================
-// BRAND COLORS - Matches VGP module
+// BRAND COLORS
 // ============================================================================
 
 const BRAND_COLORS = {
   primary: '#1e3a5f',
   danger: '#b91c1c',
   warning: '#d97706',
-  warningYellow: '#eab308',
   success: '#047857',
   gray: '#6b7280',
 };
@@ -45,6 +44,7 @@ const BRAND_COLORS = {
 // ============================================================================
 
 type AuditStatus = 'planned' | 'in_progress' | 'completed';
+type ItemStatus = 'all' | 'pending' | 'verified' | 'missing';
 
 interface Audit {
   id: string;
@@ -59,40 +59,41 @@ interface Audit {
   missing_assets: number;
   created_by: string;
   created_at: string;
-  users?: {
-    full_name: string | null;
-    email: string;
+}
+
+interface AuditItem {
+  id: string;
+  audit_id: string;
+  asset_id: string;
+  status: 'pending' | 'verified' | 'missing';
+  verified_at: string | null;
+  verified_by: string | null;
+  notes: string | null;
+  assets: {
+    id: string;
+    name: string;
+    serial_number: string | null;
+    current_location: string | null;
+    asset_categories: {
+      name: string;
+    } | null;
   };
-}
-
-interface AuditStats {
-  total: number;
-  planned: number;
-  inProgress: number;
-  completed: number;
-}
-
-interface NewAuditForm {
-  name: string;
-  scheduled_date: string;
-  scope: 'all' | 'location' | 'category';
-  selectedLocation: string;
-  selectedCategory: string;
 }
 
 // ============================================================================
 // DATE UTILITIES
 // ============================================================================
 
-function formatDateFR(iso: string | null): string {
+function formatDateTimeFR(iso: string | null): string {
   if (!iso) return '-';
   try {
-    const [y, m, d] = iso.split('T')[0].split('-').map(n => parseInt(n, 10));
-    const date = new Date(y, m - 1, d);
+    const date = new Date(iso);
     return new Intl.DateTimeFormat('fr-FR', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
     }).format(date);
   } catch {
     return iso;
@@ -100,78 +101,36 @@ function formatDateFR(iso: string | null): string {
 }
 
 // ============================================================================
-// STATUS CONFIG
-// ============================================================================
-
-const STATUS_CONFIG: Record<AuditStatus, { color: string; bgColor: string; icon: React.ElementType; labelKey: string }> = {
-  planned: {
-    color: BRAND_COLORS.primary,
-    bgColor: 'bg-blue-50',
-    icon: Calendar,
-    labelKey: 'audits.statusPlanned',
-  },
-  in_progress: {
-    color: BRAND_COLORS.warning,
-    bgColor: 'bg-orange-50',
-    icon: Clock,
-    labelKey: 'audits.statusInProgress',
-  },
-  completed: {
-    color: BRAND_COLORS.success,
-    bgColor: 'bg-green-50',
-    icon: CheckCircle,
-    labelKey: 'audits.statusCompleted',
-  },
-};
-
-// ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
-export default function AuditsPage() {
+export default function AuditDetailPage() {
+  const params = useParams();
   const router = useRouter();
   const { language } = useLanguage();
   const t = createTranslator(language);
   const supabase = createClient();
+  const auditId = params.id as string;
   
   // State
-  const [audits, setAudits] = useState<Audit[]>([]);
-  const [stats, setStats] = useState<AuditStats>({ total: 0, planned: 0, inProgress: 0, completed: 0 });
+  const [audit, setAudit] = useState<Audit | null>(null);
+  const [items, setItems] = useState<AuditItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | AuditStatus>('all');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [creating, setCreating] = useState(false);
-  const [locations, setLocations] = useState<string[]>([]);
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
-  const [formData, setFormData] = useState<NewAuditForm>({
-    name: '',
-    scheduled_date: '',
-    scope: 'all',
-    selectedLocation: '',
-    selectedCategory: '',
-  });
-  const [assetPreviewCount, setAssetPreviewCount] = useState(0);
+  const [statusFilter, setStatusFilter] = useState<ItemStatus>('all');
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
 
   // ============================================================================
   // DATA FETCHING
   // ============================================================================
 
   useEffect(() => {
-    // Set default date on client only
-    setFormData(prev => ({
-      ...prev,
-      scheduled_date: new Date().toISOString().split('T')[0],
-    }));
-    fetchAudits();
-    fetchLocationsAndCategories();
-  }, []);
+    if (auditId) {
+      fetchAuditData();
+    }
+  }, [auditId]);
 
-  useEffect(() => {
-    fetchAssetPreviewCount();
-  }, [formData.scope, formData.selectedLocation, formData.selectedCategory]);
-
-  async function fetchAudits() {
+  async function fetchAuditData() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -179,206 +138,167 @@ export default function AuditsPage() {
         return;
       }
 
-      const { data: userData } = await supabase
-        .from('users')
-        .select('organization_id')
-        .eq('id', user.id)
+      // Fetch audit
+      const { data: auditData, error: auditError } = await supabase
+        .from('audits')
+        .select('*')
+        .eq('id', auditId)
         .single();
 
-      if (!userData?.organization_id) return;
+      if (auditError) throw auditError;
+      setAudit(auditData);
 
-      const { data, error } = await supabase
-        .from('audits')
+      // Fetch audit items with asset details
+      const { data: itemsData, error: itemsError } = await supabase
+        .from('audit_items')
         .select(`
           *,
-          users:created_by (
-            full_name,
-            email
+          assets (
+            id,
+            name,
+            serial_number,
+            current_location,
+            asset_categories (name)
           )
         `)
-        .eq('organization_id', userData.organization_id)
-        .order('created_at', { ascending: false });
+        .eq('audit_id', auditId);
 
-      if (error) throw error;
-
-      const auditsData = (data || []) as Audit[];
-      setAudits(auditsData);
-
-      // Calculate stats
-      setStats({
-        total: auditsData.length,
-        planned: auditsData.filter(a => a.status === 'planned').length,
-        inProgress: auditsData.filter(a => a.status === 'in_progress').length,
-        completed: auditsData.filter(a => a.status === 'completed').length,
-      });
+      if (itemsError) throw itemsError;
+      setItems(itemsData || []);
     } catch (err) {
-      console.error('Error fetching audits:', err);
+      console.error('Error fetching audit:', err);
     } finally {
       setLoading(false);
     }
   }
 
-  async function fetchLocationsAndCategories() {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: userData } = await supabase
-        .from('users')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
-
-      if (!userData?.organization_id) return;
-
-      // Fetch unique locations from assets
-      const { data: assetsData } = await supabase
-        .from('assets')
-        .select('current_location')
-        .eq('organization_id', userData.organization_id)
-        .not('current_location', 'is', null)
-        .neq('current_location', '');
-
-      const uniqueLocations = [...new Set((assetsData || []).map(a => a.current_location).filter(Boolean))] as string[];
-      setLocations(uniqueLocations);
-
-      // Fetch categories - try org-specific first, then all
-      let { data: categoriesData } = await supabase
-        .from('asset_categories')
-        .select('id, name')
-        .eq('organization_id', userData.organization_id);
-
-      if (!categoriesData || categoriesData.length === 0) {
-        const { data: allCategories } = await supabase
-          .from('asset_categories')
-          .select('id, name');
-        categoriesData = allCategories;
-      }
-
-      setCategories(categoriesData || []);
-    } catch (err) {
-      console.error('Error fetching locations/categories:', err);
-    }
-  }
-
-  async function fetchAssetPreviewCount() {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: userData } = await supabase
-        .from('users')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
-
-      if (!userData?.organization_id) return;
-
-      let query = supabase
-        .from('assets')
-        .select('id', { count: 'exact', head: true })
-        .eq('organization_id', userData.organization_id);
-
-      if (formData.scope === 'location' && formData.selectedLocation) {
-        query = query.eq('current_location', formData.selectedLocation);
-      } else if (formData.scope === 'category' && formData.selectedCategory) {
-        query = query.eq('category_id', formData.selectedCategory);
-      }
-
-      const { count } = await query;
-      setAssetPreviewCount(count || 0);
-    } catch (err) {
-      console.error('Error fetching asset count:', err);
-    }
-  }
-
   // ============================================================================
-  // CREATE AUDIT
+  // ACTIONS
   // ============================================================================
 
-  async function handleCreateAudit() {
-    if (!formData.name.trim()) return;
-
-    setCreating(true);
+  async function startAudit() {
+    if (!audit) return;
+    
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: userData } = await supabase
-        .from('users')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
-
-      if (!userData?.organization_id) return;
-
-      // Fetch assets based on scope
-      let assetsQuery = supabase
-        .from('assets')
-        .select('id')
-        .eq('organization_id', userData.organization_id);
-
-      if (formData.scope === 'location' && formData.selectedLocation) {
-        assetsQuery = assetsQuery.eq('current_location', formData.selectedLocation);
-      } else if (formData.scope === 'category' && formData.selectedCategory) {
-        assetsQuery = assetsQuery.eq('category_id', formData.selectedCategory);
-      }
-
-      const { data: assetsToAudit } = await assetsQuery;
-
-      // Create audit
-      const { data: newAudit, error: auditError } = await supabase
+      const { error } = await supabase
         .from('audits')
-        .insert({
-          organization_id: userData.organization_id,
-          name: formData.name.trim(),
-          status: 'planned',
-          scheduled_date: formData.scheduled_date || null,
-          total_assets: assetsToAudit?.length || 0,
-          verified_assets: 0,
-          missing_assets: 0,
-          created_by: user.id,
+        .update({
+          status: 'in_progress',
+          started_at: new Date().toISOString(),
         })
-        .select()
-        .single();
+        .eq('id', audit.id);
 
-      if (auditError) throw auditError;
+      if (error) throw error;
+      fetchAuditData();
+    } catch (err) {
+      console.error('Error starting audit:', err);
+    }
+  }
 
-      // Create audit items
-      if (assetsToAudit && assetsToAudit.length > 0 && newAudit) {
-        const auditItems = assetsToAudit.map(asset => ({
-          audit_id: newAudit.id,
-          asset_id: asset.id,
-          status: 'pending',
-        }));
+  async function updateItemStatus(itemId: string, newStatus: 'verified' | 'missing') {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-        await supabase.from('audit_items').insert(auditItems);
+      const { error } = await supabase
+        .from('audit_items')
+        .update({
+          status: newStatus,
+          verified_at: new Date().toISOString(),
+          verified_by: user.id,
+        })
+        .eq('id', itemId);
+
+      if (error) throw error;
+
+      // Update local state
+      setItems(prev => prev.map(item => 
+        item.id === itemId 
+          ? { ...item, status: newStatus, verified_at: new Date().toISOString(), verified_by: user.id }
+          : item
+      ));
+
+      // Update audit counts
+      const updatedItems = items.map(item => 
+        item.id === itemId ? { ...item, status: newStatus } : item
+      );
+      const verified = updatedItems.filter(i => i.status === 'verified').length;
+      const missing = updatedItems.filter(i => i.status === 'missing').length;
+
+      await supabase
+        .from('audits')
+        .update({
+          verified_assets: verified,
+          missing_assets: missing,
+        })
+        .eq('id', auditId);
+
+      setAudit(prev => prev ? { ...prev, verified_assets: verified, missing_assets: missing } : null);
+    } catch (err) {
+      console.error('Error updating item:', err);
+    }
+  }
+
+  async function completeAudit() {
+    if (!audit) return;
+
+    try {
+      // Mark all pending as missing
+      const pendingItems = items.filter(i => i.status === 'pending');
+      if (pendingItems.length > 0) {
+        const { data: { user } } = await supabase.auth.getUser();
+        await supabase
+          .from('audit_items')
+          .update({
+            status: 'missing',
+            verified_at: new Date().toISOString(),
+            verified_by: user?.id,
+          })
+          .in('id', pendingItems.map(i => i.id));
       }
 
-      // Reset form and close modal
-      setFormData({
-        name: '',
-        scheduled_date: new Date().toISOString().split('T')[0],
-        scope: 'all',
-        selectedLocation: '',
-        selectedCategory: '',
-      });
-      setShowCreateModal(false);
-      fetchAudits();
+      const verified = items.filter(i => i.status === 'verified').length;
+      const missing = items.filter(i => i.status !== 'verified').length;
+
+      const { error } = await supabase
+        .from('audits')
+        .update({
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          verified_assets: verified,
+          missing_assets: missing,
+        })
+        .eq('id', audit.id);
+
+      if (error) throw error;
+      setShowCompleteModal(false);
+      fetchAuditData();
     } catch (err) {
-      console.error('Error creating audit:', err);
-    } finally {
-      setCreating(false);
+      console.error('Error completing audit:', err);
     }
   }
 
   // ============================================================================
-  // FILTER & SEARCH
+  // COMPUTED VALUES
   // ============================================================================
 
-  const filteredAudits = audits.filter(audit => {
-    const matchesSearch = audit.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || audit.status === statusFilter;
+  const stats = {
+    total: items.length,
+    verified: items.filter(i => i.status === 'verified').length,
+    pending: items.filter(i => i.status === 'pending').length,
+    missing: items.filter(i => i.status === 'missing').length,
+  };
+
+  const progress = stats.total > 0 
+    ? Math.round(((stats.verified + stats.missing) / stats.total) * 100)
+    : 0;
+
+  const filteredItems = items.filter(item => {
+    const matchesSearch = 
+      item.assets?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.assets?.serial_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.assets?.current_location?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -395,397 +315,337 @@ export default function AuditsPage() {
     );
   }
 
+  if (!audit) {
+    return (
+      <div className="p-6 text-center">
+        <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <h2 className="text-lg font-medium text-gray-900">{t('audits.auditNotFound')}</h2>
+        <button
+          onClick={() => router.push('/audits')}
+          className="mt-4 text-blue-600 hover:underline"
+        >
+          {t('audits.backToAudits')}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('audits.pageTitle')}</h1>
-          <p className="text-gray-600 mt-1">{t('audits.pageSubtitle')}</p>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.push('/audits')}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{audit.name}</h1>
+            {audit.status === 'completed' && audit.completed_at && (
+              <p className="text-sm text-gray-500">
+                {t('audits.completedOn')} {formatDateTimeFR(audit.completed_at)}
+              </p>
+            )}
+          </div>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 text-white rounded-lg transition-colors text-sm font-medium"
-          style={{ backgroundColor: BRAND_COLORS.primary }}
-        >
-          <Plus className="w-4 h-4" />
-          {t('audits.createAudit')}
-        </button>
+        <div className="flex items-center gap-3">
+          {audit.status === 'planned' && (
+            <button
+              onClick={startAudit}
+              className="flex items-center gap-2 px-4 py-2.5 text-white rounded-lg font-medium"
+              style={{ backgroundColor: BRAND_COLORS.primary }}
+            >
+              <Play className="w-4 h-4" />
+              {t('audits.startAudit')}
+            </button>
+          )}
+          {audit.status === 'in_progress' && (
+            <button
+              onClick={() => setShowCompleteModal(true)}
+              className="flex items-center gap-2 px-4 py-2.5 text-white rounded-lg font-medium"
+              style={{ backgroundColor: BRAND_COLORS.success }}
+            >
+              <CheckCircle className="w-4 h-4" />
+              {t('audits.completeAudit')}
+            </button>
+          )}
+          {audit.status === 'completed' && (
+            <button
+              className="flex items-center gap-2 px-4 py-2.5 text-white rounded-lg font-medium"
+              style={{ backgroundColor: BRAND_COLORS.primary }}
+            >
+              <Download className="w-4 h-4" />
+              {t('audits.exportResults')}
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        {/* Total */}
-        <button
-          onClick={() => setStatusFilter('all')}
-          className={`bg-white rounded-lg p-5 text-left transition-shadow hover:shadow-md ${
-            statusFilter === 'all' ? 'ring-2 ring-gray-400' : ''
-          }`}
-          style={{
-            borderLeft: `4px solid ${BRAND_COLORS.gray}`,
-            borderBottom: `4px solid ${BRAND_COLORS.gray}`,
-          }}
-        >
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-gray-600">{t('audits.totalAudits')}</p>
-            <ClipboardCheck className="w-5 h-5 text-gray-400" />
-          </div>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{stats.total}</p>
-          <p className="text-xs text-gray-500 mt-1">{t('audits.allTime')}</p>
-        </button>
-
-        {/* Planned */}
-        <button
-          onClick={() => setStatusFilter('planned')}
-          className={`bg-white rounded-lg p-5 text-left transition-shadow hover:shadow-md ${
-            statusFilter === 'planned' ? 'ring-2 ring-blue-400' : ''
-          }`}
-          style={{
-            borderLeft: `4px solid ${BRAND_COLORS.primary}`,
-            borderBottom: `4px solid ${BRAND_COLORS.primary}`,
-          }}
-        >
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-gray-600">{t('audits.planned')}</p>
-            <Calendar className="w-5 h-5" style={{ color: BRAND_COLORS.primary }} />
-          </div>
-          <p className="text-3xl font-bold mt-2" style={{ color: BRAND_COLORS.primary }}>{stats.planned}</p>
-          <p className="text-xs text-gray-500 mt-1">{t('audits.scheduledAudits')}</p>
-        </button>
-
-        {/* In Progress */}
-        <button
-          onClick={() => setStatusFilter('in_progress')}
-          className={`bg-white rounded-lg p-5 text-left transition-shadow hover:shadow-md ${
-            statusFilter === 'in_progress' ? 'ring-2 ring-orange-400' : ''
-          }`}
-          style={{
-            borderLeft: `4px solid ${BRAND_COLORS.warning}`,
-            borderBottom: `4px solid ${BRAND_COLORS.warning}`,
-          }}
-        >
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-gray-600">{t('audits.inProgress')}</p>
-            <Clock className="w-5 h-5" style={{ color: BRAND_COLORS.warning }} />
-          </div>
-          <p className="text-3xl font-bold mt-2" style={{ color: BRAND_COLORS.warning }}>{stats.inProgress}</p>
-          <p className="text-xs text-gray-500 mt-1">{t('audits.activeAudits')}</p>
-        </button>
-
-        {/* Completed */}
-        <button
-          onClick={() => setStatusFilter('completed')}
-          className={`bg-white rounded-lg p-5 text-left transition-shadow hover:shadow-md ${
-            statusFilter === 'completed' ? 'ring-2 ring-green-400' : ''
-          }`}
-          style={{
-            borderLeft: `4px solid ${BRAND_COLORS.success}`,
-            borderBottom: `4px solid ${BRAND_COLORS.success}`,
-          }}
-        >
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-gray-600">{t('audits.completed')}</p>
-            <CheckCircle className="w-5 h-5" style={{ color: BRAND_COLORS.success }} />
-          </div>
-          <p className="text-3xl font-bold mt-2" style={{ color: BRAND_COLORS.success }}>{stats.completed}</p>
-          <p className="text-xs text-gray-500 mt-1">{t('audits.finishedAudits')}</p>
-        </button>
-      </div>
-
-      {/* Search */}
-      <div className="bg-white rounded-lg shadow-sm p-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder={t('audits.searchPlaceholder')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+      {/* Progress Bar */}
+      <div className="bg-white rounded-lg shadow-sm p-5">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium text-gray-700">{t('audits.progress')}</span>
+          <span className="text-sm font-bold" style={{ color: audit.status === 'completed' ? BRAND_COLORS.success : BRAND_COLORS.primary }}>
+            {progress}%
+          </span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-3">
+          <div
+            className="h-3 rounded-full transition-all"
+            style={{
+              width: `${progress}%`,
+              backgroundColor: audit.status === 'completed' ? BRAND_COLORS.success : BRAND_COLORS.primary,
+            }}
           />
         </div>
       </div>
 
-      {/* Audits List */}
-      {filteredAudits.length === 0 ? (
+      {/* Stats */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <button
+          onClick={() => setStatusFilter('all')}
+          className={`bg-white rounded-lg p-4 text-left transition-shadow hover:shadow-md ${
+            statusFilter === 'all' ? 'ring-2 ring-gray-400' : ''
+          }`}
+          style={{ borderLeft: `4px solid ${BRAND_COLORS.gray}` }}
+        >
+          <p className="text-sm text-gray-600">{t('audits.totalAssets')}</p>
+          <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+        </button>
+
+        <button
+          onClick={() => setStatusFilter('verified')}
+          className={`bg-white rounded-lg p-4 text-left transition-shadow hover:shadow-md ${
+            statusFilter === 'verified' ? 'ring-2 ring-green-400' : ''
+          }`}
+          style={{ borderLeft: `4px solid ${BRAND_COLORS.success}` }}
+        >
+          <p className="text-sm text-gray-600">{t('audits.verified')}</p>
+          <p className="text-2xl font-bold" style={{ color: BRAND_COLORS.success }}>{stats.verified}</p>
+        </button>
+
+        <button
+          onClick={() => setStatusFilter('pending')}
+          className={`bg-white rounded-lg p-4 text-left transition-shadow hover:shadow-md ${
+            statusFilter === 'pending' ? 'ring-2 ring-orange-400' : ''
+          }`}
+          style={{ borderLeft: `4px solid ${BRAND_COLORS.warning}` }}
+        >
+          <p className="text-sm text-gray-600">{t('audits.pending')}</p>
+          <p className="text-2xl font-bold" style={{ color: BRAND_COLORS.warning }}>{stats.pending}</p>
+        </button>
+
+        <button
+          onClick={() => setStatusFilter('missing')}
+          className={`bg-white rounded-lg p-4 text-left transition-shadow hover:shadow-md ${
+            statusFilter === 'missing' ? 'ring-2 ring-red-400' : ''
+          }`}
+          style={{ borderLeft: `4px solid ${BRAND_COLORS.danger}` }}
+        >
+          <p className="text-sm text-gray-600">{t('audits.missing')}</p>
+          <p className="text-2xl font-bold" style={{ color: BRAND_COLORS.danger }}>{stats.missing}</p>
+        </button>
+      </div>
+
+      {/* Not Started State */}
+      {audit.status === 'planned' && (
         <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-          <ClipboardCheck className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900">{t('audits.noAudits')}</h3>
-          <p className="text-gray-500 mt-1">{t('audits.noAuditsDesc')}</p>
+          <Clock className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900">{t('audits.auditNotStarted')}</h3>
+          <p className="text-gray-500 mt-1">{t('audits.auditNotStartedDesc')}</p>
           <button
-            onClick={() => setShowCreateModal(true)}
-            className="mt-4 px-4 py-2 text-white rounded-lg text-sm font-medium"
+            onClick={startAudit}
+            className="mt-4 px-6 py-2.5 text-white rounded-lg font-medium"
             style={{ backgroundColor: BRAND_COLORS.primary }}
           >
-            {t('audits.createAudit')}
+            {t('audits.startAudit')}
           </button>
-        </div>
-      ) : (
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t('audits.auditName')}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t('audits.status')}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t('audits.progress')}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t('audits.scheduledDate')}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t('audits.createdBy')}
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t('audits.actions')}
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredAudits.map((audit) => {
-                const config = STATUS_CONFIG[audit.status];
-                const StatusIcon = config.icon;
-                const progress = audit.total_assets > 0
-                  ? Math.round(((audit.verified_assets + audit.missing_assets) / audit.total_assets) * 100)
-                  : 0;
-
-                return (
-                  <tr key={audit.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="w-10 h-10 rounded-lg flex items-center justify-center"
-                          style={{ backgroundColor: `${config.color}15` }}
-                        >
-                          <ClipboardCheck className="w-5 h-5" style={{ color: config.color }} />
-                        </div>
-                        <span className="font-medium text-gray-900">{audit.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full ${config.bgColor}`}
-                        style={{ color: config.color }}
-                      >
-                        <StatusIcon className="w-3.5 h-3.5" />
-                        {t(config.labelKey)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-24 bg-gray-200 rounded-full h-2">
-                          <div
-                            className="h-2 rounded-full transition-all"
-                            style={{
-                              width: `${progress}%`,
-                              backgroundColor: audit.status === 'completed' ? BRAND_COLORS.success : BRAND_COLORS.primary,
-                            }}
-                          />
-                        </div>
-                        <span className="text-sm text-gray-600">{progress}%</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {formatDateFR(audit.scheduled_date)}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {audit.users?.full_name || audit.users?.email || '-'}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      {audit.status === 'planned' && (
-                        <button
-                          onClick={() => router.push(`/audits/${audit.id}`)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded-lg"
-                          style={{ backgroundColor: BRAND_COLORS.primary }}
-                        >
-                          <Play className="w-3.5 h-3.5" />
-                          {t('audits.start')}
-                        </button>
-                      )}
-                      {audit.status === 'in_progress' && (
-                        <button
-                          onClick={() => router.push(`/audits/${audit.id}`)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded-lg"
-                          style={{ backgroundColor: BRAND_COLORS.warning }}
-                        >
-                          <Play className="w-3.5 h-3.5" />
-                          {t('audits.continue')}
-                        </button>
-                      )}
-                      {audit.status === 'completed' && (
-                        <button
-                          onClick={() => router.push(`/audits/${audit.id}`)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded-lg"
-                          style={{ backgroundColor: BRAND_COLORS.success }}
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          {t('audits.viewReport')}
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
         </div>
       )}
 
-      {/* Create Modal */}
-      {showCreateModal && (
+      {/* Search & Filter */}
+      {audit.status !== 'planned' && (
+        <>
+          <div className="bg-white rounded-lg shadow-sm p-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder={t('audits.searchAssets')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+            </div>
+          </div>
+
+          {/* Items List */}
+          {filteredItems.length === 0 ? (
+            <div className="bg-white rounded-lg shadow-sm p-12 text-center">
+              <Package className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900">{t('audits.noAssetsFound')}</h3>
+            </div>
+          ) : (
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t('audits.asset')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t('audits.category')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t('audits.serialNumber')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t('audits.location')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t('audits.status')}
+                    </th>
+                    {audit.status === 'in_progress' && (
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {t('audits.actions')}
+                      </th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredItems.map((item) => (
+                    <tr key={item.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                            <Package className="w-4 h-4 text-gray-500" />
+                          </div>
+                          <span className="font-medium text-gray-900">{item.assets?.name || '-'}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {item.assets?.asset_categories?.name || '-'}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="font-mono text-sm text-gray-600">
+                          {item.assets?.serial_number || '-'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                          <MapPin className="w-3.5 h-3.5" />
+                          {item.assets?.current_location || '-'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        {item.status === 'pending' && (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-orange-50" style={{ color: BRAND_COLORS.warning }}>
+                            <Clock className="w-3.5 h-3.5" />
+                            {t('audits.pending')}
+                          </span>
+                        )}
+                        {item.status === 'verified' && (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-green-50" style={{ color: BRAND_COLORS.success }}>
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            {t('audits.verified')}
+                          </span>
+                        )}
+                        {item.status === 'missing' && (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-red-50" style={{ color: BRAND_COLORS.danger }}>
+                            <XCircle className="w-3.5 h-3.5" />
+                            {t('audits.missing')}
+                          </span>
+                        )}
+                      </td>
+                      {audit.status === 'in_progress' && (
+                        <td className="px-6 py-4 text-right">
+                          {item.status === 'pending' && (
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => updateItemStatus(item.id, 'verified')}
+                                className="px-3 py-1.5 text-xs font-medium text-white rounded-lg"
+                                style={{ backgroundColor: BRAND_COLORS.success }}
+                              >
+                                {t('audits.markVerified')}
+                              </button>
+                              <button
+                                onClick={() => updateItemStatus(item.id, 'missing')}
+                                className="px-3 py-1.5 text-xs font-medium text-white rounded-lg"
+                                style={{ backgroundColor: BRAND_COLORS.danger }}
+                              >
+                                {t('audits.markMissing')}
+                              </button>
+                            </div>
+                          )}
+                          {item.status !== 'pending' && (
+                            <button
+                              onClick={() => updateItemStatus(item.id, item.status === 'verified' ? 'missing' : 'verified')}
+                              className="text-xs text-blue-600 hover:underline"
+                            >
+                              {item.status === 'verified' ? t('audits.markMissing') : t('audits.markVerified')}
+                            </button>
+                          )}
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Complete Modal */}
+      {showCompleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div
-            className="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">{t('audits.newAudit')}</h2>
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">{t('audits.confirmComplete')}</h2>
               <button
-                onClick={() => setShowCreateModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                onClick={() => setShowCompleteModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg"
               >
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
 
-            <div className="space-y-4">
-              {/* Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('audits.auditNameLabel')}
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder={t('audits.auditNamePlaceholder')}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+            <div className="flex items-start gap-3 p-4 bg-yellow-50 rounded-lg mb-4">
+              <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
+              <p className="text-sm text-yellow-800">{t('audits.confirmCompleteDesc')}</p>
+            </div>
+
+            <div className="space-y-2 mb-6">
+              <h3 className="font-medium text-gray-900">{t('audits.auditSummary')}</h3>
+              <div className="flex items-center justify-between py-2 border-b">
+                <span className="text-gray-600">{t('audits.verified')}</span>
+                <span className="font-semibold" style={{ color: BRAND_COLORS.success }}>{stats.verified} {t('audits.itemsVerified')}</span>
               </div>
-
-              {/* Date */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('audits.scheduledDateLabel')}
-                </label>
-                <input
-                  type="date"
-                  value={formData.scheduled_date}
-                  onChange={(e) => setFormData({ ...formData, scheduled_date: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+              <div className="flex items-center justify-between py-2 border-b">
+                <span className="text-gray-600">{t('audits.missing')}</span>
+                <span className="font-semibold" style={{ color: BRAND_COLORS.danger }}>{stats.missing} {t('audits.itemsMissing')}</span>
               </div>
-
-              {/* Scope */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('audits.auditScope')}
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    onClick={() => setFormData({ ...formData, scope: 'all', selectedLocation: '', selectedCategory: '' })}
-                    className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
-                      formData.scope === 'all'
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    {t('audits.allAssets')}
-                  </button>
-                  <button
-                    onClick={() => setFormData({ ...formData, scope: 'location', selectedCategory: '' })}
-                    className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
-                      formData.scope === 'location'
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    {t('audits.byLocation')}
-                  </button>
-                  <button
-                    onClick={() => setFormData({ ...formData, scope: 'category', selectedLocation: '' })}
-                    className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
-                      formData.scope === 'category'
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    {t('audits.byCategory')}
-                  </button>
-                </div>
-              </div>
-
-              {/* Location selector */}
-              {formData.scope === 'location' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t('audits.selectLocation')}
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={formData.selectedLocation}
-                      onChange={(e) => setFormData({ ...formData, selectedLocation: e.target.value })}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
-                    >
-                      <option value="">{t('audits.selectLocation')}</option>
-                      {locations.map((loc) => (
-                        <option key={loc} value={loc}>{loc}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                  </div>
-                </div>
-              )}
-
-              {/* Category selector */}
-              {formData.scope === 'category' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t('audits.selectCategory')}
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={formData.selectedCategory}
-                      onChange={(e) => setFormData({ ...formData, selectedCategory: e.target.value })}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
-                    >
-                      <option value="">{t('audits.selectCategory')}</option>
-                      {categories.map((cat) => (
-                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                  </div>
-                </div>
-              )}
-
-              {/* Asset preview */}
-              <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                <Package className="w-5 h-5 text-gray-500" />
-                <span className="text-lg font-semibold text-gray-900">{assetPreviewCount}</span>
-                <span className="text-sm text-gray-600">{t('audits.assetsFound')}</span>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-gray-600">{t('audits.pending')}</span>
+                <span className="font-semibold" style={{ color: BRAND_COLORS.warning }}>{stats.pending} {t('audits.itemsPending')}</span>
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex gap-3 mt-6 pt-4 border-t">
+            <div className="flex gap-3">
               <button
-                onClick={() => setShowCreateModal(false)}
-                className="flex-1 px-4 py-2.5 text-gray-700 bg-gray-100 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                onClick={() => setShowCompleteModal(false)}
+                className="flex-1 px-4 py-2.5 text-gray-700 bg-gray-100 rounded-lg font-medium hover:bg-gray-200"
               >
                 {t('common.cancel')}
               </button>
               <button
-                onClick={handleCreateAudit}
-                disabled={creating || !formData.name.trim()}
-                className="flex-1 px-4 py-2.5 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
-                style={{ backgroundColor: BRAND_COLORS.primary }}
+                onClick={completeAudit}
+                className="flex-1 px-4 py-2.5 text-white rounded-lg font-medium"
+                style={{ backgroundColor: BRAND_COLORS.success }}
               >
-                {creating ? t('audits.creating') : t('common.create')}
+                {t('audits.confirm')}
               </button>
             </div>
           </div>

@@ -8,27 +8,27 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLanguage } from '@/lib/LanguageContext';
+import { createTranslator } from '@/lib/i18n';
+import { createClient } from '@/lib/supabase/client';
 import {
   ClipboardCheck,
-  Plus,
-  Search,
   Calendar,
-  AlertCircle,
-  CheckCircle,
   Clock,
-  Users,
-  Package,
-  MoreHorizontal,
+  CheckCircle,
+  Search,
+  Plus,
   Play,
   Eye,
-  FileText,
+  Package,
+  MapPin,
+  Filter,
   X,
   ChevronDown,
 } from 'lucide-react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 // ============================================================================
-// B2B PROFESSIONAL BRAND COLORS (Matching VGP Module)
+// BRAND COLORS - Matches VGP module
 // ============================================================================
 
 const BRAND_COLORS = {
@@ -38,28 +38,31 @@ const BRAND_COLORS = {
   warningYellow: '#eab308',
   success: '#047857',
   gray: '#6b7280',
-} as const;
+};
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
+type AuditStatus = 'planned' | 'in_progress' | 'completed';
+
 interface Audit {
   id: string;
+  organization_id: string;
   name: string;
-  status: 'planned' | 'in_progress' | 'completed';
+  status: AuditStatus;
   scheduled_date: string | null;
   started_at: string | null;
   completed_at: string | null;
   total_assets: number;
   verified_assets: number;
   missing_assets: number;
-  created_by: string | null;
+  created_by: string;
   created_at: string;
   users?: {
     full_name: string | null;
     email: string;
-  } | null;
+  };
 }
 
 interface AuditStats {
@@ -76,192 +79,6 @@ interface NewAuditForm {
   selectedLocation: string;
   selectedCategory: string;
 }
-
-// ============================================================================
-// TRANSLATIONS
-// ============================================================================
-
-type Language = 'en' | 'fr';
-
-const translations = {
-  pageTitle: {
-    en: 'Inventory Audits',
-    fr: 'Audits d\'Inventaire',
-  },
-  pageSubtitle: {
-    en: 'Manage and track your equipment audits',
-    fr: 'Gérez et suivez vos audits d\'équipement',
-  },
-  createAudit: {
-    en: 'Create Audit',
-    fr: 'Créer un Audit',
-  },
-  searchPlaceholder: {
-    en: 'Search audits...',
-    fr: 'Rechercher des audits...',
-  },
-  // Stats cards
-  totalAudits: {
-    en: 'Total Audits',
-    fr: 'Total Audits',
-  },
-  allTime: {
-    en: 'All time',
-    fr: 'Historique complet',
-  },
-  planned: {
-    en: 'Planned',
-    fr: 'Planifiés',
-  },
-  scheduledAudits: {
-    en: 'Scheduled audits',
-    fr: 'Audits planifiés',
-  },
-  inProgress: {
-    en: 'In Progress',
-    fr: 'En Cours',
-  },
-  activeAudits: {
-    en: 'Active audits',
-    fr: 'Audits actifs',
-  },
-  completed: {
-    en: 'Completed',
-    fr: 'Terminés',
-  },
-  finishedAudits: {
-    en: 'Finished audits',
-    fr: 'Audits terminés',
-  },
-  // Table
-  auditName: {
-    en: 'Audit Name',
-    fr: 'Nom de l\'Audit',
-  },
-  status: {
-    en: 'Status',
-    fr: 'Statut',
-  },
-  progress: {
-    en: 'Progress',
-    fr: 'Progression',
-  },
-  scheduledDate: {
-    en: 'Scheduled Date',
-    fr: 'Date Prévue',
-  },
-  createdBy: {
-    en: 'Created By',
-    fr: 'Créé Par',
-  },
-  actions: {
-    en: 'Actions',
-    fr: 'Actions',
-  },
-  noAudits: {
-    en: 'No audits found',
-    fr: 'Aucun audit trouvé',
-  },
-  noAuditsDesc: {
-    en: 'Create your first audit to start tracking inventory',
-    fr: 'Créez votre premier audit pour commencer le suivi',
-  },
-  // Status labels
-  statusPlanned: {
-    en: 'Planned',
-    fr: 'Planifié',
-  },
-  statusInProgress: {
-    en: 'In Progress',
-    fr: 'En Cours',
-  },
-  statusCompleted: {
-    en: 'Completed',
-    fr: 'Terminé',
-  },
-  // Actions
-  start: {
-    en: 'Start',
-    fr: 'Démarrer',
-  },
-  continue: {
-    en: 'Continue',
-    fr: 'Continuer',
-  },
-  viewReport: {
-    en: 'View Report',
-    fr: 'Voir Rapport',
-  },
-  viewDetails: {
-    en: 'View Details',
-    fr: 'Voir Détails',
-  },
-  // Modal
-  newAudit: {
-    en: 'New Audit',
-    fr: 'Nouvel Audit',
-  },
-  auditNameLabel: {
-    en: 'Audit Name',
-    fr: 'Nom de l\'Audit',
-  },
-  auditNamePlaceholder: {
-    en: 'e.g., Q4 2025 Inventory Check',
-    fr: 'ex: Inventaire T4 2025',
-  },
-  scheduledDateLabel: {
-    en: 'Scheduled Date',
-    fr: 'Date Prévue',
-  },
-  auditScope: {
-    en: 'Audit Scope',
-    fr: 'Périmètre de l\'Audit',
-  },
-  allAssets: {
-    en: 'All Assets',
-    fr: 'Tous les Équipements',
-  },
-  byLocation: {
-    en: 'By Location',
-    fr: 'Par Emplacement',
-  },
-  byCategory: {
-    en: 'By Category',
-    fr: 'Par Catégorie',
-  },
-  selectLocation: {
-    en: 'Select Location',
-    fr: 'Sélectionner Emplacement',
-  },
-  selectCategory: {
-    en: 'Select Category',
-    fr: 'Sélectionner Catégorie',
-  },
-  cancel: {
-    en: 'Cancel',
-    fr: 'Annuler',
-  },
-  create: {
-    en: 'Create',
-    fr: 'Créer',
-  },
-  creating: {
-    en: 'Creating...',
-    fr: 'Création...',
-  },
-  assetsFound: {
-    en: 'assets found',
-    fr: 'équipements trouvés',
-  },
-  assetsMissing: {
-    en: 'missing',
-    fr: 'manquants',
-  },
-  loading: {
-    en: 'Loading...',
-    fr: 'Chargement...',
-  },
-};
 
 // ============================================================================
 // DATE UTILITIES
@@ -283,45 +100,29 @@ function formatDateFR(iso: string | null): string {
 }
 
 // ============================================================================
-// STATUS UTILITIES
+// STATUS CONFIG
 // ============================================================================
 
-function getStatusConfig(status: Audit['status'], t: typeof translations, lang: Language) {
-  switch (status) {
-    case 'planned':
-      return {
-        label: t.statusPlanned[lang],
-        color: BRAND_COLORS.primary,
-        bgColor: 'bg-blue-50',
-        textColor: 'text-blue-700',
-        Icon: Calendar,
-      };
-    case 'in_progress':
-      return {
-        label: t.statusInProgress[lang],
-        color: BRAND_COLORS.warning,
-        bgColor: 'bg-amber-50',
-        textColor: 'text-amber-700',
-        Icon: Clock,
-      };
-    case 'completed':
-      return {
-        label: t.statusCompleted[lang],
-        color: BRAND_COLORS.success,
-        bgColor: 'bg-green-50',
-        textColor: 'text-green-700',
-        Icon: CheckCircle,
-      };
-    default:
-      return {
-        label: status,
-        color: BRAND_COLORS.gray,
-        bgColor: 'bg-gray-50',
-        textColor: 'text-gray-700',
-        Icon: Clock,
-      };
-  }
-}
+const STATUS_CONFIG: Record<AuditStatus, { color: string; bgColor: string; icon: React.ElementType; labelKey: string }> = {
+  planned: {
+    color: BRAND_COLORS.primary,
+    bgColor: 'bg-blue-50',
+    icon: Calendar,
+    labelKey: 'audits.statusPlanned',
+  },
+  in_progress: {
+    color: BRAND_COLORS.warning,
+    bgColor: 'bg-orange-50',
+    icon: Clock,
+    labelKey: 'audits.statusInProgress',
+  },
+  completed: {
+    color: BRAND_COLORS.success,
+    bgColor: 'bg-green-50',
+    icon: CheckCircle,
+    labelKey: 'audits.statusCompleted',
+  },
+};
 
 // ============================================================================
 // MAIN COMPONENT
@@ -329,16 +130,16 @@ function getStatusConfig(status: Audit['status'], t: typeof translations, lang: 
 
 export default function AuditsPage() {
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const { language } = useLanguage();
+  const t = createTranslator(language);
+  const supabase = createClient();
   
   // State
-  const [mounted, setMounted] = useState(false);
-  const [language, setLanguage] = useState<Language>('fr');
   const [audits, setAudits] = useState<Audit[]>([]);
   const [stats, setStats] = useState<AuditStats>({ total: 0, planned: 0, inProgress: 0, completed: 0 });
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'planned' | 'in_progress' | 'completed'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | AuditStatus>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
   const [locations, setLocations] = useState<string[]>([]);
@@ -352,73 +153,31 @@ export default function AuditsPage() {
   });
   const [assetPreviewCount, setAssetPreviewCount] = useState(0);
 
-  const t = translations;
-
-  // ============================================================================
-  // HYDRATION FIX - Must mount before accessing localStorage
-  // ============================================================================
-
-  useEffect(() => {
-    setMounted(true);
-    // Set default date only on client side
-    setFormData(prev => ({
-      ...prev,
-      scheduled_date: new Date().toISOString().split('T')[0],
-    }));
-    // Get language from localStorage only on client
-    const savedLang = localStorage.getItem('travixo-language') as Language;
-    if (savedLang) setLanguage(savedLang);
-
-    // Listen for language changes from other tabs
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'travixo-language' && e.newValue) {
-        setLanguage(e.newValue as Language);
-      }
-    };
-
-    // Also listen for custom event (for same-tab updates)
-    const handleLanguageChange = (e: CustomEvent) => {
-      setLanguage(e.detail as Language);
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('travixo-language-change', handleLanguageChange as EventListener);
-
-    // Poll localStorage for same-tab changes (fallback for toggles that don't dispatch events)
-    const pollInterval = setInterval(() => {
-      const currentLang = localStorage.getItem('travixo-language') as Language;
-      setLanguage(prev => currentLang && currentLang !== prev ? currentLang : prev);
-    }, 500);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('travixo-language-change', handleLanguageChange as EventListener);
-      clearInterval(pollInterval);
-    };
-  }, []);
-
   // ============================================================================
   // DATA FETCHING
   // ============================================================================
 
   useEffect(() => {
-    if (mounted) {
-      fetchAudits();
-      fetchLocationsAndCategories();
-    }
-  }, [mounted]);
+    // Set default date on client only
+    setFormData(prev => ({
+      ...prev,
+      scheduled_date: new Date().toISOString().split('T')[0],
+    }));
+    fetchAudits();
+    fetchLocationsAndCategories();
+  }, []);
 
   useEffect(() => {
-    if (mounted) {
-      fetchAssetPreviewCount();
-    }
-  }, [mounted, formData.scope, formData.selectedLocation, formData.selectedCategory]);
+    fetchAssetPreviewCount();
+  }, [formData.scope, formData.selectedLocation, formData.selectedCategory]);
 
   async function fetchAudits() {
-    setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        router.push('/login');
+        return;
+      }
 
       const { data: userData } = await supabase
         .from('users')
@@ -462,10 +221,7 @@ export default function AuditsPage() {
   async function fetchLocationsAndCategories() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        console.log('[DEBUG] No user found');
-        return;
-      }
+      if (!user) return;
 
       const { data: userData } = await supabase
         .from('users')
@@ -473,43 +229,29 @@ export default function AuditsPage() {
         .eq('id', user.id)
         .single();
 
-      if (!userData?.organization_id) {
-        console.log('[DEBUG] No organization_id found for user');
-        return;
-      }
-
-      console.log('[DEBUG] Organization ID:', userData.organization_id);
+      if (!userData?.organization_id) return;
 
       // Fetch unique locations from assets
-      const { data: assetsData, error: assetsError } = await supabase
+      const { data: assetsData } = await supabase
         .from('assets')
         .select('current_location')
         .eq('organization_id', userData.organization_id)
         .not('current_location', 'is', null)
         .neq('current_location', '');
 
-      console.log('[DEBUG] Assets data:', assetsData);
-      console.log('[DEBUG] Assets error:', assetsError);
-
       const uniqueLocations = [...new Set((assetsData || []).map(a => a.current_location).filter(Boolean))] as string[];
-      console.log('[DEBUG] Unique locations:', uniqueLocations);
       setLocations(uniqueLocations);
 
-      // Fetch categories - try organization specific first, then all if empty
-      let { data: categoriesData, error: catError } = await supabase
+      // Fetch categories - try org-specific first, then all
+      let { data: categoriesData } = await supabase
         .from('asset_categories')
         .select('id, name')
         .eq('organization_id', userData.organization_id);
 
-      console.log('[DEBUG] Categories (org-specific):', categoriesData);
-      console.log('[DEBUG] Categories error:', catError);
-
-      // If no org-specific categories, try getting all (table is UNRESTRICTED)
       if (!categoriesData || categoriesData.length === 0) {
         const { data: allCategories } = await supabase
           .from('asset_categories')
           .select('id, name');
-        console.log('[DEBUG] All categories (fallback):', allCategories);
         categoriesData = allCategories;
       }
 
@@ -551,7 +293,7 @@ export default function AuditsPage() {
   }
 
   // ============================================================================
-  // ACTIONS
+  // CREATE AUDIT
   // ============================================================================
 
   async function handleCreateAudit() {
@@ -570,7 +312,7 @@ export default function AuditsPage() {
 
       if (!userData?.organization_id) return;
 
-      // Get assets based on scope
+      // Fetch assets based on scope
       let assetsQuery = supabase
         .from('assets')
         .select('id')
@@ -582,18 +324,17 @@ export default function AuditsPage() {
         assetsQuery = assetsQuery.eq('category_id', formData.selectedCategory);
       }
 
-      const { data: assetsData } = await assetsQuery;
-      const assetIds = (assetsData || []).map(a => a.id);
+      const { data: assetsToAudit } = await assetsQuery;
 
       // Create audit
-      const { data: audit, error: auditError } = await supabase
+      const { data: newAudit, error: auditError } = await supabase
         .from('audits')
         .insert({
           organization_id: userData.organization_id,
           name: formData.name.trim(),
           status: 'planned',
-          scheduled_date: formData.scheduled_date,
-          total_assets: assetIds.length,
+          scheduled_date: formData.scheduled_date || null,
+          total_assets: assetsToAudit?.length || 0,
           verified_assets: 0,
           missing_assets: 0,
           created_by: user.id,
@@ -603,19 +344,15 @@ export default function AuditsPage() {
 
       if (auditError) throw auditError;
 
-      // Create audit items for each asset
-      if (audit && assetIds.length > 0) {
-        const auditItems = assetIds.map(assetId => ({
-          audit_id: audit.id,
-          asset_id: assetId,
+      // Create audit items
+      if (assetsToAudit && assetsToAudit.length > 0 && newAudit) {
+        const auditItems = assetsToAudit.map(asset => ({
+          audit_id: newAudit.id,
+          asset_id: asset.id,
           status: 'pending',
         }));
 
-        const { error: itemsError } = await supabase
-          .from('audit_items')
-          .insert(auditItems);
-
-        if (itemsError) throw itemsError;
+        await supabase.from('audit_items').insert(auditItems);
       }
 
       // Reset form and close modal
@@ -635,25 +372,8 @@ export default function AuditsPage() {
     }
   }
 
-  async function handleStartAudit(auditId: string) {
-    try {
-      const { error } = await supabase
-        .from('audits')
-        .update({
-          status: 'in_progress',
-          started_at: new Date().toISOString(),
-        })
-        .eq('id', auditId);
-
-      if (error) throw error;
-      router.push(`/audits/${auditId}`);
-    } catch (err) {
-      console.error('Error starting audit:', err);
-    }
-  }
-
   // ============================================================================
-  // FILTERED DATA
+  // FILTER & SEARCH
   // ============================================================================
 
   const filteredAudits = audits.filter(audit => {
@@ -666,232 +386,207 @@ export default function AuditsPage() {
   // RENDER
   // ============================================================================
 
-  if (!mounted || loading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
-        <span className="ml-3 text-gray-600">{t.loading[language]}</span>
+        <span className="ml-3 text-gray-600">{t('common.loading')}</span>
       </div>
     );
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="space-y-6 p-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t.pageTitle[language]}</h1>
-          <p className="text-sm text-gray-500 mt-1">{t.pageSubtitle[language]}</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('audits.pageTitle')}</h1>
+          <p className="text-gray-600 mt-1">{t('audits.pageSubtitle')}</p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2.5 text-white rounded-lg transition-colors text-sm font-medium"
           style={{ backgroundColor: BRAND_COLORS.primary }}
         >
           <Plus className="w-4 h-4" />
-          {t.createAudit[language]}
+          {t('audits.createAudit')}
         </button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid gap-4 md:grid-cols-4">
         {/* Total */}
-        <div className="bg-white rounded-lg p-5 shadow-sm border-l-4 border-b-4 border-gray-400">
+        <button
+          onClick={() => setStatusFilter('all')}
+          className={`bg-white rounded-lg p-5 text-left transition-shadow hover:shadow-md ${
+            statusFilter === 'all' ? 'ring-2 ring-gray-400' : ''
+          }`}
+          style={{
+            borderLeft: `4px solid ${BRAND_COLORS.gray}`,
+            borderBottom: `4px solid ${BRAND_COLORS.gray}`,
+          }}
+        >
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">{t.totalAudits[language]}</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{stats.total}</p>
-              <p className="text-xs text-gray-400 mt-1">{t.allTime[language]}</p>
-            </div>
-            <div className="p-3 rounded-full bg-gray-100">
-              <ClipboardCheck className="w-6 h-6 text-gray-600" />
-            </div>
+            <p className="text-sm font-medium text-gray-600">{t('audits.totalAudits')}</p>
+            <ClipboardCheck className="w-5 h-5 text-gray-400" />
           </div>
-        </div>
+          <p className="text-3xl font-bold text-gray-900 mt-2">{stats.total}</p>
+          <p className="text-xs text-gray-500 mt-1">{t('audits.allTime')}</p>
+        </button>
 
         {/* Planned */}
-        <div 
-          className="bg-white rounded-lg p-5 shadow-sm border-l-4 border-b-4 cursor-pointer hover:shadow-md transition-shadow"
-          style={{ borderColor: BRAND_COLORS.primary }}
-          onClick={() => setStatusFilter(statusFilter === 'planned' ? 'all' : 'planned')}
+        <button
+          onClick={() => setStatusFilter('planned')}
+          className={`bg-white rounded-lg p-5 text-left transition-shadow hover:shadow-md ${
+            statusFilter === 'planned' ? 'ring-2 ring-blue-400' : ''
+          }`}
+          style={{
+            borderLeft: `4px solid ${BRAND_COLORS.primary}`,
+            borderBottom: `4px solid ${BRAND_COLORS.primary}`,
+          }}
         >
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">{t.planned[language]}</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{stats.planned}</p>
-              <p className="text-xs text-gray-400 mt-1">{t.scheduledAudits[language]}</p>
-            </div>
-            <div className="p-3 rounded-full" style={{ backgroundColor: `${BRAND_COLORS.primary}15` }}>
-              <Calendar className="w-6 h-6" style={{ color: BRAND_COLORS.primary }} />
-            </div>
+            <p className="text-sm font-medium text-gray-600">{t('audits.planned')}</p>
+            <Calendar className="w-5 h-5" style={{ color: BRAND_COLORS.primary }} />
           </div>
-        </div>
+          <p className="text-3xl font-bold mt-2" style={{ color: BRAND_COLORS.primary }}>{stats.planned}</p>
+          <p className="text-xs text-gray-500 mt-1">{t('audits.scheduledAudits')}</p>
+        </button>
 
         {/* In Progress */}
-        <div 
-          className="bg-white rounded-lg p-5 shadow-sm border-l-4 border-b-4 cursor-pointer hover:shadow-md transition-shadow"
-          style={{ borderColor: BRAND_COLORS.warning }}
-          onClick={() => setStatusFilter(statusFilter === 'in_progress' ? 'all' : 'in_progress')}
+        <button
+          onClick={() => setStatusFilter('in_progress')}
+          className={`bg-white rounded-lg p-5 text-left transition-shadow hover:shadow-md ${
+            statusFilter === 'in_progress' ? 'ring-2 ring-orange-400' : ''
+          }`}
+          style={{
+            borderLeft: `4px solid ${BRAND_COLORS.warning}`,
+            borderBottom: `4px solid ${BRAND_COLORS.warning}`,
+          }}
         >
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">{t.inProgress[language]}</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{stats.inProgress}</p>
-              <p className="text-xs text-gray-400 mt-1">{t.activeAudits[language]}</p>
-            </div>
-            <div className="p-3 rounded-full" style={{ backgroundColor: `${BRAND_COLORS.warning}15` }}>
-              <Clock className="w-6 h-6" style={{ color: BRAND_COLORS.warning }} />
-            </div>
+            <p className="text-sm font-medium text-gray-600">{t('audits.inProgress')}</p>
+            <Clock className="w-5 h-5" style={{ color: BRAND_COLORS.warning }} />
           </div>
-        </div>
+          <p className="text-3xl font-bold mt-2" style={{ color: BRAND_COLORS.warning }}>{stats.inProgress}</p>
+          <p className="text-xs text-gray-500 mt-1">{t('audits.activeAudits')}</p>
+        </button>
 
         {/* Completed */}
-        <div 
-          className="bg-white rounded-lg p-5 shadow-sm border-l-4 border-b-4 cursor-pointer hover:shadow-md transition-shadow"
-          style={{ borderColor: BRAND_COLORS.success }}
-          onClick={() => setStatusFilter(statusFilter === 'completed' ? 'all' : 'completed')}
+        <button
+          onClick={() => setStatusFilter('completed')}
+          className={`bg-white rounded-lg p-5 text-left transition-shadow hover:shadow-md ${
+            statusFilter === 'completed' ? 'ring-2 ring-green-400' : ''
+          }`}
+          style={{
+            borderLeft: `4px solid ${BRAND_COLORS.success}`,
+            borderBottom: `4px solid ${BRAND_COLORS.success}`,
+          }}
         >
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">{t.completed[language]}</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{stats.completed}</p>
-              <p className="text-xs text-gray-400 mt-1">{t.finishedAudits[language]}</p>
-            </div>
-            <div className="p-3 rounded-full" style={{ backgroundColor: `${BRAND_COLORS.success}15` }}>
-              <CheckCircle className="w-6 h-6" style={{ color: BRAND_COLORS.success }} />
-            </div>
+            <p className="text-sm font-medium text-gray-600">{t('audits.completed')}</p>
+            <CheckCircle className="w-5 h-5" style={{ color: BRAND_COLORS.success }} />
           </div>
+          <p className="text-3xl font-bold mt-2" style={{ color: BRAND_COLORS.success }}>{stats.completed}</p>
+          <p className="text-xs text-gray-500 mt-1">{t('audits.finishedAudits')}</p>
+        </button>
+      </div>
+
+      {/* Search */}
+      <div className="bg-white rounded-lg shadow-sm p-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder={t('audits.searchPlaceholder')}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+          />
         </div>
       </div>
 
-      {/* Search and Filters */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder={t.searchPlaceholder[language]}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-            />
-          </div>
-          <div className="flex gap-2">
-            {(['all', 'planned', 'in_progress', 'completed'] as const).map((status) => {
-              const isActive = statusFilter === status;
-              const config = status === 'all' 
-                ? { label: status === 'all' ? (language === 'fr' ? 'Tous' : 'All') : status, color: BRAND_COLORS.gray }
-                : getStatusConfig(status, t, language);
-              return (
-                <button
-                  key={status}
-                  onClick={() => setStatusFilter(status)}
-                  className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                    isActive
-                      ? 'text-white'
-                      : 'text-gray-600 bg-gray-100 hover:bg-gray-200'
-                  }`}
-                  style={isActive ? { backgroundColor: 'color' in config ? config.color : BRAND_COLORS.gray } : undefined}
-                >
-                  {status === 'all' ? (language === 'fr' ? 'Tous' : 'All') : config.label}
-                </button>
-              );
-            })}
-          </div>
+      {/* Audits List */}
+      {filteredAudits.length === 0 ? (
+        <div className="bg-white rounded-lg shadow-sm p-12 text-center">
+          <ClipboardCheck className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900">{t('audits.noAudits')}</h3>
+          <p className="text-gray-500 mt-1">{t('audits.noAuditsDesc')}</p>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="mt-4 px-4 py-2 text-white rounded-lg text-sm font-medium"
+            style={{ backgroundColor: BRAND_COLORS.primary }}
+          >
+            {t('audits.createAudit')}
+          </button>
         </div>
-      </div>
-
-      {/* Audits Table */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        {filteredAudits.length === 0 ? (
-          <div className="text-center py-16">
-            <ClipboardCheck className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-1">{t.noAudits[language]}</h3>
-            <p className="text-sm text-gray-500 mb-4">{t.noAuditsDesc[language]}</p>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg"
-              style={{ backgroundColor: BRAND_COLORS.primary }}
-            >
-              <Plus className="w-4 h-4" />
-              {t.createAudit[language]}
-            </button>
-          </div>
-        ) : (
+      ) : (
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
-                  {t.auditName[language]}
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {t('audits.auditName')}
                 </th>
-                <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
-                  {t.status[language]}
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {t('audits.status')}
                 </th>
-                <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
-                  {t.progress[language]}
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {t('audits.progress')}
                 </th>
-                <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
-                  {t.scheduledDate[language]}
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {t('audits.scheduledDate')}
                 </th>
-                <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
-                  {t.createdBy[language]}
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {t('audits.createdBy')}
                 </th>
-                <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">
-                  {t.actions[language]}
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {t('audits.actions')}
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredAudits.map((audit) => {
-                const statusConfig = getStatusConfig(audit.status, t, language);
-                const progressPercent = audit.total_assets > 0 
-                  ? Math.round((audit.verified_assets / audit.total_assets) * 100) 
+                const config = STATUS_CONFIG[audit.status];
+                const StatusIcon = config.icon;
+                const progress = audit.total_assets > 0
+                  ? Math.round(((audit.verified_assets + audit.missing_assets) / audit.total_assets) * 100)
                   : 0;
 
                 return (
                   <tr key={audit.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div 
-                          className="p-2 rounded-lg"
-                          style={{ backgroundColor: `${statusConfig.color}10` }}
+                        <div
+                          className="w-10 h-10 rounded-lg flex items-center justify-center"
+                          style={{ backgroundColor: `${config.color}15` }}
                         >
-                          <ClipboardCheck className="w-5 h-5" style={{ color: statusConfig.color }} />
+                          <ClipboardCheck className="w-5 h-5" style={{ color: config.color }} />
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900">{audit.name}</p>
-                          <p className="text-sm text-gray-500">
-                            {audit.total_assets} {language === 'fr' ? 'equipements' : 'assets'}
-                          </p>
-                        </div>
+                        <span className="font-medium text-gray-900">{audit.name}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full ${statusConfig.bgColor} ${statusConfig.textColor}`}>
-                        <statusConfig.Icon className="w-3.5 h-3.5" />
-                        {statusConfig.label}
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full ${config.bgColor}`}
+                        style={{ color: config.color }}
+                      >
+                        <StatusIcon className="w-3.5 h-3.5" />
+                        {t(config.labelKey)}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="w-32">
-                        <div className="flex items-center justify-between text-sm mb-1">
-                          <span className="text-gray-600">{progressPercent}%</span>
-                          {audit.missing_assets > 0 && (
-                            <span className="text-red-600 text-xs">
-                              {audit.missing_assets} {t.assetsMissing[language]}
-                            </span>
-                          )}
-                        </div>
-                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full rounded-full transition-all"
-                            style={{ 
-                              width: `${progressPercent}%`,
+                      <div className="flex items-center gap-3">
+                        <div className="w-24 bg-gray-200 rounded-full h-2">
+                          <div
+                            className="h-2 rounded-full transition-all"
+                            style={{
+                              width: `${progress}%`,
                               backgroundColor: audit.status === 'completed' ? BRAND_COLORS.success : BRAND_COLORS.primary,
                             }}
                           />
                         </div>
+                        <span className="text-sm text-gray-600">{progress}%</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
@@ -900,188 +595,197 @@ export default function AuditsPage() {
                     <td className="px-6 py-4 text-sm text-gray-600">
                       {audit.users?.full_name || audit.users?.email || '-'}
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        {audit.status === 'planned' && (
-                          <button
-                            onClick={() => handleStartAudit(audit.id)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white rounded-lg transition-colors"
-                            style={{ backgroundColor: BRAND_COLORS.primary }}
-                          >
-                            <Play className="w-3.5 h-3.5" />
-                            {t.start[language]}
-                          </button>
-                        )}
-                        {audit.status === 'in_progress' && (
-                          <button
-                            onClick={() => router.push(`/audits/${audit.id}`)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white rounded-lg transition-colors"
-                            style={{ backgroundColor: BRAND_COLORS.warning }}
-                          >
-                            <Play className="w-3.5 h-3.5" />
-                            {t.continue[language]}
-                          </button>
-                        )}
-                        {audit.status === 'completed' && (
-                          <button
-                            onClick={() => router.push(`/audits/${audit.id}/report`)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white rounded-lg transition-colors"
-                            style={{ backgroundColor: BRAND_COLORS.success }}
-                          >
-                            <FileText className="w-3.5 h-3.5" />
-                            {t.viewReport[language]}
-                          </button>
-                        )}
+                    <td className="px-6 py-4 text-right">
+                      {audit.status === 'planned' && (
                         <button
                           onClick={() => router.push(`/audits/${audit.id}`)}
-                          className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded-lg"
+                          style={{ backgroundColor: BRAND_COLORS.primary }}
                         >
-                          <Eye className="w-4 h-4" />
+                          <Play className="w-3.5 h-3.5" />
+                          {t('audits.start')}
                         </button>
-                      </div>
+                      )}
+                      {audit.status === 'in_progress' && (
+                        <button
+                          onClick={() => router.push(`/audits/${audit.id}`)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded-lg"
+                          style={{ backgroundColor: BRAND_COLORS.warning }}
+                        >
+                          <Play className="w-3.5 h-3.5" />
+                          {t('audits.continue')}
+                        </button>
+                      )}
+                      {audit.status === 'completed' && (
+                        <button
+                          onClick={() => router.push(`/audits/${audit.id}`)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded-lg"
+                          style={{ backgroundColor: BRAND_COLORS.success }}
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          {t('audits.viewReport')}
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Create Audit Modal */}
+      {/* Create Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div 
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setShowCreateModal(false)}
-          />
-          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div
+            className="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">{t.newAudit[language]}</h2>
+              <h2 className="text-xl font-semibold text-gray-900">{t('audits.newAudit')}</h2>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
 
-            <div className="space-y-5">
-              {/* Audit Name */}
+            <div className="space-y-4">
+              {/* Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  {t.auditNameLabel[language]}
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('audits.auditNameLabel')}
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder={t.auditNamePlaceholder[language]}
-                  className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  placeholder={t('audits.auditNamePlaceholder')}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
-              {/* Scheduled Date */}
+              {/* Date */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  {t.scheduledDateLabel[language]}
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('audits.scheduledDateLabel')}
                 </label>
                 <input
                   type="date"
                   value={formData.scheduled_date}
                   onChange={(e) => setFormData({ ...formData, scheduled_date: e.target.value })}
-                  className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
-              {/* Audit Scope */}
+              {/* Scope */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  {t.auditScope[language]}
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t('audits.auditScope')}
                 </label>
                 <div className="grid grid-cols-3 gap-2">
-                  {(['all', 'location', 'category'] as const).map((scope) => (
-                    <button
-                      key={scope}
-                      onClick={() => setFormData({ ...formData, scope, selectedLocation: '', selectedCategory: '' })}
-                      className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
-                        formData.scope === scope
-                          ? 'border-blue-500 bg-blue-50 text-blue-700'
-                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      {scope === 'all' ? t.allAssets[language] : scope === 'location' ? t.byLocation[language] : t.byCategory[language]}
-                    </button>
-                  ))}
+                  <button
+                    onClick={() => setFormData({ ...formData, scope: 'all', selectedLocation: '', selectedCategory: '' })}
+                    className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
+                      formData.scope === 'all'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {t('audits.allAssets')}
+                  </button>
+                  <button
+                    onClick={() => setFormData({ ...formData, scope: 'location', selectedCategory: '' })}
+                    className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
+                      formData.scope === 'location'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {t('audits.byLocation')}
+                  </button>
+                  <button
+                    onClick={() => setFormData({ ...formData, scope: 'category', selectedLocation: '' })}
+                    className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
+                      formData.scope === 'category'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {t('audits.byCategory')}
+                  </button>
                 </div>
               </div>
 
-              {/* Location Selector */}
+              {/* Location selector */}
               {formData.scope === 'location' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    {t.selectLocation[language]}
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('audits.selectLocation')}
                   </label>
-                  <select
-                    value={formData.selectedLocation}
-                    onChange={(e) => setFormData({ ...formData, selectedLocation: e.target.value })}
-                    className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                  >
-                    <option value="">{t.selectLocation[language]}</option>
-                    {locations.map((loc) => (
-                      <option key={loc} value={loc}>{loc}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      value={formData.selectedLocation}
+                      onChange={(e) => setFormData({ ...formData, selectedLocation: e.target.value })}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
+                    >
+                      <option value="">{t('audits.selectLocation')}</option>
+                      {locations.map((loc) => (
+                        <option key={loc} value={loc}>{loc}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  </div>
                 </div>
               )}
 
-              {/* Category Selector */}
+              {/* Category selector */}
               {formData.scope === 'category' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    {t.selectCategory[language]}
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('audits.selectCategory')}
                   </label>
-                  <select
-                    value={formData.selectedCategory}
-                    onChange={(e) => setFormData({ ...formData, selectedCategory: e.target.value })}
-                    className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                  >
-                    <option value="">{t.selectCategory[language]}</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      value={formData.selectedCategory}
+                      onChange={(e) => setFormData({ ...formData, selectedCategory: e.target.value })}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
+                    >
+                      <option value="">{t('audits.selectCategory')}</option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  </div>
                 </div>
               )}
 
-              {/* Asset Preview Count */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white rounded-lg">
-                    <Package className="w-5 h-5 text-gray-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">{assetPreviewCount}</p>
-                    <p className="text-sm text-gray-500">{t.assetsFound[language]}</p>
-                  </div>
-                </div>
+              {/* Asset preview */}
+              <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                <Package className="w-5 h-5 text-gray-500" />
+                <span className="text-lg font-semibold text-gray-900">{assetPreviewCount}</span>
+                <span className="text-sm text-gray-600">{t('audits.assetsFound')}</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 mt-6 pt-4 border-t border-gray-200">
+            {/* Actions */}
+            <div className="flex gap-3 mt-6 pt-4 border-t">
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="flex-1 px-4 py-2.5 text-gray-700 bg-gray-100 rounded-lg font-medium hover:bg-gray-200 transition-colors"
               >
-                {t.cancel[language]}
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleCreateAudit}
-                disabled={!formData.name.trim() || creating}
-                className="flex-1 px-4 py-2.5 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={creating || !formData.name.trim()}
+                className="flex-1 px-4 py-2.5 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
                 style={{ backgroundColor: BRAND_COLORS.primary }}
               >
-                {creating ? t.creating[language] : t.create[language]}
+                {creating ? t('audits.creating') : t('common.create')}
               </button>
             </div>
           </div>

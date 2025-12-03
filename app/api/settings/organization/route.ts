@@ -54,6 +54,8 @@ export async function GET(request: NextRequest) {
         currency,
         industry_sector,
         company_size,
+        branding_colors,
+        notification_preferences,
         created_at,
         updated_at
       `

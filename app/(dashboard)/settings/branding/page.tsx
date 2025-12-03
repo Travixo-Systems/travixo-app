@@ -86,8 +86,8 @@ export default function BrandingSettingsPage() {
     saving: { en: 'Saving...', fr: 'Enregistrement...' },
     reset: { en: 'Reset to Default', fr: 'Réinitialiser' },
     cancel: { en: 'Cancel', fr: 'Annuler' },
-    saveSuccess: { en: 'Branding saved successfully', fr: 'Identité visuelle enregistrée' },
-    saveError: { en: 'Error saving branding', fr: 'Erreur lors de l\'enregistrement' },
+    saveSuccess: { en: 'Theme saved! Refreshing...', fr: 'Thème enregistré! Actualisation...' },
+    saveError: { en: 'Error saving theme', fr: 'Erreur lors de l\'enregistrement' },
     primary: { en: 'Primary', fr: 'Principale' },
     primaryHelp: { en: 'Headers and main elements', fr: 'En-têtes et éléments principaux' },
     secondary: { en: 'Secondary', fr: 'Secondaire' },
@@ -128,6 +128,7 @@ export default function BrandingSettingsPage() {
     try {
       await updateBranding(colors);
       toast.success(labels.saveSuccess[language]);
+      setTimeout(() => window.location.reload(), 500);
     } catch (error: any) {
       toast.error(error.message || labels.saveError[language]);
     }

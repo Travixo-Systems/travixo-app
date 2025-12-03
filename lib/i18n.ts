@@ -993,7 +993,7 @@ export const translations = {
     },
     errorCreatedByRequired: {
       en: "Created by field is required",
-      fr: "Le champ \"Créé par\" est requis",
+      fr: 'Le champ "Créé par" est requis',
     },
     errorEquipmentInvalid: {
       en: "Invalid equipment",
@@ -1319,8 +1319,8 @@ export const translations = {
       fr: "Détection Intelligente des Colonnes",
     },
     importSmartDetectionDesc: {
-      en: "We automatically detect columns like \"Name\", \"Serial Number\", \"Location\", etc. Even if your headers are different, we'll figure it out!",
-      fr: "Nous détectons automatiquement les colonnes comme \"Nom\", \"Numéro de Série\", \"Emplacement\", etc. Même si vos en-têtes sont différents, nous nous en chargeons !",
+      en: 'We automatically detect columns like "Name", "Serial Number", "Location", etc. Even if your headers are different, we\'ll figure it out!',
+      fr: 'Nous détectons automatiquement les colonnes comme "Nom", "Numéro de Série", "Emplacement", etc. Même si vos en-têtes sont différents, nous nous en chargeons !',
     },
     importValidRows: {
       en: "Valid Rows",
@@ -1549,8 +1549,8 @@ export const translations = {
       fr: "Sélectionnez les équipements pour lesquels vous voulez imprimer des QR codes",
     },
     printStep2: {
-      en: "Click \"Generate PDF\" to download a printable PDF (30 QR codes per A4 page)",
-      fr: "Cliquez sur \"Générer PDF\" pour télécharger un PDF imprimable (30 QR codes par page A4)",
+      en: 'Click "Generate PDF" to download a printable PDF (30 QR codes per A4 page)',
+      fr: 'Cliquez sur "Générer PDF" pour télécharger un PDF imprimable (30 QR codes par page A4)',
     },
     printStep3: {
       en: "Print on adhesive label sheets (recommended: Avery 5160 or equivalent)",
@@ -1561,8 +1561,8 @@ export const translations = {
       fr: "Découpez et collez les étiquettes sur vos équipements",
     },
     printStep5: {
-      en: "Use \"Export CSV\" to get a spreadsheet of all selected equipment with URLs",
-      fr: "Utilisez \"Exporter CSV\" pour obtenir un tableur de tous les équipements sélectionnés avec URLs",
+      en: 'Use "Export CSV" to get a spreadsheet of all selected equipment with URLs',
+      fr: 'Utilisez "Exporter CSV" pour obtenir un tableur de tous les équipements sélectionnés avec URLs',
     },
     proTip: {
       en: "Pro Tip",
@@ -2401,7 +2401,7 @@ export const translations = {
       fr: "Historique",
     },
   },
-// ============================================================================
+  // ============================================================================
   // AUDITS MODULE
   // ============================================================================
   audits: {
@@ -2917,6 +2917,11 @@ export const translations = {
     cancel: {
       en: "Cancel",
       fr: "Annuler",
+    },
+    create: {
+      // ← AJOUTE CECI
+      en: "Create",
+      fr: "Créer",
     },
     delete: {
       en: "Delete",

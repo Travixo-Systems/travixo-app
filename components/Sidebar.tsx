@@ -2,6 +2,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import {
@@ -20,12 +21,14 @@ import { AlertCircle, Calendar, FileText, History } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { createTranslator } from '@/lib/i18n';
 import { LanguageToggle } from './LanguageToggle';
+import { useTheme } from '@/lib/ThemeContext';
 import { cn } from '@/lib/utils';
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { language } = useLanguage();
   const t = createTranslator(language);
+  const { colors, logo, orgName } = useTheme();
   const [vgpOpen, setVgpOpen] = useState(pathname.startsWith('/vgp'));
   const [collapsed, setCollapsed] = useState(false);
 
@@ -65,18 +68,44 @@ export default function Sidebar() {
   return (
     <div
       className={cn(
-        "flex flex-col bg-gray-900 h-screen border-r border-gray-800 transition-all duration-300",
+        "flex flex-col h-screen border-r border-gray-800 transition-all duration-300",
         collapsed ? "w-16" : "w-64"
       )}
+      style={{ backgroundColor: colors.primary }}
     >
       {/* Logo & Toggle */}
-      <div className="flex items-center justify-between h-16 px-4 bg-gray-900 border-b border-gray-800">
-        {!collapsed && <h1 className="text-xl font-bold text-white">TraviXO</h1>}
+      <div 
+        className="flex items-center justify-between h-16 px-4 border-b border-gray-800"
+        style={{ backgroundColor: colors.primary }}
+      >
+        {!collapsed && (
+          <div className="flex items-center space-x-2">
+            {logo ? (
+              <Image 
+                src={logo} 
+                alt={orgName} 
+                width={32} 
+                height={32} 
+                className="w-8 h-8 object-contain rounded"
+              />
+            ) : null}
+            <h1 className="text-xl font-bold text-white truncate">{orgName}</h1>
+          </div>
+        )}
+        {collapsed && logo && (
+          <Image 
+            src={logo} 
+            alt={orgName} 
+            width={32} 
+            height={32} 
+            className="w-8 h-8 object-contain rounded mx-auto"
+          />
+        )}
         <button
           onClick={toggleCollapsed}
           className={cn(
             "p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors",
-            collapsed && "mx-auto"
+            collapsed && !logo && "mx-auto"
           )}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
@@ -102,10 +131,11 @@ export default function Sidebar() {
               className={cn(
                 "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors group relative",
                 isActive
-                  ? 'bg-gray-800 text-white'
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white',
+                  ? 'text-white'
+                  : 'text-gray-300 hover:text-white',
                 collapsed && "justify-center"
               )}
+              style={isActive ? { backgroundColor: colors.secondary } : undefined}
               title={collapsed ? item.name : undefined}
             >
               <Icon className={cn("w-5 h-5", !collapsed && "mr-3")} />
@@ -119,22 +149,21 @@ export default function Sidebar() {
           <button
             onClick={() => {
               if (collapsed) {
-                // Expand sidebar first, then open VGP dropdown
                 setCollapsed(false);
                 localStorage.setItem('sidebar-collapsed', JSON.stringify(false));
                 setVgpOpen(true);
               } else {
-                // Just toggle dropdown when already expanded
                 setVgpOpen(!vgpOpen);
               }
             }}
             className={cn(
               "w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors",
               pathname.startsWith('/vgp')
-                ? 'bg-gray-800 text-white'
-                : 'text-gray-300 hover:bg-gray-800 hover:text-white',
+                ? 'text-white'
+                : 'text-gray-300 hover:text-white',
               collapsed && "justify-center"
             )}
+            style={pathname.startsWith('/vgp') ? { backgroundColor: colors.secondary } : undefined}
             title={collapsed ? t('navigation.vgp') : undefined}
           >
             <div className={cn("flex items-center", collapsed && "justify-center w-full")}>
@@ -150,7 +179,7 @@ export default function Sidebar() {
             )}
           </button>
 
-          {/* VGP Sub-menu - Only show when expanded */}
+          {/* VGP Sub-menu */}
           {vgpOpen && !collapsed && (
             <div className="mt-1 ml-4 space-y-1">
               {vgpNavigation.map((item) => {
@@ -164,9 +193,10 @@ export default function Sidebar() {
                     className={cn(
                       "flex items-center px-4 py-2 text-sm rounded-lg transition-colors",
                       isActive
-                        ? 'bg-gray-800 text-white font-medium'
-                        : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                        ? 'text-white font-medium'
+                        : 'text-gray-400 hover:text-white'
                     )}
+                    style={isActive ? { backgroundColor: colors.secondary } : undefined}
                   >
                     <Icon className="w-4 h-4 mr-3" />
                     {item.name}
@@ -189,10 +219,11 @@ export default function Sidebar() {
               className={cn(
                 "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors",
                 isActive
-                  ? 'bg-gray-800 text-white'
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white',
+                  ? 'text-white'
+                  : 'text-gray-300 hover:text-white',
                 collapsed && "justify-center"
               )}
+              style={isActive ? { backgroundColor: colors.secondary } : undefined}
               title={collapsed ? item.name : undefined}
             >
               <Icon className={cn("w-5 h-5", !collapsed && "mr-3")} />
