@@ -2716,6 +2716,14 @@ export const translations = {
       en: "Team Members",
       fr: "Membres",
     },
+    changeRoleFor: {
+      en: "Change role for",
+      fr: "Changer le rôle de",
+    },
+    updateRole: {
+      en: "Update Role",
+      fr: "Mettre à jour",
+    },
     standardAccess: {
       en: "Standard access",
       fr: "Accès standard",

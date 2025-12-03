@@ -108,10 +108,50 @@ export const ourFileRouter = {
       await supabase
         .from('organizations')
         .update({ 
-          logo_url: file.ufsUrl,
+          logo_url: file.url,
           updated_at: new Date().toISOString()
         })
         .eq('id', metadata.organizationId);
+
+      return { 
+        uploadedBy: metadata.userId,
+        fileUrl: file.url 
+      };
+    }),
+
+  // User avatar uploads (Image)
+  userAvatar: f({ 
+    image: { 
+      maxFileSize: "2MB",
+      maxFileCount: 1,
+    } 
+  })
+    .middleware(async () => {
+      const supabase = await createClient();
+      const { data: { user }, error } = await supabase.auth.getUser();
+
+      if (error || !user) {
+        throw new Error("Unauthorized");
+      }
+
+      console.log("Avatar upload by user:", user.id);
+
+      return { 
+        userId: user.id
+      };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      console.log("Avatar uploaded:", file.url);
+
+      // Update user with new avatar URL
+      const supabase = await createClient();
+      await supabase
+        .from('users')
+        .update({ 
+          avatar_url: file.url,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', metadata.userId);
 
       return { 
         uploadedBy: metadata.userId,

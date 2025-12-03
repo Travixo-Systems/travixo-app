@@ -15,7 +15,8 @@ import {
   ChevronRightIcon,
   CreditCardIcon,
   ChevronLeftIcon,
-  Bars3Icon
+  Bars3Icon,
+  ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline';
 import { AlertCircle, Calendar, FileText, History } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -23,6 +24,7 @@ import { createTranslator } from '@/lib/i18n';
 import { LanguageToggle } from './LanguageToggle';
 import { useTheme } from '@/lib/ThemeContext';
 import { cn } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -31,6 +33,10 @@ export default function Sidebar() {
   const { colors, logo, orgName } = useTheme();
   const [vgpOpen, setVgpOpen] = useState(pathname.startsWith('/vgp'));
   const [collapsed, setCollapsed] = useState(false);
+  const [user, setUser] = useState<{ firstName: string; lastName: string; email: string } | null>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const supabase = createClient();
 
   // Load collapsed state from localStorage on mount
   useEffect(() => {
@@ -40,11 +46,66 @@ export default function Sidebar() {
     }
   }, []);
 
+  // Fetch current user
+  useEffect(() => {
+    async function fetchUser() {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
+        const { data } = await supabase
+          .from('users')
+          .select('first_name, last_name, email')
+          .eq('id', authUser.id)
+          .single();
+        
+        if (data) {
+          setUser({
+            firstName: data.first_name || '',
+            lastName: data.last_name || '',
+            email: data.email
+          });
+        }
+      }
+    }
+    fetchUser();
+  }, []);
+
   // Save collapsed state to localStorage
   const toggleCollapsed = () => {
     const newState = !collapsed;
     setCollapsed(newState);
     localStorage.setItem('sidebar-collapsed', JSON.stringify(newState));
+  };
+
+  // Logout handler
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    await supabase.auth.signOut();
+    // LanguageContext will handle redirect to /login
+  };
+
+  // Get user initials
+  const getInitials = () => {
+    if (user?.firstName && user?.lastName) {
+      return (user.firstName[0] + user.lastName[0]).toUpperCase();
+    }
+    if (user?.firstName) {
+      return user.firstName.substring(0, 2).toUpperCase();
+    }
+    if (user?.email) {
+      return user.email.substring(0, 2).toUpperCase();
+    }
+    return '??';
+  };
+
+  // Get display name
+  const getDisplayName = () => {
+    if (user?.firstName && user?.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    }
+    if (user?.firstName) {
+      return user.firstName;
+    }
+    return user?.email?.split('@')[0] || '';
   };
 
   // Main navigation with translations
@@ -233,12 +294,60 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Language Toggle - Bottom of Sidebar */}
-      {!collapsed && (
-        <div className="p-4 border-t border-gray-800">
-          <LanguageToggle />
-        </div>
-      )}
+      {/* User Section & Language Toggle - Bottom of Sidebar */}
+      <div className="border-t border-gray-800">
+        {/* User Info & Logout */}
+        {user && (
+          <div className={cn("p-4", collapsed && "p-2")}>
+            {!collapsed ? (
+              <div className="space-y-3">
+                <Link 
+                  href="/settings/profile"
+                  className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                >
+                  <div 
+                    className="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-white text-sm font-medium"
+                    style={{ backgroundColor: colors.secondary }}
+                  >
+                    {getInitials()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-white truncate">{getDisplayName()}</p>
+                    <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                  </div>
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  disabled={loggingOut}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-red-400 hover:text-white hover:bg-red-600/20 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <ArrowRightOnRectangleIcon className="w-4 h-4" />
+                  {loggingOut 
+                    ? (language === 'fr' ? 'Déconnexion...' : 'Logging out...') 
+                    : (language === 'fr' ? 'Déconnexion' : 'Logout')
+                  }
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="w-full p-2 text-red-400 hover:text-white hover:bg-red-600/20 rounded-lg transition-colors flex items-center justify-center disabled:opacity-50"
+                title={language === 'fr' ? 'Déconnexion' : 'Logout'}
+              >
+                <ArrowRightOnRectangleIcon className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Language Toggle */}
+        {!collapsed && (
+          <div className="px-4 pb-4">
+            <LanguageToggle />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 // ============================================================================
 // FILE: app/(dashboard)/team/page.tsx
 // PURPOSE: Team management - invite members, change roles, remove members
-// COPY TO: your-project/app/(dashboard)/team/page.tsx
+// UPDATED: Clickable stat cards for filtering
 // ============================================================================
 
 'use client';
@@ -43,11 +43,14 @@ const BRAND_COLORS = {
 // ============================================================================
 
 type RoleType = 'owner' | 'admin' | 'member' | 'viewer';
+type FilterType = 'all' | 'admins' | 'members' | 'pending';
 
 interface TeamMember {
   id: string;
   email: string;
-  full_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  full_name: string | null; // Legacy, keep for fallback
   role: RoleType;
   organization_id: string;
   created_at: string;
@@ -77,15 +80,34 @@ const ROLE_CONFIG: Record<RoleType, { icon: React.ElementType; color: string; bg
 // UTILITIES
 // ============================================================================
 
-function getInitials(name: string | null, email: string): string {
-  if (name) {
-    const parts = name.trim().split(' ');
+function getInitials(member: TeamMember): string {
+  if (member.first_name && member.last_name) {
+    return (member.first_name[0] + member.last_name[0]).toUpperCase();
+  }
+  if (member.first_name) {
+    return member.first_name.substring(0, 2).toUpperCase();
+  }
+  if (member.full_name) {
+    const parts = member.full_name.trim().split(' ');
     if (parts.length >= 2) {
       return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     }
-    return name.substring(0, 2).toUpperCase();
+    return member.full_name.substring(0, 2).toUpperCase();
   }
-  return email.substring(0, 2).toUpperCase();
+  return member.email.substring(0, 2).toUpperCase();
+}
+
+function getDisplayName(member: TeamMember): string {
+  if (member.first_name && member.last_name) {
+    return `${member.first_name} ${member.last_name}`;
+  }
+  if (member.first_name) {
+    return member.first_name;
+  }
+  if (member.full_name) {
+    return member.full_name;
+  }
+  return member.email.split('@')[0];
 }
 
 function formatDateFR(iso: string | null): string {
@@ -98,11 +120,11 @@ function formatDateFR(iso: string | null): string {
       day: '2-digit',
     }).format(date);
   } catch {
-    return iso;
+    return '-';
   }
 }
 
-function formatRelativeTime(iso: string | null, language: 'en' | 'fr'): string {
+function getRelativeTime(iso: string | null, language: 'en' | 'fr'): string {
   if (!iso) return '-';
   try {
     const date = new Date(iso);
@@ -112,11 +134,14 @@ function formatRelativeTime(iso: string | null, language: 'en' | 'fr'): string {
 
     if (diffDays === 0) return language === 'fr' ? "Aujourd'hui" : 'Today';
     if (diffDays === 1) return language === 'fr' ? 'Hier' : 'Yesterday';
-    if (diffDays < 7) return `${diffDays} ${language === 'fr' ? 'jours' : 'days ago'}`;
-    const weeks = Math.floor(diffDays / 7);
-    return `${weeks} ${language === 'fr' ? 'semaines' : 'weeks ago'}`;
+    if (diffDays < 7) return language === 'fr' ? `Il y a ${diffDays} jours` : `${diffDays} days ago`;
+    if (diffDays < 30) {
+      const weeks = Math.floor(diffDays / 7);
+      return language === 'fr' ? `Il y a ${weeks} semaine${weeks > 1 ? 's' : ''}` : `${weeks} week${weeks > 1 ? 's' : ''} ago`;
+    }
+    return formatDateFR(iso);
   } catch {
-    return iso;
+    return '-';
   }
 }
 
@@ -128,25 +153,26 @@ export default function TeamPage() {
   const { language } = useLanguage();
   const t = createTranslator(language);
   const supabase = createClient();
-  
+
   // State
+  const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [stats, setStats] = useState<TeamStats>({ total: 0, admins: 0, members: 0, viewers: 0, pendingInvites: 0 });
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+
+  // Current user
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [currentUserRole, setCurrentUserRole] = useState<RoleType>('member');
-  
-  // Modal states
+  const [currentUserRole, setCurrentUserRole] = useState<RoleType | null>(null);
+
+  // Modals
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [showRemoveModal, setShowRemoveModal] = useState(false);
   const [showRoleModal, setShowRoleModal] = useState(false);
+  const [showRemoveModal, setShowRemoveModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
-  
-  // Form states
+  const [newRole, setNewRole] = useState<RoleType | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState<'admin' | 'member' | 'viewer'>('member');
-  const [newRole, setNewRole] = useState<RoleType>('member');
+  const [inviteRole, setInviteRole] = useState<RoleType>('member');
   const [sending, setSending] = useState(false);
 
   // ============================================================================
@@ -264,13 +290,33 @@ export default function TeamPage() {
   }
 
   // ============================================================================
-  // FILTER
+  // FILTER LOGIC
   // ============================================================================
 
-  const filteredMembers = members.filter(m =>
-    (m.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-     m.email.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredMembers = members.filter(m => {
+    // Search filter
+    const displayName = getDisplayName(m);
+    const matchesSearch = 
+      displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      m.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      m.last_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      m.email.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    if (!matchesSearch) return false;
+
+    // Role filter
+    switch (activeFilter) {
+      case 'admins':
+        return m.role === 'owner' || m.role === 'admin';
+      case 'members':
+        return m.role === 'member' || m.role === 'viewer';
+      case 'pending':
+        return false; // No pending members in users table (would be in invitations)
+      case 'all':
+      default:
+        return true;
+    }
+  });
 
   // ============================================================================
   // RENDER
@@ -278,9 +324,8 @@ export default function TeamPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
-        <span className="ml-3 text-gray-600">{t('common.loading')}</span>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: BRAND_COLORS.primary }}></div>
       </div>
     );
   }
@@ -305,11 +350,18 @@ export default function TeamPage() {
         )}
       </div>
 
-      {/* Stats */}
+      {/* Stats - Clickable Filter Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <div
-          className="bg-white rounded-lg p-5"
-          style={{ borderLeft: `4px solid ${BRAND_COLORS.gray}`, borderBottom: `4px solid ${BRAND_COLORS.gray}` }}
+        {/* Total Members */}
+        <button
+          onClick={() => setActiveFilter('all')}
+          className={`bg-white rounded-lg p-5 text-left transition-all hover:shadow-md ${
+            activeFilter === 'all' ? 'ring-2 ring-gray-400' : ''
+          }`}
+          style={{ 
+            borderLeft: `4px solid ${BRAND_COLORS.gray}`, 
+            borderBottom: `4px solid ${BRAND_COLORS.gray}`
+          }}
         >
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-gray-600">{t('team.totalMembers')}</p>
@@ -317,11 +369,18 @@ export default function TeamPage() {
           </div>
           <p className="text-3xl font-bold text-gray-900 mt-2">{stats.total}</p>
           <p className="text-xs text-gray-500 mt-1">{t('team.teamSize')}</p>
-        </div>
+        </button>
 
-        <div
-          className="bg-white rounded-lg p-5"
-          style={{ borderLeft: `4px solid ${BRAND_COLORS.success}`, borderBottom: `4px solid ${BRAND_COLORS.success}` }}
+        {/* Administrators */}
+        <button
+          onClick={() => setActiveFilter('admins')}
+          className={`bg-white rounded-lg p-5 text-left transition-all hover:shadow-md ${
+            activeFilter === 'admins' ? 'ring-2 ring-green-500' : ''
+          }`}
+          style={{ 
+            borderLeft: `4px solid ${BRAND_COLORS.success}`, 
+            borderBottom: `4px solid ${BRAND_COLORS.success}`
+          }}
         >
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-gray-600">{t('team.administrators')}</p>
@@ -329,11 +388,18 @@ export default function TeamPage() {
           </div>
           <p className="text-3xl font-bold mt-2" style={{ color: BRAND_COLORS.success }}>{stats.admins}</p>
           <p className="text-xs text-gray-500 mt-1">{t('team.fullAccess')}</p>
-        </div>
+        </button>
 
-        <div
-          className="bg-white rounded-lg p-5"
-          style={{ borderLeft: `4px solid ${BRAND_COLORS.warning}`, borderBottom: `4px solid ${BRAND_COLORS.warning}` }}
+        {/* Team Members */}
+        <button
+          onClick={() => setActiveFilter('members')}
+          className={`bg-white rounded-lg p-5 text-left transition-all hover:shadow-md ${
+            activeFilter === 'members' ? 'ring-2 ring-orange-500' : ''
+          }`}
+          style={{ 
+            borderLeft: `4px solid ${BRAND_COLORS.warning}`, 
+            borderBottom: `4px solid ${BRAND_COLORS.warning}`
+          }}
         >
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-gray-600">{t('team.teamMembers')}</p>
@@ -341,11 +407,18 @@ export default function TeamPage() {
           </div>
           <p className="text-3xl font-bold mt-2" style={{ color: BRAND_COLORS.warning }}>{stats.members + stats.viewers}</p>
           <p className="text-xs text-gray-500 mt-1">{t('team.standardAccess')}</p>
-        </div>
+        </button>
 
-        <div
-          className="bg-white rounded-lg p-5"
-          style={{ borderLeft: `4px solid ${BRAND_COLORS.primary}`, borderBottom: `4px solid ${BRAND_COLORS.primary}` }}
+        {/* Pending Invites */}
+        <button
+          onClick={() => setActiveFilter('pending')}
+          className={`bg-white rounded-lg p-5 text-left transition-all hover:shadow-md ${
+            activeFilter === 'pending' ? 'ring-2 ring-blue-500' : ''
+          }`}
+          style={{ 
+            borderLeft: `4px solid ${BRAND_COLORS.primary}`, 
+            borderBottom: `4px solid ${BRAND_COLORS.primary}`
+          }}
         >
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-gray-600">{t('team.pendingInvites')}</p>
@@ -353,8 +426,35 @@ export default function TeamPage() {
           </div>
           <p className="text-3xl font-bold mt-2" style={{ color: BRAND_COLORS.primary }}>{stats.pendingInvites}</p>
           <p className="text-xs text-gray-500 mt-1">{t('team.awaitingResponse')}</p>
-        </div>
+        </button>
       </div>
+
+      {/* Active Filter Indicator */}
+      {activeFilter !== 'all' && (
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-600">
+            {language === 'fr' ? 'Filtré par:' : 'Filtered by:'}
+          </span>
+          <span 
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium text-white"
+            style={{ 
+              backgroundColor: activeFilter === 'admins' ? BRAND_COLORS.success : 
+                              activeFilter === 'members' ? BRAND_COLORS.warning : 
+                              BRAND_COLORS.primary 
+            }}
+          >
+            {activeFilter === 'admins' && (language === 'fr' ? 'Administrateurs' : 'Administrators')}
+            {activeFilter === 'members' && (language === 'fr' ? 'Membres' : 'Members')}
+            {activeFilter === 'pending' && (language === 'fr' ? 'En attente' : 'Pending')}
+            <button 
+              onClick={() => setActiveFilter('all')}
+              className="ml-1 hover:bg-white/20 rounded-full p-0.5"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </span>
+        </div>
+      )}
 
       {/* Search */}
       <div className="bg-white rounded-lg shadow-sm p-4">
@@ -374,9 +474,29 @@ export default function TeamPage() {
       {filteredMembers.length === 0 ? (
         <div className="bg-white rounded-lg shadow-sm p-12 text-center">
           <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900">{t('team.noMembers')}</h3>
-          <p className="text-gray-500 mt-1">{t('team.noMembersDesc')}</p>
-          {canManageTeam && (
+          <h3 className="text-lg font-medium text-gray-900">
+            {activeFilter === 'pending' 
+              ? (language === 'fr' ? 'Aucune invitation en attente' : 'No pending invitations')
+              : t('team.noMembers')
+            }
+          </h3>
+          <p className="text-gray-500 mt-1">
+            {activeFilter === 'pending'
+              ? (language === 'fr' ? 'Toutes les invitations ont été acceptées' : 'All invitations have been accepted')
+              : activeFilter !== 'all'
+                ? (language === 'fr' ? 'Aucun membre dans cette catégorie' : 'No members in this category')
+                : t('team.noMembersDesc')
+            }
+          </p>
+          {activeFilter !== 'all' && (
+            <button
+              onClick={() => setActiveFilter('all')}
+              className="mt-4 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+            >
+              {language === 'fr' ? 'Voir tous les membres' : 'View all members'}
+            </button>
+          )}
+          {activeFilter === 'all' && canManageTeam && (
             <button
               onClick={() => setShowInviteModal(true)}
               className="mt-4 px-4 py-2 text-white rounded-lg text-sm font-medium"
@@ -418,72 +538,64 @@ export default function TeamPage() {
 
                 return (
                   <tr key={member.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
                         <div
-                          className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium"
+                          className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium text-sm"
                           style={{ backgroundColor: BRAND_COLORS.primary }}
                         >
-                          {getInitials(member.full_name, member.email)}
+                          {getInitials(member)}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-gray-900">
-                              {member.full_name || member.email}
-                            </span>
+                            <p className="text-sm font-medium text-gray-900">
+                              {getDisplayName(member)}
+                            </p>
                             {isCurrentUser && (
-                              <span className="px-1.5 py-0.5 text-xs bg-gray-100 text-gray-600 rounded">
+                              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
                                 {language === 'fr' ? 'Vous' : 'You'}
                               </span>
                             )}
                           </div>
-                          {member.full_name && (
-                            <span className="text-sm text-gray-500">{member.email}</span>
-                          )}
+                          <p className="text-sm text-gray-500">{member.email}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full ${roleConfig.bgColor}`}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${roleConfig.bgColor}`}
                         style={{ color: roleConfig.color }}
                       >
                         <RoleIcon className="w-3.5 h-3.5" />
                         {t(`team.role${member.role.charAt(0).toUpperCase() + member.role.slice(1)}`)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDateFR(member.created_at)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {formatRelativeTime(member.updated_at || member.created_at, language)}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {getRelativeTime(member.updated_at || member.created_at, language)}
                     </td>
                     {canManageTeam && (
-                      <td className="px-6 py-4 text-right">
-                        {canEditMember(member) && (
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => {
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        {canEditMember(member) ? (
+                          <div className="relative inline-block text-left">
+                            <MemberActions
+                              member={member}
+                              onEditRole={() => {
                                 setSelectedMember(member);
                                 setNewRole(member.role);
                                 setShowRoleModal(true);
                               }}
-                              className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
-                              title={t('team.changeRole')}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => {
+                              onRemove={() => {
                                 setSelectedMember(member);
                                 setShowRemoveModal(true);
                               }}
-                              className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
-                              title={t('team.removeMember')}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                              language={language}
+                            />
                           </div>
+                        ) : (
+                          <span className="text-gray-400">-</span>
                         )}
                       </td>
                     )}
@@ -495,21 +607,131 @@ export default function TeamPage() {
         </div>
       )}
 
-      {/* Invite Modal */}
-      {showInviteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">{t('team.inviteMemberTitle')}</h2>
-              <button
-                onClick={() => setShowInviteModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg"
-              >
-                <X className="w-5 h-5 text-gray-500" />
+      {/* Change Role Modal */}
+      {showRoleModal && selectedMember && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">{t('team.changeRole')}</h3>
+              <button onClick={() => setShowRoleModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
               </button>
             </div>
+            <div className="p-4 space-y-4">
+              <p className="text-sm text-gray-600">
+                {t('team.changeRoleFor')} <strong>{getDisplayName(selectedMember)}</strong>
+              </p>
+              <div className="space-y-2">
+                {(['admin', 'member', 'viewer'] as RoleType[]).map((role) => {
+                  const config = ROLE_CONFIG[role];
+                  const Icon = config.icon;
+                  return (
+                    <label
+                      key={role}
+                      className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${
+                        newRole === role ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="role"
+                        checked={newRole === role}
+                        onChange={() => setNewRole(role)}
+                        className="sr-only"
+                      />
+                      <div className={`p-2 rounded-lg ${config.bgColor}`}>
+                        <Icon className="w-4 h-4" style={{ color: config.color }} />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">
+                          {t(`team.role${role.charAt(0).toUpperCase() + role.slice(1)}`)}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {t(`team.role${role.charAt(0).toUpperCase() + role.slice(1)}Desc`)}
+                        </p>
+                      </div>
+                      {newRole === role && (
+                        <Check className="w-5 h-5 text-blue-500" />
+                      )}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 p-4 border-t bg-gray-50">
+              <button
+                onClick={() => setShowRoleModal(false)}
+                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                onClick={handleChangeRole}
+                disabled={sending || newRole === selectedMember.role}
+                className="px-4 py-2 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+                style={{ backgroundColor: BRAND_COLORS.primary }}
+              >
+                {sending ? t('common.loading') : t('team.updateRole')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-            <div className="space-y-4">
+      {/* Remove Member Modal */}
+      {showRemoveModal && selectedMember && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">{t('team.removeMember')}</h3>
+              <button onClick={() => setShowRemoveModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4">
+              <div className="flex items-start gap-3 p-4 bg-red-50 rounded-lg">
+                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm text-red-800">
+                    {t('team.removeWarning')}
+                  </p>
+                  <p className="text-sm text-red-700 mt-2 font-medium">
+                    {getDisplayName(selectedMember)}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 p-4 border-t bg-gray-50">
+              <button
+                onClick={() => setShowRemoveModal(false)}
+                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                onClick={handleRemoveMember}
+                disabled={sending}
+                className="px-4 py-2 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+                style={{ backgroundColor: BRAND_COLORS.danger }}
+              >
+                {sending ? t('common.loading') : t('team.confirmRemove')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Invite Member Modal */}
+      {showInviteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">{t('team.inviteMember')}</h3>
+              <button onClick={() => setShowInviteModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   {t('team.emailAddress')}
@@ -518,36 +740,36 @@ export default function TeamPage() {
                   type="email"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
-                  placeholder={t('team.emailPlaceholder')}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="colleague@company.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {t('team.selectRole')}
                 </label>
                 <div className="space-y-2">
-                  {(['admin', 'member', 'viewer'] as const).map((role) => {
+                  {(['admin', 'member', 'viewer'] as RoleType[]).map((role) => {
                     const config = ROLE_CONFIG[role];
                     const Icon = config.icon;
                     return (
-                      <button
+                      <label
                         key={role}
-                        onClick={() => setInviteRole(role)}
-                        className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                          inviteRole === role
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 hover:bg-gray-50'
+                        className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${
+                          inviteRole === role ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
                         }`}
                       >
-                        <div
-                          className="w-10 h-10 rounded-lg flex items-center justify-center"
-                          style={{ backgroundColor: `${config.color}15` }}
-                        >
-                          <Icon className="w-5 h-5" style={{ color: config.color }} />
+                        <input
+                          type="radio"
+                          name="inviteRole"
+                          checked={inviteRole === role}
+                          onChange={() => setInviteRole(role)}
+                          className="sr-only"
+                        />
+                        <div className={`p-2 rounded-lg ${config.bgColor}`}>
+                          <Icon className="w-4 h-4" style={{ color: config.color }} />
                         </div>
-                        <div className="flex-1 text-left">
+                        <div className="flex-1">
                           <p className="font-medium text-gray-900">
                             {t(`team.role${role.charAt(0).toUpperCase() + role.slice(1)}`)}
                           </p>
@@ -556,156 +778,95 @@ export default function TeamPage() {
                           </p>
                         </div>
                         {inviteRole === role && (
-                          <Check className="w-5 h-5 text-blue-600" />
+                          <Check className="w-5 h-5 text-blue-500" />
                         )}
-                      </button>
+                      </label>
                     );
                   })}
                 </div>
               </div>
+              <div className="p-3 bg-amber-50 rounded-lg">
+                <p className="text-sm text-amber-800">
+                  <strong>{language === 'fr' ? 'Note:' : 'Note:'}</strong>{' '}
+                  {language === 'fr' 
+                    ? "La fonctionnalité d'invitation par email sera disponible prochainement."
+                    : 'Email invitation feature will be available soon.'}
+                </p>
+              </div>
             </div>
-
-            <div className="flex gap-3 mt-6 pt-4 border-t">
+            <div className="flex justify-end gap-3 p-4 border-t bg-gray-50">
               <button
                 onClick={() => setShowInviteModal(false)}
-                className="flex-1 px-4 py-2.5 text-gray-700 bg-gray-100 rounded-lg font-medium hover:bg-gray-200"
+                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50"
               >
                 {t('common.cancel')}
               </button>
               <button
-                disabled={!inviteEmail.trim() || sending}
-                className="flex-1 px-4 py-2.5 text-white rounded-lg font-medium disabled:opacity-50"
+                disabled={true}
+                className="px-4 py-2 text-white rounded-lg text-sm font-medium disabled:opacity-50"
                 style={{ backgroundColor: BRAND_COLORS.primary }}
               >
-                {sending ? t('team.sending') : t('team.sendInvite')}
+                {t('team.sendInvite')}
               </button>
             </div>
           </div>
         </div>
       )}
+    </div>
+  );
+}
 
-      {/* Change Role Modal */}
-      {showRoleModal && selectedMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">{t('team.changeRoleTitle')}</h2>
-              <button
-                onClick={() => { setShowRoleModal(false); setSelectedMember(null); }}
-                className="p-2 hover:bg-gray-100 rounded-lg"
-              >
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
+// ============================================================================
+// MEMBER ACTIONS DROPDOWN
+// ============================================================================
 
-            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600">{selectedMember.full_name || selectedMember.email}</p>
-              <p className="text-xs text-gray-500">{t('team.currentRole')}: {t(`team.role${selectedMember.role.charAt(0).toUpperCase() + selectedMember.role.slice(1)}`)}</p>
-            </div>
+function MemberActions({
+  member,
+  onEditRole,
+  onRemove,
+  language,
+}: {
+  member: TeamMember;
+  onEditRole: () => void;
+  onRemove: () => void;
+  language: 'en' | 'fr';
+}) {
+  const [open, setOpen] = useState(false);
 
-            <div className="space-y-2">
-              {(['admin', 'member', 'viewer'] as const).map((role) => {
-                const config = ROLE_CONFIG[role];
-                const Icon = config.icon;
-                const isDisabled = currentUserRole === 'admin' && role === 'admin';
-                
-                return (
-                  <button
-                    key={role}
-                    onClick={() => !isDisabled && setNewRole(role)}
-                    disabled={isDisabled}
-                    className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                      newRole === role
-                        ? 'border-blue-500 bg-blue-50'
-                        : isDisabled
-                        ? 'border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed'
-                        : 'border-gray-200 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div
-                      className="w-10 h-10 rounded-lg flex items-center justify-center"
-                      style={{ backgroundColor: `${config.color}15` }}
-                    >
-                      <Icon className="w-5 h-5" style={{ color: config.color }} />
-                    </div>
-                    <div className="flex-1 text-left">
-                      <p className="font-medium text-gray-900">
-                        {t(`team.role${role.charAt(0).toUpperCase() + role.slice(1)}`)}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {t(`team.role${role.charAt(0).toUpperCase() + role.slice(1)}Desc`)}
-                      </p>
-                    </div>
-                    {newRole === role && (
-                      <Check className="w-5 h-5 text-blue-600" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="flex gap-3 mt-6 pt-4 border-t">
-              <button
-                onClick={() => { setShowRoleModal(false); setSelectedMember(null); }}
-                className="flex-1 px-4 py-2.5 text-gray-700 bg-gray-100 rounded-lg font-medium hover:bg-gray-200"
-              >
-                {t('common.cancel')}
-              </button>
-              <button
-                onClick={handleChangeRole}
-                disabled={newRole === selectedMember.role || sending}
-                className="flex-1 px-4 py-2.5 text-white rounded-lg font-medium disabled:opacity-50"
-                style={{ backgroundColor: BRAND_COLORS.primary }}
-              >
-                {t('team.saveChanges')}
-              </button>
-            </div>
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+      >
+        <MoreHorizontal className="w-4 h-4" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+            <button
+              onClick={() => {
+                setOpen(false);
+                onEditRole();
+              }}
+              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+            >
+              <Edit className="w-4 h-4" />
+              {language === 'fr' ? 'Modifier le rôle' : 'Change role'}
+            </button>
+            <button
+              onClick={() => {
+                setOpen(false);
+                onRemove();
+              }}
+              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+            >
+              <Trash2 className="w-4 h-4" />
+              {language === 'fr' ? 'Retirer de l\'équipe' : 'Remove from team'}
+            </button>
           </div>
-        </div>
-      )}
-
-      {/* Remove Modal */}
-      {showRemoveModal && selectedMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">{t('team.removeMemberTitle')}</h2>
-              <button
-                onClick={() => { setShowRemoveModal(false); setSelectedMember(null); }}
-                className="p-2 hover:bg-gray-100 rounded-lg"
-              >
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
-
-            <div className="flex items-start gap-3 p-4 bg-red-50 rounded-lg mb-4">
-              <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
-              <p className="text-sm text-red-800">{t('team.removeMemberDesc')}</p>
-            </div>
-
-            <div className="p-3 bg-gray-50 rounded-lg mb-6">
-              <p className="font-medium text-gray-900">{selectedMember.full_name || selectedMember.email}</p>
-              <p className="text-sm text-gray-500">{selectedMember.email}</p>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => { setShowRemoveModal(false); setSelectedMember(null); }}
-                className="flex-1 px-4 py-2.5 text-gray-700 bg-gray-100 rounded-lg font-medium hover:bg-gray-200"
-              >
-                {t('common.cancel')}
-              </button>
-              <button
-                onClick={handleRemoveMember}
-                disabled={sending}
-                className="flex-1 px-4 py-2.5 text-white rounded-lg font-medium disabled:opacity-50"
-                style={{ backgroundColor: BRAND_COLORS.danger }}
-              >
-                {t('team.removeConfirm')}
-              </button>
-            </div>
-          </div>
-        </div>
+        </>
       )}
     </div>
   );

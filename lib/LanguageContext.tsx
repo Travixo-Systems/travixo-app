@@ -3,6 +3,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Language } from './i18n';
+import { createClient } from '@/lib/supabase/client';
 
 interface LanguageContextType {
   language: Language;
@@ -12,7 +13,7 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguageState] = useState<Language>('fr'); // Default to French
+  const [language, setLanguageState] = useState<Language>('fr');
   const [mounted, setMounted] = useState(false);
 
   // Load from localStorage on mount
@@ -24,14 +25,24 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     setMounted(true);
   }, []);
 
-  // Save to localStorage when changes
+  // Auth state listener - clear cache on login/logout
+  useEffect(() => {
+    const supabase = createClient();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        window.location.href = '/login';
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
     localStorage.setItem('language', lang);
   };
 
-  //  FIX: Provide context even before mounting (use default value)
-  // This prevents "useLanguage must be used within LanguageProvider" error
   return (
     <LanguageContext.Provider value={{ language, setLanguage }}>
       {children}
@@ -39,10 +50,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-/**
- * Hook to access language context
- * Usage: const { language, setLanguage } = useLanguage()
- */
 export function useLanguage() {
   const context = useContext(LanguageContext);
   if (!context) {
