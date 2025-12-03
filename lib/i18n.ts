@@ -2401,7 +2401,499 @@ export const translations = {
       fr: "Historique",
     },
   },
+// ============================================================================
+  // AUDITS MODULE
+  // ============================================================================
+  audits: {
+    pageTitle: {
+      en: "Inventory Audits",
+      fr: "Audits d'Inventaire",
+    },
+    pageSubtitle: {
+      en: "Manage and track your equipment audits",
+      fr: "Gérez et suivez vos audits d'équipement",
+    },
+    createAudit: {
+      en: "Create Audit",
+      fr: "Créer un Audit",
+    },
+    searchPlaceholder: {
+      en: "Search audits...",
+      fr: "Rechercher des audits...",
+    },
+    totalAudits: {
+      en: "Total Audits",
+      fr: "Total Audits",
+    },
+    allTime: {
+      en: "All time",
+      fr: "Historique complet",
+    },
+    planned: {
+      en: "Planned",
+      fr: "Planifiés",
+    },
+    scheduledAudits: {
+      en: "Scheduled audits",
+      fr: "Audits planifiés",
+    },
+    inProgress: {
+      en: "In Progress",
+      fr: "En Cours",
+    },
+    activeAudits: {
+      en: "Active audits",
+      fr: "Audits actifs",
+    },
+    completed: {
+      en: "Completed",
+      fr: "Terminés",
+    },
+    finishedAudits: {
+      en: "Finished audits",
+      fr: "Audits terminés",
+    },
+    auditName: {
+      en: "Audit Name",
+      fr: "Nom de l'Audit",
+    },
+    status: {
+      en: "Status",
+      fr: "Statut",
+    },
+    progress: {
+      en: "Progress",
+      fr: "Progression",
+    },
+    scheduledDate: {
+      en: "Scheduled Date",
+      fr: "Date Prévue",
+    },
+    createdBy: {
+      en: "Created By",
+      fr: "Créé Par",
+    },
+    actions: {
+      en: "Actions",
+      fr: "Actions",
+    },
+    noAudits: {
+      en: "No audits found",
+      fr: "Aucun audit trouvé",
+    },
+    noAuditsDesc: {
+      en: "Create your first audit to start tracking inventory",
+      fr: "Créez votre premier audit pour commencer le suivi",
+    },
+    statusPlanned: {
+      en: "Planned",
+      fr: "Planifié",
+    },
+    statusInProgress: {
+      en: "In Progress",
+      fr: "En Cours",
+    },
+    statusCompleted: {
+      en: "Completed",
+      fr: "Terminé",
+    },
+    start: {
+      en: "Start",
+      fr: "Démarrer",
+    },
+    continue: {
+      en: "Continue",
+      fr: "Continuer",
+    },
+    viewReport: {
+      en: "View Report",
+      fr: "Voir Rapport",
+    },
+    viewDetails: {
+      en: "View Details",
+      fr: "Voir Détails",
+    },
+    newAudit: {
+      en: "New Audit",
+      fr: "Nouvel Audit",
+    },
+    auditNameLabel: {
+      en: "Audit Name",
+      fr: "Nom de l'Audit",
+    },
+    auditNamePlaceholder: {
+      en: "e.g., Q4 2025 Inventory Check",
+      fr: "ex: Inventaire T4 2025",
+    },
+    scheduledDateLabel: {
+      en: "Scheduled Date",
+      fr: "Date Prévue",
+    },
+    auditScope: {
+      en: "Audit Scope",
+      fr: "Périmètre de l'Audit",
+    },
+    allAssets: {
+      en: "All Assets",
+      fr: "Tous les Équipements",
+    },
+    byLocation: {
+      en: "By Location",
+      fr: "Par Emplacement",
+    },
+    byCategory: {
+      en: "By Category",
+      fr: "Par Catégorie",
+    },
+    selectLocation: {
+      en: "Select Location",
+      fr: "Sélectionner Emplacement",
+    },
+    selectCategory: {
+      en: "Select Category",
+      fr: "Sélectionner Catégorie",
+    },
+    creating: {
+      en: "Creating...",
+      fr: "Création...",
+    },
+    assetsFound: {
+      en: "assets found",
+      fr: "équipements trouvés",
+    },
+    // Audit Detail Page
+    backToAudits: {
+      en: "Back to Audits",
+      fr: "Retour aux Audits",
+    },
+    auditNotStarted: {
+      en: "Audit Not Started",
+      fr: "Audit Non Démarré",
+    },
+    auditNotStartedDesc: {
+      en: "Click the button below to begin this audit",
+      fr: "Cliquez sur le bouton ci-dessous pour démarrer cet audit",
+    },
+    startAudit: {
+      en: "Start Audit",
+      fr: "Démarrer l'Audit",
+    },
+    completeAudit: {
+      en: "Complete Audit",
+      fr: "Terminer l'Audit",
+    },
+    exportResults: {
+      en: "Export Results",
+      fr: "Exporter les Résultats",
+    },
+    totalAssets: {
+      en: "Total Assets",
+      fr: "Total Équipements",
+    },
+    verified: {
+      en: "Verified",
+      fr: "Vérifiés",
+    },
+    pending: {
+      en: "Pending",
+      fr: "En Attente",
+    },
+    missing: {
+      en: "Missing",
+      fr: "Manquants",
+    },
+    asset: {
+      en: "Asset",
+      fr: "Équipement",
+    },
+    category: {
+      en: "Category",
+      fr: "Catégorie",
+    },
+    serialNumber: {
+      en: "Serial Number",
+      fr: "Numéro de Série",
+    },
+    location: {
+      en: "Location",
+      fr: "Emplacement",
+    },
+    markVerified: {
+      en: "Mark Verified",
+      fr: "Marquer Vérifié",
+    },
+    markMissing: {
+      en: "Mark Missing",
+      fr: "Marquer Manquant",
+    },
+    completedOn: {
+      en: "Completed on",
+      fr: "Terminé le",
+    },
+    confirmComplete: {
+      en: "Confirm Complete",
+      fr: "Confirmer la Fin",
+    },
+    confirmCompleteDesc: {
+      en: "Are you sure you want to complete this audit? All pending items will be marked as missing.",
+      fr: "Êtes-vous sûr de vouloir terminer cet audit ? Tous les éléments en attente seront marqués comme manquants.",
+    },
+    auditSummary: {
+      en: "Audit Summary",
+      fr: "Résumé de l'Audit",
+    },
+    itemsVerified: {
+      en: "items verified",
+      fr: "éléments vérifiés",
+    },
+    itemsMissing: {
+      en: "items missing",
+      fr: "éléments manquants",
+    },
+    itemsPending: {
+      en: "items pending",
+      fr: "éléments en attente",
+    },
+    confirm: {
+      en: "Confirm",
+      fr: "Confirmer",
+    },
+    noAssetsFound: {
+      en: "No assets found",
+      fr: "Aucun équipement trouvé",
+    },
+    auditNotFound: {
+      en: "Audit not found",
+      fr: "Audit non trouvé",
+    },
+    searchAssets: {
+      en: "Search assets...",
+      fr: "Rechercher des équipements...",
+    },
+    filterAll: {
+      en: "All",
+      fr: "Tous",
+    },
+  },
 
+  // ============================================================================
+  // TEAM MODULE
+  // ============================================================================
+  team: {
+    pageTitle: {
+      en: "Team Management",
+      fr: "Gestion de l'Équipe",
+    },
+    pageSubtitle: {
+      en: "Manage team members and permissions",
+      fr: "Gérez les membres de l'équipe et leurs permissions",
+    },
+    inviteMember: {
+      en: "Invite Member",
+      fr: "Inviter un Membre",
+    },
+    searchPlaceholder: {
+      en: "Search by name or email...",
+      fr: "Rechercher par nom ou email...",
+    },
+    totalMembers: {
+      en: "Total Members",
+      fr: "Total Membres",
+    },
+    teamSize: {
+      en: "Team size",
+      fr: "Taille de l'équipe",
+    },
+    administrators: {
+      en: "Administrators",
+      fr: "Administrateurs",
+    },
+    fullAccess: {
+      en: "Full access",
+      fr: "Accès complet",
+    },
+    teamMembers: {
+      en: "Team Members",
+      fr: "Membres",
+    },
+    standardAccess: {
+      en: "Standard access",
+      fr: "Accès standard",
+    },
+    pendingInvites: {
+      en: "Pending Invites",
+      fr: "Invitations en Attente",
+    },
+    awaitingResponse: {
+      en: "Awaiting response",
+      fr: "En attente de réponse",
+    },
+    member: {
+      en: "Member",
+      fr: "Membre",
+    },
+    role: {
+      en: "Role",
+      fr: "Rôle",
+    },
+    joined: {
+      en: "Joined",
+      fr: "Rejoint",
+    },
+    lastActive: {
+      en: "Last Active",
+      fr: "Dernière Activité",
+    },
+    actions: {
+      en: "Actions",
+      fr: "Actions",
+    },
+    noMembers: {
+      en: "No team members yet",
+      fr: "Aucun membre pour l'instant",
+    },
+    noMembersDesc: {
+      en: "Invite your first team member to get started",
+      fr: "Invitez votre premier membre pour commencer",
+    },
+    // Roles
+    roleOwner: {
+      en: "Owner",
+      fr: "Propriétaire",
+    },
+    roleOwnerDesc: {
+      en: "Full control including billing and settings",
+      fr: "Contrôle total y compris facturation et paramètres",
+    },
+    roleAdmin: {
+      en: "Admin",
+      fr: "Admin",
+    },
+    roleAdminDesc: {
+      en: "Manage assets, VGP, audits, and team",
+      fr: "Gérer les équipements, VGP, audits et équipe",
+    },
+    roleMember: {
+      en: "Member",
+      fr: "Membre",
+    },
+    roleMemberDesc: {
+      en: "View and edit assets, record inspections",
+      fr: "Voir et modifier les équipements, enregistrer les inspections",
+    },
+    roleViewer: {
+      en: "Viewer",
+      fr: "Lecteur",
+    },
+    roleViewerDesc: {
+      en: "Read-only access to dashboard and reports",
+      fr: "Accès en lecture seule au tableau de bord et rapports",
+    },
+    // Actions
+    changeRole: {
+      en: "Change Role",
+      fr: "Changer le Rôle",
+    },
+    removeMember: {
+      en: "Remove Member",
+      fr: "Retirer le Membre",
+    },
+    resendInvite: {
+      en: "Resend Invite",
+      fr: "Renvoyer l'Invitation",
+    },
+    cancelInvite: {
+      en: "Cancel Invite",
+      fr: "Annuler l'Invitation",
+    },
+    // Modals
+    inviteMemberTitle: {
+      en: "Invite Team Member",
+      fr: "Inviter un Membre",
+    },
+    emailAddress: {
+      en: "Email Address",
+      fr: "Adresse Email",
+    },
+    emailPlaceholder: {
+      en: "colleague@company.com",
+      fr: "collegue@entreprise.com",
+    },
+    selectRole: {
+      en: "Select Role",
+      fr: "Sélectionner un Rôle",
+    },
+    sendInvite: {
+      en: "Send Invite",
+      fr: "Envoyer l'Invitation",
+    },
+    sending: {
+      en: "Sending...",
+      fr: "Envoi...",
+    },
+    changeRoleTitle: {
+      en: "Change Member Role",
+      fr: "Changer le Rôle du Membre",
+    },
+    currentRole: {
+      en: "Current role",
+      fr: "Rôle actuel",
+    },
+    selectNewRole: {
+      en: "Select new role",
+      fr: "Sélectionner le nouveau rôle",
+    },
+    saveChanges: {
+      en: "Save Changes",
+      fr: "Enregistrer",
+    },
+    removeMemberTitle: {
+      en: "Remove Team Member",
+      fr: "Retirer le Membre",
+    },
+    removeMemberDesc: {
+      en: "Are you sure you want to remove this member? They will lose access to the organization immediately.",
+      fr: "Êtes-vous sûr de vouloir retirer ce membre ? Il perdra immédiatement l'accès à l'organisation.",
+    },
+    removeConfirm: {
+      en: "Remove Member",
+      fr: "Retirer",
+    },
+    // Time
+    today: {
+      en: "Today",
+      fr: "Aujourd'hui",
+    },
+    yesterday: {
+      en: "Yesterday",
+      fr: "Hier",
+    },
+    daysAgo: {
+      en: "days ago",
+      fr: "jours",
+    },
+    weeksAgo: {
+      en: "weeks ago",
+      fr: "semaines",
+    },
+    // Invitations
+    pendingInvitations: {
+      en: "Pending Invitations",
+      fr: "Invitations en Attente",
+    },
+    email: {
+      en: "Email",
+      fr: "Email",
+    },
+    invitedRole: {
+      en: "Invited Role",
+      fr: "Rôle Invité",
+    },
+    statusPending: {
+      en: "Pending",
+      fr: "En Attente",
+    },
+  },
   // ============================================================================
   // COMMON
   // ============================================================================
