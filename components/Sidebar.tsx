@@ -129,28 +129,33 @@ export default function Sidebar() {
   return (
     <div
       className={cn(
-        "flex flex-col h-screen border-r border-gray-800 transition-all duration-300",
+        "flex flex-col h-screen border-r border-gray-800 transition-all duration-300 overflow-hidden",
         collapsed ? "w-16" : "w-64"
       )}
       style={{ backgroundColor: colors.primary }}
     >
       {/* Logo & Toggle */}
       <div 
-        className="flex items-center justify-between h-16 px-4 border-b border-gray-800"
+        className="flex items-center justify-between h-16 px-4 border-b border-gray-800 flex-shrink-0"
         style={{ backgroundColor: colors.primary }}
       >
         {!collapsed && (
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 flex-1 min-w-0">
             {logo ? (
               <Image 
                 src={logo} 
                 alt={orgName} 
                 width={32} 
                 height={32} 
-                className="w-8 h-8 object-contain rounded"
+                className="w-8 h-8 object-contain rounded flex-shrink-0"
               />
             ) : null}
-            <h1 className="text-xl font-bold text-white truncate">{orgName}</h1>
+            <h1 
+              className="text-xl font-bold text-white truncate" 
+              title={orgName}
+            >
+              {orgName}
+            </h1>
           </div>
         )}
         {collapsed && logo && (
@@ -165,7 +170,7 @@ export default function Sidebar() {
         <button
           onClick={toggleCollapsed}
           className={cn(
-            "p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors",
+            "p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors flex-shrink-0",
             collapsed && !logo && "mx-auto"
           )}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -179,7 +184,7 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-2 py-4 space-y-1 overflow-hidden">
         {/* Dashboard and Assets */}
         {navigation.slice(0, 2).map((item) => {
           const Icon = item.icon;
@@ -295,7 +300,7 @@ export default function Sidebar() {
       </nav>
 
       {/* User Section & Language Toggle - Bottom of Sidebar */}
-      <div className="border-t border-gray-800">
+      <div className="border-t border-gray-800 flex-shrink-0">
         {/* User Info & Logout */}
         {user && (
           <div className={cn("p-4", collapsed && "p-2")}>
