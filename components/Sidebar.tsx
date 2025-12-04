@@ -46,6 +46,15 @@ export default function Sidebar() {
     }
   }, []);
 
+  // Auto-collapse VGP dropdown when navigating away from /vgp pages
+  useEffect(() => {
+    if (!pathname.startsWith('/vgp')) {
+      setVgpOpen(false);
+    } else {
+      setVgpOpen(true);
+    }
+  }, [pathname]);
+
   // Fetch current user
   useEffect(() => {
     async function fetchUser() {
@@ -301,54 +310,61 @@ export default function Sidebar() {
 
       {/* User Section & Language Toggle - Bottom of Sidebar */}
       <div className="border-t border-gray-800 flex-shrink-0">
-        {/* User Info & Logout */}
+        {/* User Info - Compact */}
         {user && (
-          <div className={cn("p-4", collapsed && "p-2")}>
+          <div className={cn("p-3", collapsed && "p-2")}>
             {!collapsed ? (
-              <div className="space-y-3">
+              // Expanded: Avatar + Name with inline logout
+              <div className="flex items-center gap-2">
                 <Link 
                   href="/settings/profile"
-                  className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                  className="flex items-center gap-2 flex-1 min-w-0 hover:opacity-80 transition-opacity"
                 >
                   <div 
-                    className="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-white text-sm font-medium"
+                    className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-semibold"
                     style={{ backgroundColor: colors.secondary }}
                   >
                     {getInitials()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{getDisplayName()}</p>
-                    <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                    <p className="text-xs font-medium text-white truncate">{getDisplayName()}</p>
                   </div>
                 </Link>
                 <button
                   onClick={handleLogout}
                   disabled={loggingOut}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-red-400 hover:text-white hover:bg-red-600/20 rounded-lg transition-colors disabled:opacity-50"
+                  className="p-1.5 text-gray-400 hover:text-red-400 rounded transition-colors flex-shrink-0"
+                  title={language === 'fr' ? 'Déconnexion' : 'Logout'}
                 >
                   <ArrowRightOnRectangleIcon className="w-4 h-4" />
-                  {loggingOut 
-                    ? (language === 'fr' ? 'Déconnexion...' : 'Logging out...') 
-                    : (language === 'fr' ? 'Déconnexion' : 'Logout')
-                  }
                 </button>
               </div>
             ) : (
-              <button
-                onClick={handleLogout}
-                disabled={loggingOut}
-                className="w-full p-2 text-red-400 hover:text-white hover:bg-red-600/20 rounded-lg transition-colors flex items-center justify-center disabled:opacity-50"
-                title={language === 'fr' ? 'Déconnexion' : 'Logout'}
-              >
-                <ArrowRightOnRectangleIcon className="w-5 h-5" />
-              </button>
+              // Collapsed: Just avatar with logout tooltip
+              <div className="flex items-center justify-center gap-1">
+                <div 
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold cursor-pointer hover:opacity-80 transition-opacity"
+                  style={{ backgroundColor: colors.secondary }}
+                  title={getDisplayName()}
+                >
+                  {getInitials()}
+                </div>
+                <button
+                  onClick={handleLogout}
+                  disabled={loggingOut}
+                  className="p-1.5 text-gray-400 hover:text-red-400 rounded transition-colors"
+                  title={language === 'fr' ? 'Déconnexion' : 'Logout'}
+                >
+                  <ArrowRightOnRectangleIcon className="w-4 h-4" />
+                </button>
+              </div>
             )}
           </div>
         )}
 
         {/* Language Toggle */}
         {!collapsed && (
-          <div className="px-4 pb-4">
+          <div className="px-2 pb-2">
             <LanguageToggle />
           </div>
         )}

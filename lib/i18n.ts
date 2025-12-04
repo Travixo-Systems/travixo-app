@@ -1152,6 +1152,10 @@ export const translations = {
       en: "Serial",
       fr: "N° Série",
     },
+    tableHeaderCategory: {
+      en: "Category",
+      fr: "Catégorie",
+    },
     tableHeaderStatus: {
       en: "Status",
       fr: "Statut",

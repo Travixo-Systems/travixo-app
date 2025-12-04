@@ -1,3 +1,4 @@
+// components/assets/AssetsPageClient.tsx
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
@@ -11,13 +12,32 @@ import { MagnifyingGlassIcon, FunnelIcon } from '@heroicons/react/24/outline'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
 
+interface Asset {
+    id: string
+    name: string
+    serial_number: string | null
+    description: string | null
+    status: string
+    current_location: string | null
+    purchase_date: string | null
+    purchase_price: number | null
+    current_value: number | null
+    qr_code: string
+    category_id: string | null
+    asset_categories?: {
+        id: string
+        name: string
+        color: string
+    } | null
+}
+
 export default function AssetsPageClient() {
     const router = useRouter()
     const supabase = createClient()
     const { language } = useLanguage()
     const t = createTranslator(language)
     
-    const [assets, setAssets] = useState<any[]>([])
+    const [assets, setAssets] = useState<Asset[]>([])
     const [loading, setLoading] = useState(true)
     
     // Search and filter states
@@ -140,17 +160,6 @@ export default function AssetsPageClient() {
         })
         return Array.from(catMap.values()).sort((a, b) => a.name.localeCompare(b.name))
     }, [assets])
-
-    // Helper to get translated status
-    const getStatusLabel = (status: string) => {
-        switch (status) {
-            case 'available': return t('assets.statusAvailable')
-            case 'in_use': return t('assets.statusInUse')
-            case 'maintenance': return t('assets.statusMaintenance')
-            case 'retired': return t('assets.statusRetired')
-            default: return status
-        }
-    }
 
     if (loading) {
         return (
