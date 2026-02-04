@@ -9,7 +9,7 @@ import toast from 'react-hot-toast'
 export default function LoginPage() {
   const router = useRouter()
   const supabase = createClient()
-  
+
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     email: '',
@@ -31,7 +31,7 @@ export default function LoginPage() {
       if (data.user) {
         toast.success('Welcome back!')
         router.push('/dashboard')
-        router.refresh() // Important: refreshes server components
+        router.refresh()
       }
     } catch (error: any) {
       console.error('Error:', error)
@@ -44,7 +44,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-lg">
-        {/* Header */}
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900">
             Welcome Back
@@ -54,9 +53,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleLogin} className="mt-8 space-y-6">
-          {/* Email */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               Email Address
@@ -67,13 +64,12 @@ export default function LoginPage() {
               required
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-900 bg-white focus:outline-none focus:ring-orange-500 focus:border-orange-500"
               placeholder="john@company.com"
               disabled={isLoading}
             />
           </div>
 
-          {/* Password */}
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               Password
@@ -84,13 +80,12 @@ export default function LoginPage() {
               required
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-900 bg-white focus:outline-none focus:ring-orange-500 focus:border-orange-500"
               placeholder="Enter your password"
               disabled={isLoading}
             />
           </div>
 
-          {/* Remember me & Forgot password */}
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <input
@@ -104,13 +99,12 @@ export default function LoginPage() {
             </div>
 
             <div className="text-sm">
-              <a href="#" className="font-medium text-orange-600 hover:text-orange-500">
+              <Link href="/forgot-password" className="font-medium text-orange-600 hover:text-orange-500">
                 Forgot password?
-              </a>
+              </Link>
             </div>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={isLoading}
@@ -120,9 +114,8 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Footer */}
         <div className="text-center text-sm">
-          <span className="text-gray-600">Don't have an account? </span>
+          <span className="text-gray-600">{"Don't have an account?"} </span>
           <Link href="/signup" className="font-medium text-orange-600 hover:text-orange-500">
             Start free pilot
           </Link>

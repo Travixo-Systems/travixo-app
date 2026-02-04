@@ -40,7 +40,10 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
-
+/* Force input text color on mobile dark mode */
+input, select, textarea {
+  color-scheme: light;
+}
 /* Utility classes for theme colors */
 .bg-primary { background-color: var(--color-primary); }
 .bg-secondary { background-color: var(--color-secondary); }
