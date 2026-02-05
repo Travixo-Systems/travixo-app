@@ -10,9 +10,9 @@ interface NotificationPreferences {
   vgp_alerts: {
     enabled: boolean;
     timing: number[]; // Days before due date: [30, 15, 7, 1]
-    recipients: string[]; // ['owner', 'admin', 'all']
+    recipients: string; // 'owner' | 'admin' | 'all'
   };
-  digest_mode: 'immediate' | 'daily' | 'weekly' | 'never';
+  digest_mode: 'immediate' | 'daily' | 'weekly' | 'realtime' | 'never';
   asset_alerts: boolean;
   audit_alerts: boolean;
 }
@@ -49,21 +49,15 @@ function validatePreferences(prefs: any): { valid: boolean; error?: string } {
     }
   }
 
-  if (!Array.isArray(prefs.vgp_alerts.recipients)) {
-    return { valid: false, error: 'vgp_alerts.recipients must be an array' };
-  }
-
   const validRecipients = ['owner', 'admin', 'all'];
-  for (const recipient of prefs.vgp_alerts.recipients) {
-    if (!validRecipients.includes(recipient)) {
-      return {
-        valid: false,
-        error: `Invalid recipient: ${recipient}. Must be one of: ${validRecipients.join(', ')}`,
-      };
-    }
+  if (typeof prefs.vgp_alerts.recipients !== 'string' || !validRecipients.includes(prefs.vgp_alerts.recipients)) {
+    return {
+      valid: false,
+      error: `Invalid recipients: ${prefs.vgp_alerts.recipients}. Must be one of: ${validRecipients.join(', ')}`,
+    };
   }
 
-  const validDigestModes = ['immediate', 'daily', 'weekly', 'never'];
+  const validDigestModes = ['immediate', 'daily', 'weekly', 'realtime', 'never'];
   if (!validDigestModes.includes(prefs.digest_mode)) {
     return {
       valid: false,
@@ -279,7 +273,7 @@ export async function POST(request: NextRequest) {
       vgp_alerts: {
         enabled: true,
         timing: [30, 15, 7, 1],
-        recipients: ['owner'],
+        recipients: 'owner',
       },
       digest_mode: 'daily',
       asset_alerts: true,

@@ -109,16 +109,7 @@ export default function NotificationsSettingsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Convert recipients string to array format for API
-      const prefsForApi = {
-        ...preferences,
-        vgp_alerts: {
-          ...preferences.vgp_alerts,
-          recipients: [preferences.vgp_alerts.recipients], // Convert "owner" → ["owner"]
-        },
-      };
-      
-      await updateNotifications(prefsForApi);
+      await updateNotifications(preferences);
       toast.success(t('notifications.saveSuccess'));
       setIsEditing(false);
     } catch (error: any) {
