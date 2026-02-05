@@ -73,7 +73,7 @@ function toTableRow(schedule: VGPScheduleWithAsset): ScheduleTableRow {
     assetName: schedule.assets?.name || 'Equipement inconnu',
     serialNumber: schedule.assets?.serial_number || '-',
     category: schedule.assets?.asset_categories?.name || '-',
-    location: schedule.assets?.location || '-',
+    location: schedule.assets?.current_location || '-',
     dueDate: dueDate.toLocaleDateString('fr-FR', {
       day: '2-digit',
       month: '2-digit',
@@ -170,7 +170,7 @@ async function runVGPAlertsCron(): Promise<CronJobResult> {
         id,
         name,
         serial_number,
-        location,
+        current_location,
         status,
         category_id,
         asset_categories (
