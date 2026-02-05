@@ -19,7 +19,7 @@ export interface VGPScheduleWithAsset {
     id: string;
     name: string;
     serial_number: string | null;
-    location: string | null;
+    current_location: string | null;
     status: string;
     category_id: string | null;
     asset_categories: {
