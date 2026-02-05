@@ -272,7 +272,7 @@ export async function POST(request: NextRequest) {
       email_enabled: true,
       vgp_alerts: {
         enabled: true,
-        timing: [30, 15, 7, 1],
+        timing: [30, 7, 1],
         recipients: 'owner',
       },
       digest_mode: 'daily',

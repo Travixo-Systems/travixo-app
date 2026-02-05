@@ -282,17 +282,17 @@ async function runVGPAlertsCron(): Promise<CronJobResult> {
 
     console.log(`${LOG_PREFIX} Processing org: ${orgName} (${orgId})`);
 
-    // Get recipients
-    const recipients = await getAlertRecipients(orgId);
+    // Get recipients (filtered by org preference: 'owner', 'admin', or 'all')
+    const recipients = await getAlertRecipients(orgId, prefs.recipients);
 
     if (recipients.length === 0) {
-      console.log(`${LOG_PREFIX} Org ${orgName}: no admin/manager recipients, skipping`);
+      console.log(`${LOG_PREFIX} Org ${orgName}: no recipients found for pref '${prefs.recipients}', skipping`);
       orgDetail.alerts.push({
         type: 'reminder_30day',
         count: 0,
         recipients: [],
         sent: false,
-        error: 'No admin/manager recipients found',
+        error: `No recipients found for preference '${prefs.recipients}'`,
       });
       result.details.push(orgDetail);
       continue;
@@ -313,20 +313,23 @@ async function runVGPAlertsCron(): Promise<CronJobResult> {
 
       if (schedulesForAlert.length === 0) continue;
 
-      // Check if this alert type is enabled in preferences
-      const dayNumber = alertTypeToDayNumber(alertType);
-      if (!prefs.alertDays.includes(dayNumber)) {
-        console.log(
-          `${LOG_PREFIX} Org ${orgName}: ${alertType} alerts disabled in preferences, skipping`
-        );
-        orgDetail.alerts.push({
-          type: alertType,
-          count: schedulesForAlert.length,
-          recipients: recipientEmails,
-          sent: false,
-          error: 'Alert type disabled in preferences',
-        });
-        continue;
+      // Overdue alerts are always sent (critical compliance).
+      // Reminder alerts are gated by the user's timing preferences.
+      if (alertType !== 'overdue') {
+        const dayNumber = alertTypeToDayNumber(alertType);
+        if (!prefs.alertDays.includes(dayNumber)) {
+          console.log(
+            `${LOG_PREFIX} Org ${orgName}: ${alertType} alerts disabled in preferences, skipping`
+          );
+          orgDetail.alerts.push({
+            type: alertType,
+            count: schedulesForAlert.length,
+            recipients: recipientEmails,
+            sent: false,
+            error: 'Alert type disabled in preferences',
+          });
+          continue;
+        }
       }
 
       // Check for duplicates (already sent today)
