@@ -1,7 +1,7 @@
 // =============================================================================
-// VGP Overdue Alert
-// "OVERDUE: X inspections past due date - risk of fines"
-// Strongest urgency level. Includes DIRECCTE fine warning.
+// VGP Reminder - 15 Days Before Due Date
+// "15 days left: time to confirm your inspection bookings"
+// Bridges the gap between 30-day planning and 7-day urgency
 // =============================================================================
 
 import {
@@ -24,10 +24,10 @@ const BRAND = {
   navy: '#00252b',
   orange: '#f26f00',
   darkGray: '#2d3a39',
-  danger: '#ef4444',
+  warning: '#f59e0b',
 };
 
-export function VGPOverdue({
+export function VGPReminder15Day({
   organizationName,
   schedules,
   appUrl,
@@ -38,16 +38,16 @@ export function VGPOverdue({
     <Html>
       <Head />
       <Preview>
-        {`EN RETARD : ${count} inspection${count > 1 ? 's' : ''} VGP depassee${count > 1 ? 's' : ''} - Risque d'amende - ${organizationName}`}
+        {`${count} inspection${count > 1 ? 's' : ''} VGP dans 15 jours - ${organizationName}`}
       </Preview>
       <Body style={bodyStyle}>
         <Container style={containerStyle}>
           <EmailHeader />
 
           <Section style={contentStyle}>
-            {/* Overdue Badge */}
-            <Section style={overdueBadgeStyle}>
-              <Text style={overdueBadgeTextStyle}>EN RETARD</Text>
+            {/* Badge */}
+            <Section style={badgeContainerStyle}>
+              <Text style={badgeTextStyle}>15 JOURS</Text>
             </Section>
 
             {/* Greeting */}
@@ -57,53 +57,41 @@ export function VGPOverdue({
 
             {/* Summary */}
             <Text style={summaryStyle}>
-              <strong>{organizationName}</strong> a{' '}
+              Votre organisation <strong>{organizationName}</strong> a{' '}
               <strong>
-                {count} inspection{count > 1 ? 's' : ''} VGP en retard
-              </strong>
-              . Ces equipements ne sont plus en conformite reglementaire.
+                {count} inspection{count > 1 ? 's' : ''} VGP
+              </strong>{' '}
+              dont l'echeance arrive dans <strong>15 jours</strong>.
             </Text>
 
-            {/* Overdue Banner */}
-            <Section style={overdueBannerStyle}>
-              <Text style={overdueBannerTitleStyle}>
-                Non-conformite active
+            {/* Action Banner */}
+            <Section style={actionBannerStyle}>
+              <Text style={actionBannerTitleStyle}>
+                Confirmez vos rendez-vous
               </Text>
-              <Text style={overdueBannerTextStyle}>
-                Les equipements listes ci-dessous ont depasse leur date
-                d'echeance VGP. Ils ne doivent pas etre mis en service tant que
-                l'inspection n'a pas ete realisee. Planifiez les inspections
-                immediatement pour revenir en conformite.
-              </Text>
-            </Section>
-
-            {/* DIRECCTE Fine Warning - Prominent at top for overdue */}
-            <Section style={fineWarningStyle}>
-              <Text style={fineWarningTitleStyle}>
-                Amendes DIRECCTE applicables
-              </Text>
-              <Text style={fineWarningTextStyle}>
-                Rappel : Les amendes DIRECCTE pour non-conformite VGP vont de
-                3 000 EUR a 10 000 EUR par infraction. Avec {count} equipement
-                {count > 1 ? 's' : ''} en retard, l'amende potentielle totale
-                est de {(3000 * count).toLocaleString('fr-FR')} EUR a{' '}
-                {(10000 * count).toLocaleString('fr-FR')} EUR.
+              <Text style={actionBannerTextStyle}>
+                Si vous avez deja contacte un organisme de controle, assurez-vous
+                que les rendez-vous sont confirmes. Sinon, il est temps de
+                planifier ces inspections pour eviter tout retard.
               </Text>
             </Section>
 
             {/* Equipment Table */}
             <Text style={sectionTitleStyle}>
-              Equipements en retard
+              Equipements concernes
             </Text>
-            <ScheduleTable schedules={schedules} alertType="overdue" />
+            <ScheduleTable
+              schedules={schedules}
+              alertType="reminder_15day"
+            />
 
             {/* CTA Button */}
             <Section style={ctaContainerStyle}>
               <Button
-                href={`${appUrl}/vgp/schedules?status=overdue`}
+                href={`${appUrl}/vgp/schedules?status=upcoming`}
                 style={ctaButtonStyle}
               >
-                Voir les inspections en retard
+                Voir les inspections a confirmer
               </Button>
             </Section>
 
@@ -111,13 +99,10 @@ export function VGPOverdue({
             <Section style={enSectionStyle}>
               <Text style={enTitleStyle}>English Summary</Text>
               <Text style={enTextStyle}>
-                OVERDUE: {organizationName} has {count} VGP inspection
-                {count > 1 ? 's' : ''} past their due date. These assets are
-                non-compliant and should not be put into service until
-                inspected. DIRECCTE fines range from EUR 3,000 to EUR 10,000
-                per violation. Total potential fine: EUR{' '}
-                {(3000 * count).toLocaleString()} to EUR{' '}
-                {(10000 * count).toLocaleString()}.
+                Your organization {organizationName} has {count} VGP
+                inspection{count > 1 ? 's' : ''} due in 15 days.
+                Confirm your inspection appointments or schedule them now
+                to avoid delays and potential fines.
               </Text>
             </Section>
           </Section>
@@ -129,7 +114,7 @@ export function VGPOverdue({
   );
 }
 
-export default VGPOverdue;
+export default VGPReminder15Day;
 
 // ---------------------------------------------------------------------------
 // Styles
@@ -153,12 +138,12 @@ const contentStyle: React.CSSProperties = {
   padding: '24px 32px',
 };
 
-const overdueBadgeStyle: React.CSSProperties = {
+const badgeContainerStyle: React.CSSProperties = {
   margin: '0 0 16px 0',
 };
 
-const overdueBadgeTextStyle: React.CSSProperties = {
-  backgroundColor: BRAND.danger,
+const badgeTextStyle: React.CSSProperties = {
+  backgroundColor: BRAND.warning,
   color: '#ffffff',
   fontSize: '11px',
   fontWeight: 700,
@@ -185,48 +170,24 @@ const summaryStyle: React.CSSProperties = {
   margin: '0 0 20px 0',
 };
 
-const overdueBannerStyle: React.CSSProperties = {
-  backgroundColor: '#fef2f2',
-  borderLeft: `4px solid ${BRAND.danger}`,
+const actionBannerStyle: React.CSSProperties = {
+  backgroundColor: '#fffbeb',
+  borderLeft: `4px solid ${BRAND.warning}`,
   padding: '12px 16px',
-  margin: '0 0 16px 0',
+  margin: '0 0 24px 0',
   borderRadius: '0 4px 4px 0',
 };
 
-const overdueBannerTitleStyle: React.CSSProperties = {
-  color: '#991b1b',
+const actionBannerTitleStyle: React.CSSProperties = {
+  color: '#92400e',
   fontSize: '13px',
   fontWeight: 700,
   fontFamily: 'Inter, Arial, Helvetica, sans-serif',
   margin: '0 0 4px 0',
 };
 
-const overdueBannerTextStyle: React.CSSProperties = {
-  color: '#991b1b',
-  fontSize: '13px',
-  fontFamily: 'Inter, Arial, Helvetica, sans-serif',
-  margin: '0',
-  lineHeight: '1.5',
-};
-
-const fineWarningStyle: React.CSSProperties = {
-  backgroundColor: '#fef2f2',
-  border: `2px solid ${BRAND.danger}`,
-  padding: '16px',
-  margin: '0 0 24px 0',
-  borderRadius: '6px',
-};
-
-const fineWarningTitleStyle: React.CSSProperties = {
-  color: '#991b1b',
-  fontSize: '14px',
-  fontWeight: 700,
-  fontFamily: 'Inter, Arial, Helvetica, sans-serif',
-  margin: '0 0 8px 0',
-};
-
-const fineWarningTextStyle: React.CSSProperties = {
-  color: '#991b1b',
+const actionBannerTextStyle: React.CSSProperties = {
+  color: '#92400e',
   fontSize: '13px',
   fontFamily: 'Inter, Arial, Helvetica, sans-serif',
   margin: '0',
@@ -249,12 +210,12 @@ const ctaContainerStyle: React.CSSProperties = {
 };
 
 const ctaButtonStyle: React.CSSProperties = {
-  backgroundColor: BRAND.danger,
+  backgroundColor: BRAND.orange,
   color: '#ffffff',
   fontSize: '14px',
   fontWeight: 600,
   fontFamily: 'Inter, Arial, Helvetica, sans-serif',
-  padding: '14px 32px',
+  padding: '12px 28px',
   borderRadius: '6px',
   textDecoration: 'none',
   display: 'inline-block',

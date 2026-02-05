@@ -95,6 +95,7 @@ function classifySchedule(
   if (days < 0) return 'overdue';
   if (days <= 1) return 'reminder_1day';
   if (days <= 7) return 'reminder_7day';
+  if (days <= 15) return 'reminder_15day';
   if (days <= 30) return 'reminder_30day';
 
   return null; // Not due within 30 days
@@ -107,6 +108,7 @@ function classifySchedule(
 function alertTypeToDayNumber(alertType: VGPAlertType): number {
   switch (alertType) {
     case 'reminder_30day': return 30;
+    case 'reminder_15day': return 15;
     case 'reminder_7day': return 7;
     case 'reminder_1day': return 1;
     case 'overdue': return 0;
@@ -216,6 +218,7 @@ async function runVGPAlertsCron(): Promise<CronJobResult> {
     string,
     {
       reminder_30day: VGPScheduleWithAsset[];
+      reminder_15day: VGPScheduleWithAsset[];
       reminder_7day: VGPScheduleWithAsset[];
       reminder_1day: VGPScheduleWithAsset[];
       overdue: VGPScheduleWithAsset[];
@@ -231,6 +234,7 @@ async function runVGPAlertsCron(): Promise<CronJobResult> {
     if (!orgMap.has(orgId)) {
       orgMap.set(orgId, {
         reminder_30day: [],
+        reminder_15day: [],
         reminder_7day: [],
         reminder_1day: [],
         overdue: [],
@@ -282,17 +286,17 @@ async function runVGPAlertsCron(): Promise<CronJobResult> {
 
     console.log(`${LOG_PREFIX} Processing org: ${orgName} (${orgId})`);
 
-    // Get recipients
-    const recipients = await getAlertRecipients(orgId);
+    // Get recipients (filtered by org preference: 'owner', 'admin', or 'all')
+    const recipients = await getAlertRecipients(orgId, prefs.recipients);
 
     if (recipients.length === 0) {
-      console.log(`${LOG_PREFIX} Org ${orgName}: no admin/manager recipients, skipping`);
+      console.log(`${LOG_PREFIX} Org ${orgName}: no recipients found for pref '${prefs.recipients}', skipping`);
       orgDetail.alerts.push({
         type: 'reminder_30day',
         count: 0,
         recipients: [],
         sent: false,
-        error: 'No admin/manager recipients found',
+        error: `No recipients found for preference '${prefs.recipients}'`,
       });
       result.details.push(orgDetail);
       continue;
@@ -305,6 +309,7 @@ async function runVGPAlertsCron(): Promise<CronJobResult> {
       'overdue',
       'reminder_1day',
       'reminder_7day',
+      'reminder_15day',
       'reminder_30day',
     ];
 
@@ -313,20 +318,23 @@ async function runVGPAlertsCron(): Promise<CronJobResult> {
 
       if (schedulesForAlert.length === 0) continue;
 
-      // Check if this alert type is enabled in preferences
-      const dayNumber = alertTypeToDayNumber(alertType);
-      if (!prefs.alertDays.includes(dayNumber)) {
-        console.log(
-          `${LOG_PREFIX} Org ${orgName}: ${alertType} alerts disabled in preferences, skipping`
-        );
-        orgDetail.alerts.push({
-          type: alertType,
-          count: schedulesForAlert.length,
-          recipients: recipientEmails,
-          sent: false,
-          error: 'Alert type disabled in preferences',
-        });
-        continue;
+      // Overdue alerts are always sent (critical compliance).
+      // Reminder alerts are gated by the user's timing preferences.
+      if (alertType !== 'overdue') {
+        const dayNumber = alertTypeToDayNumber(alertType);
+        if (!prefs.alertDays.includes(dayNumber)) {
+          console.log(
+            `${LOG_PREFIX} Org ${orgName}: ${alertType} alerts disabled in preferences, skipping`
+          );
+          orgDetail.alerts.push({
+            type: alertType,
+            count: schedulesForAlert.length,
+            recipients: recipientEmails,
+            sent: false,
+            error: 'Alert type disabled in preferences',
+          });
+          continue;
+        }
       }
 
       // Check for duplicates (already sent today)

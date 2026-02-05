@@ -12,6 +12,7 @@ import { render } from '@react-email/render';
 import { createClient } from '@supabase/supabase-js';
 
 import { VGPReminder30Day } from './templates/vgp-reminder-30day';
+import { VGPReminder15Day } from './templates/vgp-reminder-15day';
 import { VGPReminder7Day } from './templates/vgp-reminder-7day';
 import { VGPReminder1Day } from './templates/vgp-reminder-1day';
 import { VGPOverdue } from './templates/vgp-overdue';
@@ -68,6 +69,8 @@ function getAdminSupabase() {
 const SUBJECT_LINES: Record<VGPAlertType, (count: number, orgName: string) => string> = {
   reminder_30day: (count, orgName) =>
     `[TraviXO] ${count} inspection${count > 1 ? 's' : ''} VGP a planifier - ${orgName}`,
+  reminder_15day: (count, orgName) =>
+    `[TraviXO] ${count} inspection${count > 1 ? 's' : ''} VGP dans 15 jours - ${orgName}`,
   reminder_7day: (count, orgName) =>
     `[TraviXO] URGENT : ${count} inspection${count > 1 ? 's' : ''} VGP dans 7 jours - ${orgName}`,
   reminder_1day: (count, orgName) =>
@@ -87,6 +90,8 @@ function getEmailTemplate(
   switch (alertType) {
     case 'reminder_30day':
       return VGPReminder30Day(props);
+    case 'reminder_15day':
+      return VGPReminder15Day(props);
     case 'reminder_7day':
       return VGPReminder7Day(props);
     case 'reminder_1day':
@@ -297,18 +302,36 @@ export async function filterAlreadySentAlerts(
 }
 
 /**
- * Fetch admin/manager/owner users for an organization (email recipients).
+ * Fetch email recipients for an organization, filtered by the recipients preference.
+ *
+ * @param recipientsPref - 'owner' (owner only), 'admin' (owner+admin), or 'all' (owner+admin+manager)
  */
 export async function getAlertRecipients(
-  organizationId: string
+  organizationId: string,
+  recipientsPref: string = 'owner'
 ): Promise<EmailRecipient[]> {
   const supabase = getAdminSupabase();
+
+  // Map preference to role filter
+  let roles: string[];
+  switch (recipientsPref) {
+    case 'all':
+      roles = ['owner', 'admin', 'manager'];
+      break;
+    case 'admin':
+      roles = ['owner', 'admin'];
+      break;
+    case 'owner':
+    default:
+      roles = ['owner'];
+      break;
+  }
 
   const { data, error } = await supabase
     .from('users')
     .select('email, full_name')
     .eq('organization_id', organizationId)
-    .in('role', ['owner', 'admin', 'manager']);
+    .in('role', roles);
 
   if (error) {
     console.log(
@@ -317,7 +340,7 @@ export async function getAlertRecipients(
     return [];
   }
 
-  return (data || []).map((user) => ({
+  return (data || []).map((user: any) => ({
     email: user.email,
     full_name: user.full_name || '',
   }));
@@ -325,28 +348,41 @@ export async function getAlertRecipients(
 
 /**
  * Get notification preferences for an organization.
+ * Reads from the `notification_preferences` JSONB column (set by Settings UI).
  */
 export async function getOrgNotificationPrefs(
   organizationId: string
-): Promise<{ enabled: boolean; alertDays: number[] }> {
+): Promise<{ enabled: boolean; alertDays: number[]; recipients: string }> {
   const supabase = getAdminSupabase();
 
   const { data, error } = await supabase
     .from('organizations')
-    .select('vgp_alerts_enabled, vgp_alert_days')
+    .select('notification_preferences')
     .eq('id', organizationId)
-    .single();
+    .single() as { data: { notification_preferences: any } | null; error: any };
 
   if (error || !data) {
     console.log(
       `[EMAIL] Error fetching org prefs for ${organizationId}: ${error?.message}`
     );
-    // Default: enabled with all alert types
-    return { enabled: true, alertDays: [30, 7, 1, 0] };
+    // Default: enabled with all alert types, owner-only recipients
+    return { enabled: true, alertDays: [30, 7, 1, 0], recipients: 'owner' };
   }
 
+  const prefs = data.notification_preferences;
+
+  // If no preferences stored yet, use defaults
+  if (!prefs) {
+    return { enabled: true, alertDays: [30, 7, 1, 0], recipients: 'owner' };
+  }
+
+  // email_enabled must be true AND vgp_alerts.enabled must be true
+  const emailEnabled = prefs.email_enabled ?? true;
+  const vgpEnabled = prefs.vgp_alerts?.enabled ?? true;
+
   return {
-    enabled: data.vgp_alerts_enabled ?? true,
-    alertDays: data.vgp_alert_days ?? [30, 7, 1, 0],
+    enabled: emailEnabled && vgpEnabled,
+    alertDays: Array.isArray(prefs.vgp_alerts?.timing) ? prefs.vgp_alerts.timing : [30, 7, 1, 0],
+    recipients: prefs.vgp_alerts?.recipients || 'owner',
   };
 }

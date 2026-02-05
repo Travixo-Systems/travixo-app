@@ -3,7 +3,7 @@
 // TraviXO Systems
 // =============================================================================
 
-export type VGPAlertType = 'reminder_30day' | 'reminder_7day' | 'reminder_1day' | 'overdue';
+export type VGPAlertType = 'reminder_30day' | 'reminder_15day' | 'reminder_7day' | 'reminder_1day' | 'overdue';
 
 export interface VGPScheduleWithAsset {
   id: string;
@@ -34,6 +34,7 @@ export interface AlertGroupedByOrg {
   vgp_alerts_enabled: boolean;
   vgp_alert_days: number[];
   reminder_30day: VGPScheduleWithAsset[];
+  reminder_15day: VGPScheduleWithAsset[];
   reminder_7day: VGPScheduleWithAsset[];
   reminder_1day: VGPScheduleWithAsset[];
   overdue: VGPScheduleWithAsset[];

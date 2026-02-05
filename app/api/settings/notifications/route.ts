@@ -10,9 +10,9 @@ interface NotificationPreferences {
   vgp_alerts: {
     enabled: boolean;
     timing: number[]; // Days before due date: [30, 15, 7, 1]
-    recipients: string[]; // ['owner', 'admin', 'all']
+    recipients: string; // 'owner' | 'admin' | 'all'
   };
-  digest_mode: 'immediate' | 'daily' | 'weekly' | 'never';
+  digest_mode: 'immediate' | 'daily' | 'weekly' | 'realtime' | 'never';
   asset_alerts: boolean;
   audit_alerts: boolean;
 }
@@ -49,21 +49,15 @@ function validatePreferences(prefs: any): { valid: boolean; error?: string } {
     }
   }
 
-  if (!Array.isArray(prefs.vgp_alerts.recipients)) {
-    return { valid: false, error: 'vgp_alerts.recipients must be an array' };
-  }
-
   const validRecipients = ['owner', 'admin', 'all'];
-  for (const recipient of prefs.vgp_alerts.recipients) {
-    if (!validRecipients.includes(recipient)) {
-      return {
-        valid: false,
-        error: `Invalid recipient: ${recipient}. Must be one of: ${validRecipients.join(', ')}`,
-      };
-    }
+  if (typeof prefs.vgp_alerts.recipients !== 'string' || !validRecipients.includes(prefs.vgp_alerts.recipients)) {
+    return {
+      valid: false,
+      error: `Invalid recipients: ${prefs.vgp_alerts.recipients}. Must be one of: ${validRecipients.join(', ')}`,
+    };
   }
 
-  const validDigestModes = ['immediate', 'daily', 'weekly', 'never'];
+  const validDigestModes = ['immediate', 'daily', 'weekly', 'realtime', 'never'];
   if (!validDigestModes.includes(prefs.digest_mode)) {
     return {
       valid: false,
@@ -103,7 +97,7 @@ export async function GET(request: NextRequest) {
       .from('users')
       .select('organization_id')
       .eq('id', user.id)
-      .single();
+      .single() as { data: { organization_id: string } | null; error: any };
 
     if (userError || !userData?.organization_id) {
       return NextResponse.json(
@@ -117,9 +111,9 @@ export async function GET(request: NextRequest) {
       .from('organizations')
       .select('id, name, notification_preferences')
       .eq('id', userData.organization_id)
-      .single();
+      .single() as { data: { id: string; name: string; notification_preferences: any } | null; error: any };
 
-    if (orgError) {
+    if (orgError || !organization) {
       console.error('Error fetching notification preferences:', orgError);
       return NextResponse.json(
         { error: 'Failed to fetch notification preferences' },
@@ -163,7 +157,7 @@ export async function PATCH(request: NextRequest) {
       .from('users')
       .select('organization_id, role')
       .eq('id', user.id)
-      .single();
+      .single() as { data: { organization_id: string; role: string } | null; error: any };
 
     if (userError || !userData?.organization_id) {
       return NextResponse.json(
@@ -201,17 +195,17 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Update notification preferences
-    const { data: updatedOrg, error: updateError } = await supabase
-      .from('organizations')
+    const { data: updatedOrg, error: updateError } = await (supabase
+      .from('organizations') as any)
       .update({
         notification_preferences: preferences,
         updated_at: new Date().toISOString(),
       })
       .eq('id', userData.organization_id)
       .select('id, name, notification_preferences')
-      .single();
+      .single() as { data: { id: string; name: string; notification_preferences: any } | null; error: any };
 
-    if (updateError) {
+    if (updateError || !updatedOrg) {
       console.error('Error updating notification preferences:', updateError);
       return NextResponse.json(
         { error: 'Failed to update notification preferences' },
@@ -256,7 +250,7 @@ export async function POST(request: NextRequest) {
       .from('users')
       .select('organization_id, role')
       .eq('id', user.id)
-      .single();
+      .single() as { data: { organization_id: string; role: string } | null; error: any };
 
     if (userError || !userData?.organization_id) {
       return NextResponse.json(
@@ -279,24 +273,24 @@ export async function POST(request: NextRequest) {
       vgp_alerts: {
         enabled: true,
         timing: [30, 15, 7, 1],
-        recipients: ['owner'],
+        recipients: 'owner',
       },
       digest_mode: 'daily',
       asset_alerts: true,
       audit_alerts: true,
     };
 
-    const { data: updatedOrg, error: updateError } = await supabase
-      .from('organizations')
+    const { data: updatedOrg, error: updateError } = await (supabase
+      .from('organizations') as any)
       .update({
         notification_preferences: defaultPreferences,
         updated_at: new Date().toISOString(),
       })
       .eq('id', userData.organization_id)
       .select('id, name, notification_preferences')
-      .single();
+      .single() as { data: { id: string; name: string; notification_preferences: any } | null; error: any };
 
-    if (updateError) {
+    if (updateError || !updatedOrg) {
       console.error('Error resetting notification preferences:', updateError);
       return NextResponse.json(
         { error: 'Failed to reset notification preferences' },

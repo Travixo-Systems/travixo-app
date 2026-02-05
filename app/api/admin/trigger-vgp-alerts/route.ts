@@ -36,7 +36,7 @@ async function getAuthenticatedUser() {
     .from('users')
     .select('role, organization_id')
     .eq('id', user.id)
-    .single();
+    .single() as { data: { role: string; organization_id: string } | null; error: unknown };
 
   if (!userData) {
     return null;

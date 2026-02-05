@@ -48,7 +48,7 @@ export default function NotificationsSettingsPage() {
         email_enabled: prefs.email_enabled ?? true,
         vgp_alerts: {
           enabled: prefs.vgp_alerts?.enabled ?? true,
-          timing: Array.isArray(prefs.vgp_alerts?.timing) ? prefs.vgp_alerts.timing : [30, 15, 7, 1],
+          timing: Array.isArray(prefs.vgp_alerts?.timing) ? prefs.vgp_alerts.timing : [30, 7, 1],
           recipients: recipientsValue,
         },
         digest_mode: prefs.digest_mode || 'daily',
@@ -109,16 +109,7 @@ export default function NotificationsSettingsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Convert recipients string to array format for API
-      const prefsForApi = {
-        ...preferences,
-        vgp_alerts: {
-          ...preferences.vgp_alerts,
-          recipients: [preferences.vgp_alerts.recipients], // Convert "owner" → ["owner"]
-        },
-      };
-      
-      await updateNotifications(prefsForApi);
+      await updateNotifications(preferences);
       toast.success(t('notifications.saveSuccess'));
       setIsEditing(false);
     } catch (error: any) {

@@ -14,9 +14,9 @@ import {
   Button,
 } from '@react-email/components';
 
-import { EmailHeader } from '@/components/email-header';
-import { EmailFooter } from '@/components/email-footer';
-import { ScheduleTable } from '@/components/schedule-table';
+import { EmailHeader } from './components/email-header';
+import { EmailFooter } from './components/email-footer';
+import { ScheduleTable } from './components/schedule-table';
 import type { VGPAlertEmailProps } from '@/types/vgp-alerts';
 
 const BRAND = {
@@ -37,8 +37,7 @@ export function VGPReminder30Day({
     <Html>
       <Head />
       <Preview>
-        {count} inspection{count > 1 ? 's' : ''} VGP a planifier dans les 30
-        prochains jours - {organizationName}
+        {`${count} inspection${count > 1 ? 's' : ''} VGP a planifier dans les 30 prochains jours - ${organizationName}`}
       </Preview>
       <Body style={bodyStyle}>
         <Container style={containerStyle}>

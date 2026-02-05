@@ -15,9 +15,9 @@ import {
   Button,
 } from '@react-email/components';
 
-import { EmailHeader } from '@/components/email-header';
-import { EmailFooter } from '@/components/email-footer';
-import { ScheduleTable } from '@/components/schedule-table';
+import { EmailHeader } from './components/email-header';
+import { EmailFooter } from './components/email-footer';
+import { ScheduleTable } from './components/schedule-table';
 import type { VGPAlertEmailProps } from '@/types/vgp-alerts';
 
 const BRAND = {
@@ -39,8 +39,7 @@ export function VGPReminder7Day({
     <Html>
       <Head />
       <Preview>
-        URGENT : {count} inspection{count > 1 ? 's' : ''} VGP dans 7 jours -{' '}
-        {organizationName}
+        {`URGENT : ${count} inspection${count > 1 ? 's' : ''} VGP dans 7 jours - ${organizationName}`}
       </Preview>
       <Body style={bodyStyle}>
         <Container style={containerStyle}>
