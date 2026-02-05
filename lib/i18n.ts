@@ -2681,6 +2681,146 @@ export const translations = {
   },
 
   // ============================================================================
+  // SETTINGS - NOTIFICATIONS
+  // ============================================================================
+  notifications: {
+    pageTitle: {
+      en: "Notifications",
+      fr: "Notifications",
+    },
+    pageSubtitle: {
+      en: "Manage email alerts and preferences",
+      fr: "Gérez les alertes email et préférences",
+    },
+    back: {
+      en: "Back to Settings",
+      fr: "Retour aux Paramètres",
+    },
+    edit: {
+      en: "Edit",
+      fr: "Modifier",
+    },
+    save: {
+      en: "Save Changes",
+      fr: "Enregistrer",
+    },
+    cancel: {
+      en: "Cancel",
+      fr: "Annuler",
+    },
+    saving: {
+      en: "Saving...",
+      fr: "Enregistrement...",
+    },
+    saveSuccess: {
+      en: "Notification preferences updated",
+      fr: "Préférences de notifications mises à jour",
+    },
+    saveError: {
+      en: "Error updating preferences",
+      fr: "Erreur lors de la mise à jour",
+    },
+    emailNotifications: {
+      en: "Email Notifications",
+      fr: "Notifications Email",
+    },
+    emailEnabled: {
+      en: "Enable email notifications",
+      fr: "Activer les notifications email",
+    },
+    vgpAlerts: {
+      en: "VGP Compliance Alerts",
+      fr: "Alertes de Conformité VGP",
+    },
+    vgpAlertsDesc: {
+      en: "Receive email alerts for upcoming inspections",
+      fr: "Recevez des alertes email pour les inspections à venir",
+    },
+    vgpEnabled: {
+      en: "Enable VGP alerts",
+      fr: "Activer les alertes VGP",
+    },
+    alertTiming: {
+      en: "Alert Timing",
+      fr: "Calendrier des Alertes",
+    },
+    alertTimingDesc: {
+      en: "Days before due date",
+      fr: "Jours avant l'échéance",
+    },
+    daysInAdvance: {
+      en: "days in advance",
+      fr: "jours à l'avance",
+    },
+    recipients: {
+      en: "Alert Recipients",
+      fr: "Destinataires des Alertes",
+    },
+    recipientsOwner: {
+      en: "Organization owner only",
+      fr: "Propriétaire uniquement",
+    },
+    recipientsAll: {
+      en: "All team members",
+      fr: "Tous les membres",
+    },
+    digestMode: {
+      en: "Digest Mode",
+      fr: "Mode Résumé",
+    },
+    digestModeDesc: {
+      en: "Frequency of summary emails",
+      fr: "Fréquence des emails récapitulatifs",
+    },
+    daily: {
+      en: "Daily (8:00 AM)",
+      fr: "Quotidien (8h00)",
+    },
+    weekly: {
+      en: "Weekly (Monday 8:00 AM)",
+      fr: "Hebdomadaire (Lundi 8h00)",
+    },
+    realtime: {
+      en: "Real-time (immediate)",
+      fr: "Temps réel (immédiat)",
+    },
+    otherAlerts: {
+      en: "Other Alerts",
+      fr: "Autres Alertes",
+    },
+    assetAlerts: {
+      en: "Asset movement alerts",
+      fr: "Alertes de mouvement d'actifs",
+    },
+    auditAlerts: {
+      en: "Audit reminders",
+      fr: "Rappels d'audit",
+    },
+    enabled: {
+      en: "Enabled",
+      fr: "Activé",
+    },
+    disabled: {
+      en: "Disabled",
+      fr: "Désactivé",
+    },
+    yes: {
+      en: "Yes",
+      fr: "Oui",
+    },
+    no: {
+      en: "No",
+      fr: "Non",
+    },
+  },
+
+
+
+
+
+
+
+  // ============================================================================
   // TEAM MODULE
   // ============================================================================
   team: {

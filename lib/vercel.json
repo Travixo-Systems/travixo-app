@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/vgp-alerts",
+      "schedule": "0 7 * * *"
+    }
+  ]
+}

@@ -10,11 +10,13 @@ import {
   CheckIcon,
 } from '@heroicons/react/24/outline';
 import { useLanguage } from '@/lib/LanguageContext';
+import { createTranslator } from '@/lib/i18n';
 import { useOrganization, useUpdateNotifications, type NotificationPreferences } from '@/hooks/useOrganization';
 import toast from 'react-hot-toast';
 
 export default function NotificationsSettingsPage() {
   const { language } = useLanguage();
+  const t = createTranslator(language);
   const { data: organization, isLoading } = useOrganization();
   const { mutateAsync: updateNotifications, isPending: saving } = useUpdateNotifications();
 
@@ -33,51 +35,28 @@ export default function NotificationsSettingsPage() {
 
   useEffect(() => {
     if (organization?.notification_preferences) {
-      setPreferences(organization.notification_preferences);
+      // Ensure data structure is correct with fallbacks
+      const prefs = organization.notification_preferences;
+      
+      // Handle recipients: could be string "owner" or array ["owner"]
+      let recipientsValue = prefs.vgp_alerts?.recipients || 'owner';
+      if (Array.isArray(recipientsValue)) {
+        recipientsValue = recipientsValue[0] || 'owner';
+      }
+      
+      setPreferences({
+        email_enabled: prefs.email_enabled ?? true,
+        vgp_alerts: {
+          enabled: prefs.vgp_alerts?.enabled ?? true,
+          timing: Array.isArray(prefs.vgp_alerts?.timing) ? prefs.vgp_alerts.timing : [30, 15, 7, 1],
+          recipients: recipientsValue,
+        },
+        digest_mode: prefs.digest_mode || 'daily',
+        asset_alerts: prefs.asset_alerts ?? true,
+        audit_alerts: prefs.audit_alerts ?? true,
+      });
     }
   }, [organization]);
-
-  const labels = {
-    pageTitle: { en: 'Notifications', fr: 'Notifications' },
-    pageSubtitle: { en: 'Manage email alerts and preferences', fr: 'Gérez les alertes email et préférences' },
-    back: { en: 'Back to Settings', fr: 'Retour aux Paramètres' },
-    edit: { en: 'Edit', fr: 'Modifier' },
-    save: { en: 'Save Changes', fr: 'Enregistrer' },
-    cancel: { en: 'Cancel', fr: 'Annuler' },
-    saving: { en: 'Saving...', fr: 'Enregistrement...' },
-    saveSuccess: { en: 'Notification preferences updated', fr: 'Préférences de notifications mises à jour' },
-    saveError: { en: 'Error updating preferences', fr: 'Erreur lors de la mise à jour' },
-    
-    emailNotifications: { en: 'Email Notifications', fr: 'Notifications Email' },
-    emailEnabled: { en: 'Enable email notifications', fr: 'Activer les notifications email' },
-    
-    vgpAlerts: { en: 'VGP Compliance Alerts', fr: 'Alertes de Conformité VGP' },
-    vgpAlertsDesc: { en: 'Receive email alerts for upcoming inspections', fr: 'Recevez des alertes email pour les inspections à venir' },
-    vgpEnabled: { en: 'Enable VGP alerts', fr: 'Activer les alertes VGP' },
-    
-    alertTiming: { en: 'Alert Timing', fr: 'Calendrier des Alertes' },
-    alertTimingDesc: { en: 'Days before due date', fr: 'Jours avant l\'échéance' },
-    daysInAdvance: { en: 'days in advance', fr: 'jours à l\'avance' },
-    
-    recipients: { en: 'Alert Recipients', fr: 'Destinataires des Alertes' },
-    recipientsOwner: { en: 'Organization owner only', fr: 'Propriétaire uniquement' },
-    recipientsAll: { en: 'All team members', fr: 'Tous les membres' },
-    
-    digestMode: { en: 'Digest Mode', fr: 'Mode Résumé' },
-    digestModeDesc: { en: 'Frequency of summary emails', fr: 'Fréquence des emails récapitulatifs' },
-    daily: { en: 'Daily (8:00 AM)', fr: 'Quotidien (8h00)' },
-    weekly: { en: 'Weekly (Monday 8:00 AM)', fr: 'Hebdomadaire (Lundi 8h00)' },
-    realtime: { en: 'Real-time (immediate)', fr: 'Temps réel (immédiat)' },
-    
-    otherAlerts: { en: 'Other Alerts', fr: 'Autres Alertes' },
-    assetAlerts: { en: 'Asset movement alerts', fr: 'Alertes de mouvement d\'actifs' },
-    auditAlerts: { en: 'Audit reminders', fr: 'Rappels d\'audit' },
-    
-    enabled: { en: 'Enabled', fr: 'Activé' },
-    disabled: { en: 'Disabled', fr: 'Désactivé' },
-    yes: { en: 'Yes', fr: 'Oui' },
-    no: { en: 'No', fr: 'Non' },
-  };
 
   const handleToggleVGPAlerts = () => {
     setPreferences(prev => ({
@@ -130,12 +109,20 @@ export default function NotificationsSettingsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Hook expects NotificationPreferences directly, it wraps in { preferences: ... } internally
-      await updateNotifications(preferences);
-      toast.success(labels.saveSuccess[language]);
+      // Convert recipients string to array format for API
+      const prefsForApi = {
+        ...preferences,
+        vgp_alerts: {
+          ...preferences.vgp_alerts,
+          recipients: [preferences.vgp_alerts.recipients], // Convert "owner" → ["owner"]
+        },
+      };
+      
+      await updateNotifications(prefsForApi);
+      toast.success(t('notifications.saveSuccess'));
       setIsEditing(false);
     } catch (error: any) {
-      toast.error(error.message || labels.saveError[language]);
+      toast.error(error.message || t('notifications.saveError'));
     }
   };
 
@@ -163,7 +150,7 @@ export default function NotificationsSettingsPage() {
           className="flex items-center text-sm text-gray-600 hover:text-gray-900 mb-6"
         >
           <ArrowLeftIcon className="w-4 h-4 mr-2" />
-          {labels.back[language]}
+          {t('notifications.back')}
         </Link>
 
         {/* Header */}
@@ -174,10 +161,10 @@ export default function NotificationsSettingsPage() {
             </div>
             <div>
               <h1 className="text-2xl font-semibold text-gray-900">
-                {labels.pageTitle[language]}
+                {t('notifications.pageTitle')}
               </h1>
               <p className="text-sm text-gray-600">
-                {labels.pageSubtitle[language]}
+                {t('notifications.pageSubtitle')}
               </p>
             </div>
           </div>
@@ -188,7 +175,7 @@ export default function NotificationsSettingsPage() {
               className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               <PencilIcon className="w-4 h-4" />
-              <span>{labels.edit[language]}</span>
+              <span>{t('notifications.edit')}</span>
             </button>
           )}
         </div>
@@ -199,42 +186,44 @@ export default function NotificationsSettingsPage() {
             {/* Email Notifications */}
             <div className="bg-white shadow rounded-lg p-6">
               <h3 className="text-sm font-medium text-gray-900 mb-4">
-                {labels.emailNotifications[language]}
+                {t('notifications.emailNotifications')}
               </h3>
               <PreferenceDisplay
-                label={labels.emailEnabled[language]}
+                label={t('notifications.emailEnabled')}
                 value={preferences.email_enabled}
-                labels={labels}
+                yesText={t('notifications.yes')}
+                noText={t('notifications.no')}
               />
             </div>
 
             {/* VGP Alerts */}
             <div className="bg-white shadow rounded-lg p-6">
               <h3 className="text-sm font-medium text-gray-900 mb-1">
-                {labels.vgpAlerts[language]}
+                {t('notifications.vgpAlerts')}
               </h3>
-              <p className="text-xs text-gray-500 mb-4">{labels.vgpAlertsDesc[language]}</p>
+              <p className="text-xs text-gray-500 mb-4">{t('notifications.vgpAlertsDesc')}</p>
 
               <div className="space-y-3">
                 <PreferenceDisplay
-                  label={labels.vgpEnabled[language]}
+                  label={t('notifications.vgpEnabled')}
                   value={preferences.vgp_alerts.enabled}
-                  labels={labels}
+                  yesText={t('notifications.yes')}
+                  noText={t('notifications.no')}
                 />
                 
                 {preferences.vgp_alerts.enabled && (
                   <>
                     <div className="flex items-center justify-between py-3 border-t border-gray-200">
-                      <span className="text-sm font-medium text-gray-700">{labels.alertTiming[language]}</span>
+                      <span className="text-sm font-medium text-gray-700">{t('notifications.alertTiming')}</span>
                       <span className="text-sm text-gray-900">
-                        {preferences.vgp_alerts.timing.sort((a, b) => b - a).join(', ')} {labels.daysInAdvance[language]}
+                        {preferences.vgp_alerts.timing.sort((a, b) => b - a).join(', ')} {t('notifications.daysInAdvance')}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between py-3 border-t border-gray-200">
-                      <span className="text-sm font-medium text-gray-700">{labels.recipients[language]}</span>
+                      <span className="text-sm font-medium text-gray-700">{t('notifications.recipients')}</span>
                       <span className="text-sm text-gray-900">
-                        {preferences.vgp_alerts.recipients === 'owner' ? labels.recipientsOwner[language] : labels.recipientsAll[language]}
+                        {preferences.vgp_alerts.recipients === 'owner' ? t('notifications.recipientsOwner') : t('notifications.recipientsAll')}
                       </span>
                     </div>
                   </>
@@ -245,16 +234,16 @@ export default function NotificationsSettingsPage() {
             {/* Digest Mode */}
             <div className="bg-white shadow rounded-lg p-6">
               <h3 className="text-sm font-medium text-gray-900 mb-1">
-                {labels.digestMode[language]}
+                {t('notifications.digestMode')}
               </h3>
-              <p className="text-xs text-gray-500 mb-4">{labels.digestModeDesc[language]}</p>
+              <p className="text-xs text-gray-500 mb-4">{t('notifications.digestModeDesc')}</p>
 
               <div className="flex items-center justify-between py-3">
-                <span className="text-sm font-medium text-gray-700">{labels.digestMode[language]}</span>
+                <span className="text-sm font-medium text-gray-700">{t('notifications.digestMode')}</span>
                 <span className="text-sm text-gray-900">
-                  {preferences.digest_mode === 'daily' && labels.daily[language]}
-                  {preferences.digest_mode === 'weekly' && labels.weekly[language]}
-                  {preferences.digest_mode === 'realtime' && labels.realtime[language]}
+                  {preferences.digest_mode === 'daily' && t('notifications.daily')}
+                  {preferences.digest_mode === 'weekly' && t('notifications.weekly')}
+                  {preferences.digest_mode === 'realtime' && t('notifications.realtime')}
                 </span>
               </div>
             </div>
@@ -262,19 +251,21 @@ export default function NotificationsSettingsPage() {
             {/* Other Alerts */}
             <div className="bg-white shadow rounded-lg p-6">
               <h3 className="text-sm font-medium text-gray-900 mb-4">
-                {labels.otherAlerts[language]}
+                {t('notifications.otherAlerts')}
               </h3>
 
               <div className="space-y-3">
                 <PreferenceDisplay
-                  label={labels.assetAlerts[language]}
+                  label={t('notifications.assetAlerts')}
                   value={preferences.asset_alerts}
-                  labels={labels}
+                  yesText={t('notifications.yes')}
+                  noText={t('notifications.no')}
                 />
                 <PreferenceDisplay
-                  label={labels.auditAlerts[language]}
+                  label={t('notifications.auditAlerts')}
                   value={preferences.audit_alerts}
-                  labels={labels}
+                  yesText={t('notifications.yes')}
+                  noText={t('notifications.no')}
                 />
               </div>
             </div>
@@ -287,10 +278,10 @@ export default function NotificationsSettingsPage() {
             {/* Email Notifications */}
             <div className="bg-white shadow rounded-lg p-6">
               <h3 className="text-sm font-medium text-gray-900 mb-4">
-                {labels.emailNotifications[language]}
+                {t('notifications.emailNotifications')}
               </h3>
               <ToggleSwitch
-                label={labels.emailEnabled[language]}
+                label={t('notifications.emailEnabled')}
                 checked={preferences.email_enabled}
                 onChange={handleToggleEmail}
               />
@@ -300,13 +291,13 @@ export default function NotificationsSettingsPage() {
             {preferences.email_enabled && (
               <div className="bg-white shadow rounded-lg p-6">
                 <h3 className="text-sm font-medium text-gray-900 mb-1">
-                  {labels.vgpAlerts[language]}
+                  {t('notifications.vgpAlerts')}
                 </h3>
-                <p className="text-xs text-gray-500 mb-4">{labels.vgpAlertsDesc[language]}</p>
+                <p className="text-xs text-gray-500 mb-4">{t('notifications.vgpAlertsDesc')}</p>
 
                 <div className="space-y-4">
                   <ToggleSwitch
-                    label={labels.vgpEnabled[language]}
+                    label={t('notifications.vgpEnabled')}
                     checked={preferences.vgp_alerts.enabled}
                     onChange={handleToggleVGPAlerts}
                   />
@@ -315,14 +306,14 @@ export default function NotificationsSettingsPage() {
                     <>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          {labels.alertTiming[language]}
+                          {t('notifications.alertTiming')}
                         </label>
-                        <p className="text-xs text-gray-500 mb-3">{labels.alertTimingDesc[language]}</p>
+                        <p className="text-xs text-gray-500 mb-3">{t('notifications.alertTimingDesc')}</p>
                         <div className="space-y-2">
                           {[30, 15, 7, 1].map(days => (
                             <CheckboxField
                               key={days}
-                              label={`${days} ${labels.daysInAdvance[language]}`}
+                              label={`${days} ${t('notifications.daysInAdvance')}`}
                               checked={preferences.vgp_alerts.timing.includes(days)}
                               onChange={() => handleToggleVGPTiming(days)}
                             />
@@ -332,15 +323,15 @@ export default function NotificationsSettingsPage() {
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          {labels.recipients[language]}
+                          {t('notifications.recipients')}
                         </label>
                         <select
-                          value={preferences.vgp_alerts.recipients}
+                          value={preferences.vgp_alerts.recipients || 'owner'}
                           onChange={(e) => handleChangeVGPRecipients(e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         >
-                          <option value="owner">{labels.recipientsOwner[language]}</option>
-                          <option value="all">{labels.recipientsAll[language]}</option>
+                          <option value="owner">{t('notifications.recipientsOwner')}</option>
+                          <option value="all">{t('notifications.recipientsAll')}</option>
                         </select>
                       </div>
                     </>
@@ -353,19 +344,19 @@ export default function NotificationsSettingsPage() {
             {preferences.email_enabled && (
               <div className="bg-white shadow rounded-lg p-6">
                 <h3 className="text-sm font-medium text-gray-900 mb-1">
-                  {labels.digestMode[language]}
+                  {t('notifications.digestMode')}
                 </h3>
-                <p className="text-xs text-gray-500 mb-4">{labels.digestModeDesc[language]}</p>
+                <p className="text-xs text-gray-500 mb-4">{t('notifications.digestModeDesc')}</p>
 
                 <div>
                   <select
-                    value={preferences.digest_mode}
+                    value={preferences.digest_mode || 'daily'}
                     onChange={(e) => handleChangeDigestMode(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
-                    <option value="realtime">{labels.realtime[language]}</option>
-                    <option value="daily">{labels.daily[language]}</option>
-                    <option value="weekly">{labels.weekly[language]}</option>
+                    <option value="realtime">{t('notifications.realtime')}</option>
+                    <option value="daily">{t('notifications.daily')}</option>
+                    <option value="weekly">{t('notifications.weekly')}</option>
                   </select>
                 </div>
               </div>
@@ -375,17 +366,17 @@ export default function NotificationsSettingsPage() {
             {preferences.email_enabled && (
               <div className="bg-white shadow rounded-lg p-6">
                 <h3 className="text-sm font-medium text-gray-900 mb-4">
-                  {labels.otherAlerts[language]}
+                  {t('notifications.otherAlerts')}
                 </h3>
 
                 <div className="space-y-3">
                   <CheckboxField
-                    label={labels.assetAlerts[language]}
+                    label={t('notifications.assetAlerts')}
                     checked={preferences.asset_alerts}
                     onChange={handleToggleAssetAlerts}
                   />
                   <CheckboxField
-                    label={labels.auditAlerts[language]}
+                    label={t('notifications.auditAlerts')}
                     checked={preferences.audit_alerts}
                     onChange={handleToggleAuditAlerts}
                   />
@@ -400,7 +391,7 @@ export default function NotificationsSettingsPage() {
                 onClick={handleCancelEdit}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                {labels.cancel[language]}
+                {t('notifications.cancel')}
               </button>
               <button
                 type="submit"
@@ -408,7 +399,7 @@ export default function NotificationsSettingsPage() {
                 className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
                 <CheckIcon className="w-4 h-4" />
-                <span>{saving ? labels.saving[language] : labels.save[language]}</span>
+                <span>{saving ? t('notifications.saving') : t('notifications.save')}</span>
               </button>
             </div>
           </form>
@@ -419,12 +410,12 @@ export default function NotificationsSettingsPage() {
 }
 
 // Helper Components
-function PreferenceDisplay({ label, value, labels }: { label: string; value: boolean; labels: any }) {
+function PreferenceDisplay({ label, value, yesText, noText }: { label: string; value: boolean; yesText: string; noText: string }) {
   return (
     <div className="flex items-center justify-between py-3 border-b border-gray-200 last:border-0">
       <span className="text-sm font-medium text-gray-700">{label}</span>
       <span className={`text-sm font-medium ${value ? 'text-green-600' : 'text-gray-400'}`}>
-        {value ? labels.yes : labels.no}
+        {value ? yesText : noText}
       </span>
     </div>
   );
