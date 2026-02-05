@@ -12,6 +12,7 @@ import { render } from '@react-email/render';
 import { createClient } from '@supabase/supabase-js';
 
 import { VGPReminder30Day } from './templates/vgp-reminder-30day';
+import { VGPReminder15Day } from './templates/vgp-reminder-15day';
 import { VGPReminder7Day } from './templates/vgp-reminder-7day';
 import { VGPReminder1Day } from './templates/vgp-reminder-1day';
 import { VGPOverdue } from './templates/vgp-overdue';
@@ -68,6 +69,8 @@ function getAdminSupabase() {
 const SUBJECT_LINES: Record<VGPAlertType, (count: number, orgName: string) => string> = {
   reminder_30day: (count, orgName) =>
     `[TraviXO] ${count} inspection${count > 1 ? 's' : ''} VGP a planifier - ${orgName}`,
+  reminder_15day: (count, orgName) =>
+    `[TraviXO] ${count} inspection${count > 1 ? 's' : ''} VGP dans 15 jours - ${orgName}`,
   reminder_7day: (count, orgName) =>
     `[TraviXO] URGENT : ${count} inspection${count > 1 ? 's' : ''} VGP dans 7 jours - ${orgName}`,
   reminder_1day: (count, orgName) =>
@@ -87,6 +90,8 @@ function getEmailTemplate(
   switch (alertType) {
     case 'reminder_30day':
       return VGPReminder30Day(props);
+    case 'reminder_15day':
+      return VGPReminder15Day(props);
     case 'reminder_7day':
       return VGPReminder7Day(props);
     case 'reminder_1day':

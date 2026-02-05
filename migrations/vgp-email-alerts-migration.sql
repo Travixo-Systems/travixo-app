@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS vgp_alerts (
   schedule_id uuid NOT NULL REFERENCES vgp_schedules(id) ON DELETE CASCADE,
   asset_id uuid REFERENCES assets(id) ON DELETE SET NULL,
   organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-  alert_type text NOT NULL CHECK (alert_type IN ('reminder_30day', 'reminder_7day', 'reminder_1day', 'overdue')),
+  alert_type text NOT NULL CHECK (alert_type IN ('reminder_30day', 'reminder_15day', 'reminder_7day', 'reminder_1day', 'overdue')),
   alert_date date NOT NULL DEFAULT CURRENT_DATE,
   due_date date NOT NULL,
   sent boolean NOT NULL DEFAULT false,
@@ -45,7 +45,7 @@ BEGIN
       "email_enabled": true,
       "vgp_alerts": {
         "enabled": true,
-        "timing": [30, 7, 1],
+        "timing": [30, 15, 7, 1],
         "recipients": "owner"
       },
       "digest_mode": "daily",

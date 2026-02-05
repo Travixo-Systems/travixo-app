@@ -95,6 +95,7 @@ function classifySchedule(
   if (days < 0) return 'overdue';
   if (days <= 1) return 'reminder_1day';
   if (days <= 7) return 'reminder_7day';
+  if (days <= 15) return 'reminder_15day';
   if (days <= 30) return 'reminder_30day';
 
   return null; // Not due within 30 days
@@ -107,6 +108,7 @@ function classifySchedule(
 function alertTypeToDayNumber(alertType: VGPAlertType): number {
   switch (alertType) {
     case 'reminder_30day': return 30;
+    case 'reminder_15day': return 15;
     case 'reminder_7day': return 7;
     case 'reminder_1day': return 1;
     case 'overdue': return 0;
@@ -216,6 +218,7 @@ async function runVGPAlertsCron(): Promise<CronJobResult> {
     string,
     {
       reminder_30day: VGPScheduleWithAsset[];
+      reminder_15day: VGPScheduleWithAsset[];
       reminder_7day: VGPScheduleWithAsset[];
       reminder_1day: VGPScheduleWithAsset[];
       overdue: VGPScheduleWithAsset[];
@@ -231,6 +234,7 @@ async function runVGPAlertsCron(): Promise<CronJobResult> {
     if (!orgMap.has(orgId)) {
       orgMap.set(orgId, {
         reminder_30day: [],
+        reminder_15day: [],
         reminder_7day: [],
         reminder_1day: [],
         overdue: [],
@@ -305,6 +309,7 @@ async function runVGPAlertsCron(): Promise<CronJobResult> {
       'overdue',
       'reminder_1day',
       'reminder_7day',
+      'reminder_15day',
       'reminder_30day',
     ];
 

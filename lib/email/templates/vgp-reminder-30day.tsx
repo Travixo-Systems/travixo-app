@@ -37,8 +37,7 @@ export function VGPReminder30Day({
     <Html>
       <Head />
       <Preview>
-        {count} inspection{count > 1 ? 's' : ''} VGP a planifier dans les 30
-        prochains jours - {organizationName}
+        {`${count} inspection${count > 1 ? 's' : ''} VGP a planifier dans les 30 prochains jours - ${organizationName}`}
       </Preview>
       <Body style={bodyStyle}>
         <Container style={containerStyle}>

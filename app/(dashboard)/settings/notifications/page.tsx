@@ -25,7 +25,7 @@ export default function NotificationsSettingsPage() {
     email_enabled: true,
     vgp_alerts: {
       enabled: true,
-      timing: [30, 7, 1],
+      timing: [30, 15, 7, 1],
       recipients: 'owner',
     },
     digest_mode: 'daily',
@@ -301,7 +301,7 @@ export default function NotificationsSettingsPage() {
                         </label>
                         <p className="text-xs text-gray-500 mb-3">{t('notifications.alertTimingDesc')}</p>
                         <div className="space-y-2">
-                          {[30, 7, 1].map(days => (
+                          {[30, 15, 7, 1].map(days => (
                             <CheckboxField
                               key={days}
                               label={`${days} ${t('notifications.daysInAdvance')}`}

@@ -38,8 +38,7 @@ export function VGPReminder1Day({
     <Html>
       <Head />
       <Preview>
-        CRITIQUE : {count} inspection{count > 1 ? 's' : ''} VGP due{count > 1 ? 's' : ''}{' '}
-        DEMAIN - {organizationName}
+        {`CRITIQUE : ${count} inspection${count > 1 ? 's' : ''} VGP due${count > 1 ? 's' : ''} DEMAIN - ${organizationName}`}
       </Preview>
       <Body style={bodyStyle}>
         <Container style={containerStyle}>

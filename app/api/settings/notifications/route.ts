@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
       .from('users')
       .select('organization_id')
       .eq('id', user.id)
-      .single();
+      .single() as { data: { organization_id: string } | null; error: any };
 
     if (userError || !userData?.organization_id) {
       return NextResponse.json(
@@ -111,9 +111,9 @@ export async function GET(request: NextRequest) {
       .from('organizations')
       .select('id, name, notification_preferences')
       .eq('id', userData.organization_id)
-      .single();
+      .single() as { data: { id: string; name: string; notification_preferences: any } | null; error: any };
 
-    if (orgError) {
+    if (orgError || !organization) {
       console.error('Error fetching notification preferences:', orgError);
       return NextResponse.json(
         { error: 'Failed to fetch notification preferences' },
@@ -157,7 +157,7 @@ export async function PATCH(request: NextRequest) {
       .from('users')
       .select('organization_id, role')
       .eq('id', user.id)
-      .single();
+      .single() as { data: { organization_id: string; role: string } | null; error: any };
 
     if (userError || !userData?.organization_id) {
       return NextResponse.json(
@@ -195,17 +195,17 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Update notification preferences
-    const { data: updatedOrg, error: updateError } = await supabase
-      .from('organizations')
+    const { data: updatedOrg, error: updateError } = await (supabase
+      .from('organizations') as any)
       .update({
         notification_preferences: preferences,
         updated_at: new Date().toISOString(),
       })
       .eq('id', userData.organization_id)
       .select('id, name, notification_preferences')
-      .single();
+      .single() as { data: { id: string; name: string; notification_preferences: any } | null; error: any };
 
-    if (updateError) {
+    if (updateError || !updatedOrg) {
       console.error('Error updating notification preferences:', updateError);
       return NextResponse.json(
         { error: 'Failed to update notification preferences' },
@@ -250,7 +250,7 @@ export async function POST(request: NextRequest) {
       .from('users')
       .select('organization_id, role')
       .eq('id', user.id)
-      .single();
+      .single() as { data: { organization_id: string; role: string } | null; error: any };
 
     if (userError || !userData?.organization_id) {
       return NextResponse.json(
@@ -272,7 +272,7 @@ export async function POST(request: NextRequest) {
       email_enabled: true,
       vgp_alerts: {
         enabled: true,
-        timing: [30, 7, 1],
+        timing: [30, 15, 7, 1],
         recipients: 'owner',
       },
       digest_mode: 'daily',
@@ -280,17 +280,17 @@ export async function POST(request: NextRequest) {
       audit_alerts: true,
     };
 
-    const { data: updatedOrg, error: updateError } = await supabase
-      .from('organizations')
+    const { data: updatedOrg, error: updateError } = await (supabase
+      .from('organizations') as any)
       .update({
         notification_preferences: defaultPreferences,
         updated_at: new Date().toISOString(),
       })
       .eq('id', userData.organization_id)
       .select('id, name, notification_preferences')
-      .single();
+      .single() as { data: { id: string; name: string; notification_preferences: any } | null; error: any };
 
-    if (updateError) {
+    if (updateError || !updatedOrg) {
       console.error('Error resetting notification preferences:', updateError);
       return NextResponse.json(
         { error: 'Failed to reset notification preferences' },

@@ -39,8 +39,7 @@ export function VGPReminder7Day({
     <Html>
       <Head />
       <Preview>
-        URGENT : {count} inspection{count > 1 ? 's' : ''} VGP dans 7 jours -{' '}
-        {organizationName}
+        {`URGENT : ${count} inspection${count > 1 ? 's' : ''} VGP dans 7 jours - ${organizationName}`}
       </Preview>
       <Body style={bodyStyle}>
         <Container style={containerStyle}>
