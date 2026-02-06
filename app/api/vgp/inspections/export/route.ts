@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { CookieOptions } from '@supabase/ssr';
 import { format } from 'date-fns';
+import { requireFeature } from '@/lib/server/require-feature';
 
 async function createClient() {
   const cookieStore = await cookies();
@@ -32,24 +33,10 @@ async function createClient() {
 export async function GET(request: Request) {
   try {
     const supabase = await createClient();
-    
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
-    const { data: profile, error: profileErr } = await supabase
-      .from('users')
-      .select('organization_id')
-      .eq('id', user.id)
-      .single();
-
-    if (profileErr || !profile?.organization_id) {
-      return NextResponse.json(
-        { error: 'No organization' },
-        { status: 403 }
-      );
-    }
+    // Feature gate: require vgp_compliance (also handles auth + org lookup)
+    const { denied, organizationId } = await requireFeature(supabase, 'vgp_compliance');
+    if (denied) return denied;
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search');
@@ -75,7 +62,7 @@ export async function GET(request: Request) {
           asset_categories ( name )
         )
       `)
-      .eq('organization_id', profile.organization_id);
+      .eq('organization_id', organizationId!);
 
     if (result && result !== 'all') {
       query = query.eq('result', result);

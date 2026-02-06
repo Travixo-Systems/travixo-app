@@ -6,6 +6,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { CookieOptions } from '@supabase/ssr';
+import { requireFeature } from '@/lib/server/require-feature';
 
 /**
  * Create authenticated Supabase client for server-side operations
@@ -52,25 +53,10 @@ async function createClient() {
 export async function GET(request: Request) {
   try {
     const supabase = await createClient();
-    
-    // Authenticate user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      console.log('VGP Inspections GET: Unauthorized');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
-    // Get user's organization
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('organization_id')
-      .eq('id', user.id)
-      .single();
-
-    if (userError || !userData?.organization_id) {
-      console.error('VGP Inspections GET: Organization not found');
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-    }
+    // Feature gate: require vgp_compliance (also handles auth + org lookup)
+    const { denied, organizationId } = await requireFeature(supabase, 'vgp_compliance');
+    if (denied) return denied;
 
     // Parse query parameters
     const { searchParams } = new URL(request.url);
@@ -97,7 +83,7 @@ export async function GET(request: Request) {
           status
         )
       `)
-      .eq('organization_id', userData.organization_id)
+      .eq('organization_id', organizationId!)
       .order('inspection_date', { ascending: false });
 
     // Apply filters if provided
@@ -154,25 +140,13 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
-    
-    // Authenticate user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      console.log('VGP Inspections POST: Unauthorized');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
-    // Get user's organization
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('organization_id')
-      .eq('id', user.id)
-      .single();
+    // Feature gate: require vgp_compliance (also handles auth + org lookup)
+    const { denied, organizationId } = await requireFeature(supabase, 'vgp_compliance');
+    if (denied) return denied;
 
-    if (userError || !userData?.organization_id) {
-      console.error('VGP Inspections POST: Organization not found');
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-    }
+    // Need user.id for performed_by field
+    const { data: { user } } = await supabase.auth.getUser();
 
     // Parse request body
     const body = await request.json();
@@ -236,7 +210,7 @@ export async function POST(request: Request) {
       .insert({
         asset_id,
         schedule_id: schedule_id || null,
-        organization_id: userData.organization_id,
+        organization_id: organizationId!,
         inspection_date,
         inspector_name,
         inspector_company: inspector_company || null,
@@ -285,7 +259,7 @@ export async function POST(request: Request) {
         .from('vgp_schedules')
         .update(scheduleUpdate)
         .eq('id', schedule_id)
-        .eq('organization_id', userData.organization_id);
+        .eq('organization_id', organizationId!);
 
       if (updateError) {
         console.error('VGP Inspections POST: Schedule update error', updateError);
@@ -304,7 +278,7 @@ export async function POST(request: Request) {
           updated_at: new Date().toISOString()
         })
         .eq('id', asset_id)
-        .eq('organization_id', userData.organization_id);
+        .eq('organization_id', organizationId!);
 
       if (assetError) {
         console.error('VGP Inspections POST: Asset status update error', assetError);

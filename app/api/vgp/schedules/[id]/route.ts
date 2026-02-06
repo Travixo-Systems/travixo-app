@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { CookieOptions } from '@supabase/ssr';
+import { requireFeature } from '@/lib/server/require-feature';
 
 async function createClient() {
   const cookieStore = await cookies();
@@ -34,17 +35,13 @@ export async function GET(
 ) {
   try {
     const supabase = await createClient();
-    
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+
+    // Feature gate: require vgp_compliance (also handles auth + org lookup)
+    const { denied } = await requireFeature(supabase, 'vgp_compliance');
+    if (denied) return denied;
 
     const resolvedParams = await params;
     const scheduleId = resolvedParams.id;
-
-    console.log('VGP Schedule GET: Fetching schedule', scheduleId);
 
     const { data: schedule, error } = await supabase
       .from('vgp_schedules')
@@ -94,11 +91,13 @@ export async function PATCH(
 ) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+
+    // Feature gate: require vgp_compliance (also handles auth + org lookup)
+    const { denied } = await requireFeature(supabase, 'vgp_compliance');
+    if (denied) return denied;
+
+    // Need user.id for audit trail
+    const { data: { user } } = await supabase.auth.getUser();
 
     const resolvedParams = await params;
     const scheduleId = resolvedParams.id;
@@ -189,11 +188,13 @@ export async function DELETE(
 ) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+
+    // Feature gate: require vgp_compliance (also handles auth + org lookup)
+    const { denied } = await requireFeature(supabase, 'vgp_compliance');
+    if (denied) return denied;
+
+    // Need user.id for archived_by
+    const { data: { user } } = await supabase.auth.getUser();
 
     const resolvedParams = await params;
     const scheduleId = resolvedParams.id;
