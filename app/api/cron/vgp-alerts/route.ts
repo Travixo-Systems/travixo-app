@@ -1,66 +1,132 @@
-// =============================================================================
-// VGP Alerts Cron Job
-// Schedule: Daily at 7:00 UTC (8:00 AM Paris time CET)
-// Checks all active VGP schedules, groups by org, sends appropriate alerts
-//
-// Security: Protected by CRON_SECRET header (Vercel sends this automatically)
-// =============================================================================
+// app/api/cron/vgp-alerts/route.ts
+// Task-based VGP reminder system
+// Keeps reminding at increasing frequency until inspection is resolved.
+// Frequency: 30+ weekly, 15-30 twice/week, 7-15 every other day, <7 daily, overdue daily
 
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
+import { NextResponse } from "next/server";
 
-import {
-  sendVGPAlert,
-  logEmailAlerts,
-  filterAlreadySentAlerts,
-  getAlertRecipients,
-  getOrgNotificationPrefs,
-  getDailyEmailCount,
-} from '@/lib/email/email-service';
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+);
 
-import type {
-  VGPAlertType,
-  VGPScheduleWithAsset,
-  ScheduleTableRow,
-  CronJobResult,
-  CronOrgDetail,
-} from '@/types/vgp-alerts';
+const MAX_EMAILS_PER_RUN = 80; // Resend free tier buffer
 
-// ---------------------------------------------------------------------------
-// Config
-// ---------------------------------------------------------------------------
+// Frequency rules: how many days must pass since last alert before we send again
+type UrgencyLevel =
+  | "planning"
+  | "attention"
+  | "urgent"
+  | "critical"
+  | "overdue";
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const CRON_SECRET = process.env.CRON_SECRET;
-const LOG_PREFIX = '[VGP-CRON]';
-
-// Max emails per cron run (rate limit safety)
-const MAX_EMAILS_PER_RUN = 80;
-
-// ---------------------------------------------------------------------------
-// Helper: Create admin Supabase client (bypasses RLS)
-// ---------------------------------------------------------------------------
-
-function getAdminSupabase() {
-  return createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
-    auth: { persistSession: false },
-  });
+interface FrequencyRule {
+  level: UrgencyLevel;
+  minDays: number; // inclusive lower bound (days until due)
+  maxDays: number | null; // inclusive upper bound (null = no upper limit)
+  cooldownDays: number; // min days between alerts for this schedule
+  templateKey: string; // which email template to use
 }
 
-// ---------------------------------------------------------------------------
-// Helper: Calculate days between today and a date
-// ---------------------------------------------------------------------------
+const FREQUENCY_RULES: FrequencyRule[] = [
+  // Order matters: check from most urgent to least
+  {
+    level: "overdue",
+    minDays: -Infinity,
+    maxDays: -1,
+    cooldownDays: 1,
+    templateKey: "overdue",
+  },
+  {
+    level: "critical",
+    minDays: 0,
+    maxDays: 6,
+    cooldownDays: 1,
+    templateKey: "1day",
+  },
+  {
+    level: "urgent",
+    minDays: 7,
+    maxDays: 14,
+    cooldownDays: 2,
+    templateKey: "7day",
+  },
+  {
+    level: "attention",
+    minDays: 15,
+    maxDays: 29,
+    cooldownDays: 3,
+    templateKey: "15day",
+  },
+  {
+    level: "planning",
+    minDays: 30,
+    maxDays: 60,
+    cooldownDays: 7,
+    templateKey: "30day",
+  },
+];
 
-function daysUntil(dateStr: string): number {
+function getUrgencyRule(daysUntilDue: number): FrequencyRule | null {
+  for (const rule of FREQUENCY_RULES) {
+    const minOk =
+      daysUntilDue >= (rule.minDays === -Infinity ? -Infinity : rule.minDays);
+    const maxOk = rule.maxDays === null || daysUntilDue <= rule.maxDays;
+    if (minOk && maxOk) return rule;
+  }
+  return null; // More than 60 days out - no reminders yet
+}
+
+interface ScheduleWithAsset {
+  id: string;
+  asset_id: string;
+  organization_id: string;
+  next_due_date: string;
+  interval_months: number;
+  inspector_name: string | null;
+  inspector_company: string | null;
+  assets: {
+    name: string;
+    serial_number: string | null;
+    category_id: string | null;
+    current_location: string | null;
+    asset_categories: { name: string } | null;
+  };
+}
+
+interface OrgPreferences {
+  vgp_alerts_enabled: boolean;
+  vgp_alert_days: number[];
+  notification_preferences: {
+    recipients?: "owner" | "admin" | "all";
+    digest_mode?: "individual" | "digest" | "realtime";
+  } | null;
+}
+
+// ============================================================
+// Core logic - exported for manual trigger import
+// ============================================================
+export async function runVGPAlertsCron(): Promise<{
+  sent: number;
+  skipped: number;
+  cooldown: number;
+  organizations: Array<{
+    org: string;
+    sent: number;
+    skipped: number;
+    cooldown: number;
+  }>;
+  timestamp: string;
+}> {
+  console.log("[VGP-CRON] Task-based reminder run starting...");
+
+  // 1. Get all active schedules due within 60 days or overdue
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const target = new Date(dateStr);
-  target.setHours(0, 0, 0, 0);
-  const diffMs = target.getTime() - today.getTime();
-  return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-}
+  const sixtyDaysOut = new Date(today);
+  sixtyDaysOut.setDate(sixtyDaysOut.getDate() + 60);
 
+<<<<<<< HEAD
 // ---------------------------------------------------------------------------
 // Helper: Map a schedule+asset row into a ScheduleTableRow
 // ---------------------------------------------------------------------------
@@ -157,319 +223,339 @@ async function runVGPAlertsCron(): Promise<CronJobResult> {
   const { data: schedules, error: schedulesError } = await supabase
     .from('vgp_schedules')
     .select(`
+=======
+  const { data: schedules, error: schedError } = (await supabase
+    .from("vgp_schedules")
+    .select(
+      `
+>>>>>>> 8f37a06 (refresh email aan notification reminder)
       id,
       asset_id,
       organization_id,
-      interval_months,
-      last_inspection_date,
       next_due_date,
+      interval_months,
       inspector_name,
       inspector_company,
-      status,
       assets (
-        id,
         name,
         serial_number,
+<<<<<<< HEAD
         current_location,
         status,
+=======
+>>>>>>> 8f37a06 (refresh email aan notification reminder)
         category_id,
+        current_location,
         asset_categories (
           name
         )
       )
-    `)
-    .is('archived_at', null)
-    .eq('status', 'active')
-    .lte('next_due_date', cutoffDate)
-    .order('next_due_date', { ascending: true });
+    `,
+    )
+    .eq("status", "active")
+    .lte("next_due_date", sixtyDaysOut.toISOString().split("T")[0])
+    .is("archived_at", null)) as {
+    data: ScheduleWithAsset[] | null;
+    error: any;
+  };
 
-  if (schedulesError) {
-    console.log(`${LOG_PREFIX} Error querying schedules: ${schedulesError.message}`);
-    result.success = false;
-    result.errors.push(`Database query error: ${schedulesError.message}`);
-    return result;
+  if (schedError) {
+    console.log("[VGP-CRON] Error querying schedules:", schedError.message);
+    throw new Error(schedError.message);
   }
 
   if (!schedules || schedules.length === 0) {
-    console.log(`${LOG_PREFIX} No active schedules due within 30 days. Done.`);
-    return result;
+    console.log("[VGP-CRON] No schedules due within 60 days. Done.");
+    return {
+      sent: 0,
+      skipped: 0,
+      cooldown: 0,
+      organizations: [],
+      timestamp: new Date().toISOString(),
+    };
   }
 
-  console.log(`${LOG_PREFIX} Found ${schedules.length} schedules to evaluate`);
-
-  // -------------------------------------------------------------------------
-  // 2. Filter out schedules with no linked asset (orphaned)
-  // -------------------------------------------------------------------------
-
-  const validSchedules = (schedules as unknown as VGPScheduleWithAsset[]).filter(
-    (s) => s.assets && s.assets.id
+  console.log(
+    `[VGP-CRON] Found ${schedules.length} active schedules within 60-day window`,
   );
 
-  const orphanedCount = schedules.length - validSchedules.length;
-  if (orphanedCount > 0) {
-    console.log(`${LOG_PREFIX} Skipping ${orphanedCount} orphaned schedules (no linked asset)`);
+  // 2. Get last unresolved alert for each schedule
+  const scheduleIds = schedules.map((s) => s.id);
+  const { data: recentAlerts, error: alertsError } = await supabase
+    .from("vgp_alerts")
+    .select("schedule_id, sent_at, urgency_level")
+    .in("schedule_id", scheduleIds)
+    .eq("resolved", false)
+    .order("sent_at", { ascending: false });
+
+  if (alertsError) {
+    console.log(
+      "[VGP-CRON] Error querying recent alerts:",
+      alertsError.message,
+    );
+    throw new Error(alertsError.message);
   }
 
-  // -------------------------------------------------------------------------
-  // 3. Group by organization and classify into alert buckets
-  // -------------------------------------------------------------------------
-
-  const orgMap = new Map<
-    string,
-    {
-      reminder_30day: VGPScheduleWithAsset[];
-      reminder_15day: VGPScheduleWithAsset[];
-      reminder_7day: VGPScheduleWithAsset[];
-      reminder_1day: VGPScheduleWithAsset[];
-      overdue: VGPScheduleWithAsset[];
-    }
-  >();
-
-  for (const schedule of validSchedules) {
-    const orgId = schedule.organization_id;
-    const alertType = classifySchedule(schedule);
-
-    if (!alertType) continue;
-
-    if (!orgMap.has(orgId)) {
-      orgMap.set(orgId, {
-        reminder_30day: [],
-        reminder_15day: [],
-        reminder_7day: [],
-        reminder_1day: [],
-        overdue: [],
+  // Build a map: schedule_id -> most recent alert date
+  const lastAlertMap = new Map<string, { sentAt: Date; level: string }>();
+  for (const alert of recentAlerts || []) {
+    if (!lastAlertMap.has(alert.schedule_id)) {
+      lastAlertMap.set(alert.schedule_id, {
+        sentAt: new Date(alert.sent_at),
+        level: alert.urgency_level,
       });
     }
-
-    orgMap.get(orgId)![alertType].push(schedule);
   }
 
-  console.log(`${LOG_PREFIX} ${orgMap.size} organizations have schedules requiring alerts`);
-
-  // -------------------------------------------------------------------------
-  // 4. Process each organization
-  // -------------------------------------------------------------------------
-
-  let totalEmailsSent = 0;
-
-  for (const [orgId, buckets] of orgMap.entries()) {
-    // Rate limit check
-    if (totalEmailsSent >= MAX_EMAILS_PER_RUN) {
-      console.log(`${LOG_PREFIX} Email limit reached during processing, stopping`);
-      result.errors.push('Email limit reached mid-run');
-      break;
+  // 3. Group schedules by organization
+  const orgSchedules = new Map<string, ScheduleWithAsset[]>();
+  for (const schedule of schedules) {
+    const orgId = schedule.organization_id;
+    if (!orgSchedules.has(orgId)) {
+      orgSchedules.set(orgId, []);
     }
+    orgSchedules.get(orgId)!.push(schedule);
+  }
 
-    const orgDetail: CronOrgDetail = {
-      organization_id: orgId,
-      organization_name: '',
-      alerts: [],
+  console.log(
+    `[VGP-CRON] Schedules grouped into ${orgSchedules.size} organizations`,
+  );
+
+  // 4. Process each organization
+  let totalSent = 0;
+  let totalSkipped = 0;
+  let totalCooldown = 0;
+  const results: Array<{
+    org: string;
+    sent: number;
+    skipped: number;
+    cooldown: number;
+  }> = [];
+
+  for (const [orgId, orgScheds] of orgSchedules) {
+    // Check org notification preferences
+    const { data: org, error: orgError } = (await supabase
+      .from("organizations")
+      .select(
+        "id, name, vgp_alerts_enabled, vgp_alert_days, notification_preferences",
+      )
+      .eq("id", orgId)
+      .single()) as {
+      data: (OrgPreferences & { id: string; name: string }) | null;
+      error: any;
     };
 
-    // Get organization preferences
-    const prefs = await getOrgNotificationPrefs(orgId);
-
-    if (!prefs.enabled) {
-      console.log(`${LOG_PREFIX} Org ${orgId}: alerts disabled, skipping`);
+    if (orgError || !org) {
+      console.log(
+        `[VGP-CRON] Could not fetch org ${orgId}:`,
+        orgError?.message,
+      );
       continue;
     }
 
-    // Get org name
-    const { data: orgData } = await getAdminSupabase()
-      .from('organizations')
-      .select('name')
-      .eq('id', orgId)
-      .single();
+    if (!org.vgp_alerts_enabled) {
+      console.log(`[VGP-CRON] Alerts disabled for org: ${org.name}`);
+      totalSkipped += orgScheds.length;
+      continue;
+    }
 
-    const orgName = orgData?.name || 'Organisation';
-    orgDetail.organization_name = orgName;
-
-    console.log(`${LOG_PREFIX} Processing org: ${orgName} (${orgId})`);
-
-    // Get recipients (filtered by org preference: 'owner', 'admin', or 'all')
-    const recipients = await getAlertRecipients(orgId, prefs.recipients);
-
+    // Get recipients based on org preferences
+    const recipients = await getAlertRecipients(
+      orgId,
+      org.notification_preferences,
+    );
     if (recipients.length === 0) {
-      console.log(`${LOG_PREFIX} Org ${orgName}: no recipients found for pref '${prefs.recipients}', skipping`);
-      orgDetail.alerts.push({
-        type: 'reminder_30day',
-        count: 0,
-        recipients: [],
-        sent: false,
-        error: `No recipients found for preference '${prefs.recipients}'`,
-      });
-      result.details.push(orgDetail);
+      console.log(`[VGP-CRON] No recipients found for org: ${org.name}`);
+      totalSkipped += orgScheds.length;
       continue;
     }
 
-    const recipientEmails = recipients.map((r) => r.email);
+    // Determine which schedules need an alert NOW
+    const schedulesToAlert: Array<{
+      schedule: ScheduleWithAsset;
+      rule: FrequencyRule;
+      daysUntilDue: number;
+    }> = [];
 
-    // Process each alert type
-    const alertTypes: VGPAlertType[] = [
-      'overdue',
-      'reminder_1day',
-      'reminder_7day',
-      'reminder_15day',
-      'reminder_30day',
-    ];
+    for (const schedule of orgScheds) {
+      const dueDate = new Date(schedule.next_due_date);
+      const daysUntilDue = Math.floor(
+        (dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+      );
 
-    for (const alertType of alertTypes) {
-      const schedulesForAlert = buckets[alertType];
+      const rule = getUrgencyRule(daysUntilDue);
+      if (!rule) {
+        // More than 60 days out, skip
+        continue;
+      }
 
-      if (schedulesForAlert.length === 0) continue;
+      // Check if org has this alert type enabled
+      // Map urgency levels to the vgp_alert_days preference
+      // vgp_alert_days contains values like [30, 15, 7, 1, 0] where 0 = overdue
+      const alertDayMapping: Record<UrgencyLevel, number> = {
+        planning: 30,
+        attention: 15,
+        urgent: 7,
+        critical: 1,
+        overdue: 0,
+      };
+      const mappedDay = alertDayMapping[rule.level];
+      if (org.vgp_alert_days && !org.vgp_alert_days.includes(mappedDay)) {
+        // Org has disabled this urgency level
+        totalSkipped++;
+        continue;
+      }
 
-      // Overdue alerts are always sent (critical compliance).
-      // Reminder alerts are gated by the user's timing preferences.
-      if (alertType !== 'overdue') {
-        const dayNumber = alertTypeToDayNumber(alertType);
-        if (!prefs.alertDays.includes(dayNumber)) {
-          console.log(
-            `${LOG_PREFIX} Org ${orgName}: ${alertType} alerts disabled in preferences, skipping`
-          );
-          orgDetail.alerts.push({
-            type: alertType,
-            count: schedulesForAlert.length,
-            recipients: recipientEmails,
-            sent: false,
-            error: 'Alert type disabled in preferences',
-          });
+      // Check cooldown: has enough time passed since the last alert?
+      const lastAlert = lastAlertMap.get(schedule.id);
+      if (lastAlert) {
+        const daysSinceLastAlert = Math.floor(
+          (today.getTime() - lastAlert.sentAt.getTime()) /
+            (1000 * 60 * 60 * 24),
+        );
+        if (daysSinceLastAlert < rule.cooldownDays) {
+          totalCooldown++;
           continue;
         }
       }
 
-      // Check for duplicates (already sent today)
-      const scheduleIds = schedulesForAlert.map((s) => s.id);
-      const unsent = await filterAlreadySentAlerts(scheduleIds, alertType);
+      schedulesToAlert.push({ schedule, rule, daysUntilDue });
 
-      if (unsent.length === 0) {
-        console.log(
-          `${LOG_PREFIX} Org ${orgName}: all ${alertType} alerts already sent today, skipping`
-        );
-        orgDetail.alerts.push({
-          type: alertType,
-          count: schedulesForAlert.length,
-          recipients: recipientEmails,
-          sent: false,
-          error: 'Already sent today',
-        });
-        continue;
-      }
-
-      // Filter to only unsent schedules
-      const unsentSchedules = schedulesForAlert.filter((s) =>
-        unsent.includes(s.id)
-      );
-
-      // Prepare table rows
-      const tableRows = unsentSchedules.map(toTableRow);
-
-      // Send email
-      const sendResult = await sendVGPAlert(
-        alertType,
-        orgName,
-        recipients,
-        tableRows
-      );
-
-      orgDetail.alerts.push({
-        type: alertType,
-        count: unsentSchedules.length,
-        recipients: recipientEmails,
-        sent: sendResult.success,
-        error: sendResult.error,
-      });
-
-      if (sendResult.success) {
-        totalEmailsSent++;
-
-        // Log the sent alerts
-        await logEmailAlerts(
-          unsentSchedules.map((s) => s.id),
-          unsentSchedules.map((s) => s.asset_id),
-          orgId,
-          alertType,
-          unsentSchedules.map((s) => s.next_due_date),
-          recipientEmails
-        );
-
-        console.log(
-          `${LOG_PREFIX} Org ${orgName}: sent ${alertType} for ${unsentSchedules.length} schedules`
-        );
-      } else {
-        console.log(
-          `${LOG_PREFIX} Org ${orgName}: FAILED to send ${alertType}: ${sendResult.error}`
-        );
-        result.errors.push(
-          `Failed ${alertType} for ${orgName}: ${sendResult.error}`
-        );
+      if (totalSent + schedulesToAlert.length >= MAX_EMAILS_PER_RUN) {
+        console.log("[VGP-CRON] Approaching email limit, stopping collection");
+        break;
       }
     }
 
-    result.details.push(orgDetail);
-    result.organizations_processed++;
+    if (schedulesToAlert.length === 0) {
+      continue;
+    }
+
+    // Group by urgency level for digest emails
+    const byUrgency = new Map<UrgencyLevel, typeof schedulesToAlert>();
+    for (const item of schedulesToAlert) {
+      const level = item.rule.level;
+      if (!byUrgency.has(level)) {
+        byUrgency.set(level, []);
+      }
+      byUrgency.get(level)!.push(item);
+    }
+
+    let orgSent = 0;
+    let orgSkipped = 0;
+
+    // Send one email per urgency level (digest approach)
+    for (const [level, items] of byUrgency) {
+      const templateKey = items[0].rule.templateKey;
+
+      try {
+        // Import and send email template
+        const { sendVGPAlert } = await import("@/lib/email/email-service");
+        await sendVGPAlert(
+          templateKey as any,
+          orgId,
+          items.map((i) => ({
+            ...i.schedule,
+            days_until_due: i.daysUntilDue,
+          })),
+          recipients,
+        );
+
+        // Log each schedule alert in vgp_alerts
+        for (const item of items) {
+          await supabase.from("vgp_alerts").insert({
+            schedule_id: item.schedule.id,
+            organization_id: orgId,
+            alert_type: templateKey,
+            urgency_level: level,
+            sent: true,
+            sent_at: new Date().toISOString(),
+            email_sent_to: recipients,
+            resolved: false,
+          });
+        }
+
+        orgSent += items.length;
+        console.log(
+          `[VGP-CRON] Sent ${level} alert for ${items.length} schedules to ${org.name}`,
+        );
+      } catch (emailError: any) {
+        console.log(
+          `[VGP-CRON] Failed to send ${level} alert for ${org.name}:`,
+          emailError.message,
+        );
+        orgSkipped += items.length;
+      }
+    }
+
+    totalSent += orgSent;
+    totalSkipped += orgSkipped;
+    results.push({
+      org: org.name,
+      sent: orgSent,
+      skipped: orgSkipped,
+      cooldown: 0,
+    });
   }
 
-  result.emails_sent = totalEmailsSent;
+  const summary = {
+    sent: totalSent,
+    skipped: totalSkipped,
+    cooldown: totalCooldown,
+    organizations: results,
+    timestamp: new Date().toISOString(),
+  };
 
-  const elapsed = Date.now() - startTime;
-  console.log(
-    `${LOG_PREFIX} === Cron Job Complete === ` +
-    `Orgs: ${result.organizations_processed}, ` +
-    `Emails: ${result.emails_sent}, ` +
-    `Errors: ${result.errors.length}, ` +
-    `Duration: ${elapsed}ms`
-  );
-
-  return result;
+  console.log("[VGP-CRON] Run complete:", JSON.stringify(summary));
+  return summary;
 }
 
-// ---------------------------------------------------------------------------
-// Route Handler
-// ---------------------------------------------------------------------------
-
-export async function GET(request: NextRequest) {
-  console.log(`${LOG_PREFIX} Cron endpoint called`);
-
-  // Verify CRON_SECRET for security
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = CRON_SECRET;
-
-  if (!cronSecret) {
-    console.log(`${LOG_PREFIX} CRON_SECRET not configured`);
-    return NextResponse.json(
-      { error: 'Server configuration error: CRON_SECRET not set' },
-      { status: 500 }
-    );
-  }
-
-  if (authHeader !== `Bearer ${cronSecret}`) {
-    console.log(`${LOG_PREFIX} Unauthorized: invalid or missing CRON_SECRET`);
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 401 }
-    );
+// ============================================================
+// GET handler - called by Vercel Cron, protected by CRON_SECRET
+// ============================================================
+export async function GET(request: Request) {
+  const authHeader = request.headers.get("authorization");
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    console.log("[VGP-CRON] Unauthorized request - invalid CRON_SECRET");
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const result = await runVGPAlertsCron();
-
-    return NextResponse.json(result, {
-      status: result.success ? 200 : 207,
-    });
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error);
-    console.log(`${LOG_PREFIX} Unhandled error: ${msg}`);
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: msg,
-        timestamp: new Date().toISOString(),
-      },
-      { status: 500 }
-    );
+    const summary = await runVGPAlertsCron();
+    return NextResponse.json(summary);
+  } catch (error: any) {
+    console.log("[VGP-CRON] Unexpected error:", error.message);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-// Export the core logic so the manual trigger can reuse it
-export { runVGPAlertsCron };
+// ============================================================
+// Helper: get email recipients based on org preferences
+// ============================================================
+async function getAlertRecipients(
+  orgId: string,
+  prefs: OrgPreferences["notification_preferences"],
+): Promise<string[]> {
+  const recipientPref = prefs?.recipients || "admin";
+
+  let query = supabase.from("users").select("email").eq("company_id", orgId);
+
+  if (recipientPref === "owner") {
+    query = query.eq("role", "owner");
+  } else if (recipientPref === "admin") {
+    query = query.in("role", ["owner", "admin"]);
+  }
+  // 'all' = no role filter
+
+  const { data: users, error } = query;
+
+  if (error || !users) {
+    console.log(
+      `[VGP-CRON] Error fetching recipients for org ${orgId}:`,
+      error?.message,
+    );
+    return [];
+  }
+
+  return users.map((u: { email: string }) => u.email).filter(Boolean);
+}
