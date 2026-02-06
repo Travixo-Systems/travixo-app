@@ -4,6 +4,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { CookieOptions } from '@supabase/ssr';
+import { requireFeature } from '@/lib/server/require-feature';
 
 async function createClient() {
   const cookieStore = await cookies();
@@ -38,30 +39,10 @@ async function createClient() {
 export async function GET(request: Request) {
   try {
     const supabase = await createClient();
-    
-    // TODO: REMOVE before live demo - debug logging
-    console.log('[VGP] Compliance summary request initiated');
-    
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !user) {
-      console.error('[VGP] Auth failed:', authError?.message);
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('organization_id')
-      .eq('id', user.id)
-      .single();
-
-    if (userError || !userData?.organization_id) {
-      console.error('[VGP] Organization lookup failed:', userError?.message);
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-    }
-
-    // TODO: REMOVE before live demo - debug logging
-    console.log('[VGP] Org ID:', userData.organization_id);
+    // Feature gate: require vgp_compliance (also handles auth + org lookup)
+    const { denied, organizationId } = await requireFeature(supabase, 'vgp_compliance');
+    if (denied) return denied;
 
     // Fetch ALL NON-ARCHIVED schedules with asset details
     const { data: allSchedules, error: schedulesError } = await supabase
@@ -78,7 +59,7 @@ export async function GET(request: Request) {
           )
         )
       `)
-      .eq('organization_id', userData.organization_id)
+      .eq('organization_id', organizationId!)
       .is('archived_at', null)
       .order('next_due_date', { ascending: true });
 

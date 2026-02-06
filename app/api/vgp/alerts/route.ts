@@ -1,18 +1,41 @@
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
+import { requireFeature } from '@/lib/server/require-feature';
+
+async function createClient() {
+  const cookieStore = await cookies();
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          try {
+            cookieStore.set({ name, value, ...options });
+          } catch {}
+        },
+        remove(name: string, options: CookieOptions) {
+          try {
+            cookieStore.set({ name, value: '', ...options });
+          } catch {}
+        },
+      },
+    }
+  );
+}
+
 export async function GET(request: Request) {
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = await createClient();
   const { searchParams } = new URL(request.url);
   const pending_only = searchParams.get('pending_only') === 'true';
-  
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
 
-  const { data: userData } = await supabase
-    .from('users')
-    .select('organization_id')
-    .eq('id', user.id)
-    .single();
+  // Feature gate: require vgp_compliance
+  const { denied, organizationId } = await requireFeature(supabase, 'vgp_compliance');
+  if (denied) return denied;
 
   let query = supabase
     .from('vgp_alerts')
@@ -30,7 +53,7 @@ export async function GET(request: Request) {
         inspector_company
       )
     `)
-    .eq('organization_id', userData.organization_id)
+    .eq('organization_id', organizationId!)
     .order('alert_date', { ascending: true });
 
   if (pending_only) {
@@ -47,13 +70,12 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = await createClient();
   const { alert_ids } = await request.json();
-  
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+
+  // Feature gate: require vgp_compliance
+  const { denied } = await requireFeature(supabase, 'vgp_compliance');
+  if (denied) return denied;
 
   // Mark alerts as sent
   const { error } = await supabase

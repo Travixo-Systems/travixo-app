@@ -214,14 +214,18 @@ DECLARE
   org_subscription_active BOOLEAN;
   feature_enabled BOOLEAN;
 BEGIN
-  -- Check if organization is a pilot
-  SELECT 
+  -- Check if organization is an active pilot.
+  -- If pilot_start_date or pilot_end_date is NULL the pilot period is unbounded
+  -- on that side (e.g. no end date = indefinite pilot).
+  SELECT
     is_pilot,
-    (is_pilot AND NOW() BETWEEN COALESCE(pilot_start_date, NOW()) AND COALESCE(pilot_end_date, NOW()))
+    (is_pilot
+      AND (pilot_start_date IS NULL OR NOW() >= pilot_start_date)
+      AND (pilot_end_date   IS NULL OR NOW() <= pilot_end_date))
   INTO org_is_pilot, org_pilot_active
   FROM organizations
   WHERE id = org_id;
-  
+
   -- Pilots get all features during pilot period
   IF org_pilot_active THEN
     RETURN TRUE;

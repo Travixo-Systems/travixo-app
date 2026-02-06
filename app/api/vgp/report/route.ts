@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import type { CookieOptions } from "@supabase/ssr";
 import { generateVGPReport } from "@/lib/pdf-generator";
+import { requireFeature } from "@/lib/server/require-feature";
 
 const INSPECTION_FIELDS = `
   id,
@@ -58,27 +59,12 @@ export async function POST(request: Request) {
   try {
     const supabase = await createClient();
 
-    // Check authentication
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // Feature gate: require vgp_compliance (also handles auth + org lookup)
+    const { denied, organizationId } = await requireFeature(supabase, 'vgp_compliance');
+    if (denied) return denied;
 
-    // Get user's organization
-    const { data: profile, error: profileErr } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-
-    if (profileErr || !profile?.organization_id) {
-      return NextResponse.json(
-        { error: "Impossible de déterminer l'organisation de l'utilisateur" },
-        { status: 400 }
-      );
-    }
+    // Need user email for report contact info
+    const { data: { user } } = await supabase.auth.getUser();
 
     // Get date range from request
     const body = await request.json();
@@ -98,7 +84,7 @@ export async function POST(request: Request) {
     const { data: inspections, error: inspectionsError } = await supabase
       .from("vgp_inspections")
       .select(INSPECTION_FIELDS)
-      .eq("organization_id", profile.organization_id)
+      .eq("organization_id", organizationId!)
       .gte("inspection_date", start_date)
       .lte("inspection_date", end_date)
       .order("inspection_date", { ascending: false });
@@ -127,7 +113,7 @@ export async function POST(request: Request) {
       const { data: orgRow } = await supabase
         .from("organizations")
         .select("name")
-        .eq("id", profile.organization_id)
+        .eq("id", organizationId!)
         .maybeSingle();
 
       if (orgRow?.name) {
@@ -151,7 +137,7 @@ export async function POST(request: Request) {
           asset_categories ( name )
         )
       `)
-      .eq("organization_id", profile.organization_id)
+      .eq("organization_id", organizationId!)
       .lt("next_due_date", todayIso)
       .eq("archived", false);
 
@@ -208,26 +194,10 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   try {
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
 
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: profile, error: profileErr } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-
-    if (profileErr || !profile?.organization_id) {
-      return NextResponse.json(
-        { error: "Impossible de déterminer l'organisation de l'utilisateur" },
-        { status: 400 }
-      );
-    }
+    // Feature gate: require vgp_compliance (also handles auth + org lookup)
+    const { denied, organizationId } = await requireFeature(supabase, 'vgp_compliance');
+    if (denied) return denied;
 
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get("start_date");
@@ -238,7 +208,7 @@ export async function GET(request: Request) {
       const { data: inspections, error } = await supabase
         .from("vgp_inspections")
         .select(INSPECTION_FIELDS)
-        .eq("organization_id", profile.organization_id)
+        .eq("organization_id", organizationId!)
         .gte("inspection_date", startDate)
         .lte("inspection_date", endDate)
         .order("inspection_date", { ascending: false });
@@ -260,7 +230,7 @@ export async function GET(request: Request) {
     const { data: dates, error: datesErr } = await supabase
       .from("vgp_inspections")
       .select("inspection_date")
-      .eq("organization_id", profile.organization_id)
+      .eq("organization_id", organizationId!)
       .order("inspection_date", { ascending: true });
 
     if (datesErr) {
