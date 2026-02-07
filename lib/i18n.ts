@@ -300,6 +300,56 @@ export const translations = {
         en: "Active",
         fr: "Actif",
       },
+      past_due: {
+        en: "Payment Overdue",
+        fr: "Paiement en retard",
+      },
+      cancelled: {
+        en: "Cancelled",
+        fr: "Annulé",
+      },
+    },
+
+    // Stripe billing
+    manageBilling: {
+      en: "Manage Billing",
+      fr: "Gérer la facturation",
+    },
+    subscribe: {
+      en: "Subscribe",
+      fr: "S'abonner",
+    },
+    changePlan: {
+      en: "Change Plan",
+      fr: "Changer de forfait",
+    },
+    checkoutSuccess: {
+      en: "Subscription activated successfully!",
+      fr: "Abonnement activé avec succès !",
+    },
+    checkoutCanceled: {
+      en: "Payment canceled",
+      fr: "Paiement annulé",
+    },
+    pastDueWarning: {
+      en: "Your payment has failed. Please update your payment method to avoid service suspension.",
+      fr: "Votre paiement a échoué. Veuillez mettre à jour votre moyen de paiement pour éviter la suspension du service.",
+    },
+    renewalDate: {
+      en: "Renewal",
+      fr: "Renouvellement",
+    },
+    securePayment: {
+      en: "Secure payment via Stripe. Bank card and SEPA accepted.",
+      fr: "Paiement sécurisé par Stripe. Carte bancaire et prélèvement SEPA acceptés.",
+    },
+    cancelAnytime: {
+      en: "Cancel anytime from the billing portal.",
+      fr: "Annulation possible à tout moment depuis le portail de facturation.",
+    },
+    loading: {
+      en: "Loading...",
+      fr: "Chargement...",
     },
 
     // Feature labels (all plan features)

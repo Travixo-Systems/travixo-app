@@ -136,3 +136,49 @@ export function useUsage() {
   const { data: subscriptionInfo } = useSubscription();
   return subscriptionInfo?.usage || { assets: 0, max_assets: 100, limit_reached: false };
 }
+
+/**
+ * Check if org has an active Stripe subscription
+ */
+export function useHasStripeSubscription() {
+  const { data: subscriptionInfo } = useSubscription();
+  return !!subscriptionInfo?.subscription?.stripe_subscription_id;
+}
+
+/**
+ * Initiate Stripe Checkout — redirects to Stripe-hosted payment page
+ */
+export function useStripeCheckout() {
+  return useMutation({
+    mutationFn: async ({ planSlug, billingCycle }: { planSlug: string; billingCycle: 'monthly' | 'yearly' }) => {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planSlug, billingCycle }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Checkout failed');
+      return data as { url: string };
+    },
+    onSuccess: (data) => {
+      if (data.url) window.location.href = data.url;
+    },
+  });
+}
+
+/**
+ * Open Stripe Billing Portal — redirects to Stripe-hosted portal
+ */
+export function useStripePortal() {
+  return useMutation({
+    mutationFn: async () => {
+      const res = await fetch('/api/stripe/portal', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Portal failed');
+      return data as { url: string };
+    },
+    onSuccess: (data) => {
+      if (data.url) window.location.href = data.url;
+    },
+  });
+}
