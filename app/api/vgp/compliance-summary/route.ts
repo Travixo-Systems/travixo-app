@@ -4,6 +4,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { CookieOptions } from '@supabase/ssr';
+import { checkFeatureAccess } from '@/lib/billing/guard';
 
 async function createClient() {
   const cookieStore = await cookies();
@@ -37,8 +38,12 @@ async function createClient() {
 
 export async function GET(request: Request) {
   try {
+    // Server-side feature gate: VGP requires Professional+ plan
+    const denied = await checkFeatureAccess('vgp_compliance');
+    if (denied) return denied;
+
     const supabase = await createClient();
-    
+
     // TODO: REMOVE before live demo - debug logging
     console.log('[VGP] Compliance summary request initiated');
     

@@ -2,6 +2,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { checkFeatureAccess } from '@/lib/billing/guard';
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -44,6 +45,10 @@ function isoDateOnly(d: Date) {
 // GET /api/vgp/schedules?status=&due_before=&due_after=&page=&limit=&include_archived=
 export async function GET(request: Request) {
   try {
+    // Server-side feature gate: VGP requires Professional+ plan
+    const denied = await checkFeatureAccess('vgp_compliance');
+    if (denied) return denied;
+
     const supabase = await createClient();
 
     const {
@@ -141,6 +146,10 @@ export async function GET(request: Request) {
 // body: { asset_id: string, interval_months: number|string, last_inspection_date?: string(yyyy-mm-dd) }
 export async function POST(request: Request) {
   try {
+    // Server-side feature gate: VGP requires Professional+ plan
+    const denied = await checkFeatureAccess('vgp_compliance');
+    if (denied) return denied;
+
     const supabase = await createClient();
 
     const {

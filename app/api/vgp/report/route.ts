@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import type { CookieOptions } from "@supabase/ssr";
 import { generateVGPReport } from "@/lib/pdf-generator";
+import { checkFeatureAccess } from '@/lib/billing/guard';
 
 const INSPECTION_FIELDS = `
   id,
@@ -207,6 +208,10 @@ export async function POST(request: Request) {
 // ------------------ GET = Preview/Metadata ------------------
 export async function GET(request: Request) {
   try {
+    // Server-side feature gate: VGP requires Professional+ plan
+    const denied = await checkFeatureAccess('vgp_compliance');
+    if (denied) return denied;
+
     const supabase = await createClient();
     const {
       data: { user },

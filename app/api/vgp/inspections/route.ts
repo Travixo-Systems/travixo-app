@@ -6,6 +6,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { CookieOptions } from '@supabase/ssr';
+import { checkFeatureAccess } from '@/lib/billing/guard';
 
 /**
  * Create authenticated Supabase client for server-side operations
@@ -51,8 +52,12 @@ async function createClient() {
  */
 export async function GET(request: Request) {
   try {
+    // Server-side feature gate: VGP requires Professional+ plan
+    const denied = await checkFeatureAccess('vgp_compliance');
+    if (denied) return denied;
+
     const supabase = await createClient();
-    
+
     // Authenticate user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -153,8 +158,12 @@ export async function GET(request: Request) {
  */
 export async function POST(request: Request) {
   try {
+    // Server-side feature gate: VGP requires Professional+ plan
+    const denied = await checkFeatureAccess('vgp_compliance');
+    if (denied) return denied;
+
     const supabase = await createClient();
-    
+
     // Authenticate user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
