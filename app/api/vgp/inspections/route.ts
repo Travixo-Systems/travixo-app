@@ -147,6 +147,9 @@ export async function POST(request: Request) {
 
     // Need user.id for performed_by field
     const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     // Parse request body
     const body = await request.json();

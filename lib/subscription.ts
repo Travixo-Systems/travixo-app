@@ -34,7 +34,7 @@ export interface SubscriptionPlan {
   price_yearly: number;
   max_assets: number;
   max_users: number;
-  features: Record<FeatureKey, boolean>;
+  features: Record<FeatureKey, boolean | string>;
   is_active: boolean;
   display_order: number;
 }
@@ -43,6 +43,7 @@ export interface Subscription {
   id: string;
   organization_id: string;
   plan_id: string;
+  stripe_subscription_id: string | null;
   status: 'trialing' | 'active' | 'cancelled' | 'expired' | 'past_due';
   billing_cycle: 'monthly' | 'yearly';
   current_period_start: string;
@@ -147,7 +148,7 @@ export async function checkAssetLimit(): Promise<{
       .eq('organization_id', userData.organization_id)
       .single();
 
-    const maxAssets = subscription?.plan?.max_assets || 100;
+    const maxAssets = (subscription as unknown as { plan: { max_assets: number } | null })?.plan?.max_assets || 100;
     const current = assetCount || 0;
 
     return {

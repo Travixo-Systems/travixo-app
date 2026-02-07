@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { 
-  ArrowLeft, 
-  Package, 
-  MapPin, 
+import {
+  ArrowLeft,
+  Package,
+  MapPin,
   Calendar,
   AlertCircle,
   CheckCircle,
@@ -15,7 +15,9 @@ import {
   Navigation,
   Wrench,
   CircleSlash,
-  Lock
+  Lock,
+  ClipboardCheck,
+  Loader2,
 } from 'lucide-react'
 
 interface Asset {
@@ -32,6 +34,15 @@ interface Asset {
   asset_categories: {
     name: string
   } | null
+}
+
+interface ActiveAuditContext {
+  audit_id: string;
+  audit_name: string;
+  audit_item_id: string;
+  item_status: string;
+  verified_assets: number;
+  total_assets: number;
 }
 
 interface PageProps {
@@ -54,6 +65,8 @@ export default function ScanPage({ params }: PageProps) {
   
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+  const [auditContext, setAuditContext] = useState<ActiveAuditContext | null>(null)
+  const [verifying, setVerifying] = useState(false)
 
   useEffect(() => {
     async function resolveParams() {
@@ -73,6 +86,7 @@ export default function ScanPage({ params }: PageProps) {
   useEffect(() => {
     if (asset && qr_code) {
       autoLogScan()
+      checkActiveAudit(asset.id)
     }
   }, [asset])
 
@@ -94,6 +108,85 @@ export default function ScanPage({ params }: PageProps) {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     setIsAuthenticated(!!user)
+  }
+
+  async function checkActiveAudit(assetId: string) {
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: userData } = await supabase
+        .from('users')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single()
+
+      if (!userData?.organization_id) return
+
+      // Find active audits for this asset
+      const { data: auditItems } = await supabase
+        .from('audit_items')
+        .select('id, status, audit_id')
+        .eq('asset_id', assetId)
+        .in('status', ['pending', 'verified', 'missing'])
+
+      if (!auditItems || auditItems.length === 0) return
+
+      // Find the in_progress audit among them
+      for (const item of auditItems) {
+        const { data: audit } = await supabase
+          .from('audits')
+          .select('id, name, status, verified_assets, total_assets')
+          .eq('id', item.audit_id)
+          .eq('organization_id', userData.organization_id)
+          .eq('status', 'in_progress')
+          .single()
+
+        if (audit) {
+          setAuditContext({
+            audit_id: audit.id,
+            audit_name: audit.name,
+            audit_item_id: item.id,
+            item_status: item.status,
+            verified_assets: audit.verified_assets,
+            total_assets: audit.total_assets,
+          })
+          return
+        }
+      }
+    } catch (err) {
+      // Silent fail - audit context is optional
+    }
+  }
+
+  async function handleVerifyInAudit() {
+    if (!auditContext) return
+    setVerifying(true)
+
+    try {
+      const response = await fetch(
+        `/api/audits/${auditContext.audit_id}/items/${auditContext.audit_item_id}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'verified' }),
+        }
+      )
+
+      if (!response.ok) throw new Error('Failed to verify')
+
+      setAuditContext(prev => prev ? {
+        ...prev,
+        item_status: 'verified',
+        verified_assets: prev.verified_assets + 1,
+      } : null)
+      setSuccessMessage('Asset verified in audit!')
+    } catch (err) {
+      setErrorMessage('Failed to verify asset in audit')
+    } finally {
+      setVerifying(false)
+    }
   }
 
   async function fetchAsset() {
@@ -118,7 +211,7 @@ export default function ScanPage({ params }: PageProps) {
         return
       }
 
-      setAsset(data)
+      setAsset(data as unknown as Asset)
       setSelectedStatus(data.status || 'available')
     } catch (error) {
       console.error('Error fetching asset:', error)
@@ -380,6 +473,65 @@ export default function ScanPage({ params }: PageProps) {
       )}
 
       <div className="max-w-2xl mx-auto">
+        {/* Active Audit Banner */}
+        {auditContext && isAuthenticated && (
+          <div className="mb-4 bg-gradient-to-r from-[#1e3a5f] to-[#2d5a7b] rounded-lg shadow-lg p-4 text-white">
+            <div className="flex items-center gap-3 mb-3">
+              <ClipboardCheck className="w-6 h-6 text-orange-400" />
+              <div className="flex-1">
+                <p className="font-bold text-sm">Active Audit</p>
+                <p className="text-white/80 text-xs">{auditContext.audit_name}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-bold">
+                  {auditContext.verified_assets}/{auditContext.total_assets}
+                </p>
+                <p className="text-white/60 text-xs">verified</p>
+              </div>
+            </div>
+
+            {/* Progress bar */}
+            <div className="w-full bg-white/20 rounded-full h-2 mb-3">
+              <div
+                className="h-2 rounded-full transition-all bg-orange-400"
+                style={{
+                  width: `${auditContext.total_assets > 0 ? Math.round((auditContext.verified_assets / auditContext.total_assets) * 100) : 0}%`,
+                }}
+              />
+            </div>
+
+            {auditContext.item_status === 'pending' ? (
+              <button
+                onClick={handleVerifyInAudit}
+                disabled={verifying}
+                className="w-full py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {verifying ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Verifying...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-5 h-5" />
+                    Verify Asset in Audit
+                  </>
+                )}
+              </button>
+            ) : auditContext.item_status === 'verified' ? (
+              <div className="w-full py-3 bg-green-500/20 text-green-300 rounded-lg font-bold text-sm text-center flex items-center justify-center gap-2">
+                <CheckCircle className="w-5 h-5" />
+                Already Verified
+              </div>
+            ) : auditContext.item_status === 'missing' ? (
+              <div className="w-full py-3 bg-red-500/20 text-red-300 rounded-lg font-bold text-sm text-center flex items-center justify-center gap-2">
+                <AlertCircle className="w-5 h-5" />
+                Marked as Missing
+              </div>
+            ) : null}
+          </div>
+        )}
+
         <div className="mb-6">
           <button
             onClick={() => router.push(isAuthenticated ? '/dashboard' : '/')}

@@ -80,7 +80,7 @@ export default function AssetsPageClient() {
                 .eq('organization_id', userData.organization_id)
                 .order('created_at', { ascending: false })
 
-            setAssets(data || [])
+            setAssets((data || []) as unknown as Asset[])
         } finally {
             setLoading(false)
         }
@@ -179,7 +179,7 @@ export default function AssetsPageClient() {
                     </p>
                 </div>
                 <div className="flex gap-3">
-                    <ImportAssetsButton />
+                    <ImportAssetsButton onSuccess={loadAssets} />
                     <AddAssetButton onSuccess={loadAssets} />
                     <Link 
                         href="/qr-codes" 

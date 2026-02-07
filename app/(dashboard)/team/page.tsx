@@ -24,6 +24,9 @@ import {
   AlertCircle,
   X,
   Check,
+  RefreshCw,
+  Clock,
+  Loader2,
 } from 'lucide-react';
 
 // ============================================================================
@@ -55,6 +58,16 @@ interface TeamMember {
   organization_id: string;
   created_at: string;
   updated_at: string | null;
+}
+
+interface TeamInvitation {
+  id: string;
+  email: string;
+  role: string;
+  status: string;
+  created_at: string;
+  expires_at: string;
+  invited_by: string;
 }
 
 interface TeamStats {
@@ -174,6 +187,11 @@ export default function TeamPage() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<RoleType>('member');
   const [sending, setSending] = useState(false);
+  const [inviteError, setInviteError] = useState('');
+  const [inviteSuccess, setInviteSuccess] = useState('');
+
+  // Invitations
+  const [invitations, setInvitations] = useState<TeamInvitation[]>([]);
 
   // ============================================================================
   // DATA FETCHING
@@ -212,13 +230,28 @@ export default function TeamPage() {
       const teamMembers = (membersData || []) as TeamMember[];
       setMembers(teamMembers);
 
+      // Fetch pending invitations
+      let pendingCount = 0;
+      try {
+        const inviteRes = await fetch('/api/team/invitations');
+        if (inviteRes.ok) {
+          const inviteData = await inviteRes.json();
+          setInvitations(inviteData.invitations || []);
+          pendingCount = (inviteData.invitations || []).filter(
+            (inv: TeamInvitation) => inv.status === 'pending'
+          ).length;
+        }
+      } catch {
+        // Silently fail - invitations are non-critical
+      }
+
       // Calculate stats
       setStats({
         total: teamMembers.length,
         admins: teamMembers.filter(m => m.role === 'owner' || m.role === 'admin').length,
         members: teamMembers.filter(m => m.role === 'member').length,
         viewers: teamMembers.filter(m => m.role === 'viewer').length,
-        pendingInvites: 0, // Would come from team_invitations table
+        pendingInvites: pendingCount,
       });
     } catch (err) {
       console.error('Error fetching team:', err);
@@ -272,6 +305,66 @@ export default function TeamPage() {
       console.error('Error removing member:', err);
     } finally {
       setSending(false);
+    }
+  }
+
+  async function handleSendInvite() {
+    if (!inviteEmail.trim()) return;
+
+    setSending(true);
+    setInviteError('');
+    setInviteSuccess('');
+
+    try {
+      const response = await fetch('/api/team/invitations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setInviteError(data.error || 'Failed to send invitation');
+        return;
+      }
+
+      setInviteSuccess(
+        language === 'fr'
+          ? `Invitation envoyee a ${inviteEmail}`
+          : `Invitation sent to ${inviteEmail}`
+      );
+      setInviteEmail('');
+      setInviteRole('member');
+      fetchTeamData();
+
+      // Close modal after short delay
+      setTimeout(() => {
+        setShowInviteModal(false);
+        setInviteSuccess('');
+      }, 1500);
+    } catch {
+      setInviteError(
+        language === 'fr' ? 'Erreur lors de l\'envoi' : 'Failed to send invitation'
+      );
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function handleInvitationAction(invitationId: string, action: 'resend' | 'revoke') {
+    try {
+      const response = await fetch(`/api/team/invitations/${invitationId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+
+      if (response.ok) {
+        fetchTeamData();
+      }
+    } catch (err) {
+      console.error('Error with invitation action:', err);
     }
   }
 
@@ -607,6 +700,108 @@ export default function TeamPage() {
         </div>
       )}
 
+      {/* Pending Invitations Section */}
+      {canManageTeam && invitations.length > 0 && (activeFilter === 'all' || activeFilter === 'pending') && (
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b bg-gray-50">
+            <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+              <Mail className="w-4 h-4" style={{ color: BRAND_COLORS.primary }} />
+              {language === 'fr' ? 'Invitations en attente' : 'Pending Invitations'}
+              <span
+                className="ml-1 px-2 py-0.5 rounded-full text-xs text-white"
+                style={{ backgroundColor: BRAND_COLORS.primary }}
+              >
+                {invitations.filter(i => i.status === 'pending').length}
+              </span>
+            </h3>
+          </div>
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  {t('team.role')}
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  {language === 'fr' ? 'Envoyee le' : 'Sent'}
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                  {t('team.actions')}
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {invitations.map((invitation) => {
+                const isExpired = new Date(invitation.expires_at) < new Date() && invitation.status === 'pending';
+                return (
+                  <tr key={invitation.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-100">
+                          <Mail className="w-4 h-4 text-gray-400" />
+                        </div>
+                        <p className="text-sm font-medium text-gray-900">{invitation.email}</p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50" style={{ color: BRAND_COLORS.primary }}>
+                        {invitation.role === 'admin'
+                          ? (language === 'fr' ? 'Administrateur' : 'Admin')
+                          : invitation.role === 'viewer'
+                            ? (language === 'fr' ? 'Lecteur' : 'Viewer')
+                            : (language === 'fr' ? 'Membre' : 'Member')
+                        }
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatDateFR(invitation.created_at)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {isExpired ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700">
+                          <Clock className="w-3 h-3" />
+                          {language === 'fr' ? 'Expiree' : 'Expired'}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700">
+                          <Clock className="w-3 h-3" />
+                          {language === 'fr' ? 'En attente' : 'Pending'}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleInvitationAction(invitation.id, 'resend')}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                          title={language === 'fr' ? 'Renvoyer' : 'Resend'}
+                        >
+                          <RefreshCw className="w-3 h-3" />
+                          {language === 'fr' ? 'Renvoyer' : 'Resend'}
+                        </button>
+                        <button
+                          onClick={() => handleInvitationAction(invitation.id, 'revoke')}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                          title={language === 'fr' ? 'Revoquer' : 'Revoke'}
+                        >
+                          <X className="w-3 h-3" />
+                          {language === 'fr' ? 'Revoquer' : 'Revoke'}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       {/* Change Role Modal */}
       {showRoleModal && selectedMember && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
@@ -785,28 +980,35 @@ export default function TeamPage() {
                   })}
                 </div>
               </div>
-              <div className="p-3 bg-amber-50 rounded-lg">
-                <p className="text-sm text-amber-800">
-                  <strong>{language === 'fr' ? 'Note:' : 'Note:'}</strong>{' '}
-                  {language === 'fr' 
-                    ? "La fonctionnalité d'invitation par email sera disponible prochainement."
-                    : 'Email invitation feature will be available soon.'}
-                </p>
-              </div>
+              {inviteError && (
+                <div className="p-3 bg-red-50 rounded-lg">
+                  <p className="text-sm text-red-800">{inviteError}</p>
+                </div>
+              )}
+              {inviteSuccess && (
+                <div className="p-3 bg-green-50 rounded-lg">
+                  <p className="text-sm text-green-800">{inviteSuccess}</p>
+                </div>
+              )}
             </div>
             <div className="flex justify-end gap-3 p-4 border-t bg-gray-50">
               <button
-                onClick={() => setShowInviteModal(false)}
+                onClick={() => { setShowInviteModal(false); setInviteError(''); setInviteSuccess(''); }}
                 className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50"
               >
                 {t('common.cancel')}
               </button>
               <button
-                disabled={true}
-                className="px-4 py-2 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+                onClick={handleSendInvite}
+                disabled={sending || !inviteEmail.trim()}
+                className="flex items-center gap-2 px-4 py-2 text-white rounded-lg text-sm font-medium disabled:opacity-50"
                 style={{ backgroundColor: BRAND_COLORS.primary }}
               >
-                {t('team.sendInvite')}
+                {sending && <Loader2 className="w-4 h-4 animate-spin" />}
+                {sending
+                  ? (language === 'fr' ? 'Envoi...' : 'Sending...')
+                  : t('team.sendInvite')
+                }
               </button>
             </div>
           </div>

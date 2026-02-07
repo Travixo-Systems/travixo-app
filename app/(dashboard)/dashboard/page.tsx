@@ -49,18 +49,18 @@ export default function DashboardPage() {
       .single()
 
     const orgId = profile?.organization_id
-    const orgName = profile?.organizations?.name || 'Your Organization'
+    const orgName = (profile as unknown as { organizations: { name: string } | null })?.organizations?.name || 'Your Organization'
 
     // Get asset counts
     const { count: totalAssets } = await supabase
       .from('assets')
-      .select('*', { count: 'only', head: true })
-      .eq('organization_id', orgId)
+      .select('*', { count: 'exact', head: true })
+      .eq('organization_id', orgId!)
 
     const { count: inUseAssets } = await supabase
       .from('assets')
-      .select('*', { count: 'only', head: true })
-      .eq('organization_id', orgId)
+      .select('*', { count: 'exact', head: true })
+      .eq('organization_id', orgId!)
       .eq('status', 'in_use')
 
     // Get VGP schedules
@@ -78,7 +78,7 @@ export default function DashboardPage() {
           asset_categories (name)
         )
       `)
-      .eq('organization_id', orgId)
+      .eq('organization_id', orgId!)
 
     // Calculate VGP stats
     const today = new Date()
@@ -110,7 +110,7 @@ export default function DashboardPage() {
     
     const { count: recentScans } = await supabase
       .from('scans')
-      .select('*', { count: 'only', head: true })
+      .select('*', { count: 'exact', head: true })
       .gte('scanned_at', sevenDaysAgo.toISOString())
 
     // Calculate metrics

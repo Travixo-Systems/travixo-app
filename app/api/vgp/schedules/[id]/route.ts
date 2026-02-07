@@ -98,6 +98,9 @@ export async function PATCH(
 
     // Need user.id for audit trail
     const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const resolvedParams = await params;
     const scheduleId = resolvedParams.id;
@@ -195,6 +198,9 @@ export async function DELETE(
 
     // Need user.id for archived_by
     const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const resolvedParams = await params;
     const scheduleId = resolvedParams.id;

@@ -159,21 +159,27 @@ export async function POST(request: Request) {
       };
     });
 
+    // Map inspections so assets is a single object (Supabase returns arrays for joins)
+    const mappedInspections = (inspections || []).map((i: any) => ({
+      ...i,
+      assets: Array.isArray(i.assets) ? i.assets[0] : i.assets,
+    }));
+
     // Generate PDF (works with 0 or more inspections)
     const pdfBuffer = generateVGPReport(
       {
         name: orgName,
         siret: "N/A",
         address: "N/A",
-        contact: user.email || "N/A",
+        contact: user?.email || "N/A",
       },
-      inspections || [],
+      mappedInspections,
       overdueEquipment,
       start_date,
       end_date
     );
 
-    return new Response(pdfBuffer, {
+    return new Response(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",

@@ -6,7 +6,11 @@ import AddAssetModal from './AddAssetModal'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
 
-export default function AddAssetButton() {
+interface AddAssetButtonProps {
+  onSuccess?: () => void
+}
+
+export default function AddAssetButton({ onSuccess }: AddAssetButtonProps) {
   const { language } = useLanguage()
   const t = createTranslator(language)
   const [isOpen, setIsOpen] = useState(false)
@@ -21,7 +25,7 @@ export default function AddAssetButton() {
         {t('assets.buttonAddAsset')}
       </button>
 
-      <AddAssetModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <AddAssetModal isOpen={isOpen} onClose={() => setIsOpen(false)} onSuccess={onSuccess} />
     </>
   )
 }
