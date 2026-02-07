@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error(`[Stripe Checkout Error] step=${step}`, error.message, error.stack);
     return NextResponse.json(
-      { error: `[${step}] ${error.message || 'Unknown error'}` },
+      { error: error.message || 'Failed to create checkout session' },
       { status: 500 }
     );
   }

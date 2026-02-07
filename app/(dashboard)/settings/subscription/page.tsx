@@ -44,6 +44,7 @@ export default function SubscriptionPage() {
   const hasStripeSubscription = useHasStripeSubscription();
 
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
 
   const currentPlan = subscriptionInfo?.subscription?.plan;
   const usage = subscriptionInfo?.usage;
@@ -84,7 +85,7 @@ export default function SubscriptionPage() {
     // New subscription: redirect to Stripe Checkout
     setSelectedPlan(planSlug);
     startCheckout(
-      { planSlug, billingCycle: 'yearly' },
+      { planSlug, billingCycle },
       {
         onError: (error: any) => {
           console.error('[Checkout Error]', error);
@@ -215,6 +216,41 @@ export default function SubscriptionPage() {
           </div>
         )}
 
+        {/* Billing Cycle Toggle */}
+        <div className="flex justify-center">
+          <div className="inline-flex items-center bg-white border border-gray-200 rounded-lg p-1">
+            <button
+              onClick={() => setBillingCycle('monthly')}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                billingCycle === 'monthly'
+                  ? 'text-white'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+              style={billingCycle === 'monthly' ? { backgroundColor: BRAND.primary } : {}}
+            >
+              {t('subscription.billingMonthly')}
+            </button>
+            <button
+              onClick={() => setBillingCycle('yearly')}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${
+                billingCycle === 'yearly'
+                  ? 'text-white'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+              style={billingCycle === 'yearly' ? { backgroundColor: BRAND.primary } : {}}
+            >
+              {t('subscription.billingYearly')}
+              <span className={`px-1.5 py-0.5 text-xs font-semibold rounded ${
+                billingCycle === 'yearly'
+                  ? 'bg-white/20 text-white'
+                  : 'bg-green-50 text-green-700'
+              }`}>
+                {t('subscription.yearlySavings')}
+              </span>
+            </button>
+          </div>
+        </div>
+
         {/* Plans Grid */}
         <div className={`grid grid-cols-1 ${visiblePlans.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-4'} gap-6`}>
           {visiblePlans.map((plan) => {
@@ -228,13 +264,13 @@ export default function SubscriptionPage() {
             };
 
             // Calculate 10% loyalty discount for existing customers (round to end in 900)
-            let displayYearlyPrice = plan.price_yearly;
+            let displayPrice = billingCycle === 'yearly' ? plan.price_yearly : plan.price_monthly;
             let hasLoyaltyDiscount = false;
 
-            if (isExistingCustomer && !isStarter && !isEnterprise) {
+            if (isExistingCustomer && !isStarter && !isEnterprise && billingCycle === 'yearly') {
               const discounted = plan.price_yearly * 0.90;
               // Round down to nearest 1000, then add 900
-              displayYearlyPrice = Math.floor(discounted / 1000) * 1000 + 900;
+              displayPrice = Math.floor(discounted / 1000) * 1000 + 900;
               hasLoyaltyDiscount = true;
             }
 
@@ -296,10 +332,10 @@ export default function SubscriptionPage() {
                     ) : (
                       <>
                         <div className="text-3xl font-bold text-green-600">
-                          {formatEuro(displayYearlyPrice)} €
+                          {formatEuro(displayPrice)} €
                         </div>
                         <div className="text-sm font-medium text-gray-700 mt-0.5">
-                          {t('subscription.perYear')}
+                          {billingCycle === 'yearly' ? t('subscription.perYear') : t('subscription.perMonth')}
                         </div>
 
                         {/* Show strikethrough + loyalty badge if discounted */}
@@ -314,9 +350,11 @@ export default function SubscriptionPage() {
                           </div>
                         )}
 
-                        {/* Always show ORIGINAL monthly price */}
+                        {/* Show the alternate cycle price */}
                         <div className="text-xs text-gray-500 mt-2">
-                          {t('subscription.orMonthly')} {formatEuro(plan.price_monthly)} €/{t('subscription.month')}
+                          {billingCycle === 'yearly'
+                            ? `${t('subscription.orMonthly')} ${formatEuro(plan.price_monthly)} €/${t('subscription.month')}`
+                            : `${t('subscription.orMonthly')} ${formatEuro(plan.price_yearly)} €/${t('subscription.perYear')}`}
                         </div>
                       </>
                     )}
