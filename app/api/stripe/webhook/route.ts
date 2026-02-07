@@ -15,6 +15,12 @@ export async function POST(request: NextRequest) {
   const body = await request.text();
   const signature = request.headers.get('stripe-signature');
 
+  console.log('[Stripe Webhook] Received request', {
+    hasSignature: !!signature,
+    bodyLength: body.length,
+    hasWebhookSecret: !!process.env.STRIPE_WEBHOOK_SECRET,
+  });
+
   if (!signature) {
     return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
   }
@@ -220,21 +226,24 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription, event
     .single();
 
   if (existingSub) {
-    await supabaseAdmin
+    const { error: updateErr } = await supabaseAdmin
       .from('subscriptions')
       .update(subscriptionData)
       .eq('organization_id', organizationId);
+    if (updateErr) console.error('[Stripe Webhook] Failed to update subscription:', updateErr.message);
   } else {
-    await supabaseAdmin
+    const { error: insertErr } = await supabaseAdmin
       .from('subscriptions')
       .insert(subscriptionData);
+    if (insertErr) console.error('[Stripe Webhook] Failed to insert subscription:', insertErr.message);
   }
 
   // Update organization subscription_status
-  await supabaseAdmin
+  const { error: orgErr } = await supabaseAdmin
     .from('organizations')
     .update({ subscription_status: status })
     .eq('id', organizationId);
+  if (orgErr) console.error('[Stripe Webhook] Failed to update org status:', orgErr.message);
 
   await logBillingEvent({
     organizationId,
