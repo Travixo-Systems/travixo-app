@@ -1,9 +1,25 @@
 'use client';
 
-import { useState } from 'react';
-import { useSubscription, usePlans, useUpdateSubscription } from '@/hooks/useSubscription';
+import { useState, useEffect } from 'react';
+import {
+  useSubscription,
+  usePlans,
+  useUpdateSubscription,
+  useStripeCheckout,
+  useStripePortal,
+  useHasStripeSubscription,
+} from '@/hooks/useSubscription';
 import { formatPrice, getPlanBadgeColor, getStatusBadgeColor } from '@/lib/subscription';
-import { CheckIcon, XMarkIcon, SparklesIcon, ClockIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
+import {
+  CheckIcon,
+  XMarkIcon,
+  SparklesIcon,
+  ClockIcon,
+  InformationCircleIcon,
+  CreditCardIcon,
+  ExclamationTriangleIcon,
+  ArrowTopRightOnSquareIcon,
+} from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/lib/LanguageContext';
 import { createTranslator } from '@/lib/i18n';
@@ -23,7 +39,10 @@ export default function SubscriptionPage() {
   const { data: subscriptionInfo, isLoading: subLoading } = useSubscription();
   const { data: plansData, isLoading: plansLoading } = usePlans();
   const { mutateAsync, isPending } = useUpdateSubscription();
-  
+  const { mutate: startCheckout, isPending: checkoutPending } = useStripeCheckout();
+  const { mutate: openPortal, isPending: portalPending } = useStripePortal();
+  const hasStripeSubscription = useHasStripeSubscription();
+
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
   const currentPlan = subscriptionInfo?.subscription?.plan;
@@ -31,8 +50,21 @@ export default function SubscriptionPage() {
   const isPilot = subscriptionInfo?.is_pilot;
   const isTrial = subscriptionInfo?.is_trial;
   const daysRemaining = subscriptionInfo?.days_remaining;
+  const subscriptionStatus = subscriptionInfo?.subscription?.status;
 
-  const handleUpgrade = async (planSlug: string) => {
+  // Handle checkout result from URL params
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('checkout') === 'success') {
+      toast.success(t('subscription.checkoutSuccess'));
+      window.history.replaceState({}, '', '/settings/subscription');
+    } else if (params.get('checkout') === 'canceled') {
+      toast(t('subscription.checkoutCanceled'), { icon: 'ℹ️' });
+      window.history.replaceState({}, '', '/settings/subscription');
+    }
+  }, []);
+
+  const handlePlanAction = async (planSlug: string) => {
     if (planSlug === currentPlan?.slug) {
       toast.error(t('subscription.errors.alreadyOnPlan'));
       return;
@@ -43,27 +75,23 @@ export default function SubscriptionPage() {
       return;
     }
 
-    setSelectedPlan(planSlug);
-    
-    try {
-      const result = await mutateAsync({ planSlug, billingCycle: 'yearly' });
-      
-      if (result.success) {
-        toast.success(t('subscription.success.updated'));
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-      } else {
-        toast.error(result.message || result.error || t('subscription.errors.updateFailed'), {
-          duration: 5000
-        });
-        setSelectedPlan(null);
-      }
-    } catch (error: any) {
-      const errorMsg = error.message || error.error || t('subscription.errors.updateFailed');
-      toast.error(errorMsg, { duration: 5000 });
-      setSelectedPlan(null);
+    // If org already has a Stripe subscription, send to billing portal for plan changes
+    if (hasStripeSubscription) {
+      openPortal();
+      return;
     }
+
+    // New subscription: redirect to Stripe Checkout
+    setSelectedPlan(planSlug);
+    startCheckout(
+      { planSlug, billingCycle: 'yearly' },
+      {
+        onError: (error: any) => {
+          toast.error(error.message || t('subscription.errors.updateFailed'), { duration: 5000 });
+          setSelectedPlan(null);
+        },
+      }
+    );
   };
 
   if (subLoading || plansLoading) {
@@ -98,7 +126,7 @@ export default function SubscriptionPage() {
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto space-y-6">
-        
+
         {/* Header */}
         <div className="flex items-end justify-between">
           <div>
@@ -113,11 +141,9 @@ export default function SubscriptionPage() {
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-semibold text-gray-900">{currentPlan?.name || t('subscription.noPlan')}</span>
-                {subscriptionInfo?.subscription?.status && (
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusBadgeColor(subscriptionInfo.subscription.status)}`}>
-                    {subscriptionInfo.subscription.status === 'trialing' 
-                      ? t('subscription.status.trialing')
-                      : t('subscription.status.active')}
+                {subscriptionStatus && (
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusBadgeColor(subscriptionStatus)}`}>
+                    {t(`subscription.status.${subscriptionStatus}`) || subscriptionStatus}
                   </span>
                 )}
               </div>
@@ -125,31 +151,58 @@ export default function SubscriptionPage() {
             </div>
           </div>
 
-          {usage && (
-            <div className="flex items-center gap-6">
-              <div className="text-right">
-                <div className="text-xs text-gray-600 mb-1">{t('subscription.assetsUsed')}</div>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-lg font-bold text-gray-900">{usage.assets}</span>
-                  <span className="text-xs text-gray-500">/ {usage.max_assets === 999999 ? '∞' : usage.max_assets}</span>
+          <div className="flex items-center gap-4">
+            {usage && (
+              <div className="flex items-center gap-6">
+                <div className="text-right">
+                  <div className="text-xs text-gray-600 mb-1">{t('subscription.assetsUsed')}</div>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-lg font-bold text-gray-900">{usage.assets}</span>
+                    <span className="text-xs text-gray-500">/ {usage.max_assets === 999999 ? '∞' : usage.max_assets}</span>
+                  </div>
+                </div>
+                <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-colors ${usage.limit_reached ? 'bg-red-600' : 'bg-green-600'}`}
+                    style={{ width: `${Math.min((usage.assets / usage.max_assets) * 100, 100)}%` }}
+                  ></div>
                 </div>
               </div>
-              <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div 
-                  className={`h-full rounded-full transition-colors ${usage.limit_reached ? 'bg-red-600' : 'bg-green-600'}`}
-                  style={{ width: `${Math.min((usage.assets / usage.max_assets) * 100, 100)}%` }}
-                ></div>
-              </div>
-            </div>
-          )}
+            )}
 
-          {isTrial && daysRemaining !== null && (
-            <div className="text-right border-l border-gray-200 pl-6">
-              <div className="text-xs text-gray-600">{t('subscription.trialEndsIn')}</div>
-              <div className="text-lg font-bold text-gray-900">{daysRemaining} {t('subscription.days')}</div>
-            </div>
-          )}
+            {isTrial && daysRemaining !== null && (
+              <div className="text-right border-l border-gray-200 pl-6">
+                <div className="text-xs text-gray-600">{t('subscription.trialEndsIn')}</div>
+                <div className="text-lg font-bold text-gray-900">{daysRemaining} {t('subscription.days')}</div>
+              </div>
+            )}
+
+            {/* Manage Billing button — only if org has Stripe subscription */}
+            {hasStripeSubscription && (
+              <div className="border-l border-gray-200 pl-4">
+                <button
+                  onClick={() => openPortal()}
+                  disabled={portalPending}
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                >
+                  <CreditCardIcon className="w-4 h-4" />
+                  {portalPending ? t('subscription.loading') : t('subscription.manageBilling')}
+                  <ArrowTopRightOnSquareIcon className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Past Due Warning */}
+        {subscriptionStatus === 'past_due' && (
+          <div className="bg-red-50 border-l-4 border-red-600 rounded-lg p-4 flex items-start gap-3">
+            <ExclamationTriangleIcon className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-red-900">{t('subscription.pastDueWarning')}</p>
+            </div>
+          </div>
+        )}
 
         {isPilot && (
           <div className="bg-purple-50 border-l-4 border-purple-600 rounded-lg p-4 flex items-start gap-3">
@@ -176,7 +229,7 @@ export default function SubscriptionPage() {
             // Calculate 10% loyalty discount for existing customers (round to end in 900)
             let displayYearlyPrice = plan.price_yearly;
             let hasLoyaltyDiscount = false;
-            
+
             if (isExistingCustomer && !isStarter && !isEnterprise) {
               const discounted = plan.price_yearly * 0.90;
               // Round down to nearest 1000, then add 900
@@ -191,6 +244,8 @@ export default function SubscriptionPage() {
               'public_scanning',
               'email_support'
             ];
+
+            const isActionLoading = (checkoutPending && selectedPlan === plan.slug) || (portalPending && !isCurrentPlan && hasStripeSubscription);
 
             return (
               <div
@@ -245,7 +300,7 @@ export default function SubscriptionPage() {
                         <div className="text-sm font-medium text-gray-700 mt-0.5">
                           {t('subscription.perYear')}
                         </div>
-                        
+
                         {/* Show strikethrough + loyalty badge if discounted */}
                         {hasLoyaltyDiscount && (
                           <div className="flex items-center gap-2 mt-2">
@@ -257,7 +312,7 @@ export default function SubscriptionPage() {
                             </span>
                           </div>
                         )}
-                        
+
                         {/* Always show ORIGINAL monthly price */}
                         <div className="text-xs text-gray-500 mt-2">
                           {t('subscription.orMonthly')} {formatEuro(plan.price_monthly)} €/{t('subscription.month')}
@@ -274,24 +329,40 @@ export default function SubscriptionPage() {
                     >
                       {t('subscription.contactSales')}
                     </a>
-                  ) : (
+                  ) : isCurrentPlan ? (
                     <button
-                      onClick={() => handleUpgrade(plan.slug)}
-                      disabled={isCurrentPlan || isPending}
+                      disabled
+                      className="w-full py-2.5 px-4 rounded-lg font-medium text-sm bg-gray-100 text-gray-400 cursor-not-allowed"
+                    >
+                      {t('subscription.currentPlan')}
+                    </button>
+                  ) : hasStripeSubscription ? (
+                    <button
+                      onClick={() => openPortal()}
+                      disabled={portalPending}
                       className={`w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-colors ${
-                        isCurrentPlan
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : isRecommended
+                        isRecommended
                           ? 'text-white hover:opacity-90'
                           : 'bg-gray-900 text-white hover:bg-gray-800'
-                      } ${isPending && selectedPlan === plan.slug ? 'opacity-60' : ''}`}
-                      style={isRecommended && !isCurrentPlan ? { backgroundColor: BRAND.warning } : {}}
+                      } ${portalPending ? 'opacity-60' : ''}`}
+                      style={isRecommended ? { backgroundColor: BRAND.warning } : {}}
                     >
-                      {isPending && selectedPlan === plan.slug
-                        ? t('subscription.updating')
-                        : isCurrentPlan
-                        ? t('subscription.currentPlan')
-                        : t('subscription.selectPlan')}
+                      {portalPending ? t('subscription.loading') : t('subscription.changePlan')}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handlePlanAction(plan.slug)}
+                      disabled={isActionLoading}
+                      className={`w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-colors ${
+                        isRecommended
+                          ? 'text-white hover:opacity-90'
+                          : 'bg-gray-900 text-white hover:bg-gray-800'
+                      } ${isActionLoading ? 'opacity-60' : ''}`}
+                      style={isRecommended ? { backgroundColor: BRAND.warning } : {}}
+                    >
+                      {isActionLoading
+                        ? t('subscription.loading')
+                        : t('subscription.subscribe')}
                     </button>
                   )}
                 </div>
@@ -301,11 +372,11 @@ export default function SubscriptionPage() {
                 {/* Features */}
                 <div className="p-6 pt-4">
                   <div className="text-xs font-semibold text-gray-700 mb-3 uppercase tracking-wide">
-                    {plan.max_assets === 999999 
+                    {plan.max_assets === 999999
                       ? t('subscription.unlimitedAssets')
                       : `${plan.max_assets.toLocaleString()} ${t('subscription.assetsLabel')}`}
                   </div>
-                  
+
                   <div className="space-y-2.5">
                     {isStarter ? (
                       // Starter: Show basic features
@@ -323,7 +394,7 @@ export default function SubscriptionPage() {
                       <>
                         {/* Built features first */}
                         {Object.entries(plan.features)
-                          .filter(([key, value]) => 
+                          .filter(([key, value]) =>
                             !starterBasicFeatures.includes(key) && value === true
                           )
                           .map(([key, value]) => (
@@ -335,7 +406,7 @@ export default function SubscriptionPage() {
                               translator={t}
                             />
                           ))}
-                        
+
                         {/* On-demand features second */}
                         {Object.entries(plan.features)
                           .filter(([key, value]) => value === 'on_demand')
@@ -349,10 +420,10 @@ export default function SubscriptionPage() {
                               translator={t}
                             />
                           ))}
-                        
+
                         {/* Coming soon features last */}
                         {Object.entries(plan.features)
-                          .filter(([key, value]) => 
+                          .filter(([key, value]) =>
                             !starterBasicFeatures.includes(key) && value === false
                           )
                           .map(([key, value]) => (
@@ -374,8 +445,10 @@ export default function SubscriptionPage() {
         </div>
 
         {/* Footer */}
-        <div className="text-center pt-4">
-          <p className="text-sm text-gray-600">
+        <div className="text-center pt-4 space-y-1">
+          <p className="text-sm text-gray-500">{t('subscription.securePayment')}</p>
+          <p className="text-sm text-gray-500">{t('subscription.cancelAnytime')}</p>
+          <p className="text-sm text-gray-600 mt-2">
             {t('subscription.questions')} <a href="mailto:support@travixosystems.com" className="font-medium hover:underline" style={{ color: BRAND.warning }}>
               {t('subscription.contactSupport')}
             </a>
@@ -386,14 +459,14 @@ export default function SubscriptionPage() {
   );
 }
 
-function FeatureItem({ 
-  value, 
+function FeatureItem({
+  value,
   text,
   tooltip,
   language,
   translator: t
-}: { 
-  value: boolean | string; 
+}: {
+  value: boolean | string;
   text: string;
   tooltip?: string;
   language: string;
@@ -414,11 +487,11 @@ function FeatureItem({
       {isComingSoon && (
         <ClockIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
       )}
-      
+
       <span className={`text-sm ${isAvailable ? 'text-gray-900' : isOnDemand ? 'text-gray-700' : 'text-gray-400'}`}>
         {text}
       </span>
-      
+
       {isOnDemand && (
         <>
           <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-xs font-medium rounded">
@@ -434,7 +507,7 @@ function FeatureItem({
           )}
         </>
       )}
-      
+
       {isComingSoon && (
         <span className="px-1.5 py-0.5 bg-gray-100 text-gray-500 text-xs font-medium rounded">
           {t('subscription.comingSoon')}
