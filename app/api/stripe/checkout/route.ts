@@ -3,14 +3,22 @@ import { createClient } from '@/lib/supabase/server';
 import { stripe, PRICE_MAP, getOrCreateStripeCustomer, type PlanSlug, type BillingCycle } from '@/lib/stripe';
 
 export async function POST(request: NextRequest) {
+  let step = 'init';
   try {
+    // Step 1: Auth
+    step = 'auth';
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Unauthorized', detail: authError?.message || 'No user session' },
+        { status: 401 }
+      );
     }
 
+    // Step 2: Parse body
+    step = 'parse_body';
     const body = await request.json();
     const { planSlug, billingCycle = 'yearly' } = body as {
       planSlug: string;
@@ -19,7 +27,10 @@ export async function POST(request: NextRequest) {
 
     // Validate plan
     if (!PRICE_MAP[planSlug]) {
-      return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
+      return NextResponse.json(
+        { error: `Invalid plan: "${planSlug}". Valid plans: ${Object.keys(PRICE_MAP).join(', ')}` },
+        { status: 400 }
+      );
     }
 
     // Enterprise requires sales contact
@@ -30,29 +41,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get user's organization
-    const { data: userData } = await supabase
+    // Step 3: Get user's organization
+    step = 'get_user';
+    const { data: userData, error: userError } = await supabase
       .from('users')
       .select('organization_id, email')
       .eq('id', user.id)
       .single();
 
-    if (!userData?.organization_id) {
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    if (userError || !userData?.organization_id) {
+      return NextResponse.json(
+        { error: `User profile not found (${userError?.message || 'no organization_id'})` },
+        { status: 404 }
+      );
     }
 
-    // Get organization
-    const { data: org } = await supabase
+    // Step 4: Get organization
+    step = 'get_org';
+    const { data: org, error: orgError } = await supabase
       .from('organizations')
       .select('id, name, stripe_customer_id')
       .eq('id', userData.organization_id)
       .single();
 
-    if (!org) {
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    if (orgError || !org) {
+      return NextResponse.json(
+        { error: `Organization not found (${orgError?.message || 'null result'})` },
+        { status: 404 }
+      );
     }
 
-    // Check if already has active Stripe subscription
+    // Step 5: Check existing subscription
+    step = 'check_existing_sub';
     const { data: existingSub } = await supabase
       .from('subscriptions')
       .select('stripe_subscription_id, status')
@@ -66,7 +86,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get or create Stripe customer
+    // Step 6: Get or create Stripe customer
+    step = 'create_customer';
     const customerId = await getOrCreateStripeCustomer(
       org.id,
       org.name,
@@ -76,19 +97,25 @@ export async function POST(request: NextRequest) {
 
     // Save customer ID if new
     if (!org.stripe_customer_id) {
+      step = 'save_customer_id';
       await supabase
         .from('organizations')
         .update({ stripe_customer_id: customerId })
         .eq('id', org.id);
     }
 
-    // Get the price ID
-    const priceId = PRICE_MAP[planSlug][billingCycle];
+    // Step 7: Resolve price ID
+    step = 'resolve_price';
+    const priceId = PRICE_MAP[planSlug]?.[billingCycle];
     if (!priceId) {
-      return NextResponse.json({ error: 'Price not configured' }, { status: 400 });
+      return NextResponse.json(
+        { error: `Price not configured for ${planSlug}/${billingCycle}. Check STRIPE_PRICE_* env vars.` },
+        { status: 400 }
+      );
     }
 
-    // Create Stripe Checkout session
+    // Step 8: Create Stripe Checkout session
+    step = 'create_session';
     const origin = request.headers.get('origin') || 'https://app.travixosystems.com';
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -106,9 +133,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: session.url });
   } catch (error: any) {
-    console.error('[Stripe Checkout Error]', error.message, error.stack);
+    console.error(`[Stripe Checkout Error] step=${step}`, error.message, error.stack);
     return NextResponse.json(
-      { error: error.message || 'Failed to create checkout session' },
+      { error: `[${step}] ${error.message || 'Unknown error'}` },
       { status: 500 }
     );
   }
