@@ -87,7 +87,8 @@ export default function SubscriptionPage() {
       { planSlug, billingCycle: 'yearly' },
       {
         onError: (error: any) => {
-          toast.error(error.message || t('subscription.errors.updateFailed'), { duration: 5000 });
+          console.error('[Checkout Error]', error);
+          toast.error(error.message || t('subscription.errors.updateFailed'), { duration: 8000 });
           setSelectedPlan(null);
         },
       }
