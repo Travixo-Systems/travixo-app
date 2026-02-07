@@ -3,23 +3,33 @@
 
 import { ReactNode } from 'react';
 import { useFeatureAccess } from '@/hooks/useSubscription';
-import type { SubscriptionPlan } from '@/lib/subscription';
+import type { FeatureKey } from '@/lib/subscription';
 import { LockClosedIcon } from '@heroicons/react/24/outline';
 
 interface InlineFeatureGateProps {
-  feature: keyof SubscriptionPlan['features'];
+  feature: FeatureKey;
   children: ReactNode;
   showLockIcon?: boolean;
   tooltip?: string;
 }
 
-export default function InlineFeatureGate({ 
-  feature, 
-  children, 
+export default function InlineFeatureGate({
+  feature,
+  children,
   showLockIcon = true,
   tooltip
 }: InlineFeatureGateProps) {
-  const hasAccess = useFeatureAccess(feature);
+  const { hasAccess, isLoading } = useFeatureAccess(feature);
+
+  // While loading, render children in a muted state without the lock icon
+  // to avoid a jarring flash for paying users.
+  if (isLoading) {
+    return (
+      <div className="relative inline-block opacity-75">
+        {children}
+      </div>
+    );
+  }
 
   // If has access, show normally
   if (hasAccess) {
@@ -32,7 +42,7 @@ export default function InlineFeatureGate({
       <div className="opacity-50 pointer-events-none">
         {children}
       </div>
-      
+
       {showLockIcon && (
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
           <LockClosedIcon className="w-5 h-5 text-gray-600" />

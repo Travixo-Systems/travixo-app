@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { CookieOptions } from '@supabase/ssr';
+import { requireFeature } from '@/lib/server/require-feature';
 
 async function createClient() {
   const cookieStore = await cookies();
@@ -31,24 +32,10 @@ async function createClient() {
 export async function GET(request: Request) {
   try {
     const supabase = await createClient();
-    
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
-    const { data: profile, error: profileErr } = await supabase
-      .from('users')
-      .select('organization_id')
-      .eq('id', user.id)
-      .single();
-
-    if (profileErr || !profile?.organization_id) {
-      return NextResponse.json(
-        { error: 'No organization found' },
-        { status: 403 }
-      );
-    }
+    // Feature gate: require vgp_compliance (also handles auth + org lookup)
+    const { denied, organizationId } = await requireFeature(supabase, 'vgp_compliance');
+    if (denied) return denied;
 
     const { data: inspections, error } = await supabase
       .from('vgp_inspections')
@@ -70,7 +57,7 @@ export async function GET(request: Request) {
           asset_categories ( name )
         )
       `)
-      .eq('organization_id', profile.organization_id)
+      .eq('organization_id', organizationId!)
       .order('inspection_date', { ascending: false });
 
     if (error) {

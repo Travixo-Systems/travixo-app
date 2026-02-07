@@ -4,18 +4,34 @@
 import { ReactNode } from 'react';
 import Link from 'next/link';
 import { useFeatureAccess, useCurrentPlan } from '@/hooks/useSubscription';
-import type { SubscriptionPlan } from '@/lib/subscription';
+import { FEATURE_REGISTRY, type FeatureKey } from '@/lib/subscription';
 import { LockClosedIcon, ArrowUpIcon } from '@heroicons/react/24/outline';
 
 interface FeatureGateProps {
-  feature: keyof SubscriptionPlan['features'];
+  feature: FeatureKey;
   children: ReactNode;
   fallback?: ReactNode;
 }
 
 export default function FeatureGate({ feature, children, fallback }: FeatureGateProps) {
-  const hasAccess = useFeatureAccess(feature);
+  const { hasAccess, isLoading } = useFeatureAccess(feature);
   const currentPlan = useCurrentPlan();
+
+  // Show skeleton while subscription data is loading to avoid
+  // flashing the lock screen to paying users on every page load.
+  if (isLoading) {
+    return (
+      <div className="min-h-[400px] flex items-center justify-center p-8">
+        <div className="max-w-md w-full bg-white rounded-lg border-2 border-gray-100 p-8 text-center animate-pulse">
+          <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full mb-4" />
+          <div className="h-6 bg-gray-100 rounded w-3/4 mx-auto mb-2" />
+          <div className="h-4 bg-gray-100 rounded w-full mx-auto mb-2" />
+          <div className="h-4 bg-gray-100 rounded w-2/3 mx-auto mb-6" />
+          <div className="h-10 bg-gray-100 rounded w-1/2 mx-auto" />
+        </div>
+      </div>
+    );
+  }
 
   // If has access, show content
   if (hasAccess) {
@@ -28,19 +44,21 @@ export default function FeatureGate({ feature, children, fallback }: FeatureGate
   }
 
   // Default upgrade prompt
+  const meta = FEATURE_REGISTRY[feature];
+
   return (
     <div className="min-h-[400px] flex items-center justify-center p-8">
       <div className="max-w-md w-full bg-white rounded-lg border-2 border-gray-200 p-8 text-center">
         <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
           <LockClosedIcon className="w-6 h-6 text-gray-600" />
         </div>
-        
+
         <h3 className="text-xl font-semibold text-gray-900 mb-2">
-          {getFeatureTitle(feature)}
+          {meta?.title ?? 'Premium Feature'}
         </h3>
-        
+
         <p className="text-gray-600 mb-6">
-          {getFeatureDescription(feature, currentPlan?.name)}
+          {meta?.description ?? `This feature is not available on the ${currentPlan?.name ?? 'Free'} plan.`}
         </p>
 
         <Link
@@ -57,28 +75,4 @@ export default function FeatureGate({ feature, children, fallback }: FeatureGate
       </div>
     </div>
   );
-}
-
-function getFeatureTitle(feature: string): string {
-  const titles: Record<string, string> = {
-    vgp_compliance: 'VGP Compliance Module',
-    digital_audits: 'Digital Audits',
-    api_access: 'API Access',
-    custom_branding: 'Custom Branding',
-    dedicated_support: 'Dedicated Support',
-    custom_integrations: 'Custom Integrations'
-  };
-  return titles[feature] || 'Premium Feature';
-}
-
-function getFeatureDescription(feature: string, currentPlan?: string): string {
-  const descriptions: Record<string, string> = {
-    vgp_compliance: 'VGP compliance tracking is available on Professional plans and above. Upgrade to automate your French regulatory compliance.',
-    digital_audits: 'Digital audit workflows are available on Professional plans and above. Upgrade to streamline your inventory audits.',
-    api_access: 'API access is available on Business and Enterprise plans. Upgrade to integrate TraviXO with your existing systems.',
-    custom_branding: 'Custom branding is available on Enterprise plans. Upgrade to white-label the platform for your organization.',
-    dedicated_support: 'Dedicated support is available on Business and Enterprise plans. Upgrade for priority assistance.',
-    custom_integrations: 'Custom integrations are available on Enterprise plans. Upgrade for tailored integration solutions.'
-  };
-  return descriptions[feature] || `This feature is not available on the ${currentPlan} plan.`;
 }

@@ -6,6 +6,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { requireFeature } from '@/lib/server/require-feature';
 
 // ============================================================================
 // GET /api/audits - List all audits for the organization
@@ -14,29 +15,10 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
-    
-    // Get authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
 
-    // Get user's organization
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('organization_id')
-      .eq('id', user.id)
-      .single();
-
-    if (userError || !userData?.organization_id) {
-      return NextResponse.json(
-        { error: 'Organization not found' },
-        { status: 404 }
-      );
-    }
+    // Feature gate: require digital_audits (also handles auth + org lookup)
+    const { denied, organizationId } = await requireFeature(supabase, 'digital_audits');
+    if (denied) return denied;
 
     // Parse query parameters
     const searchParams = request.nextUrl.searchParams;
@@ -54,7 +36,7 @@ export async function GET(request: NextRequest) {
           email
         )
       `, { count: 'exact' })
-      .eq('organization_id', userData.organization_id)
+      .eq('organization_id', organizationId!)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -95,32 +77,21 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    
-    // Get authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
 
-    // Get user's organization
-    const { data: userData, error: userError } = await supabase
+    // Feature gate: require digital_audits (also handles auth + org lookup)
+    const { denied, organizationId } = await requireFeature(supabase, 'digital_audits');
+    if (denied) return denied;
+
+    // Need user info for created_by and role check
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: userData } = await supabase
       .from('users')
-      .select('organization_id, role')
-      .eq('id', user.id)
+      .select('role')
+      .eq('id', user!.id)
       .single();
 
-    if (userError || !userData?.organization_id) {
-      return NextResponse.json(
-        { error: 'Organization not found' },
-        { status: 404 }
-      );
-    }
-
     // Check permissions (owner, admin, or member can create audits)
-    if (!['owner', 'admin', 'member'].includes(userData.role)) {
+    if (!['owner', 'admin', 'member'].includes(userData?.role)) {
       return NextResponse.json(
         { error: 'Insufficient permissions' },
         { status: 403 }
@@ -143,7 +114,7 @@ export async function POST(request: NextRequest) {
     let assetsQuery = supabase
       .from('assets')
       .select('id')
-      .eq('organization_id', userData.organization_id);
+      .eq('organization_id', organizationId!);
 
     if (scope === 'location' && location) {
       assetsQuery = assetsQuery.eq('current_location', location);
@@ -167,7 +138,7 @@ export async function POST(request: NextRequest) {
     const { data: audit, error: auditError } = await supabase
       .from('audits')
       .insert({
-        organization_id: userData.organization_id,
+        organization_id: organizationId!,
         name: name.trim(),
         status: 'planned',
         scheduled_date: scheduled_date || null,
@@ -222,29 +193,10 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const supabase = await createClient();
-    
-    // Get authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
 
-    // Get user's organization
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('organization_id, role')
-      .eq('id', user.id)
-      .single();
-
-    if (userError || !userData?.organization_id) {
-      return NextResponse.json(
-        { error: 'Organization not found' },
-        { status: 404 }
-      );
-    }
+    // Feature gate: require digital_audits (also handles auth + org lookup)
+    const { denied, organizationId } = await requireFeature(supabase, 'digital_audits');
+    if (denied) return denied;
 
     // Parse request body
     const body = await request.json();
@@ -288,7 +240,7 @@ export async function PATCH(request: NextRequest) {
       .from('audits')
       .update(updateData)
       .eq('id', id)
-      .eq('organization_id', userData.organization_id)
+      .eq('organization_id', organizationId!)
       .select()
       .single();
 
@@ -324,32 +276,21 @@ export async function PATCH(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const supabase = await createClient();
-    
-    // Get authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
 
-    // Get user's organization
-    const { data: userData, error: userError } = await supabase
+    // Feature gate: require digital_audits (also handles auth + org lookup)
+    const { denied, organizationId } = await requireFeature(supabase, 'digital_audits');
+    if (denied) return denied;
+
+    // Need user role for permission check
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: userData } = await supabase
       .from('users')
-      .select('organization_id, role')
-      .eq('id', user.id)
+      .select('role')
+      .eq('id', user!.id)
       .single();
 
-    if (userError || !userData?.organization_id) {
-      return NextResponse.json(
-        { error: 'Organization not found' },
-        { status: 404 }
-      );
-    }
-
     // Only owner and admin can delete audits
-    if (!['owner', 'admin'].includes(userData.role)) {
+    if (!['owner', 'admin'].includes(userData?.role)) {
       return NextResponse.json(
         { error: 'Insufficient permissions' },
         { status: 403 }
@@ -378,7 +319,7 @@ export async function DELETE(request: NextRequest) {
       .from('audits')
       .delete()
       .eq('id', id)
-      .eq('organization_id', userData.organization_id);
+      .eq('organization_id', organizationId!);
 
     if (deleteError) {
       console.error('Error deleting audit:', deleteError);

@@ -2,7 +2,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { checkFeatureAccess } from '@/lib/billing/guard';
+import { requireFeature } from "@/lib/server/require-feature";
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -45,25 +45,11 @@ function isoDateOnly(d: Date) {
 // GET /api/vgp/schedules?status=&due_before=&due_after=&page=&limit=&include_archived=
 export async function GET(request: Request) {
   try {
-    // Server-side feature gate: VGP requires Professional+ plan
-    const denied = await checkFeatureAccess('vgp_compliance');
-    if (denied) return denied;
-
     const supabase = await createClient();
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-    if (authError || !user) return json({ error: "Unauthorized" }, 401);
-
-    const { data: userRow, error: userErr } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-    if (userErr || !userRow?.organization_id)
-      return json({ error: "Organization not found" }, 404);
+    // Feature gate: require vgp_compliance (also handles auth + org lookup)
+    const { denied, organizationId } = await requireFeature(supabase, 'vgp_compliance');
+    if (denied) return denied;
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || undefined;
@@ -106,7 +92,7 @@ export async function GET(request: Request) {
       `,
         { count: "exact" }
       )
-      .eq("organization_id", userRow.organization_id)
+      .eq("organization_id", organizationId!)
       .order("next_due_date", { ascending: true })
       .order("id", { ascending: true });
 
@@ -146,25 +132,11 @@ export async function GET(request: Request) {
 // body: { asset_id: string, interval_months: number|string, last_inspection_date?: string(yyyy-mm-dd) }
 export async function POST(request: Request) {
   try {
-    // Server-side feature gate: VGP requires Professional+ plan
-    const denied = await checkFeatureAccess('vgp_compliance');
-    if (denied) return denied;
-
     const supabase = await createClient();
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-    if (authError || !user) return json({ error: "Unauthorized" }, 401);
-
-    const { data: userRow, error: userErr } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-    if (userErr || !userRow?.organization_id)
-      return json({ error: "Organization not found" }, 404);
+    // Feature gate: require vgp_compliance (also handles auth + org lookup)
+    const { denied, organizationId } = await requireFeature(supabase, 'vgp_compliance');
+    if (denied) return denied;
 
     const body = await request.json().catch(() => ({}));
     const asset_id = body?.asset_id as string;
@@ -196,7 +168,7 @@ export async function POST(request: Request) {
       .from("vgp_schedules")
       .insert({
         asset_id,
-        organization_id: userRow.organization_id,
+        organization_id: organizationId!,
         interval_months: months,
         last_inspection_date: last_inspection_date ?? null,
         next_due_date: isoDateOnly(nextDue),
