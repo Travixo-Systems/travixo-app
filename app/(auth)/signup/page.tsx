@@ -92,13 +92,14 @@ function SignUpContent() {
         const inviteToken = tokenMatch?.[1]
 
         if (inviteToken) {
-          // Wait for auth session to propagate
-          await new Promise(resolve => setTimeout(resolve, 1500))
-
+          // Pass the access_token directly so the API doesn't need session cookies
           const acceptResponse = await fetch('/api/team/invitations/accept', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token: inviteToken }),
+            body: JSON.stringify({
+              token: inviteToken,
+              access_token: authData.session?.access_token,
+            }),
           })
 
           const acceptData = await acceptResponse.json()

@@ -19,7 +19,7 @@ function hashToken(token: string): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { token } = body;
+    const { token, access_token } = body;
 
     if (!token || typeof token !== 'string') {
       return NextResponse.json({ error: 'Token is required' }, { status: 400 });
@@ -71,9 +71,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if the current user is authenticated
-    const sessionClient = await createSessionClient();
-    const { data: { user } } = await sessionClient.auth.getUser();
+    // Resolve the authenticated user — try access_token first (for fresh signup),
+    // then fall back to session cookies (for normal login/page visit)
+    let user = null;
+
+    if (access_token) {
+      // Verify the access token directly with Supabase
+      const { data: { user: tokenUser } } = await serviceClient.auth.getUser(access_token);
+      user = tokenUser;
+    }
+
+    if (!user) {
+      // Fall back to session cookies
+      const sessionClient = await createSessionClient();
+      const { data: { user: sessionUser } } = await sessionClient.auth.getUser();
+      user = sessionUser;
+    }
 
     if (!user) {
       // User not logged in - return info so the page can redirect to signup
@@ -98,7 +111,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user already belongs to an org
+    // Check if user already belongs to a DIFFERENT org
     const { data: existingUser } = await serviceClient
       .from('users')
       .select('organization_id')
@@ -112,18 +125,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Assign user to the organization
-    const { error: updateError } = await serviceClient
+    // Assign user to the organization — use upsert to handle fresh signups
+    // where the users record may not exist yet
+    const { error: upsertError } = await serviceClient
       .from('users')
-      .update({
+      .upsert({
+        id: user.id,
+        email: user.email!,
+        full_name: user.user_metadata?.full_name || user.email!.split('@')[0],
         organization_id: invitation.organization_id,
         role: invitation.role,
         updated_at: new Date().toISOString(),
-      })
-      .eq('id', user.id);
+      }, { onConflict: 'id' });
 
-    if (updateError) {
-      console.error('Error assigning user to org:', updateError);
+    if (upsertError) {
+      console.error('Error assigning user to org:', upsertError);
       return NextResponse.json({ error: 'Failed to join organization' }, { status: 500 });
     }
 
