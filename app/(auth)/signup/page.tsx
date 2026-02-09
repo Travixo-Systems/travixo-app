@@ -161,7 +161,7 @@ export default function SignUpPage() {
                 En toute conformite.
               </h2>
               <p className="mt-4 text-white/70 text-lg">
-                Start your 90-day free pilot. Full access, no credit card required.
+                Start your 30-day free pilot. Full access, no credit card required.
               </p>
             </div>
           )}
@@ -229,7 +229,7 @@ export default function SignUpPage() {
                 Demarrer l'essai gratuit
               </h2>
               <p className="mt-1 text-sm text-gray-500">
-                90 jours gratuits • Aucune carte requise
+                30 jours gratuits • Aucune carte requise
               </p>
             </div>
           )}
