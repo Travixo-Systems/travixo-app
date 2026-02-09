@@ -243,7 +243,8 @@ export default function AcceptInvitePage() {
                 Se deconnecter et continuer
               </button>
               <p className="text-xs text-gray-400">
-                Vous serez deconnecte de {currentEmail} et redirige vers la page de connexion
+                Vous serez deconnecte de {currentEmail} et redirige vers la page de connexion.
+                Connectez-vous ou creez un compte avec : <span className="font-semibold text-gray-600">{invitedEmail}</span>
               </p>
             </div>
           </div>
