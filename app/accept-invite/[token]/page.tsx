@@ -7,6 +7,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { CheckCircle, XCircle, Clock, Loader2, UserPlus, LogIn, LogOut, Mail } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 const BRAND = {
   primary: '#1e3a5f',
@@ -230,21 +231,20 @@ export default function AcceptInvitePage() {
 
             <div className="space-y-3">
               <button
-                onClick={() => router.push(`/login?redirect=/accept-invite/${token}`)}
+                onClick={async () => {
+                  const supabase = createClient();
+                  await supabase.auth.signOut();
+                  router.push(`/login?redirect=/accept-invite/${token}`);
+                }}
                 className="w-full px-6 py-3 text-white rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors hover:opacity-90"
-                style={{ backgroundColor: BRAND.primary }}
+                style={{ backgroundColor: BRAND.orange }}
               >
-                <LogIn className="w-5 h-5" />
-                Se connecter avec {invitedEmail.split('@')[0]}...
+                <LogOut className="w-5 h-5" />
+                Se deconnecter et continuer
               </button>
-              <button
-                onClick={() => router.push(`/signup?redirect=/accept-invite/${token}&email=${encodeURIComponent(invitedEmail)}`)}
-                className="w-full px-6 py-3 border-2 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors hover:bg-gray-50"
-                style={{ borderColor: BRAND.primary, color: BRAND.primary }}
-              >
-                <UserPlus className="w-5 h-5" />
-                Creer un compte avec cette adresse
-              </button>
+              <p className="text-xs text-gray-400">
+                Vous serez deconnecte de {currentEmail} et redirige vers la page de connexion
+              </p>
             </div>
           </div>
         )}
