@@ -63,7 +63,10 @@ function LoginContent() {
             const acceptResponse = await fetch('/api/team/invitations/accept', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ token: inviteToken }),
+              body: JSON.stringify({
+                token: inviteToken,
+                access_token: data.session?.access_token,
+              }),
             })
             const acceptData = await acceptResponse.json()
 
