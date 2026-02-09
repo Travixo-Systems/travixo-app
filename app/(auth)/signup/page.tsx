@@ -1,16 +1,22 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
 
 export default function SignUpPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  const redirectTo = searchParams.get('redirect') || '/dashboard'
+  const prefillEmail = searchParams.get('email') || ''
+  const isInviteRedirect = redirectTo.startsWith('/accept-invite/')
+
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
-    email: '',
+    email: prefillEmail,
     password: '',
     fullName: '',
     companyName: '',
@@ -32,25 +38,14 @@ export default function SignUpPage() {
         throw new Error('Password must be at least 6 characters')
       }
 
-      if (!formData.companyName.trim()) {
-        throw new Error('Company name is required')
-      }
-
       if (!formData.fullName.trim()) {
         throw new Error('Your name is required')
       }
 
-      // Generate unique slug from company name
-      const baseSlug = formData.companyName
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '')
-      
-      const uniqueSlug = `${baseSlug}-${Date.now().toString(36)}`
+      if (!isInviteRedirect && !formData.companyName.trim()) {
+        throw new Error('Company name is required')
+      }
 
-      console.log('Step 1: Creating auth user...')
-      
       // Step 1: Create authentication user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email.trim(),
@@ -66,39 +61,45 @@ export default function SignUpPage() {
         console.error('Auth error:', authError)
         throw authError
       }
-      
+
       if (!authData.user) {
         throw new Error('User creation failed')
       }
 
-      console.log('Auth user created:', authData.user.id)
-      console.log('Step 2: Creating organization and user profile...')
+      // Step 2: For invite flow, skip org creation — the accept-invite page handles org assignment.
+      // For normal signup, create organization and user profile.
+      if (!isInviteRedirect) {
+        const baseSlug = formData.companyName
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '')
 
-      // Step 2: Create organization and user profile via database function
-      const { data: orgData, error: orgError } = await supabase.rpc(
-        'create_organization_and_user',
-        {
-          p_org_name: formData.companyName.trim(),
-          p_org_slug: uniqueSlug,
-          p_user_id: authData.user.id,
-          p_user_email: formData.email.trim(),
-          p_user_full_name: formData.fullName.trim(),
+        const uniqueSlug = `${baseSlug}-${Date.now().toString(36)}`
+
+        const { error: orgError } = await supabase.rpc(
+          'create_organization_and_user',
+          {
+            p_org_name: formData.companyName.trim(),
+            p_org_slug: uniqueSlug,
+            p_user_id: authData.user.id,
+            p_user_email: formData.email.trim(),
+            p_user_full_name: formData.fullName.trim(),
+          }
+        )
+
+        if (orgError) {
+          console.error('Organization creation error:', orgError)
+          throw new Error(`Failed to create organization: ${orgError.message}`)
         }
-      )
-
-      if (orgError) {
-        console.error('Organization creation error:', orgError)
-        throw new Error(`Failed to create organization: ${orgError.message}`)
       }
 
-      console.log('Organization created successfully:', orgData)
+      toast.success(isInviteRedirect ? 'Compte cree ! Acceptation de l\'invitation...' : 'Account created! Redirecting to dashboard...')
 
-      toast.success('Account created! Redirecting to dashboard...')
-      
       // Wait a moment for data to propagate
       await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      router.push('/dashboard')
+
+      router.push(redirectTo)
       router.refresh()
 
     } catch (error: any) {
@@ -129,32 +130,47 @@ export default function SignUpPage() {
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-xl shadow-lg">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900">
-            Start Your Free Pilot
+            {isInviteRedirect ? 'Creer votre compte' : 'Start Your Free Pilot'}
           </h1>
           <p className="mt-2 text-sm text-gray-600">
-            90 days free • No credit card required
+            {isInviteRedirect ? 'Create your account to join the team' : '90 days free • No credit card required'}
           </p>
         </div>
 
-        <form onSubmit={handleSignUp} className="mt-8 space-y-6">
-          <div>
-            <label 
-              htmlFor="company" 
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Company Name
-            </label>
-            <input
-              id="company"
-              type="text"
-              required
-              value={formData.companyName}
-              onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-              placeholder="Acme Equipment Rentals"
-              disabled={isLoading}
-            />
+        {isInviteRedirect && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+            <p className="text-sm font-semibold text-blue-800">
+              Creez votre compte pour accepter l'invitation
+            </p>
+            {prefillEmail && (
+              <p className="text-xs text-blue-600 mt-1">
+                Utilisez l'adresse : <span className="font-bold">{prefillEmail}</span>
+              </p>
+            )}
           </div>
+        )}
+
+        <form onSubmit={handleSignUp} className="mt-8 space-y-6">
+          {!isInviteRedirect && (
+            <div>
+              <label
+                htmlFor="company"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Company Name
+              </label>
+              <input
+                id="company"
+                type="text"
+                required
+                value={formData.companyName}
+                onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                placeholder="Acme Equipment Rentals"
+                disabled={isLoading}
+              />
+            </div>
+          )}
 
           <div>
             <label 
@@ -188,9 +204,10 @@ export default function SignUpPage() {
               required
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className={`block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed ${prefillEmail ? 'bg-gray-50' : ''}`}
               placeholder="john@company.com"
               disabled={isLoading}
+              readOnly={!!prefillEmail}
             />
           </div>
 
@@ -250,8 +267,8 @@ export default function SignUpPage() {
 
         <div className="text-center text-sm">
           <span className="text-gray-600">Already have an account? </span>
-          <Link 
-            href="/login" 
+          <Link
+            href={isInviteRedirect ? `/login?redirect=${encodeURIComponent(redirectTo)}` : '/login'}
             className="font-medium text-orange-600 hover:text-orange-500 transition-colors"
           >
             Sign in

@@ -1,14 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
+
+  const redirectTo = searchParams.get('redirect') || '/dashboard'
+  const isInviteRedirect = redirectTo.startsWith('/accept-invite/')
 
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -29,8 +33,8 @@ export default function LoginPage() {
       if (error) throw error
 
       if (data.user) {
-        toast.success('Welcome back!')
-        router.push('/dashboard')
+        toast.success(isInviteRedirect ? 'Connexion reussie ! Acceptation de l\'invitation...' : 'Welcome back!')
+        router.push(redirectTo)
         router.refresh()
       }
     } catch (error: any) {
@@ -52,6 +56,17 @@ export default function LoginPage() {
             Sign in to your TraviXO account
           </p>
         </div>
+
+        {isInviteRedirect && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+            <p className="text-sm font-semibold text-blue-800">
+              Connectez-vous pour accepter votre invitation
+            </p>
+            <p className="text-xs text-blue-600 mt-1">
+              Sign in to accept your team invitation
+            </p>
+          </div>
+        )}
 
         <form onSubmit={handleLogin} className="mt-8 space-y-6">
           <div>
@@ -116,8 +131,11 @@ export default function LoginPage() {
 
         <div className="text-center text-sm">
           <span className="text-gray-600">{"Don't have an account?"} </span>
-          <Link href="/signup" className="font-medium text-orange-600 hover:text-orange-500">
-            Start free pilot
+          <Link
+            href={isInviteRedirect ? `/signup?redirect=${encodeURIComponent(redirectTo)}` : '/signup'}
+            className="font-medium text-orange-600 hover:text-orange-500"
+          >
+            {isInviteRedirect ? 'Create an account' : 'Start free pilot'}
           </Link>
         </div>
       </div>
