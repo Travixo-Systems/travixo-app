@@ -84,9 +84,41 @@ function SignUpContent() {
         throw new Error('User creation failed')
       }
 
-      // For invite flow, skip org creation — the accept-invite page handles org assignment.
-      // For normal signup, create organization and user profile.
-      if (!isInviteRedirect) {
+      // For invite flow, skip org creation — accept the invitation directly instead.
+      // This avoids the fragile redirect chain that auth middleware can intercept.
+      if (isInviteRedirect) {
+        // Extract token from redirect URL: /accept-invite/[token]
+        const tokenMatch = redirectTo.match(/\/accept-invite\/(.+)/)
+        const inviteToken = tokenMatch?.[1]
+
+        if (inviteToken) {
+          // Wait for auth session to propagate
+          await new Promise(resolve => setTimeout(resolve, 1500))
+
+          const acceptResponse = await fetch('/api/team/invitations/accept', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: inviteToken }),
+          })
+
+          const acceptData = await acceptResponse.json()
+
+          if (acceptData.success) {
+            toast.success('Compte cree et invitation acceptee !')
+            router.push('/dashboard')
+            router.refresh()
+            return
+          } else {
+            console.error('Accept invitation failed after signup:', acceptData)
+            // Still redirect to accept-invite page as fallback
+            toast.success('Compte cree ! Finalisation de l\'invitation...')
+            router.push(redirectTo)
+            router.refresh()
+            return
+          }
+        }
+      } else {
+        // Normal signup: create organization and user profile
         const baseSlug = formData.companyName
           .toLowerCase()
           .trim()
@@ -112,11 +144,11 @@ function SignUpContent() {
         }
       }
 
-      toast.success(isInviteRedirect ? 'Compte cree ! Acceptation de l\'invitation...' : 'Account created! Redirecting to dashboard...')
+      toast.success('Account created! Redirecting to dashboard...')
 
       await new Promise(resolve => setTimeout(resolve, 1000))
 
-      router.push(redirectTo)
+      router.push('/dashboard')
       router.refresh()
 
     } catch (error: any) {

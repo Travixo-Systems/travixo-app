@@ -53,8 +53,29 @@ function LoginContent() {
       if (error) throw error
 
       if (data.user) {
-        toast.success(isInviteRedirect ? 'Connexion reussie ! Acceptation de l\'invitation...' : 'Welcome back!')
-        router.push(redirectTo)
+        // For invite flow, accept the invitation directly instead of fragile redirect
+        if (isInviteRedirect) {
+          const tokenMatch = redirectTo.match(/\/accept-invite\/(.+)/)
+          const inviteToken = tokenMatch?.[1]
+
+          if (inviteToken) {
+            toast.success('Connexion reussie ! Acceptation de l\'invitation...')
+            const acceptResponse = await fetch('/api/team/invitations/accept', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token: inviteToken }),
+            })
+            const acceptData = await acceptResponse.json()
+
+            if (acceptData.success) {
+              toast.success('Invitation acceptee !')
+            }
+          }
+        } else {
+          toast.success('Welcome back!')
+        }
+
+        router.push('/dashboard')
         router.refresh()
       }
     } catch (error: any) {
