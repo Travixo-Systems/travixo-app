@@ -49,6 +49,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Look up the organization name for display
+    const { data: org } = await serviceClient
+      .from('organizations')
+      .select('name')
+      .eq('id', invitation.organization_id)
+      .single();
+
+    const orgName = org?.name || 'the organization';
+
     // Check if expired
     if (new Date(invitation.expires_at) < new Date()) {
       await serviceClient
@@ -71,14 +80,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         requiresAuth: true,
         email: invitation.email,
-        organizationId: invitation.organization_id,
+        organizationName: orgName,
+        role: invitation.role,
       });
     }
 
     // Verify the authenticated user's email matches the invitation
     if (user.email?.toLowerCase() !== invitation.email.toLowerCase()) {
       return NextResponse.json(
-        { error: `This invitation was sent to ${invitation.email}. Please log in with that email address.` },
+        {
+          error: 'email_mismatch',
+          invitedEmail: invitation.email,
+          currentEmail: user.email,
+          organizationName: orgName,
+        },
         { status: 403 }
       );
     }
