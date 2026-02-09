@@ -6,7 +6,11 @@ import ImportAssetsModal from './ImportAssetsModal'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
 
-export default function ImportAssetsButton() {
+interface ImportAssetsButtonProps {
+  onSuccess?: () => void
+}
+
+export default function ImportAssetsButton({ onSuccess }: ImportAssetsButtonProps) {
   const { language } = useLanguage()
   const t = createTranslator(language)
   const [isOpen, setIsOpen] = useState(false)
@@ -21,7 +25,7 @@ export default function ImportAssetsButton() {
         {t('assets.importFromExcel')}
       </button>
 
-      <ImportAssetsModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <ImportAssetsModal isOpen={isOpen} onClose={() => setIsOpen(false)} onSuccess={onSuccess} />
     </>
   )
 }

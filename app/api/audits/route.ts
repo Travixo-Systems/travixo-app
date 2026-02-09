@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     // Check permissions (owner, admin, or member can create audits)
-    if (!['owner', 'admin', 'member'].includes(userData?.role)) {
+    if (!userData?.role || !['owner', 'admin', 'member'].includes(userData.role)) {
       return NextResponse.json(
         { error: 'Insufficient permissions' },
         { status: 403 }
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json();
-    const { name, scheduled_date, scope, location, category_id } = body;
+    const { name, scheduled_date, scope, location, category_id, excluded_assets } = body;
 
     // Validate required fields
     if (!name?.trim()) {
@@ -132,9 +132,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const assetIds = (assets || []).map(a => a.id);
+    const allAssetIds = (assets || []).map(a => a.id);
 
-    // Create the audit
+    // Separate excluded assets from active scope
+    const excludedMap = new Map<string, string>();
+    if (Array.isArray(excluded_assets)) {
+      for (const exc of excluded_assets) {
+        if (exc.asset_id && exc.exclusion_reason) {
+          excludedMap.set(exc.asset_id, exc.exclusion_reason);
+        }
+      }
+    }
+
+    const activeAssetIds = allAssetIds.filter(id => !excludedMap.has(id));
+
+    // Create the audit (total_assets counts only active items)
     const { data: audit, error: auditError } = await supabase
       .from('audits')
       .insert({
@@ -142,10 +154,10 @@ export async function POST(request: NextRequest) {
         name: name.trim(),
         status: 'planned',
         scheduled_date: scheduled_date || null,
-        total_assets: assetIds.length,
+        total_assets: activeAssetIds.length,
         verified_assets: 0,
         missing_assets: 0,
-        created_by: user.id,
+        created_by: user!.id,
       })
       .select()
       .single();
@@ -158,21 +170,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create audit items for each asset
-    if (assetIds.length > 0) {
-      const auditItems = assetIds.map(assetId => ({
+    // Create audit items — active assets get 'pending', excluded get 'excluded' with reason in notes
+    const auditItems = [
+      ...activeAssetIds.map(assetId => ({
         audit_id: audit.id,
         asset_id: assetId,
         status: 'pending',
-      }));
+      })),
+      ...Array.from(excludedMap.entries()).map(([assetId, reason]) => ({
+        audit_id: audit.id,
+        asset_id: assetId,
+        status: 'excluded',
+        notes: reason,
+      })),
+    ];
 
+    if (auditItems.length > 0) {
       const { error: itemsError } = await supabase
         .from('audit_items')
         .insert(auditItems);
 
       if (itemsError) {
         console.error('Error creating audit items:', itemsError);
-        // Don't fail the request, just log the error
       }
     }
 
@@ -290,7 +309,7 @@ export async function DELETE(request: NextRequest) {
       .single();
 
     // Only owner and admin can delete audits
-    if (!['owner', 'admin'].includes(userData?.role)) {
+    if (!userData?.role || !['owner', 'admin'].includes(userData.role)) {
       return NextResponse.json(
         { error: 'Insufficient permissions' },
         { status: 403 }

@@ -91,7 +91,7 @@ export function generateVGPReport(
     orientation: 'portrait',
     unit: 'mm',
     format: 'a4',
-    compressPDF: true
+    compress: true
   });
   
   // Set encoding explicitly

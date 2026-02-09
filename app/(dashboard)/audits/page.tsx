@@ -25,6 +25,8 @@ import {
   Filter,
   X,
   ChevronDown,
+  Ban,
+  AlertTriangle,
 } from 'lucide-react';
 
 // ============================================================================
@@ -70,6 +72,18 @@ interface AuditStats {
   planned: number;
   inProgress: number;
   completed: number;
+}
+
+interface ScopeAsset {
+  id: string;
+  name: string;
+  serial_number: string | null;
+  current_location: string | null;
+}
+
+interface ExcludedAsset {
+  asset_id: string;
+  reason: string;
 }
 
 interface NewAuditForm {
@@ -152,6 +166,10 @@ export default function AuditsPage() {
     selectedCategory: '',
   });
   const [assetPreviewCount, setAssetPreviewCount] = useState(0);
+  const [scopeAssets, setScopeAssets] = useState<ScopeAsset[]>([]);
+  const [excludedAssets, setExcludedAssets] = useState<ExcludedAsset[]>([]);
+  const [excludingAssetId, setExcludingAssetId] = useState<string | null>(null);
+  const [exclusionReason, setExclusionReason] = useState('');
 
   // ============================================================================
   // DATA FETCHING
@@ -276,7 +294,7 @@ export default function AuditsPage() {
 
       let query = supabase
         .from('assets')
-        .select('id', { count: 'exact', head: true })
+        .select('id, name, serial_number, current_location')
         .eq('organization_id', userData.organization_id);
 
       if (formData.scope === 'location' && formData.selectedLocation) {
@@ -285,8 +303,13 @@ export default function AuditsPage() {
         query = query.eq('category_id', formData.selectedCategory);
       }
 
-      const { count } = await query;
-      setAssetPreviewCount(count || 0);
+      const { data: assets, count } = await query.order('name').limit(500);
+      setScopeAssets((assets || []) as unknown as ScopeAsset[]);
+      setAssetPreviewCount(assets?.length || 0);
+      // Reset exclusions when scope changes
+      setExcludedAssets([]);
+      setExcludingAssetId(null);
+      setExclusionReason('');
     } catch (err) {
       console.error('Error fetching asset count:', err);
     }
@@ -296,63 +319,52 @@ export default function AuditsPage() {
   // CREATE AUDIT
   // ============================================================================
 
+  function handleExcludeAsset(assetId: string) {
+    if (!exclusionReason.trim()) return;
+    setExcludedAssets(prev => [...prev.filter(e => e.asset_id !== assetId), { asset_id: assetId, reason: exclusionReason.trim() }]);
+    setExcludingAssetId(null);
+    setExclusionReason('');
+  }
+
+  function handleRemoveExclusion(assetId: string) {
+    setExcludedAssets(prev => prev.filter(e => e.asset_id !== assetId));
+  }
+
+  const activeAssetCount = assetPreviewCount - excludedAssets.length;
+
   async function handleCreateAudit() {
     if (!formData.name.trim()) return;
 
     setCreating(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: userData } = await supabase
-        .from('users')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
-
-      if (!userData?.organization_id) return;
-
-      // Fetch assets based on scope
-      let assetsQuery = supabase
-        .from('assets')
-        .select('id')
-        .eq('organization_id', userData.organization_id);
+      const body: Record<string, unknown> = {
+        name: formData.name.trim(),
+        scheduled_date: formData.scheduled_date || null,
+        scope: formData.scope,
+      };
 
       if (formData.scope === 'location' && formData.selectedLocation) {
-        assetsQuery = assetsQuery.eq('current_location', formData.selectedLocation);
+        body.location = formData.selectedLocation;
       } else if (formData.scope === 'category' && formData.selectedCategory) {
-        assetsQuery = assetsQuery.eq('category_id', formData.selectedCategory);
+        body.category_id = formData.selectedCategory;
       }
 
-      const { data: assetsToAudit } = await assetsQuery;
-
-      // Create audit
-      const { data: newAudit, error: auditError } = await supabase
-        .from('audits')
-        .insert({
-          organization_id: userData.organization_id,
-          name: formData.name.trim(),
-          status: 'planned',
-          scheduled_date: formData.scheduled_date || null,
-          total_assets: assetsToAudit?.length || 0,
-          verified_assets: 0,
-          missing_assets: 0,
-          created_by: user.id,
-        })
-        .select()
-        .single();
-
-      if (auditError) throw auditError;
-
-      // Create audit items
-      if (assetsToAudit && assetsToAudit.length > 0 && newAudit) {
-        const auditItems = assetsToAudit.map(asset => ({
-          audit_id: newAudit.id,
-          asset_id: asset.id,
-          status: 'pending',
+      if (excludedAssets.length > 0) {
+        body.excluded_assets = excludedAssets.map(e => ({
+          asset_id: e.asset_id,
+          exclusion_reason: e.reason,
         }));
+      }
 
-        await supabase.from('audit_items').insert(auditItems);
+      const response = await fetch('/api/audits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to create audit');
       }
 
       // Reset form and close modal
@@ -363,6 +375,7 @@ export default function AuditsPage() {
         selectedLocation: '',
         selectedCategory: '',
       });
+      setExcludedAssets([]);
       setShowCreateModal(false);
       fetchAudits();
     } catch (err) {
@@ -763,11 +776,107 @@ export default function AuditsPage() {
                 </div>
               )}
 
-              {/* Asset preview */}
-              <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                <Package className="w-5 h-5 text-gray-500" />
-                <span className="text-lg font-semibold text-gray-900">{assetPreviewCount}</span>
-                <span className="text-sm text-gray-600">{t('audits.assetsFound')}</span>
+              {/* Asset preview with exclusion support */}
+              <div>
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-t-lg border border-gray-200">
+                  <div className="flex items-center gap-2">
+                    <Package className="w-5 h-5 text-gray-500" />
+                    <span className="text-lg font-semibold text-gray-900">{activeAssetCount}</span>
+                    <span className="text-sm text-gray-600">{t('audits.assetsFound')}</span>
+                  </div>
+                  {excludedAssets.length > 0 && (
+                    <span className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded-full flex items-center gap-1">
+                      <Ban className="w-3 h-3" />
+                      {excludedAssets.length} excluded
+                    </span>
+                  )}
+                </div>
+
+                {scopeAssets.length > 0 && (
+                  <div className="border border-t-0 border-gray-200 rounded-b-lg max-h-48 overflow-y-auto">
+                    {scopeAssets.map((asset) => {
+                      const isExcluded = excludedAssets.some(e => e.asset_id === asset.id);
+                      const isExcluding = excludingAssetId === asset.id;
+
+                      return (
+                        <div
+                          key={asset.id}
+                          className={`px-3 py-2 border-b border-gray-100 last:border-b-0 ${
+                            isExcluded ? 'bg-red-50' : 'hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1 min-w-0">
+                              <span className={`text-sm font-medium ${isExcluded ? 'text-red-700 line-through' : 'text-gray-900'}`}>
+                                {asset.name}
+                              </span>
+                              {asset.serial_number && (
+                                <span className="text-xs text-gray-500 ml-2">#{asset.serial_number}</span>
+                              )}
+                            </div>
+                            {isExcluded ? (
+                              <button
+                                onClick={() => handleRemoveExclusion(asset.id)}
+                                className="text-xs text-red-600 hover:text-red-800 font-medium ml-2 whitespace-nowrap"
+                              >
+                                Restore
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setExcludingAssetId(isExcluding ? null : asset.id);
+                                  setExclusionReason('');
+                                }}
+                                className="text-xs text-gray-500 hover:text-amber-700 font-medium ml-2 whitespace-nowrap"
+                              >
+                                {isExcluding ? 'Cancel' : 'Exclude'}
+                              </button>
+                            )}
+                          </div>
+
+                          {isExcluded && (
+                            <p className="text-xs text-red-600 mt-0.5 flex items-center gap-1">
+                              <Ban className="w-3 h-3" />
+                              {excludedAssets.find(e => e.asset_id === asset.id)?.reason}
+                            </p>
+                          )}
+
+                          {isExcluding && (
+                            <div className="mt-2 flex gap-2">
+                              <input
+                                type="text"
+                                placeholder="Reason for exclusion (required)"
+                                value={exclusionReason}
+                                onChange={(e) => setExclusionReason(e.target.value)}
+                                className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
+                                maxLength={200}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleExcludeAsset(asset.id);
+                                }}
+                              />
+                              <button
+                                onClick={() => handleExcludeAsset(asset.id)}
+                                disabled={!exclusionReason.trim()}
+                                className="px-2 py-1 text-xs bg-amber-600 text-white rounded hover:bg-amber-700 disabled:opacity-50"
+                              >
+                                Confirm
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {excludedAssets.length > 0 && (
+                  <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+                    <p className="text-xs text-amber-800 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" />
+                      Excluded assets will be documented in the audit report with their exclusion reasons (DIRECCTE compliant).
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 

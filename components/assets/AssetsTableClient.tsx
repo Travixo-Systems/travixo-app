@@ -197,7 +197,7 @@ export default function AssetsTableClient({ assets }: { assets: Asset[] }) {
                     asset={{
                         id: vgpAsset.id,
                         name: vgpAsset.name,
-                        serial_number: vgpAsset.serial_number,
+                        serial_number: vgpAsset.serial_number ?? undefined,
                         category: vgpAsset.asset_categories?.name || 'Unknown'
                     }}
                     onClose={() => setVgpAsset(null)}

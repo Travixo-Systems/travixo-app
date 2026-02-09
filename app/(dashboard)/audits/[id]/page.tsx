@@ -25,6 +25,9 @@ import {
   MapPin,
   AlertCircle,
   X,
+  QrCode,
+  Ban,
+  Loader2,
 } from 'lucide-react';
 
 // ============================================================================
@@ -44,7 +47,7 @@ const BRAND_COLORS = {
 // ============================================================================
 
 type AuditStatus = 'planned' | 'in_progress' | 'completed';
-type ItemStatus = 'all' | 'pending' | 'verified' | 'missing';
+type ItemStatus = 'all' | 'pending' | 'verified' | 'missing' | 'excluded';
 
 interface Audit {
   id: string;
@@ -65,7 +68,7 @@ interface AuditItem {
   id: string;
   audit_id: string;
   asset_id: string;
-  status: 'pending' | 'verified' | 'missing';
+  status: 'pending' | 'verified' | 'missing' | 'excluded';
   verified_at: string | null;
   verified_by: string | null;
   notes: string | null;
@@ -119,6 +122,7 @@ export default function AuditDetailPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<ItemStatus>('all');
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   // ============================================================================
   // DATA FETCHING
@@ -128,6 +132,17 @@ export default function AuditDetailPage() {
     if (auditId) {
       fetchAuditData();
     }
+  }, [auditId]);
+
+  // Refetch on visibility change (user returns to tab)
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible' && auditId) {
+        fetchAuditData();
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [auditId]);
 
   async function fetchAuditData() {
@@ -146,7 +161,7 @@ export default function AuditDetailPage() {
         .single();
 
       if (auditError) throw auditError;
-      setAudit(auditData);
+      setAudit(auditData as unknown as Audit);
 
       // Fetch audit items with asset details
       const { data: itemsData, error: itemsError } = await supabase
@@ -164,7 +179,7 @@ export default function AuditDetailPage() {
         .eq('audit_id', auditId);
 
       if (itemsError) throw itemsError;
-      setItems(itemsData || []);
+      setItems((itemsData || []) as unknown as AuditItem[]);
     } catch (err) {
       console.error('Error fetching audit:', err);
     } finally {
@@ -243,7 +258,7 @@ export default function AuditDetailPage() {
     if (!audit) return;
 
     try {
-      // Mark all pending as missing
+      // Mark all pending as missing (excluded items stay excluded)
       const pendingItems = items.filter(i => i.status === 'pending');
       if (pendingItems.length > 0) {
         const { data: { user } } = await supabase.auth.getUser();
@@ -257,8 +272,9 @@ export default function AuditDetailPage() {
           .in('id', pendingItems.map(i => i.id));
       }
 
+      // Count only active items (not excluded)
       const verified = items.filter(i => i.status === 'verified').length;
-      const missing = items.filter(i => i.status !== 'verified').length;
+      const missing = items.filter(i => i.status === 'pending' || i.status === 'missing').length;
 
       const { error } = await supabase
         .from('audits')
@@ -271,6 +287,12 @@ export default function AuditDetailPage() {
         .eq('id', audit.id);
 
       if (error) throw error;
+
+      // Trigger missing asset email notification (fire and forget)
+      if (missing > 0) {
+        fetch(`/api/audits/${audit.id}/notify-missing`, { method: 'POST' }).catch(() => {});
+      }
+
       setShowCompleteModal(false);
       fetchAuditData();
     } catch (err) {
@@ -278,20 +300,52 @@ export default function AuditDetailPage() {
     }
   }
 
+  async function exportAudit() {
+    if (!audit) return;
+    setExporting(true);
+    try {
+      const response = await fetch(`/api/audits/${audit.id}/export`);
+      if (!response.ok) throw new Error('Export failed');
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `audit-${audit.name.replace(/[^a-zA-Z0-9]/g, '-')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Export error:', err);
+    } finally {
+      setExporting(false);
+    }
+  }
+
   // ============================================================================
   // COMPUTED VALUES
   // ============================================================================
 
+  const activeItems = items.filter(i => i.status !== 'excluded');
+  const excludedItems = items.filter(i => i.status === 'excluded');
+
   const stats = {
-    total: items.length,
+    total: activeItems.length,
     verified: items.filter(i => i.status === 'verified').length,
     pending: items.filter(i => i.status === 'pending').length,
     missing: items.filter(i => i.status === 'missing').length,
+    excluded: excludedItems.length,
   };
 
-  const progress = stats.total > 0 
+  const progress = stats.total > 0
     ? Math.round(((stats.verified + stats.missing) / stats.total) * 100)
     : 0;
+
+  // Color-coded progress
+  const progressColor = progress < 50 ? BRAND_COLORS.danger
+    : progress < 90 ? BRAND_COLORS.warning
+    : BRAND_COLORS.success;
 
   const filteredItems = items.filter(item => {
     const matchesSearch = 
@@ -362,21 +416,34 @@ export default function AuditDetailPage() {
             </button>
           )}
           {audit.status === 'in_progress' && (
-            <button
-              onClick={() => setShowCompleteModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 text-white rounded-lg font-medium"
-              style={{ backgroundColor: BRAND_COLORS.success }}
-            >
-              <CheckCircle className="w-4 h-4" />
-              {t('audits.completeAudit')}
-            </button>
+            <>
+              <button
+                onClick={exportAudit}
+                disabled={exporting}
+                className="flex items-center gap-2 px-4 py-2.5 border-2 rounded-lg font-medium"
+                style={{ borderColor: BRAND_COLORS.primary, color: BRAND_COLORS.primary }}
+              >
+                {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                {language === 'fr' ? 'Exporter' : 'Export'}
+              </button>
+              <button
+                onClick={() => setShowCompleteModal(true)}
+                className="flex items-center gap-2 px-4 py-2.5 text-white rounded-lg font-medium"
+                style={{ backgroundColor: BRAND_COLORS.success }}
+              >
+                <CheckCircle className="w-4 h-4" />
+                {t('audits.completeAudit')}
+              </button>
+            </>
           )}
           {audit.status === 'completed' && (
             <button
-              className="flex items-center gap-2 px-4 py-2.5 text-white rounded-lg font-medium"
+              onClick={exportAudit}
+              disabled={exporting}
+              className="flex items-center gap-2 px-4 py-2.5 text-white rounded-lg font-medium disabled:opacity-50"
               style={{ backgroundColor: BRAND_COLORS.primary }}
             >
-              <Download className="w-4 h-4" />
+              {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
               {t('audits.exportResults')}
             </button>
           )}
@@ -387,16 +454,16 @@ export default function AuditDetailPage() {
       <div className="bg-white rounded-lg shadow-sm p-5">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium text-gray-700">{t('audits.progress')}</span>
-          <span className="text-sm font-bold" style={{ color: audit.status === 'completed' ? BRAND_COLORS.success : BRAND_COLORS.primary }}>
-            {progress}%
+          <span className="text-sm font-bold" style={{ color: audit.status === 'completed' ? BRAND_COLORS.success : progressColor }}>
+            {stats.verified} / {stats.total} ({progress}%)
           </span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-3">
+        <div className="w-full bg-gray-200 rounded-full h-4">
           <div
-            className="h-3 rounded-full transition-all"
+            className="h-4 rounded-full transition-all duration-500"
             style={{
               width: `${progress}%`,
-              backgroundColor: audit.status === 'completed' ? BRAND_COLORS.success : BRAND_COLORS.primary,
+              backgroundColor: audit.status === 'completed' ? BRAND_COLORS.success : progressColor,
             }}
           />
         </div>
@@ -409,10 +476,15 @@ export default function AuditDetailPage() {
           className={`bg-white rounded-lg p-4 text-left transition-shadow hover:shadow-md ${
             statusFilter === 'all' ? 'ring-2 ring-gray-400' : ''
           }`}
-          style={{ borderLeft: `4px solid ${BRAND_COLORS.gray}` }}
+          style={{ borderLeft: `4px solid ${BRAND_COLORS.gray}`, borderBottom: `4px solid ${BRAND_COLORS.gray}` }}
         >
           <p className="text-sm text-gray-600">{t('audits.totalAssets')}</p>
           <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+          {stats.excluded > 0 && (
+            <p className="text-xs text-gray-500 mt-1">
+              ({stats.excluded} {language === 'fr' ? 'exclu(s)' : 'excluded'})
+            </p>
+          )}
         </button>
 
         <button
@@ -420,7 +492,7 @@ export default function AuditDetailPage() {
           className={`bg-white rounded-lg p-4 text-left transition-shadow hover:shadow-md ${
             statusFilter === 'verified' ? 'ring-2 ring-green-400' : ''
           }`}
-          style={{ borderLeft: `4px solid ${BRAND_COLORS.success}` }}
+          style={{ borderLeft: `4px solid ${BRAND_COLORS.success}`, borderBottom: `4px solid ${BRAND_COLORS.success}` }}
         >
           <p className="text-sm text-gray-600">{t('audits.verified')}</p>
           <p className="text-2xl font-bold" style={{ color: BRAND_COLORS.success }}>{stats.verified}</p>
@@ -431,7 +503,7 @@ export default function AuditDetailPage() {
           className={`bg-white rounded-lg p-4 text-left transition-shadow hover:shadow-md ${
             statusFilter === 'pending' ? 'ring-2 ring-orange-400' : ''
           }`}
-          style={{ borderLeft: `4px solid ${BRAND_COLORS.warning}` }}
+          style={{ borderLeft: `4px solid ${BRAND_COLORS.warning}`, borderBottom: `4px solid ${BRAND_COLORS.warning}` }}
         >
           <p className="text-sm text-gray-600">{t('audits.pending')}</p>
           <p className="text-2xl font-bold" style={{ color: BRAND_COLORS.warning }}>{stats.pending}</p>
@@ -442,7 +514,7 @@ export default function AuditDetailPage() {
           className={`bg-white rounded-lg p-4 text-left transition-shadow hover:shadow-md ${
             statusFilter === 'missing' ? 'ring-2 ring-red-400' : ''
           }`}
-          style={{ borderLeft: `4px solid ${BRAND_COLORS.danger}` }}
+          style={{ borderLeft: `4px solid ${BRAND_COLORS.danger}`, borderBottom: `4px solid ${BRAND_COLORS.danger}` }}
         >
           <p className="text-sm text-gray-600">{t('audits.missing')}</p>
           <p className="text-2xl font-bold" style={{ color: BRAND_COLORS.danger }}>{stats.missing}</p>
@@ -558,6 +630,12 @@ export default function AuditDetailPage() {
                             {t('audits.missing')}
                           </span>
                         )}
+                        {item.status === 'excluded' && (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-500">
+                            <Ban className="w-3.5 h-3.5" />
+                            {language === 'fr' ? 'Exclu' : 'Excluded'}
+                          </span>
+                        )}
                       </td>
                       {audit.status === 'in_progress' && (
                         <td className="px-6 py-4 text-right">
@@ -596,6 +674,34 @@ export default function AuditDetailPage() {
             </div>
           )}
         </>
+      )}
+
+      {/* Excluded Assets Section */}
+      {excludedItems.length > 0 && (statusFilter === 'all' || statusFilter === 'excluded') && (
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b bg-gray-50">
+            <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Ban className="w-4 h-4 text-gray-400" />
+              {language === 'fr' ? 'Equipements exclus' : 'Excluded Assets'} ({excludedItems.length})
+            </h3>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {excludedItems.map(item => (
+              <div key={item.id} className="px-6 py-3 flex items-center justify-between text-sm">
+                <div className="flex items-center gap-3">
+                  <Package className="w-4 h-4 text-gray-300" />
+                  <span className="text-gray-500">{item.assets?.name || '-'}</span>
+                  {item.assets?.serial_number && (
+                    <span className="text-xs font-mono text-gray-400">{item.assets.serial_number}</span>
+                  )}
+                </div>
+                <span className="text-xs text-gray-400 italic max-w-xs truncate">
+                  {item.notes || '-'}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Complete Modal */}

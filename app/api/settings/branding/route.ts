@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
       {
         branding: {
           logo_url: organization.logo_url,
-          colors: organization.branding_colors as BrandingColors,
+          colors: organization.branding_colors as unknown as BrandingColors,
         },
       },
       { status: 200 }
@@ -206,7 +206,7 @@ export async function PATCH(request: NextRequest) {
         message: "Branding updated successfully",
         branding: {
           logo_url: updatedOrg.logo_url,
-          colors: updatedOrg.branding_colors as BrandingColors,
+          colors: updatedOrg.branding_colors as unknown as BrandingColors,
         },
       },
       { status: 200 }
@@ -268,7 +268,7 @@ export async function POST(request: NextRequest) {
     const { data: updatedOrg, error: updateError } = await supabase
       .from("organizations")
       .update({
-        branding_colors: defaultColors,
+        branding_colors: defaultColors as unknown as Record<string, string>,
         updated_at: new Date().toISOString(),
       })
       .eq("id", userData.organization_id)
@@ -288,7 +288,7 @@ export async function POST(request: NextRequest) {
         message: "Branding reset to default",
         branding: {
           logo_url: updatedOrg.logo_url,
-          colors: updatedOrg.branding_colors as BrandingColors,
+          colors: updatedOrg.branding_colors as unknown as BrandingColors,
         },
       },
       { status: 200 }

@@ -13,9 +13,10 @@ import { createTranslator } from '@/lib/i18n'
 interface AddAssetModalProps {
   isOpen: boolean
   onClose: () => void
+  onSuccess?: () => void
 }
 
-export default function AddAssetModal({ isOpen, onClose }: AddAssetModalProps) {
+export default function AddAssetModal({ isOpen, onClose, onSuccess }: AddAssetModalProps) {
   const router = useRouter()
   const supabase = createClient()
   const { language } = useLanguage()
@@ -74,6 +75,7 @@ export default function AddAssetModal({ isOpen, onClose }: AddAssetModalProps) {
 
       toast.success(t('assets.toastAssetAdded'))
       router.refresh()
+      onSuccess?.()
       onClose()
 
       setFormData({
