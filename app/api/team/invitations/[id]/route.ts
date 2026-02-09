@@ -11,7 +11,7 @@ import { TeamInvitationEmail } from '@/lib/email/templates/team-invitation';
 import { validateRequest, revokeInvitationSchema } from '@/lib/validations/schemas';
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://app.travixosystems.com';
+const APP_URL = process.env.APP_URL || 'https://app.travixosystems.com';
 
 function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
