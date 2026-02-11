@@ -581,10 +581,36 @@ export const translations = {
       en: "Notes",
       fr: "Notes",
     },
+    edit: {
+      en: "Edit",
+      fr: "Modifier",
+    },
+    archiveReason: {
+      en: "Please enter a reason for archiving this schedule:",
+      fr: "Veuillez indiquer la raison de l'archivage de ce calendrier :",
+    },
+    success: {
+      archived: {
+        en: "Schedule archived successfully",
+        fr: "Calendrier archivé avec succès",
+      },
+      updated: {
+        en: "Schedule updated successfully",
+        fr: "Calendrier mis à jour avec succès",
+      },
+    },
     error: {
       loadingFailed: {
         en: "Failed to load schedules",
         fr: "Échec du chargement des calendriers",
+      },
+      archiveFailed: {
+        en: "Failed to archive schedule",
+        fr: "Échec de l'archivage du calendrier",
+      },
+      archiveError: {
+        en: "An error occurred while archiving",
+        fr: "Une erreur est survenue lors de l'archivage",
       },
     },
     detailsModal: {
@@ -3108,6 +3134,14 @@ export const translations = {
       fr: "Êtes-vous sûr de vouloir retirer ce membre ? Il perdra immédiatement l'accès à l'organisation.",
     },
     removeConfirm: {
+      en: "Remove Member",
+      fr: "Retirer",
+    },
+    removeWarning: {
+      en: "Are you sure you want to remove this member? They will lose access to the organization immediately.",
+      fr: "Êtes-vous sûr de vouloir retirer ce membre ? Il perdra immédiatement l'accès à l'organisation.",
+    },
+    confirmRemove: {
       en: "Remove Member",
       fr: "Retirer",
     },
