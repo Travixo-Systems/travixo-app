@@ -19,6 +19,12 @@ import {
   ClipboardCheck,
   Loader2,
 } from 'lucide-react'
+import RentalStatusCard, { type ActiveRental } from '@/components/rental/RentalStatusCard'
+import CheckoutOverlay from '@/components/rental/CheckoutOverlay'
+import ReturnOverlay from '@/components/rental/ReturnOverlay'
+import VGPComplianceBadge from '@/components/rental/VGPComplianceBadge'
+import RentalUpgradePrompt from '@/components/rental/RentalUpgradePrompt'
+import { useFeatureAccess } from '@/hooks/useSubscription'
 
 interface Asset {
   id: string
@@ -68,6 +74,14 @@ export default function ScanPage({ params }: PageProps) {
   const [auditContext, setAuditContext] = useState<ActiveAuditContext | null>(null)
   const [verifying, setVerifying] = useState(false)
 
+  // Rental state
+  const [showCheckoutOverlay, setShowCheckoutOverlay] = useState(false)
+  const [showReturnOverlay, setShowReturnOverlay] = useState(false)
+  const [returnRental, setReturnRental] = useState<ActiveRental | null>(null)
+  const [organizationId, setOrganizationId] = useState<string>('')
+  const [rentalKey, setRentalKey] = useState(0) // Force re-fetch after action
+  const { hasAccess: hasRentalAccess, isLoading: rentalAccessLoading } = useFeatureAccess('rental_management')
+
   useEffect(() => {
     async function resolveParams() {
       const resolvedParams = await Promise.resolve(params)
@@ -108,6 +122,17 @@ export default function ScanPage({ params }: PageProps) {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     setIsAuthenticated(!!user)
+
+    if (user) {
+      const { data: userData } = await supabase
+        .from('users')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single()
+      if (userData?.organization_id) {
+        setOrganizationId(userData.organization_id)
+      }
+    }
   }
 
   async function checkActiveAudit(assetId: string) {
@@ -223,6 +248,7 @@ export default function ScanPage({ params }: PageProps) {
 
   async function autoLogScan() {
     if (!asset) return
+    if (showCheckoutOverlay || showReturnOverlay) return // Suppress during rental action
 
     try {
       let latitude: number | undefined
@@ -592,6 +618,29 @@ export default function ScanPage({ params }: PageProps) {
           )}
         </div>
 
+        {/* VGP Compliance Badge (simplified public view) */}
+        <div className="mb-6">
+          <VGPComplianceBadge assetId={asset.id} organizationId={organizationId} />
+        </div>
+
+        {/* Rental Status Card */}
+        {!rentalAccessLoading && hasRentalAccess ? (
+          <RentalStatusCard
+            key={rentalKey}
+            assetId={asset.id}
+            isAuthenticated={isAuthenticated}
+            onCheckout={() => setShowCheckoutOverlay(true)}
+            onReturn={(rental) => {
+              setReturnRental(rental)
+              setShowReturnOverlay(true)
+            }}
+          />
+        ) : !rentalAccessLoading && isAuthenticated ? (
+          <div className="mb-6">
+            <RentalUpgradePrompt />
+          </div>
+        ) : null}
+
         {!isAuthenticated && (
           <div className="bg-blue-50 border-2 border-blue-500 rounded-lg p-6 mb-6 text-center">
             <Lock className="w-12 h-12 text-blue-600 mx-auto mb-3" />
@@ -768,6 +817,41 @@ export default function ScanPage({ params }: PageProps) {
           </p>
         </div>
       </div>
+
+      {/* Checkout Overlay */}
+      {showCheckoutOverlay && organizationId && (
+        <CheckoutOverlay
+          assetId={asset.id}
+          assetName={asset.name}
+          organizationId={organizationId}
+          onClose={() => setShowCheckoutOverlay(false)}
+          onSuccess={() => {
+            setShowCheckoutOverlay(false)
+            setRentalKey(prev => prev + 1)
+            setSuccessMessage('Sortie enregistrée avec succès')
+            fetchAsset()
+          }}
+        />
+      )}
+
+      {/* Return Overlay */}
+      {showReturnOverlay && returnRental && (
+        <ReturnOverlay
+          rental={returnRental}
+          assetName={asset.name}
+          onClose={() => {
+            setShowReturnOverlay(false)
+            setReturnRental(null)
+          }}
+          onSuccess={() => {
+            setShowReturnOverlay(false)
+            setReturnRental(null)
+            setRentalKey(prev => prev + 1)
+            setSuccessMessage('Retour enregistré avec succès')
+            fetchAsset()
+          }}
+        />
+      )}
     </div>
   )
 }

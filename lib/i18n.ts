@@ -3181,6 +3181,136 @@ export const translations = {
     },
   },
   // ============================================================================
+  // RENTAL MODULE
+  // ============================================================================
+  rental: {
+    availableForRental: {
+      en: "Available for Rental",
+      fr: "Disponible pour location",
+    },
+    currentlyRented: {
+      en: "Currently Rented",
+      fr: "Actuellement en location",
+    },
+    overdue: {
+      en: "OVERDUE",
+      fr: "EN RETARD",
+    },
+    openEnded: {
+      en: "Open-ended",
+      fr: "Durée indéterminée",
+    },
+    checkoutToClient: {
+      en: "Checkout to Client",
+      fr: "Sortie client",
+    },
+    processReturn: {
+      en: "Process Return",
+      fr: "Enregistrer le retour",
+    },
+    confirmCheckout: {
+      en: "Confirm Checkout",
+      fr: "Confirmer la sortie",
+    },
+    confirmReturn: {
+      en: "Confirm Return",
+      fr: "Confirmer le retour",
+    },
+    clientName: {
+      en: "Client Name",
+      fr: "Nom du client",
+    },
+    clientContact: {
+      en: "Client Contact",
+      fr: "Contact client",
+    },
+    expectedReturn: {
+      en: "Expected Return",
+      fr: "Retour prévu",
+    },
+    returnCondition: {
+      en: "Return Condition",
+      fr: "État au retour",
+    },
+    conditionGood: {
+      en: "Good",
+      fr: "Bon",
+    },
+    conditionFair: {
+      en: "Fair",
+      fr: "Correct",
+    },
+    conditionDamaged: {
+      en: "Damaged",
+      fr: "Endommagé",
+    },
+    client: {
+      en: "Client",
+      fr: "Client",
+    },
+    since: {
+      en: "Since",
+      fr: "Depuis",
+    },
+    expectedBy: {
+      en: "Expected by",
+      fr: "Retour prévu le",
+    },
+    overdueBy: {
+      en: "Overdue by",
+      fr: "En retard de",
+    },
+    duration: {
+      en: "Duration",
+      fr: "Durée",
+    },
+    days: {
+      en: "days",
+      fr: "jours",
+    },
+    vgpBlocked: {
+      en: "VGP Non-Compliant",
+      fr: "VGP Non Conforme",
+    },
+    vgpBlockedMessage: {
+      en: "This equipment cannot be rented until VGP inspection is completed.",
+      fr: "Cet équipement ne peut pas être loué tant que l'inspection VGP n'est pas effectuée.",
+    },
+    vgpCompliant: {
+      en: "VGP: Compliant",
+      fr: "VGP : Conforme",
+    },
+    vgpNextInspection: {
+      en: "Next inspection",
+      fr: "Prochaine inspection",
+    },
+    alreadyRented: {
+      en: "This asset is already rented out",
+      fr: "Cet actif est déjà en location",
+    },
+    checkoutSuccess: {
+      en: "Asset checked out successfully",
+      fr: "Sortie enregistrée avec succès",
+    },
+    returnSuccess: {
+      en: "Asset returned successfully",
+      fr: "Retour enregistré avec succès",
+    },
+    rentalFeatureTitle: {
+      en: "Equipment Rental Tracking",
+      fr: "Suivi de location d'équipement",
+    },
+    rentalFeatureDescription: {
+      en: "Track who has your equipment, when it's coming back, and block non-compliant checkouts.",
+      fr: "Suivez qui a votre équipement, quand il revient, et bloquez les sorties non conformes.",
+    },
+    upgradeToUnlock: {
+      en: "Upgrade to Professional",
+      fr: "Passer au Professionnel",
+    },
+  },
+
+  // ============================================================================
   // COMMON
   // ============================================================================
   common: {
