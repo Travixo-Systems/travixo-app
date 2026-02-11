@@ -92,8 +92,8 @@ export async function GET() {
     // Check if pilot is active
     const isPilot = org?.is_pilot || false;
     const isPilotActive = isPilot &&
-      org.pilot_start_date &&
-      org.pilot_end_date &&
+      org?.pilot_start_date &&
+      org?.pilot_end_date &&
       new Date() >= new Date(org.pilot_start_date) &&
       new Date() <= new Date(org.pilot_end_date);
 
