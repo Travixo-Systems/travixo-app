@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { CookieOptions } from '@supabase/ssr';
-import { requireFeature } from '@/lib/server/require-feature';
+import { requireFeature, requireVGPWriteAccess } from '@/lib/server/require-feature';
 
 async function createClient() {
   const cookieStore = await cookies();
@@ -92,8 +92,8 @@ export async function PATCH(
   try {
     const supabase = await createClient();
 
-    // Feature gate: require vgp_compliance (also handles auth + org lookup)
-    const { denied } = await requireFeature(supabase, 'vgp_compliance');
+    // Feature gate: require VGP write access (blocks expired pilots)
+    const { denied } = await requireVGPWriteAccess(supabase);
     if (denied) return denied;
 
     // Need user.id for audit trail
@@ -192,8 +192,8 @@ export async function DELETE(
   try {
     const supabase = await createClient();
 
-    // Feature gate: require vgp_compliance (also handles auth + org lookup)
-    const { denied } = await requireFeature(supabase, 'vgp_compliance');
+    // Feature gate: require VGP write access (blocks expired pilots)
+    const { denied } = await requireVGPWriteAccess(supabase);
     if (denied) return denied;
 
     // Need user.id for archived_by
