@@ -486,6 +486,285 @@ export async function runVGPAlertsCron(): Promise<CronResult> {
 }
 
 // ============================================================
+// Client Recall Pass
+// Finds equipment currently rented out that has VGP due within
+// 30 or 14 days, and sends recall notifications to the org.
+// ============================================================
+
+interface RecallResult {
+  organizations_processed: number;
+  recall_emails_sent: number;
+  recall_items_found: number;
+  errors: string[];
+}
+
+async function runClientRecallPass(): Promise<RecallResult> {
+  const RECALL_PREFIX = "[RECALL]";
+  console.log(`${RECALL_PREFIX} Starting client recall pass...`);
+
+  const result: RecallResult = {
+    organizations_processed: 0,
+    recall_emails_sent: 0,
+    recall_items_found: 0,
+    errors: [],
+  };
+
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Find active rentals where the rented asset has a VGP schedule due within 30 days
+    const thirtyDaysOut = new Date(today);
+    thirtyDaysOut.setDate(thirtyDaysOut.getDate() + 30);
+
+    const { data: rentalSchedules, error: queryError } = await supabase
+      .from("rentals")
+      .select(`
+        id,
+        asset_id,
+        organization_id,
+        client_name,
+        client_id,
+        checkout_date,
+        expected_return_date,
+        assets (
+          name,
+          serial_number,
+          category_id,
+          asset_categories (
+            name
+          )
+        )
+      `)
+      .eq("status", "active") as { data: any[] | null; error: any };
+
+    if (queryError) {
+      console.log(`${RECALL_PREFIX} Error querying active rentals:`, queryError.message);
+      result.errors.push(`Rental query error: ${queryError.message}`);
+      return result;
+    }
+
+    if (!rentalSchedules || rentalSchedules.length === 0) {
+      console.log(`${RECALL_PREFIX} No active rentals found. Done.`);
+      return result;
+    }
+
+    console.log(`${RECALL_PREFIX} Found ${rentalSchedules.length} active rentals`);
+
+    // For each rental, check if its asset has a VGP schedule due within 30 days
+    const assetIds = rentalSchedules.map((r: any) => r.asset_id);
+
+    const { data: vgpSchedules, error: vgpError } = await supabase
+      .from("vgp_schedules")
+      .select("id, asset_id, next_due_date")
+      .in("asset_id", assetIds)
+      .eq("status", "active")
+      .is("archived_at", null)
+      .lte("next_due_date", thirtyDaysOut.toISOString().split("T")[0]);
+
+    if (vgpError) {
+      console.log(`${RECALL_PREFIX} Error querying VGP schedules:`, vgpError.message);
+      result.errors.push(`VGP schedule query error: ${vgpError.message}`);
+      return result;
+    }
+
+    if (!vgpSchedules || vgpSchedules.length === 0) {
+      console.log(`${RECALL_PREFIX} No rented assets with upcoming VGP. Done.`);
+      return result;
+    }
+
+    // Build asset_id -> VGP schedule map
+    const vgpMap = new Map<string, { scheduleId: string; nextDueDate: string }>();
+    for (const vs of vgpSchedules) {
+      vgpMap.set(vs.asset_id, { scheduleId: vs.id, nextDueDate: vs.next_due_date });
+    }
+
+    // Match rentals with their VGP schedules
+    interface RecallItem {
+      rental: any;
+      vgpScheduleId: string;
+      nextDueDate: string;
+      daysUntilDue: number;
+      alertType: "recall_30day" | "recall_14day";
+    }
+
+    const recallItems: RecallItem[] = [];
+
+    for (const rental of rentalSchedules) {
+      const vgp = vgpMap.get(rental.asset_id);
+      if (!vgp) continue;
+
+      const dueDate = new Date(vgp.nextDueDate);
+      dueDate.setHours(0, 0, 0, 0);
+      const daysUntilDue = Math.floor(
+        (dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      // Only process if within 30 days
+      if (daysUntilDue > 30) continue;
+
+      const alertType: "recall_30day" | "recall_14day" =
+        daysUntilDue <= 14 ? "recall_14day" : "recall_30day";
+
+      recallItems.push({
+        rental,
+        vgpScheduleId: vgp.scheduleId,
+        nextDueDate: vgp.nextDueDate,
+        daysUntilDue,
+        alertType,
+      });
+    }
+
+    result.recall_items_found = recallItems.length;
+
+    if (recallItems.length === 0) {
+      console.log(`${RECALL_PREFIX} No recall items after filtering. Done.`);
+      return result;
+    }
+
+    console.log(`${RECALL_PREFIX} ${recallItems.length} items need recall alerts`);
+
+    // Check dedup: filter out already-sent alerts
+    const rentalIds = recallItems.map((ri) => ri.rental.id);
+    const { data: existingAlerts } = await supabase
+      .from("client_recall_alerts")
+      .select("rental_id, alert_type, next_due_date")
+      .in("rental_id", rentalIds)
+      .eq("sent", true);
+
+    const sentSet = new Set(
+      (existingAlerts || []).map(
+        (a: any) => `${a.rental_id}:${a.alert_type}:${a.next_due_date}`
+      )
+    );
+
+    const newItems = recallItems.filter(
+      (ri) => !sentSet.has(`${ri.rental.id}:${ri.alertType}:${ri.nextDueDate}`)
+    );
+
+    if (newItems.length === 0) {
+      console.log(`${RECALL_PREFIX} All recall alerts already sent. Done.`);
+      return result;
+    }
+
+    console.log(`${RECALL_PREFIX} ${newItems.length} new recall alerts to send`);
+
+    // Group by organization
+    const orgItems = new Map<string, RecallItem[]>();
+    for (const item of newItems) {
+      const orgId = item.rental.organization_id;
+      if (!orgItems.has(orgId)) orgItems.set(orgId, []);
+      orgItems.get(orgId)!.push(item);
+    }
+
+    // Process each org
+    for (const [orgId, items] of orgItems) {
+      const { orgName, prefs } = await getOrgNotificationPrefs(orgId);
+
+      if (!prefs || !prefs.enabled) {
+        console.log(`${RECALL_PREFIX} Alerts disabled for org: ${orgName}`);
+        continue;
+      }
+
+      const recipients = await getAlertRecipients(orgId, prefs.recipients);
+      if (recipients.length === 0) {
+        console.log(`${RECALL_PREFIX} No recipients for org: ${orgName}`);
+        continue;
+      }
+
+      // Split by alert type
+      const by30 = items.filter((i) => i.alertType === "recall_30day");
+      const by14 = items.filter((i) => i.alertType === "recall_14day");
+
+      for (const [alertType, batch] of [
+        ["recall_30day", by30],
+        ["recall_14day", by14],
+      ] as const) {
+        if (batch.length === 0) continue;
+
+        // Format date as DD/MM/YYYY
+        const formatDate = (d: string) => {
+          try {
+            const [y, m, day] = d.split("-");
+            return `${day}/${m}/${y}`;
+          } catch {
+            return d;
+          }
+        };
+
+        const tableRows = batch.map((item) => ({
+          assetName: item.rental.assets?.name || "Equipement inconnu",
+          serialNumber: item.rental.assets?.serial_number || "-",
+          category: item.rental.assets?.asset_categories?.name || "-",
+          clientName: item.rental.client_name,
+          checkoutDate: formatDate(
+            item.rental.checkout_date.split("T")[0]
+          ),
+          vgpDueDate: formatDate(item.nextDueDate),
+          daysUntilDue: item.daysUntilDue,
+        }));
+
+        try {
+          const { sendClientRecallEmail } = await import(
+            "@/lib/email/email-service"
+          );
+
+          const sendResult = await sendClientRecallEmail(
+            alertType,
+            orgName,
+            recipients,
+            tableRows
+          );
+
+          if (sendResult.success) {
+            result.recall_emails_sent++;
+
+            // Log dedup records
+            const now = new Date().toISOString();
+            const recipientEmails = recipients.map((r) => r.email);
+
+            for (const item of batch) {
+              await supabase.from("client_recall_alerts").insert({
+                organization_id: orgId,
+                rental_id: item.rental.id,
+                client_id: item.rental.client_id || null,
+                asset_id: item.rental.asset_id,
+                alert_type: alertType,
+                vgp_schedule_id: item.vgpScheduleId,
+                next_due_date: item.nextDueDate,
+                sent: true,
+                sent_at: now,
+                email_sent_to: recipientEmails,
+              });
+            }
+
+            console.log(
+              `${RECALL_PREFIX} Sent ${alertType} for ${batch.length} items to ${orgName}`
+            );
+          } else {
+            console.log(
+              `${RECALL_PREFIX} Failed ${alertType} for ${orgName}: ${sendResult.error}`
+            );
+            result.errors.push(`Failed ${alertType} for ${orgName}: ${sendResult.error}`);
+          }
+        } catch (e: any) {
+          console.log(`${RECALL_PREFIX} Exception: ${e.message}`);
+          result.errors.push(`Exception ${alertType} for ${orgName}: ${e.message}`);
+        }
+      }
+
+      result.organizations_processed++;
+    }
+  } catch (error: any) {
+    console.log(`[RECALL] Unexpected error:`, error.message);
+    result.errors.push(`Unexpected error: ${error.message}`);
+  }
+
+  console.log(`[RECALL] Pass complete:`, JSON.stringify(result, null, 2));
+  return result;
+}
+
+// ============================================================
 // GET handler - called by Vercel Cron, protected by CRON_SECRET
 // ============================================================
 
@@ -499,8 +778,18 @@ export async function GET(request: Request) {
   }
 
   try {
-    const result = await runVGPAlertsCron();
-    return NextResponse.json(result, { status: result.success ? 200 : 207 });
+    // Run VGP alerts first
+    const vgpResult = await runVGPAlertsCron();
+
+    // Then run client recall pass
+    const recallResult = await runClientRecallPass();
+
+    const combined = {
+      ...vgpResult,
+      recall: recallResult,
+    };
+
+    return NextResponse.json(combined, { status: vgpResult.success ? 200 : 207 });
   } catch (error: any) {
     console.log(`${LOG_PREFIX} Unexpected error:`, error.message);
     return NextResponse.json({

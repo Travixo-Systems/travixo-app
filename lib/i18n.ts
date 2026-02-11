@@ -2530,6 +2530,10 @@ export const translations = {
       en: "History",
       fr: "Historique",
     },
+    clients: {
+      en: "Clients",
+      fr: "Clients",
+    },
   },
   // ============================================================================
   // AUDITS MODULE
@@ -3307,6 +3311,116 @@ export const translations = {
     upgradeToUnlock: {
       en: "Upgrade to Professional",
       fr: "Passer au Professionnel",
+    },
+    selectClient: {
+      en: "Select Client",
+      fr: "Sélectionner un client",
+    },
+    newClient: {
+      en: "New Client",
+      fr: "Nouveau client",
+    },
+    orCreateNew: {
+      en: "or create new",
+      fr: "ou créer nouveau",
+    },
+    clientEmail: {
+      en: "Email",
+      fr: "Email",
+    },
+    clientPhone: {
+      en: "Phone",
+      fr: "Téléphone",
+    },
+    clientCompany: {
+      en: "Company",
+      fr: "Entreprise",
+    },
+  },
+
+  // ============================================================================
+  // CLIENTS
+  // ============================================================================
+  clients: {
+    pageTitle: {
+      en: "Clients",
+      fr: "Clients",
+    },
+    pageSubtitle: {
+      en: "Manage your rental clients and their equipment",
+      fr: "Gérez vos clients de location et leur équipement",
+    },
+    addClient: {
+      en: "Add Client",
+      fr: "Ajouter un client",
+    },
+    searchClients: {
+      en: "Search clients...",
+      fr: "Rechercher des clients...",
+    },
+    noClients: {
+      en: "No clients yet",
+      fr: "Aucun client pour le moment",
+    },
+    noClientsDescription: {
+      en: "Clients are created automatically when you check out equipment, or you can add them manually.",
+      fr: "Les clients sont créés automatiquement lors des sorties d'équipement, ou vous pouvez les ajouter manuellement.",
+    },
+    activeRentals: {
+      en: "Active Rentals",
+      fr: "Locations actives",
+    },
+    totalRentals: {
+      en: "Total Rentals",
+      fr: "Total locations",
+    },
+    name: {
+      en: "Name",
+      fr: "Nom",
+    },
+    email: {
+      en: "Email",
+      fr: "Email",
+    },
+    phone: {
+      en: "Phone",
+      fr: "Téléphone",
+    },
+    company: {
+      en: "Company",
+      fr: "Entreprise",
+    },
+    address: {
+      en: "Address",
+      fr: "Adresse",
+    },
+    notes: {
+      en: "Notes",
+      fr: "Notes",
+    },
+    editClient: {
+      en: "Edit Client",
+      fr: "Modifier le client",
+    },
+    clientSaved: {
+      en: "Client saved",
+      fr: "Client enregistré",
+    },
+    clientExists: {
+      en: "A client with this name already exists",
+      fr: "Un client avec ce nom existe déjà",
+    },
+    recallNeeded: {
+      en: "VGP Recall Needed",
+      fr: "Rappel VGP nécessaire",
+    },
+    recallDescription: {
+      en: "Equipment rented to this client needs VGP inspection soon",
+      fr: "L'équipement loué à ce client nécessite bientôt une inspection VGP",
+    },
+    equipmentOut: {
+      en: "equipment out",
+      fr: "équipement(s) sorti(s)",
     },
   },
 

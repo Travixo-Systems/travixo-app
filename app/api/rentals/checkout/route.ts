@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { asset_id, client_name, client_contact, expected_return_date, notes, latitude, longitude } = body
+    const { asset_id, client_name, client_contact, expected_return_date, notes, latitude, longitude, client_id } = body
 
     if (!asset_id || !client_name?.trim()) {
       return NextResponse.json(
@@ -37,6 +37,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'no_organization' }, { status: 403 })
     }
 
+    // Validate client_id UUID format if provided
+    if (client_id && !uuidRegex.test(client_id)) {
+      return NextResponse.json({ error: 'invalid client_id format' }, { status: 400 })
+    }
+
     // Call RPC
     const { data, error } = await supabase.rpc('checkout_asset', {
       p_asset_id: asset_id,
@@ -49,6 +54,7 @@ export async function POST(request: NextRequest) {
       p_location_name: null,
       p_latitude: latitude || null,
       p_longitude: longitude || null,
+      p_client_id: client_id || null,
     })
 
     if (error) {

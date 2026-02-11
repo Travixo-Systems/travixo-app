@@ -607,6 +607,7 @@ export type Database = {
           asset_id: string
           client_name: string
           client_contact: string | null
+          client_id: string | null
           checked_out_by: string
           returned_by: string | null
           checkout_date: string
@@ -627,6 +628,7 @@ export type Database = {
           asset_id: string
           client_name: string
           client_contact?: string | null
+          client_id?: string | null
           checked_out_by: string
           returned_by?: string | null
           checkout_date?: string
@@ -642,6 +644,7 @@ export type Database = {
         Update: {
           client_name?: string
           client_contact?: string | null
+          client_id?: string | null
           returned_by?: string | null
           expected_return_date?: string | null
           actual_return_date?: string | null
@@ -650,6 +653,74 @@ export type Database = {
           status?: string
           return_scan_id?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      clients: {
+        Row: {
+          id: string
+          organization_id: string
+          name: string
+          email: string | null
+          phone: string | null
+          company: string | null
+          address: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          name: string
+          email?: string | null
+          phone?: string | null
+          company?: string | null
+          address?: string | null
+          notes?: string | null
+        }
+        Update: {
+          name?: string
+          email?: string | null
+          phone?: string | null
+          company?: string | null
+          address?: string | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      client_recall_alerts: {
+        Row: {
+          id: string
+          organization_id: string
+          rental_id: string
+          client_id: string | null
+          asset_id: string
+          alert_type: string
+          vgp_schedule_id: string | null
+          next_due_date: string
+          sent: boolean
+          sent_at: string | null
+          email_sent_to: string[] | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          rental_id: string
+          client_id?: string | null
+          asset_id: string
+          alert_type: string
+          vgp_schedule_id?: string | null
+          next_due_date: string
+          sent?: boolean
+          sent_at?: string | null
+          email_sent_to?: string[] | null
+        }
+        Update: {
+          sent?: boolean
+          sent_at?: string | null
         }
         Relationships: []
       }
@@ -690,6 +761,7 @@ export type Database = {
           p_location_name?: string | null
           p_latitude?: number | null
           p_longitude?: number | null
+          p_client_id?: string | null
         }
         Returns: { success: boolean; rental_id?: string; scan_id?: string; error?: string }
       }
