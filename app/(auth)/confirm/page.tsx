@@ -71,6 +71,8 @@ function ConfirmContent() {
 
           // Create org + user profile for the newly confirmed user
           await createOrgForUser(supabase, verifiedUser)
+          // Trigger demo data seeding + welcome email (non-blocking)
+          triggerPostRegistration()
           setState('success')
           return
         }
@@ -93,6 +95,8 @@ function ConfirmContent() {
 
       // User confirmed but no org yet — create it
       await createOrgForUser(supabase, user)
+      // Trigger demo data seeding + welcome email (non-blocking)
+      triggerPostRegistration()
       setState('success')
 
     } catch (error: any) {
@@ -100,6 +104,16 @@ function ConfirmContent() {
       setErrorMessage(error.message || 'La confirmation a echoue')
       setState('error')
     }
+  }
+
+  function triggerPostRegistration() {
+    // Fire-and-forget: seed demo data + send welcome email
+    fetch('/api/internal/post-registration', { method: 'POST' })
+      .then(res => {
+        if (!res.ok) console.error('Post-registration trigger failed:', res.status)
+        else console.log('Post-registration completed (demo data + welcome email)')
+      })
+      .catch(err => console.error('Post-registration trigger error:', err))
   }
 
   async function createOrgForUser(supabase: any, user: any) {

@@ -84,3 +84,62 @@ export async function requireFeature(
 
   return { denied: null, organizationId: orgId };
 }
+
+/**
+ * Verify the authenticated user's organization has WRITE access to VGP.
+ *
+ * Expired pilots get read-only VGP access — they can view data but cannot
+ * create, edit, or delete inspections or schedules. This guard enforces that
+ * at the API level.
+ *
+ * Usage in a route handler:
+ * ```ts
+ * const { denied, organizationId } = await requireVGPWriteAccess(supabase);
+ * if (denied) return denied;
+ * ```
+ */
+export async function requireVGPWriteAccess(
+  supabase: SupabaseClient,
+): Promise<FeatureCheckResult> {
+  // First, run the standard feature check
+  const result = await requireFeature(supabase, 'vgp_compliance');
+  if (result.denied) return result;
+
+  // Feature is available — now check if it's read-only (expired pilot)
+  const { data: org } = await supabase
+    .from('organizations')
+    .select('is_pilot, pilot_end_date, subscription_tier')
+    .eq('id', result.organizationId!)
+    .single();
+
+  if (!org) {
+    return {
+      denied: NextResponse.json({ error: 'Organization not found' }, { status: 403 }),
+      organizationId: result.organizationId,
+    };
+  }
+
+  // Expired pilot = read-only
+  if (org.is_pilot && org.pilot_end_date) {
+    const expired = new Date(org.pilot_end_date) < new Date();
+    if (expired) {
+      // Check if they've upgraded to a paid plan with VGP
+      const paidPlans = ['professional', 'business', 'enterprise'];
+      if (!paidPlans.includes(org.subscription_tier || '')) {
+        return {
+          denied: NextResponse.json(
+            {
+              error: 'VGP en lecture seule',
+              message: 'Votre période pilote a expiré. Passez au plan Professionnel pour modifier les données VGP.',
+              code: 'VGP_READ_ONLY',
+            },
+            { status: 403 },
+          ),
+          organizationId: result.organizationId,
+        };
+      }
+    }
+  }
+
+  return result;
+}

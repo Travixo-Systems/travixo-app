@@ -6,9 +6,12 @@ import { useRouter } from "next/navigation"
 import { useLanguage } from "@/lib/LanguageContext"
 import { createTranslator } from "@/lib/i18n"
 import { createClient } from "@/lib/supabase/client"
+import OnboardingBanner from "@/components/dashboard/OnboardingBanner"
 
 interface DashboardData {
   orgName: string
+  orgId: string
+  onboardingCompleted: boolean
   totalAssets: number
   inUseAssets: number
   vgpOverdue: number
@@ -44,12 +47,14 @@ export default function DashboardPage() {
     // Get user profile and org
     const { data: profile } = await supabase
       .from('users')
-      .select('organization_id, organizations(name)')
+      .select('organization_id, organizations(name, onboarding_completed)')
       .eq('id', user.id)
       .single()
 
     const orgId = profile?.organization_id
-    const orgName = (profile as unknown as { organizations: { name: string } | null })?.organizations?.name || 'Your Organization'
+    const orgInfo = (profile as unknown as { organizations: { name: string; onboarding_completed: boolean } | null })?.organizations
+    const orgName = orgInfo?.name || 'Your Organization'
+    const onboardingCompleted = orgInfo?.onboarding_completed ?? true
 
     // Get asset counts
     const { count: totalAssets } = await supabase
@@ -123,6 +128,8 @@ export default function DashboardPage() {
 
     setData({
       orgName,
+      orgId: orgId || '',
+      onboardingCompleted,
       totalAssets: totalAssets || 0,
       inUseAssets: inUseAssets || 0,
       vgpOverdue,
@@ -156,6 +163,8 @@ export default function DashboardPage() {
 
   const {
     orgName,
+    orgId,
+    onboardingCompleted,
     totalAssets,
     vgpOverdue,
     vgpUpcoming,
@@ -169,6 +178,14 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 p-6">
+      {/* Onboarding Banner */}
+      {orgId && (
+        <OnboardingBanner
+          organizationId={orgId}
+          onboardingCompleted={onboardingCompleted}
+        />
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

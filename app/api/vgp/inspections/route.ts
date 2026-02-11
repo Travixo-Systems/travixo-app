@@ -6,7 +6,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { CookieOptions } from '@supabase/ssr';
-import { requireFeature } from '@/lib/server/require-feature';
+import { requireFeature, requireVGPWriteAccess } from '@/lib/server/require-feature';
 
 /**
  * Create authenticated Supabase client for server-side operations
@@ -141,8 +141,8 @@ export async function POST(request: Request) {
   try {
     const supabase = await createClient();
 
-    // Feature gate: require vgp_compliance (also handles auth + org lookup)
-    const { denied, organizationId } = await requireFeature(supabase, 'vgp_compliance');
+    // Feature gate: require VGP write access (blocks expired pilots)
+    const { denied, organizationId } = await requireVGPWriteAccess(supabase);
     if (denied) return denied;
 
     // Need user.id for performed_by field
