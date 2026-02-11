@@ -35,6 +35,8 @@ export type Database = {
           pilot_end_date: string | null
           pilot_notes: string | null
           converted_to_paid: boolean
+          onboarding_completed: boolean
+          demo_data_seeded: boolean
         }
         Insert: {
           id?: string
@@ -62,6 +64,8 @@ export type Database = {
           pilot_end_date?: string | null
           pilot_notes?: string | null
           converted_to_paid?: boolean
+          onboarding_completed?: boolean
+          demo_data_seeded?: boolean
         }
         Update: {
           name?: string
@@ -88,6 +92,8 @@ export type Database = {
           pilot_end_date?: string | null
           pilot_notes?: string | null
           converted_to_paid?: boolean
+          onboarding_completed?: boolean
+          demo_data_seeded?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -147,6 +153,7 @@ export type Database = {
           current_value: number | null
           last_seen_at: string | null
           last_seen_by: string | null
+          is_demo_data: boolean
           created_at: string
           updated_at: string
         }
@@ -166,6 +173,7 @@ export type Database = {
           current_value?: number | null
           last_seen_at?: string | null
           last_seen_by?: string | null
+          is_demo_data?: boolean
         }
         Update: {
           name?: string
@@ -179,6 +187,7 @@ export type Database = {
           current_value?: number | null
           last_seen_at?: string | null
           last_seen_by?: string | null
+          is_demo_data?: boolean
           updated_at?: string
         }
         Relationships: []
