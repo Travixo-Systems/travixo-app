@@ -53,8 +53,8 @@ export function useFeatureAccess(feature: FeatureKey): { hasAccess: boolean; isL
     return { hasAccess: false, isLoading: true };
   }
 
-  // Pilots get everything (pilot date validation is done server-side in the API)
-  if (subscriptionInfo.is_pilot) {
+  // Active pilots get everything (pilot_active check is done server-side)
+  if (subscriptionInfo.pilot_active) {
     return { hasAccess: true, isLoading: false };
   }
 
@@ -181,4 +181,68 @@ export function useStripePortal() {
       if (data.url) window.location.href = data.url;
     },
   });
+}
+
+/**
+ * Get VGP access level: 'full' | 'read_only' | 'blocked'
+ * - full: active pilot or Professional+ plan
+ * - read_only: expired pilot (can view, cannot create/edit)
+ * - blocked: no VGP access at all
+ */
+export function useVGPAccess(): {
+  access: 'full' | 'read_only' | 'blocked';
+  isLoading: boolean;
+} {
+  const { data: subscriptionInfo, isLoading } = useSubscription();
+
+  if (isLoading || !subscriptionInfo) {
+    return { access: 'blocked', isLoading: true };
+  }
+
+  const vgpAccess = (subscriptionInfo as any).vgp_access;
+  if (vgpAccess) {
+    return { access: vgpAccess, isLoading: false };
+  }
+
+  // Fallback: compute client-side
+  if ((subscriptionInfo as any).pilot_active) {
+    return { access: 'full', isLoading: false };
+  }
+
+  const planSlug = subscriptionInfo.subscription?.plan?.slug;
+  if (['professional', 'business', 'enterprise'].includes(planSlug || '')) {
+    return { access: 'full', isLoading: false };
+  }
+
+  if (subscriptionInfo.is_pilot && !(subscriptionInfo as any).pilot_active) {
+    return { access: 'read_only', isLoading: false };
+  }
+
+  return { access: 'blocked', isLoading: false };
+}
+
+/**
+ * Get pilot status with detailed info for banners
+ */
+export function usePilotStatus(): {
+  isPilot: boolean;
+  pilotActive: boolean;
+  daysRemaining: number | null;
+  pilotEndDate: string | null;
+  isLoading: boolean;
+} {
+  const { data: subscriptionInfo, isLoading } = useSubscription();
+
+  if (isLoading || !subscriptionInfo) {
+    return { isPilot: false, pilotActive: false, daysRemaining: null, pilotEndDate: null, isLoading: true };
+  }
+
+  const info = subscriptionInfo as any;
+  return {
+    isPilot: info.is_pilot || false,
+    pilotActive: info.pilot_active || false,
+    daysRemaining: info.days_remaining || null,
+    pilotEndDate: info.pilot_end_date || null,
+    isLoading: false,
+  };
 }

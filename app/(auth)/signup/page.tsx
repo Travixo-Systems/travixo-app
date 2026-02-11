@@ -65,34 +65,25 @@ function SignUpContent() {
         throw new Error('Company name is required')
       }
 
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email.trim(),
-        password: formData.password,
-        options: {
-          data: {
-            full_name: formData.fullName.trim(),
-          }
-        }
-      })
-
-      if (authError) {
-        console.error('Auth error:', authError)
-        throw authError
-      }
-
-      if (!authData.user) {
-        throw new Error('User creation failed')
-      }
-
-      // For invite flow, skip org creation — accept the invitation directly instead.
-      // This avoids the fragile redirect chain that auth middleware can intercept.
+      // For invite flow, create user + accept invitation immediately (no email confirmation)
       if (isInviteRedirect) {
-        // Extract token from redirect URL: /accept-invite/[token]
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: formData.email.trim(),
+          password: formData.password,
+          options: {
+            data: {
+              full_name: formData.fullName.trim(),
+            }
+          }
+        })
+
+        if (authError) throw authError
+        if (!authData.user) throw new Error('User creation failed')
+
         const tokenMatch = redirectTo.match(/\/accept-invite\/(.+)/)
         const inviteToken = tokenMatch?.[1]
 
         if (inviteToken) {
-          // Pass the access_token directly so the API doesn't need session cookies
           const acceptResponse = await fetch('/api/team/invitations/accept', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -111,46 +102,37 @@ function SignUpContent() {
             return
           } else {
             console.error('Accept invitation failed after signup:', acceptData)
-            // Still redirect to accept-invite page as fallback
             toast.success('Compte cree ! Finalisation de l\'invitation...')
             router.push(redirectTo)
             router.refresh()
             return
           }
         }
+
+        toast.success('Account created!')
+        router.push('/dashboard')
+        router.refresh()
       } else {
-        // Normal signup: create organization and user profile
-        const baseSlug = formData.companyName
-          .toLowerCase()
-          .trim()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-+|-+$/g, '')
-
-        const uniqueSlug = `${baseSlug}-${Date.now().toString(36)}`
-
-        const { error: orgError } = await supabase.rpc(
-          'create_organization_and_user',
-          {
-            p_org_name: formData.companyName.trim(),
-            p_org_slug: uniqueSlug,
-            p_user_id: authData.user.id,
-            p_user_email: formData.email.trim(),
-            p_user_full_name: formData.fullName.trim(),
+        // Normal signup: auth user created, email confirmation required.
+        // Org + user profile creation deferred to post-confirmation (/confirm page).
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: formData.email.trim(),
+          password: formData.password,
+          options: {
+            data: {
+              full_name: formData.fullName.trim(),
+              company_name: formData.companyName.trim(),
+            },
+            emailRedirectTo: `${window.location.origin}/auth/callback?next=/confirm`,
           }
-        )
+        })
 
-        if (orgError) {
-          console.error('Organization creation error:', orgError)
-          throw new Error(`Failed to create organization: ${orgError.message}`)
-        }
+        if (authError) throw authError
+        if (!authData.user) throw new Error('User creation failed')
+
+        // Redirect to check-email page — org creation happens after confirmation
+        router.push(`/check-email?email=${encodeURIComponent(formData.email.trim())}`)
       }
-
-      toast.success('Account created! Redirecting to dashboard...')
-
-      await new Promise(resolve => setTimeout(resolve, 1000))
-
-      router.push('/dashboard')
-      router.refresh()
 
     } catch (error: any) {
       console.error('Signup error:', error)
@@ -271,10 +253,10 @@ function SignUpContent() {
             /* ---- Normal signup header ---- */
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
-                Demarrer l'essai gratuit
+                Evaluation gratuite de 30 jours
               </h2>
               <p className="mt-1 text-sm text-gray-500">
-                30 jours gratuits • Aucune carte requise
+                Conformite VGP incluse • Aucune carte requise
               </p>
             </div>
           )}
