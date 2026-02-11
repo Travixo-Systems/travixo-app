@@ -30,6 +30,11 @@ export type Database = {
           company_size: string | null
           branding_colors: Record<string, string> | null
           notification_preferences: Record<string, unknown> | null
+          is_pilot: boolean
+          pilot_start_date: string | null
+          pilot_end_date: string | null
+          pilot_notes: string | null
+          converted_to_paid: boolean
         }
         Insert: {
           id?: string
@@ -52,6 +57,11 @@ export type Database = {
           company_size?: string | null
           branding_colors?: Record<string, string> | null
           notification_preferences?: Record<string, unknown> | null
+          is_pilot?: boolean
+          pilot_start_date?: string | null
+          pilot_end_date?: string | null
+          pilot_notes?: string | null
+          converted_to_paid?: boolean
         }
         Update: {
           name?: string
@@ -73,6 +83,11 @@ export type Database = {
           company_size?: string | null
           branding_colors?: Record<string, string> | null
           notification_preferences?: Record<string, unknown> | null
+          is_pilot?: boolean
+          pilot_start_date?: string | null
+          pilot_end_date?: string | null
+          pilot_notes?: string | null
+          converted_to_paid?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -592,6 +607,14 @@ export type Database = {
           p_user_full_name: string
         }
         Returns: string
+      }
+      is_pilot_active: {
+        Args: { org_id: string }
+        Returns: boolean
+      }
+      check_pilot_asset_limit: {
+        Args: { org_id: string }
+        Returns: { current_count: number; max_allowed: number; limit_reached: boolean }[]
       }
     }
   }

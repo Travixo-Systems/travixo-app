@@ -67,6 +67,9 @@ export interface SubscriptionInfo {
   is_pilot: boolean;
   is_trial: boolean;
   days_remaining: number | null;
+  pilot_active: boolean;
+  pilot_end_date: string | null;
+  vgp_access: 'full' | 'read_only' | 'blocked';
 }
 
 /**

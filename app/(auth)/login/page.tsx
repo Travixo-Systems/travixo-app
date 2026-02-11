@@ -35,14 +35,35 @@ function LoginContent() {
   const isInviteRedirect = redirectTo.startsWith('/accept-invite/')
 
   const [isLoading, setIsLoading] = useState(false)
+  const [isResending, setIsResending] = useState(false)
+  const [showUnconfirmed, setShowUnconfirmed] = useState(false)
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState('')
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   })
 
+  const handleResendConfirmation = async () => {
+    if (!unconfirmedEmail || isResending) return
+    setIsResending(true)
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: unconfirmedEmail,
+      })
+      if (error) throw error
+      toast.success('Email de confirmation renvoye !')
+    } catch (error: any) {
+      toast.error(error.message || 'Impossible de renvoyer l\'email')
+    } finally {
+      setIsResending(false)
+    }
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setShowUnconfirmed(false)
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -53,7 +74,16 @@ function LoginContent() {
       if (error) throw error
 
       if (data.user) {
-        // For invite flow, accept the invitation directly instead of fragile redirect
+        // Check if email is confirmed
+        if (!data.user.email_confirmed_at) {
+          // Sign out immediately — unconfirmed users cannot access the app
+          await supabase.auth.signOut()
+          setUnconfirmedEmail(formData.email)
+          setShowUnconfirmed(true)
+          return
+        }
+
+        // For invite flow, accept the invitation directly
         if (isInviteRedirect) {
           const tokenMatch = redirectTo.match(/\/accept-invite\/(.+)/)
           const inviteToken = tokenMatch?.[1]
@@ -167,6 +197,26 @@ function LoginContent() {
             </div>
           )}
 
+          {showUnconfirmed && (
+            <div className="rounded-lg p-4 bg-amber-50 border border-amber-200">
+              <p className="text-sm font-semibold text-amber-800">
+                Veuillez verifier votre email
+              </p>
+              <p className="text-xs text-amber-700 mt-1">
+                Un email de confirmation a ete envoye a <span className="font-medium">{unconfirmedEmail}</span>.
+                Cliquez sur le lien pour activer votre compte.
+              </p>
+              <button
+                onClick={handleResendConfirmation}
+                disabled={isResending}
+                className="mt-2 text-xs font-medium underline disabled:opacity-50"
+                style={{ color: BRAND.orange }}
+              >
+                {isResending ? 'Envoi en cours...' : 'Renvoyer l\'email de confirmation'}
+              </button>
+            </div>
+          )}
+
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
               <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1.5">
@@ -259,7 +309,7 @@ function LoginContent() {
               className="font-semibold hover:underline"
               style={{ color: BRAND.primary }}
             >
-              {isInviteRedirect ? 'Creer un compte' : 'Demarrer l\'essai gratuit'}
+              {isInviteRedirect ? 'Creer un compte' : 'Evaluation gratuite de 30 jours'}
             </Link>
           </div>
         </div>

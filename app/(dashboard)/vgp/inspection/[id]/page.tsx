@@ -4,7 +4,9 @@ import { use, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertCircle, Save, CheckCircle, X, Upload, FileText } from 'lucide-react';
 import { useUploadThing } from '@/lib/uploadthing';
-import FeatureGate from '@/components/subscription/FeatureGate'; // ✅ Added import
+import FeatureGate from '@/components/subscription/FeatureGate';
+import { VGPReadOnlyBanner } from '@/components/vgp/VGPUpgradeOverlay';
+import { useVGPAccess } from '@/hooks/useSubscription';
 
 interface Schedule {
   id: string;
@@ -31,6 +33,8 @@ export default function InspectionRecorderPage({
   const router = useRouter();
   const resolvedParams = use(params);
   const scheduleId = resolvedParams.id;
+  const { access: vgpAccess } = useVGPAccess();
+  const isReadOnly = vgpAccess === 'read_only';
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -192,6 +196,29 @@ export default function InspectionRecorderPage({
         <div className="p-8">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-red-800">{error}</p>
+          </div>
+        </div>
+      </FeatureGate>
+    );
+  }
+
+  if (isReadOnly) {
+    return (
+      <FeatureGate feature="vgp_compliance">
+        <div className="p-8 max-w-4xl mx-auto">
+          <VGPReadOnlyBanner />
+          <div className="mt-4">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Enregistrer une Inspection VGP</h1>
+            <p className="text-gray-600">
+              L'enregistrement d'inspections n'est pas disponible en mode lecture seule.
+              Passez au plan Professionnel pour enregistrer de nouvelles inspections.
+            </p>
+            <button
+              onClick={() => router.push('/vgp')}
+              className="mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
+            >
+              Retour au tableau VGP
+            </button>
           </div>
         </div>
       </FeatureGate>

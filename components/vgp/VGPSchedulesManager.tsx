@@ -9,6 +9,8 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { createTranslator, Language } from '@/lib/i18n';
 import { EditScheduleModal } from './EditScheduleModal';
 import FeatureGate from '@/components/subscription/FeatureGate';
+import { VGPReadOnlyBanner } from './VGPUpgradeOverlay';
+import { useVGPAccess } from '@/hooks/useSubscription';
 
 // ============================================================================
 // B2B PROFESSIONAL BRAND COLORS (Org-Modular)
@@ -149,7 +151,9 @@ function Toast({ message, type, onClose }: { message: string; type: 'success' | 
 function VGPSchedulesContent({ language, t }: { language: Language; t: (key: string) => string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+  const { access: vgpAccess } = useVGPAccess();
+  const isReadOnly = vgpAccess === 'read_only';
+
   // Data
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
@@ -329,6 +333,8 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
         <p className="text-gray-600 mt-1">{t('vgpSchedules.pageSubtitle')}</p>
       </div>
 
+      {isReadOnly && <VGPReadOnlyBanner />}
+
       {/* 4 Cards - White with colored borders */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
@@ -470,22 +476,24 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
                       </td>
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-1">
-                          
+                          {!isReadOnly && (
                             <button
                               onClick={() => window.location.href = `/vgp/inspection/${schedule.id}`}
-                              className="px-2 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-red-700 rounded transition-colors"
+                              className="px-2 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors"
                               title={t('vgpSchedules.inspection')}
                             >
                               {t('vgpSchedules.inspection')}
                             </button>
-                        
-                          <button
-                            onClick={() => handleEdit(schedule)}
-                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                            title={t('vgpSchedules.edit')}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
+                          )}
+                          {!isReadOnly && (
+                            <button
+                              onClick={() => handleEdit(schedule)}
+                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                              title={t('vgpSchedules.edit')}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                          )}
                           <button
                             onClick={() => {
                               setSelectedSchedule(schedule);
@@ -496,13 +504,15 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
                           >
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button
-                            onClick={() => handleArchive(schedule.id)}
-                            className="p-1.5 text-orange-600 hover:bg-orange-50 rounded transition-colors"
-                            title={t('vgpSchedules.archive')}
-                          >
-                            <Archive className="w-4 h-4" />
-                          </button>
+                          {!isReadOnly && (
+                            <button
+                              onClick={() => handleArchive(schedule.id)}
+                              className="p-1.5 text-orange-600 hover:bg-orange-50 rounded transition-colors"
+                              title={t('vgpSchedules.archive')}
+                            >
+                              <Archive className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

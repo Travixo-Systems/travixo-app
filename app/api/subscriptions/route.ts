@@ -89,33 +89,55 @@ export async function GET() {
 
     const currentAssets = assetCount || 0;
 
-    // Calculate days remaining
+    // Check if pilot is active
+    const isPilot = org?.is_pilot || false;
+    const isPilotActive = isPilot &&
+      org.pilot_start_date &&
+      org.pilot_end_date &&
+      new Date() >= new Date(org.pilot_start_date) &&
+      new Date() <= new Date(org.pilot_end_date);
+
+    // For pilots: calculate days remaining from pilot_end_date
+    // For regular subscriptions: from subscription period end
     let daysRemaining = null;
-    if (subscription?.current_period_end) {
+    if (isPilotActive && org.pilot_end_date) {
+      const endDate = new Date(org.pilot_end_date);
+      const today = new Date();
+      daysRemaining = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    } else if (subscription?.current_period_end) {
       const endDate = new Date(subscription.current_period_end);
       const today = new Date();
       daysRemaining = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     }
 
-    // Check if pilot is active
-    const isPilotActive = org?.is_pilot && 
-      org.pilot_start_date && 
-      org.pilot_end_date &&
-      new Date() >= new Date(org.pilot_start_date) && 
-      new Date() <= new Date(org.pilot_end_date);
+    // Asset limit: 50 for active pilots, plan limit otherwise
+    const maxAssets = isPilotActive ? 50 : (subscription?.plan?.max_assets || 100);
+
+    // Determine VGP access level
+    let vgp_access: 'full' | 'read_only' | 'blocked' = 'blocked';
+    if (isPilotActive) {
+      vgp_access = 'full';
+    } else if (['professional', 'business', 'enterprise'].includes(subscription?.plan?.slug || '')) {
+      vgp_access = 'full';
+    } else if (isPilot && !isPilotActive) {
+      // Expired pilot — read-only VGP
+      vgp_access = 'read_only';
+    }
 
     return NextResponse.json({
       subscription: subscription || null,
       organization: org,
       usage: {
         assets: currentAssets,
-        max_assets: subscription?.plan?.max_assets || 100,
-        limit_reached: currentAssets >= (subscription?.plan?.max_assets || 100)
+        max_assets: maxAssets,
+        limit_reached: currentAssets >= maxAssets,
       },
       days_remaining: daysRemaining,
       is_trial: subscription?.status === 'trialing',
-      is_pilot: org?.is_pilot || false,
-      pilot_active: isPilotActive
+      is_pilot: isPilot,
+      pilot_active: isPilotActive,
+      pilot_end_date: org?.pilot_end_date || null,
+      vgp_access,
     });
 
   } catch (error: any) {

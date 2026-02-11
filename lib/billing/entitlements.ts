@@ -14,6 +14,8 @@ export type Feature =
   | 'dedicated_support'
   | 'custom_integrations';
 
+export type FeatureAccessLevel = 'full' | 'read_only' | 'blocked';
+
 export interface EntitlementContext {
   organizationId: string;
   subscriptionStatus: string;
@@ -24,11 +26,14 @@ export interface EntitlementContext {
   maxUsers: number;
   currentAssets: number;
   currentUsers: number;
+  isPilot: boolean;
+  pilotActive: boolean;
+  pilotEndDate: string | null;
 }
 
 /**
  * Load the full entitlement context for the current user.
- * 4 parallel DB queries for performance.
+ * 5 parallel DB queries for performance.
  */
 export async function getEntitlementContext(): Promise<EntitlementContext | null> {
   const supabase = await createClient();
@@ -45,7 +50,7 @@ export async function getEntitlementContext(): Promise<EntitlementContext | null
 
   const orgId = userData.organization_id;
 
-  const [subResult, overrideResult, assetCount, userCount] = await Promise.all([
+  const [subResult, overrideResult, assetCount, userCount, orgResult] = await Promise.all([
     supabase
       .from('subscriptions')
       .select('*, plan:subscription_plans(*)')
@@ -63,19 +68,34 @@ export async function getEntitlementContext(): Promise<EntitlementContext | null
       .from('users')
       .select('id', { count: 'exact', head: true })
       .eq('organization_id', orgId),
+    supabase
+      .from('organizations')
+      .select('is_pilot, pilot_start_date, pilot_end_date')
+      .eq('id', orgId)
+      .single(),
   ]);
 
   const sub = subResult.data as any;
+  const org = orgResult.data as any;
+
+  const isPilot = org?.is_pilot || false;
+  const pilotActive = isPilot &&
+    (!org?.pilot_start_date || new Date() >= new Date(org.pilot_start_date)) &&
+    (!org?.pilot_end_date || new Date() <= new Date(org.pilot_end_date));
+
   return {
     organizationId: orgId,
     subscriptionStatus: sub?.status || 'trialing',
     planSlug: sub?.plan?.slug || 'starter',
     planFeatures: sub?.plan?.features || {},
     overrides: overrideResult.data || [],
-    maxAssets: sub?.plan?.max_assets || 100,
+    maxAssets: pilotActive ? 50 : (sub?.plan?.max_assets || 100),
     maxUsers: sub?.plan?.max_users || 5,
     currentAssets: assetCount.count || 0,
     currentUsers: userCount.count || 0,
+    isPilot,
+    pilotActive,
+    pilotEndDate: org?.pilot_end_date || null,
   };
 }
 
@@ -84,6 +104,9 @@ export async function getEntitlementContext(): Promise<EntitlementContext | null
  * Resolution order: overrides → subscription status → plan features → deny
  */
 export function hasFeature(ctx: EntitlementContext, feature: Feature): boolean {
+  // Active pilots get all features
+  if (ctx.pilotActive) return true;
+
   // 1. Check overrides (custom deals, pilots, promos)
   const override = ctx.overrides.find(o => o.feature === feature);
   if (override) {
@@ -101,6 +124,28 @@ export function hasFeature(ctx: EntitlementContext, feature: Feature): boolean {
 
   // 3. Check plan features (true = enabled, false/'on_demand' = not included)
   return ctx.planFeatures[feature] === true;
+}
+
+/**
+ * Get access level for a feature.
+ * Returns 'full' if user can read+write, 'read_only' if expired pilot
+ * with prior access, 'blocked' if no access at all.
+ */
+export function getFeatureAccessLevel(ctx: EntitlementContext, feature: Feature): FeatureAccessLevel {
+  // Full access if feature is enabled
+  if (hasFeature(ctx, feature)) return 'full';
+
+  // For VGP: expired pilot = read-only (can view data, cannot create/edit)
+  if (feature === 'vgp_compliance' && ctx.isPilot && !ctx.pilotActive) {
+    return 'read_only';
+  }
+
+  // For digital_audits: same treatment as VGP for expired pilots
+  if (feature === 'digital_audits' && ctx.isPilot && !ctx.pilotActive) {
+    return 'read_only';
+  }
+
+  return 'blocked';
 }
 
 /**

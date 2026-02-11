@@ -5,6 +5,8 @@ import { AlertCircle, CheckCircle, Calendar, FileText, TrendingUp, ArrowRight } 
 import FeatureGate from '@/components/subscription/FeatureGate';
 import { useLanguage } from '@/lib/LanguageContext';
 import { createTranslator } from '@/lib/i18n';
+import { VGPReadOnlyBanner } from './VGPUpgradeOverlay';
+import { useVGPAccess } from '@/hooks/useSubscription';
 
 export default function VGPComplianceDashboard() {
   return (
@@ -17,6 +19,8 @@ export default function VGPComplianceDashboard() {
 function VGPContent() {
   const { language } = useLanguage();
   const t = createTranslator(language);
+  const { access: vgpAccess } = useVGPAccess();
+  const isReadOnly = vgpAccess === 'read_only';
 
   const [summary, setSummary] = useState<any>(null);
   const [upcoming, setUpcoming] = useState<any[]>([]);
@@ -70,6 +74,8 @@ function VGPContent() {
 
   return (
     <div className="p-8 space-y-6">
+      {isReadOnly && <VGPReadOnlyBanner />}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -78,13 +84,15 @@ function VGPContent() {
             {t('vgpDashboard.pageSubtitle')}
           </p>
         </div>
-        <button
-          onClick={() => (window.location.href = '/vgp/report')}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <FileText className="w-4 h-4" />
-          {t('vgpDashboard.generateReport')}
-        </button>
+        {!isReadOnly && (
+          <button
+            onClick={() => (window.location.href = '/vgp/report')}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <FileText className="w-4 h-4" />
+            {t('vgpDashboard.generateReport')}
+          </button>
+        )}
       </div>
 
       {/* 4 Cards */}
