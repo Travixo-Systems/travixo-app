@@ -18,6 +18,7 @@ export const FEATURE_REGISTRY = {
   priority_support: { title: 'Priority Support', description: 'Priority customer support channels.' },
   dedicated_support: { title: 'Dedicated Support', description: 'Dedicated support is available on Business and Enterprise plans. Upgrade for priority assistance.' },
   custom_integrations: { title: 'Custom Integrations', description: 'Custom integrations are available on Enterprise plans. Upgrade for tailored integration solutions.' },
+  rental_management: { title: 'Rental Management', description: 'Equipment rental tracking is available on Professional plans and above. Upgrade to track who has your equipment and block non-compliant checkouts.' },
 } as const;
 
 export type FeatureKey = keyof typeof FEATURE_REGISTRY;

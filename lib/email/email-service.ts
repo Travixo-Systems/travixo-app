@@ -16,6 +16,8 @@ import { VGPReminder15Day } from './templates/vgp-reminder-15day';
 import { VGPReminder7Day } from './templates/vgp-reminder-7day';
 import { VGPReminder1Day } from './templates/vgp-reminder-1day';
 import { VGPOverdue } from './templates/vgp-overdue';
+import { ClientRecall30Day } from './templates/client-recall-30day';
+import { ClientRecall14Day } from './templates/client-recall-14day';
 
 import type {
   VGPAlertType,
@@ -23,6 +25,8 @@ import type {
   EmailRecipient,
   VGPAlertEmailProps,
 } from '@/types/vgp-alerts';
+
+import type { RecallTableRow } from './templates/components/rental-recall-table';
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -386,3 +390,92 @@ export async function getOrgNotificationPrefs(
     recipients: prefs.vgp_alerts?.recipients || 'owner',
   };
 }
+
+// ---------------------------------------------------------------------------
+// Client Recall Emails
+// ---------------------------------------------------------------------------
+
+export type RecallAlertType = 'recall_30day' | 'recall_14day';
+
+const RECALL_SUBJECT_LINES: Record<RecallAlertType, (count: number, orgName: string) => string> = {
+  recall_30day: (count, orgName) =>
+    `[TraviXO] Rappel VGP : ${count} equipement${count > 1 ? 's' : ''} en location a planifier - ${orgName}`,
+  recall_14day: (count, orgName) =>
+    `[TraviXO] URGENT : ${count} equipement${count > 1 ? 's' : ''} en location - VGP dans 14 jours - ${orgName}`,
+};
+
+/**
+ * Send a client recall email to org recipients.
+ * Notifies that rented-out equipment needs VGP inspection soon.
+ */
+export async function sendClientRecallEmail(
+  alertType: RecallAlertType,
+  organizationName: string,
+  recipients: EmailRecipient[],
+  items: RecallTableRow[]
+): Promise<{ success: boolean; emailId?: string; error?: string }> {
+  const logPrefix = '[EMAIL-RECALL]';
+
+  if (recipients.length === 0 || items.length === 0) {
+    return { success: false, error: 'No recipients or items' };
+  }
+
+  const resend = getResendClient();
+
+  const props = {
+    organizationName,
+    items,
+    appUrl: APP_URL,
+  };
+
+  const subject = RECALL_SUBJECT_LINES[alertType](items.length, organizationName);
+  const recipientEmails = recipients.map((r) => r.email);
+
+  console.log(
+    `${logPrefix} Sending ${alertType} to ${organizationName} ` +
+    `(${items.length} items, ${recipientEmails.length} recipients)`
+  );
+
+  let html: string;
+  try {
+    const template = alertType === 'recall_30day'
+      ? ClientRecall30Day(props)
+      : ClientRecall14Day(props);
+    html = await render(template);
+  } catch (renderError) {
+    const msg = renderError instanceof Error ? renderError.message : String(renderError);
+    console.log(`${logPrefix} Template render error: ${msg}`);
+    return { success: false, error: `Template render failed: ${msg}` };
+  }
+
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const { data, error } = await resend.emails.send({
+        from: `${SENDER_NAME} <${SENDER_EMAIL}>`,
+        to: recipientEmails,
+        replyTo: REPLY_TO,
+        subject,
+        html,
+      });
+
+      if (error) {
+        console.log(`${logPrefix} Resend error (attempt ${attempt}): ${error.message}`);
+        if (attempt === 2) return { success: false, error: `Resend error: ${error.message}` };
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        continue;
+      }
+
+      console.log(`${logPrefix} Email sent: ${data?.id} (attempt ${attempt})`);
+      return { success: true, emailId: data?.id };
+    } catch (sendError) {
+      const msg = sendError instanceof Error ? sendError.message : String(sendError);
+      console.log(`${logPrefix} Exception (attempt ${attempt}): ${msg}`);
+      if (attempt === 2) return { success: false, error: `Send exception: ${msg}` };
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+  }
+
+  return { success: false, error: 'All send attempts failed' };
+}
+
+export type { RecallTableRow };

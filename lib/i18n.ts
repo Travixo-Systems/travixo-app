@@ -2530,6 +2530,10 @@ export const translations = {
       en: "History",
       fr: "Historique",
     },
+    clients: {
+      en: "Clients",
+      fr: "Clients",
+    },
   },
   // ============================================================================
   // AUDITS MODULE
@@ -3180,6 +3184,246 @@ export const translations = {
       fr: "En Attente",
     },
   },
+  // ============================================================================
+  // RENTAL MODULE
+  // ============================================================================
+  rental: {
+    availableForRental: {
+      en: "Available for Rental",
+      fr: "Disponible pour location",
+    },
+    currentlyRented: {
+      en: "Currently Rented",
+      fr: "Actuellement en location",
+    },
+    overdue: {
+      en: "OVERDUE",
+      fr: "EN RETARD",
+    },
+    openEnded: {
+      en: "Open-ended",
+      fr: "Durée indéterminée",
+    },
+    checkoutToClient: {
+      en: "Checkout to Client",
+      fr: "Sortie client",
+    },
+    processReturn: {
+      en: "Process Return",
+      fr: "Enregistrer le retour",
+    },
+    confirmCheckout: {
+      en: "Confirm Checkout",
+      fr: "Confirmer la sortie",
+    },
+    confirmReturn: {
+      en: "Confirm Return",
+      fr: "Confirmer le retour",
+    },
+    clientName: {
+      en: "Client Name",
+      fr: "Nom du client",
+    },
+    clientContact: {
+      en: "Client Contact",
+      fr: "Contact client",
+    },
+    expectedReturn: {
+      en: "Expected Return",
+      fr: "Retour prévu",
+    },
+    returnCondition: {
+      en: "Return Condition",
+      fr: "État au retour",
+    },
+    conditionGood: {
+      en: "Good",
+      fr: "Bon",
+    },
+    conditionFair: {
+      en: "Fair",
+      fr: "Correct",
+    },
+    conditionDamaged: {
+      en: "Damaged",
+      fr: "Endommagé",
+    },
+    client: {
+      en: "Client",
+      fr: "Client",
+    },
+    since: {
+      en: "Since",
+      fr: "Depuis",
+    },
+    expectedBy: {
+      en: "Expected by",
+      fr: "Retour prévu le",
+    },
+    overdueBy: {
+      en: "Overdue by",
+      fr: "En retard de",
+    },
+    duration: {
+      en: "Duration",
+      fr: "Durée",
+    },
+    days: {
+      en: "days",
+      fr: "jours",
+    },
+    vgpBlocked: {
+      en: "VGP Non-Compliant",
+      fr: "VGP Non Conforme",
+    },
+    vgpBlockedMessage: {
+      en: "This equipment cannot be rented until VGP inspection is completed.",
+      fr: "Cet équipement ne peut pas être loué tant que l'inspection VGP n'est pas effectuée.",
+    },
+    vgpCompliant: {
+      en: "VGP: Compliant",
+      fr: "VGP : Conforme",
+    },
+    vgpNextInspection: {
+      en: "Next inspection",
+      fr: "Prochaine inspection",
+    },
+    alreadyRented: {
+      en: "This asset is already rented out",
+      fr: "Cet actif est déjà en location",
+    },
+    checkoutSuccess: {
+      en: "Asset checked out successfully",
+      fr: "Sortie enregistrée avec succès",
+    },
+    returnSuccess: {
+      en: "Asset returned successfully",
+      fr: "Retour enregistré avec succès",
+    },
+    rentalFeatureTitle: {
+      en: "Equipment Rental Tracking",
+      fr: "Suivi de location d'équipement",
+    },
+    rentalFeatureDescription: {
+      en: "Track who has your equipment, when it's coming back, and block non-compliant checkouts.",
+      fr: "Suivez qui a votre équipement, quand il revient, et bloquez les sorties non conformes.",
+    },
+    upgradeToUnlock: {
+      en: "Upgrade to Professional",
+      fr: "Passer au Professionnel",
+    },
+    selectClient: {
+      en: "Select Client",
+      fr: "Sélectionner un client",
+    },
+    newClient: {
+      en: "New Client",
+      fr: "Nouveau client",
+    },
+    orCreateNew: {
+      en: "or create new",
+      fr: "ou créer nouveau",
+    },
+    clientEmail: {
+      en: "Email",
+      fr: "Email",
+    },
+    clientPhone: {
+      en: "Phone",
+      fr: "Téléphone",
+    },
+    clientCompany: {
+      en: "Company",
+      fr: "Entreprise",
+    },
+  },
+
+  // ============================================================================
+  // CLIENTS
+  // ============================================================================
+  clients: {
+    pageTitle: {
+      en: "Clients",
+      fr: "Clients",
+    },
+    pageSubtitle: {
+      en: "Manage your rental clients and their equipment",
+      fr: "Gérez vos clients de location et leur équipement",
+    },
+    addClient: {
+      en: "Add Client",
+      fr: "Ajouter un client",
+    },
+    searchClients: {
+      en: "Search clients...",
+      fr: "Rechercher des clients...",
+    },
+    noClients: {
+      en: "No clients yet",
+      fr: "Aucun client pour le moment",
+    },
+    noClientsDescription: {
+      en: "Clients are created automatically when you check out equipment, or you can add them manually.",
+      fr: "Les clients sont créés automatiquement lors des sorties d'équipement, ou vous pouvez les ajouter manuellement.",
+    },
+    activeRentals: {
+      en: "Active Rentals",
+      fr: "Locations actives",
+    },
+    totalRentals: {
+      en: "Total Rentals",
+      fr: "Total locations",
+    },
+    name: {
+      en: "Name",
+      fr: "Nom",
+    },
+    email: {
+      en: "Email",
+      fr: "Email",
+    },
+    phone: {
+      en: "Phone",
+      fr: "Téléphone",
+    },
+    company: {
+      en: "Company",
+      fr: "Entreprise",
+    },
+    address: {
+      en: "Address",
+      fr: "Adresse",
+    },
+    notes: {
+      en: "Notes",
+      fr: "Notes",
+    },
+    editClient: {
+      en: "Edit Client",
+      fr: "Modifier le client",
+    },
+    clientSaved: {
+      en: "Client saved",
+      fr: "Client enregistré",
+    },
+    clientExists: {
+      en: "A client with this name already exists",
+      fr: "Un client avec ce nom existe déjà",
+    },
+    recallNeeded: {
+      en: "VGP Recall Needed",
+      fr: "Rappel VGP nécessaire",
+    },
+    recallDescription: {
+      en: "Equipment rented to this client needs VGP inspection soon",
+      fr: "L'équipement loué à ce client nécessite bientôt une inspection VGP",
+    },
+    equipmentOut: {
+      en: "equipment out",
+      fr: "équipement(s) sorti(s)",
+    },
+  },
+
   // ============================================================================
   // COMMON
   // ============================================================================

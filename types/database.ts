@@ -600,6 +600,130 @@ export type Database = {
         }
         Relationships: []
       }
+      rentals: {
+        Row: {
+          id: string
+          organization_id: string
+          asset_id: string
+          client_name: string
+          client_contact: string | null
+          client_id: string | null
+          checked_out_by: string
+          returned_by: string | null
+          checkout_date: string
+          expected_return_date: string | null
+          actual_return_date: string | null
+          checkout_notes: string | null
+          return_notes: string | null
+          return_condition: string | null
+          status: string
+          checkout_scan_id: string | null
+          return_scan_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          asset_id: string
+          client_name: string
+          client_contact?: string | null
+          client_id?: string | null
+          checked_out_by: string
+          returned_by?: string | null
+          checkout_date?: string
+          expected_return_date?: string | null
+          actual_return_date?: string | null
+          checkout_notes?: string | null
+          return_notes?: string | null
+          return_condition?: string | null
+          status?: string
+          checkout_scan_id?: string | null
+          return_scan_id?: string | null
+        }
+        Update: {
+          client_name?: string
+          client_contact?: string | null
+          client_id?: string | null
+          returned_by?: string | null
+          expected_return_date?: string | null
+          actual_return_date?: string | null
+          return_notes?: string | null
+          return_condition?: string | null
+          status?: string
+          return_scan_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      clients: {
+        Row: {
+          id: string
+          organization_id: string
+          name: string
+          email: string | null
+          phone: string | null
+          company: string | null
+          address: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          name: string
+          email?: string | null
+          phone?: string | null
+          company?: string | null
+          address?: string | null
+          notes?: string | null
+        }
+        Update: {
+          name?: string
+          email?: string | null
+          phone?: string | null
+          company?: string | null
+          address?: string | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      client_recall_alerts: {
+        Row: {
+          id: string
+          organization_id: string
+          rental_id: string
+          client_id: string | null
+          asset_id: string
+          alert_type: string
+          vgp_schedule_id: string | null
+          next_due_date: string
+          sent: boolean
+          sent_at: string | null
+          email_sent_to: string[] | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          rental_id: string
+          client_id?: string | null
+          asset_id: string
+          alert_type: string
+          vgp_schedule_id?: string | null
+          next_due_date: string
+          sent?: boolean
+          sent_at?: string | null
+          email_sent_to?: string[] | null
+        }
+        Update: {
+          sent?: boolean
+          sent_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: {
@@ -624,6 +748,34 @@ export type Database = {
       check_pilot_asset_limit: {
         Args: { org_id: string }
         Returns: { current_count: number; max_allowed: number; limit_reached: boolean }[]
+      }
+      checkout_asset: {
+        Args: {
+          p_asset_id: string
+          p_organization_id: string
+          p_user_id: string
+          p_client_name: string
+          p_client_contact?: string | null
+          p_expected_return_date?: string | null
+          p_checkout_notes?: string | null
+          p_location_name?: string | null
+          p_latitude?: number | null
+          p_longitude?: number | null
+          p_client_id?: string | null
+        }
+        Returns: { success: boolean; rental_id?: string; scan_id?: string; error?: string }
+      }
+      return_asset: {
+        Args: {
+          p_rental_id: string
+          p_user_id: string
+          p_return_condition?: string | null
+          p_return_notes?: string | null
+          p_location_name?: string | null
+          p_latitude?: number | null
+          p_longitude?: number | null
+        }
+        Returns: { success: boolean; scan_id?: string; error?: string }
       }
     }
   }
