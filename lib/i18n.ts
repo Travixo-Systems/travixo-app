@@ -587,6 +587,56 @@ export const translations = {
         fr: "Échec du chargement des calendriers",
       },
     },
+    detailsModal: {
+      title: {
+        en: "Schedule Details",
+        fr: "Détails du calendrier",
+      },
+      overdueBy: {
+        en: "Overdue by {days} days",
+        fr: "En retard de {days} jours",
+      },
+      daysUntil: {
+        en: "{days} days until due",
+        fr: "{days} jours avant l'échéance",
+      },
+      inspectionSchedule: {
+        en: "Inspection Schedule",
+        fr: "Calendrier d'inspection",
+      },
+      interval: {
+        en: "Interval",
+        fr: "Intervalle",
+      },
+      months: {
+        en: "months",
+        fr: "mois",
+      },
+      nextInspection: {
+        en: "Next Inspection",
+        fr: "Prochaine inspection",
+      },
+      lastInspection: {
+        en: "Last Inspection",
+        fr: "Dernière inspection",
+      },
+      assignedInspector: {
+        en: "Assigned Inspector",
+        fr: "Inspecteur attitré",
+      },
+      notes: {
+        en: "Notes",
+        fr: "Notes",
+      },
+      qrCode: {
+        en: "QR Code",
+        fr: "Code QR",
+      },
+      close: {
+        en: "Close",
+        fr: "Fermer",
+      },
+    },
   },
 
   // ============================================================================
