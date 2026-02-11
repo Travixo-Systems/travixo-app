@@ -1,5 +1,4 @@
 import type { NextConfig } from 'next'
-import { withSentryConfig } from '@sentry/nextjs'
 
 const securityHeaders = [
   { key: 'X-Frame-Options', value: 'DENY' },
@@ -29,17 +28,4 @@ const nextConfig: NextConfig = {
   },
 }
 
-export default withSentryConfig(nextConfig, {
-  // Suppress source map upload logs during build
-  silent: !process.env.CI,
-
-  // Upload source maps for better stack traces
-  widenClientFileUpload: true,
-
-  // Hide source maps from users
-  hideSourceMaps: true,
-
-  // Automatically instrument API routes and server components
-  autoInstrumentServerFunctions: true,
-  autoInstrumentMiddleware: true,
-})
+export default nextConfig

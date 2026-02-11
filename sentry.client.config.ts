@@ -1,24 +1,28 @@
 // Sentry configuration for the browser (client-side).
-// Loaded automatically by @sentry/nextjs via next.config.ts instrumentation.
+// Uses @sentry/browser directly for Next.js 16 compatibility.
 
-import * as Sentry from '@sentry/nextjs'
+import * as Sentry from '@sentry/browser'
 
-Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+export function initSentryClient() {
+  if (typeof window === 'undefined') return
 
-  // Only send errors in production
-  enabled: process.env.NODE_ENV === 'production',
+  Sentry.init({
+    dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
-  // Sample 100% of errors, 10% of transactions (adjust as traffic grows)
-  tracesSampleRate: 0.1,
-  replaysSessionSampleRate: 0,
-  replaysOnErrorSampleRate: 1.0,
+    // Only send errors in production
+    enabled: process.env.NODE_ENV === 'production',
 
-  // Filter out noise
-  ignoreErrors: [
-    'ResizeObserver loop',
-    'Network request failed',
-    'Load failed',
-    'AbortError',
-  ],
-})
+    // Sample 100% of errors, 10% of transactions (adjust as traffic grows)
+    tracesSampleRate: 0.1,
+
+    // Filter out noise
+    ignoreErrors: [
+      'ResizeObserver loop',
+      'Network request failed',
+      'Load failed',
+      'AbortError',
+    ],
+  })
+}
+
+export { Sentry }

@@ -1,6 +1,5 @@
 'use client'
 
-import * as Sentry from '@sentry/nextjs'
 import { useEffect } from 'react'
 
 export default function GlobalError({
@@ -11,7 +10,10 @@ export default function GlobalError({
   reset: () => void
 }) {
   useEffect(() => {
-    Sentry.captureException(error)
+    // Dynamic import to avoid SSR issues with @sentry/browser
+    import('@sentry/browser').then(Sentry => {
+      Sentry.captureException(error)
+    })
   }, [error])
 
   return (
