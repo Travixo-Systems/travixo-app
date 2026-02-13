@@ -47,14 +47,19 @@ export default function DashboardPage() {
     // Get user profile and org
     const { data: profile } = await supabase
       .from('users')
-      .select('organization_id, organizations(name, onboarding_completed)')
+      .select('organization_id, organizations(name, onboarding_completed, demo_data_seeded)')
       .eq('id', user.id)
       .single()
 
     const orgId = profile?.organization_id
-    const orgInfo = (profile as unknown as { organizations: { name: string; onboarding_completed: boolean } | null })?.organizations
+    const orgInfo = (profile as unknown as { organizations: { name: string; onboarding_completed: boolean; demo_data_seeded: boolean } | null })?.organizations
     const orgName = orgInfo?.name || 'Your Organization'
     const onboardingCompleted = orgInfo?.onboarding_completed ?? true
+
+    // Auto-trigger onboarding for existing orgs that haven't been seeded yet
+    if (orgId && orgInfo && !orgInfo.demo_data_seeded) {
+      fetch('/api/internal/post-registration', { method: 'POST' }).catch(() => {})
+    }
 
     // Get asset counts
     const { count: totalAssets } = await supabase
