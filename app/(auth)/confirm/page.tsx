@@ -197,7 +197,7 @@ function ConfirmContent() {
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">Verification en cours...</h2>
                 <p className="mt-3 text-gray-600">
-                  Configuration de votre compte et activation du pilote de 14 jours.
+                  Configuration de votre compte et activation du pilote de 15 jours.
                 </p>
               </div>
             </>
@@ -211,7 +211,7 @@ function ConfirmContent() {
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">Email verifie !</h2>
                 <p className="mt-3 text-gray-600">
-                  Votre compte est pret. Votre pilote gratuit de 14 jours est actif.
+                  Votre compte est pret. Votre pilote gratuit de 15 jours est actif.
                 </p>
                 <p className="mt-2 text-sm text-gray-500">
                   50 equipements max &bull; Conformite VGP incluse &bull; Aucune carte requise

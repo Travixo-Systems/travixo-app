@@ -2,6 +2,7 @@
 import Sidebar from '@/components/Sidebar'
 import { ThemeProvider } from '@/lib/ThemeContext'
 import PilotBanner from '@/components/dashboard/PilotBanner'
+import AccountLockedOverlay from '@/components/dashboard/AccountLockedOverlay'
 
 export default async function DashboardLayout({
   children,
@@ -15,7 +16,9 @@ export default async function DashboardLayout({
         <div className="flex-1 flex flex-col overflow-hidden">
           <PilotBanner />
           <main className="flex-1 overflow-y-auto">
-            {children}
+            <AccountLockedOverlay>
+              {children}
+            </AccountLockedOverlay>
           </main>
         </div>
       </div>

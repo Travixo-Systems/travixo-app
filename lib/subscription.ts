@@ -71,6 +71,7 @@ export interface SubscriptionInfo {
   pilot_active: boolean;
   pilot_end_date: string | null;
   vgp_access: 'full' | 'read_only' | 'blocked';
+  account_locked: boolean;
 }
 
 /**

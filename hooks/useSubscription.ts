@@ -53,6 +53,11 @@ export function useFeatureAccess(feature: FeatureKey): { hasAccess: boolean; isL
     return { hasAccess: false, isLoading: true };
   }
 
+  // Account locked — no access to anything
+  if (subscriptionInfo.account_locked) {
+    return { hasAccess: false, isLoading: false };
+  }
+
   // Active pilots get everything (pilot_active check is done server-side)
   if (subscriptionInfo.pilot_active) {
     return { hasAccess: true, isLoading: false };
@@ -214,6 +219,11 @@ export function useVGPAccess(): {
     return { access: 'full', isLoading: false };
   }
 
+  // Account locked (30+ days since signup, not converted) — blocked entirely
+  if ((subscriptionInfo as any).account_locked) {
+    return { access: 'blocked', isLoading: false };
+  }
+
   if (subscriptionInfo.is_pilot && !(subscriptionInfo as any).pilot_active) {
     return { access: 'read_only', isLoading: false };
   }
@@ -229,12 +239,13 @@ export function usePilotStatus(): {
   pilotActive: boolean;
   daysRemaining: number | null;
   pilotEndDate: string | null;
+  accountLocked: boolean;
   isLoading: boolean;
 } {
   const { data: subscriptionInfo, isLoading } = useSubscription();
 
   if (isLoading || !subscriptionInfo) {
-    return { isPilot: false, pilotActive: false, daysRemaining: null, pilotEndDate: null, isLoading: true };
+    return { isPilot: false, pilotActive: false, daysRemaining: null, pilotEndDate: null, accountLocked: false, isLoading: true };
   }
 
   const info = subscriptionInfo as any;
@@ -243,6 +254,7 @@ export function usePilotStatus(): {
     pilotActive: info.pilot_active || false,
     daysRemaining: info.days_remaining || null,
     pilotEndDate: info.pilot_end_date || null,
+    accountLocked: info.account_locked || false,
     isLoading: false,
   };
 }

@@ -29,6 +29,9 @@ export interface EntitlementContext {
   isPilot: boolean;
   pilotActive: boolean;
   pilotEndDate: string | null;
+  pilotStartDate: string | null;
+  convertedToPaid: boolean;
+  accountLocked: boolean;
 }
 
 /**
@@ -70,7 +73,7 @@ export async function getEntitlementContext(): Promise<EntitlementContext | null
       .eq('organization_id', orgId),
     supabase
       .from('organizations')
-      .select('is_pilot, pilot_start_date, pilot_end_date')
+      .select('is_pilot, pilot_start_date, pilot_end_date, converted_to_paid')
       .eq('id', orgId)
       .single(),
   ]);
@@ -82,6 +85,15 @@ export async function getEntitlementContext(): Promise<EntitlementContext | null
   const pilotActive = isPilot &&
     (!org?.pilot_start_date || new Date() >= new Date(org.pilot_start_date)) &&
     (!org?.pilot_end_date || new Date() <= new Date(org.pilot_end_date));
+
+  const convertedToPaid = org?.converted_to_paid || false;
+  let daysSincePilotStart = 0;
+  if (isPilot && org?.pilot_start_date) {
+    daysSincePilotStart = Math.ceil(
+      (new Date().getTime() - new Date(org.pilot_start_date).getTime()) / (1000 * 60 * 60 * 24)
+    );
+  }
+  const accountLocked = isPilot && !pilotActive && !convertedToPaid && daysSincePilotStart > 30;
 
   return {
     organizationId: orgId,
@@ -96,6 +108,9 @@ export async function getEntitlementContext(): Promise<EntitlementContext | null
     isPilot,
     pilotActive,
     pilotEndDate: org?.pilot_end_date || null,
+    pilotStartDate: org?.pilot_start_date || null,
+    convertedToPaid,
+    accountLocked,
   };
 }
 
@@ -104,6 +119,9 @@ export async function getEntitlementContext(): Promise<EntitlementContext | null
  * Resolution order: overrides → subscription status → plan features → deny
  */
 export function hasFeature(ctx: EntitlementContext, feature: Feature): boolean {
+  // Account locked — no access to anything
+  if (ctx.accountLocked) return false;
+
   // Active pilots get all features
   if (ctx.pilotActive) return true;
 
@@ -132,15 +150,18 @@ export function hasFeature(ctx: EntitlementContext, feature: Feature): boolean {
  * with prior access, 'blocked' if no access at all.
  */
 export function getFeatureAccessLevel(ctx: EntitlementContext, feature: Feature): FeatureAccessLevel {
+  // Account locked — everything blocked
+  if (ctx.accountLocked) return 'blocked';
+
   // Full access if feature is enabled
   if (hasFeature(ctx, feature)) return 'full';
 
-  // For VGP: expired pilot = read-only (can view data, cannot create/edit)
+  // For VGP: expired pilot within grace period = read-only
   if (feature === 'vgp_compliance' && ctx.isPilot && !ctx.pilotActive) {
     return 'read_only';
   }
 
-  // For digital_audits: same treatment as VGP for expired pilots
+  // For digital_audits: same treatment as VGP for expired pilots in grace period
   if (feature === 'digital_audits' && ctx.isPilot && !ctx.pilotActive) {
     return 'read_only';
   }

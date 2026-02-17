@@ -11,8 +11,8 @@
 UPDATE public.organizations
 SET is_pilot          = true,
     pilot_start_date  = NOW(),
-    pilot_end_date    = NOW() + INTERVAL '14 days',
-    trial_ends_at     = NOW() + INTERVAL '14 days',
+    pilot_end_date    = NOW() + INTERVAL '15 days',
+    trial_ends_at     = NOW() + INTERVAL '15 days',
     subscription_status = 'trialing',
     onboarding_completed = false,
     demo_data_seeded     = false
@@ -21,7 +21,7 @@ WHERE is_pilot IS NOT true
 
 -- 2. Grant entitlement overrides for the pilot period (skip if already granted)
 INSERT INTO public.entitlement_overrides (organization_id, feature, granted, reason, expires_at)
-SELECT o.id, f.feature, true, 'pilot-backfill', NOW() + INTERVAL '14 days'
+SELECT o.id, f.feature, true, 'pilot-backfill', NOW() + INTERVAL '15 days'
 FROM public.organizations o
 CROSS JOIN (VALUES
   ('qr_generation'), ('public_scanning'), ('basic_reports'), ('csv_export'),
