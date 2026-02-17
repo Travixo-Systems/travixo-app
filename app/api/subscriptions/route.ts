@@ -69,7 +69,7 @@ export async function GET() {
     // Fetch organization details (pilot status)
     const { data: org, error: orgError } = await supabase
       .from('organizations')
-      .select('id, name, is_pilot, pilot_start_date, pilot_end_date')
+      .select('id, name, is_pilot, pilot_start_date, pilot_end_date, converted_to_paid')
       .eq('id', organizationId)
       .single();
 
@@ -113,14 +113,26 @@ export async function GET() {
     // Asset limit: 50 for active pilots, plan limit otherwise
     const maxAssets = isPilotActive ? 50 : (subscription?.plan?.max_assets || 100);
 
+    // Hard cutoff: 30 days after pilot start, if not converted → kill access
+    const convertedToPaid = org?.converted_to_paid || false;
+    let daysSincePilotStart = 0;
+    if (isPilot && org?.pilot_start_date) {
+      daysSincePilotStart = Math.ceil(
+        (new Date().getTime() - new Date(org.pilot_start_date).getTime()) / (1000 * 60 * 60 * 24)
+      );
+    }
+    const accountLocked = isPilot && !isPilotActive && !convertedToPaid && daysSincePilotStart > 30;
+
     // Determine VGP access level
     let vgp_access: 'full' | 'read_only' | 'blocked' = 'blocked';
-    if (isPilotActive) {
+    if (accountLocked) {
+      vgp_access = 'blocked';
+    } else if (isPilotActive) {
       vgp_access = 'full';
     } else if (['professional', 'business', 'enterprise'].includes(subscription?.plan?.slug || '')) {
       vgp_access = 'full';
     } else if (isPilot && !isPilotActive) {
-      // Expired pilot — read-only VGP
+      // Expired pilot within 30-day grace period — read-only VGP
       vgp_access = 'read_only';
     }
 
@@ -138,6 +150,7 @@ export async function GET() {
       pilot_active: isPilotActive,
       pilot_end_date: org?.pilot_end_date || null,
       vgp_access,
+      account_locked: accountLocked,
     });
 
   } catch (error: any) {

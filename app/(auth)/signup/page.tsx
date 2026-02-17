@@ -188,7 +188,7 @@ function SignUpContent() {
                 En toute conformite.
               </h2>
               <p className="mt-4 text-white/70 text-lg">
-                Start your 30-day free pilot. Full access, no credit card required.
+                Start your 15-day free pilot. Full access, no credit card required.
               </p>
             </div>
           )}
@@ -253,7 +253,7 @@ function SignUpContent() {
             /* ---- Normal signup header ---- */
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
-                Evaluation gratuite de 30 jours
+                Evaluation gratuite de 15 jours
               </h2>
               <p className="mt-1 text-sm text-gray-500">
                 Conformite VGP incluse • Aucune carte requise

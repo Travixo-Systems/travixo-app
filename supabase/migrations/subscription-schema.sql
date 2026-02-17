@@ -287,9 +287,9 @@ SELECT
   (SELECT id FROM subscription_plans WHERE slug = 'professional' LIMIT 1),
   'trialing',
   NOW(),
-  NOW() + INTERVAL '30 days',
+  NOW() + INTERVAL '15 days',
   NOW(),
-  NOW() + INTERVAL '30 days'
+  NOW() + INTERVAL '15 days'
 FROM organizations o
 WHERE NOT EXISTS (
   SELECT 1 FROM subscriptions WHERE organization_id = o.id
