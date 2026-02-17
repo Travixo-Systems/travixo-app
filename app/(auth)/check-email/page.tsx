@@ -76,7 +76,7 @@ function CheckEmailContent() {
               Plus qu'une etape.
             </h2>
             <p className="mt-4 text-white/70 text-lg">
-              Verifiez votre adresse email pour activer votre compte et demarrer votre pilote de 30 jours.
+              Verifiez votre adresse email pour activer votre compte et demarrer votre pilote de 14 jours.
             </p>
           </div>
         </div>
@@ -113,7 +113,7 @@ function CheckEmailContent() {
               </p>
             )}
             <p className="mt-4 text-sm text-gray-500">
-              Cliquez sur le lien dans l'email pour verifier votre compte et activer votre pilote gratuit de 30 jours.
+              Cliquez sur le lien dans l'email pour verifier votre compte et activer votre pilote gratuit de 14 jours.
             </p>
           </div>
 

@@ -309,7 +309,7 @@ function LoginContent() {
               className="font-semibold hover:underline"
               style={{ color: BRAND.primary }}
             >
-              {isInviteRedirect ? 'Creer un compte' : 'Evaluation gratuite de 30 jours'}
+              {isInviteRedirect ? 'Creer un compte' : 'Evaluation gratuite de 14 jours'}
             </Link>
           </div>
         </div>

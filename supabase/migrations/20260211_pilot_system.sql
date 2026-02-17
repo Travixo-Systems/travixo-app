@@ -1,7 +1,7 @@
 -- ============================================================
 -- TraviXO Pilot System Migration
 -- Date: 2026-02-11
--- Purpose: Enforce 30-day pilot on new signups, add pilot
+-- Purpose: Enforce 14-day pilot on new signups, add pilot
 --          tracking columns, fix Professional pricing,
 --          add pilot-aware asset limit check
 -- ============================================================
@@ -105,8 +105,8 @@ BEGIN
     'trialing',
     true,
     NOW(),
-    NOW() + INTERVAL '30 days',
-    NOW() + INTERVAL '30 days'
+    NOW() + INTERVAL '14 days',
+    NOW() + INTERVAL '14 days'
   )
   RETURNING id INTO v_org_id;
 
@@ -128,15 +128,15 @@ BEGIN
       trial_start, trial_end
     ) VALUES (
       v_org_id, v_plan_id, 'trialing',
-      NOW(), NOW() + INTERVAL '30 days',
-      NOW(), NOW() + INTERVAL '30 days'
+      NOW(), NOW() + INTERVAL '14 days',
+      NOW(), NOW() + INTERVAL '14 days'
     )
     ON CONFLICT (organization_id) DO NOTHING;
   END IF;
 
   -- Grant all features via entitlement overrides for pilot period
   INSERT INTO public.entitlement_overrides (organization_id, feature, granted, reason, expires_at)
-  SELECT v_org_id, f.feature, true, 'pilot', NOW() + INTERVAL '30 days'
+  SELECT v_org_id, f.feature, true, 'pilot', NOW() + INTERVAL '14 days'
   FROM (VALUES
     ('qr_generation'), ('public_scanning'), ('basic_reports'), ('csv_export'),
     ('email_support'), ('vgp_compliance'), ('digital_audits'), ('api_access'),
