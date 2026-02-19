@@ -368,8 +368,8 @@ export const VGP_VERIFICATION_TYPE_DEFINITIONS: VGPVerificationTypeDefinitions =
 export const VGP_LEGAL_NOTICE: VGPLegalNotice = {
   referenceCodeTravail: 'Articles R.4323-21 à R.4323-28 du Code du travail.',
   disclaimer:
-    "Ce rapport est généré automatiquement par TraviXO. Il est valide uniquement accompagné des certificats individuels d'inspection et ne se substitue pas aux obligations de conservation des rapports détaillés.",
-  editeur: 'TraviXO Systems',
+    "Ce rapport est généré automatiquement par LOXAM. Il est valide uniquement accompagné des certificats individuels d'inspection et ne se substitue pas aux obligations de conservation des rapports détaillés.",
+  editeur: 'LOXAM',
   versionApplication: 'v1.0.0',
 };
 

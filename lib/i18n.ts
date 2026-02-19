@@ -215,8 +215,8 @@ export const translations = {
         fr: "Vous êtes déjà sur ce plan",
       },
       contactEnterprise: {
-        en: "Please contact sales for Enterprise pricing: contact@travixosystems.com",
-        fr: "Veuillez contacter les ventes pour les tarifs Entreprise : contact@travixosystems.com",
+        en: "Please contact sales for Enterprise pricing: contact@loxam.fr",
+        fr: "Veuillez contacter les ventes pour les tarifs Entreprise : contact@loxam.fr",
       },
       updateFailed: {
         en: "Failed to update subscription",
@@ -286,8 +286,8 @@ export const translations = {
       fr: "Bientôt disponible",
     },
     enterpriseContactError: {
-      en: "Please contact sales for Enterprise pricing: contact@travixosystems.com",
-      fr: "Veuillez contacter les ventes pour les tarifs Enterprise : contact@travixosystems.com",
+      en: "Please contact sales for Enterprise pricing: contact@loxam.fr",
+      fr: "Veuillez contacter les ventes pour les tarifs Enterprise : contact@loxam.fr",
     },
 
     // Status badges
@@ -1754,8 +1754,8 @@ export const translations = {
         fr: "Nom de l'entreprise",
       },
       companyNamePlaceholder: {
-        en: "TraviXO Systems",
-        fr: "TraviXO Systems",
+        en: "LOXAM Systems",
+        fr: "LOXAM Systems",
       },
       logo: {
         en: "Company Logo",
@@ -2437,8 +2437,8 @@ export const translations = {
     },
     // ROI Impact
     roiImpact: {
-      en: "TraviXO ROI Impact",
-      fr: "Impact ROI TraviXO",
+      en: "LOXAM ROI Impact",
+      fr: "Impact ROI LOXAM",
     },
     lossesAvoided: {
       en: "Losses Avoided (vs 2%)",
@@ -2469,8 +2469,8 @@ export const translations = {
       fr: "conformité",
     },
     traviXOCost: {
-      en: "TraviXO Cost",
-      fr: "Coût TraviXO",
+      en: "LOXAM Cost",
+      fr: "Coût LOXAM",
     },
     roi: {
       en: "ROI",

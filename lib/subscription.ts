@@ -13,7 +13,7 @@ export const FEATURE_REGISTRY = {
   email_support: { title: 'Email Support', description: 'Email-based customer support.' },
   vgp_compliance: { title: 'VGP Compliance Module', description: 'VGP compliance tracking is available on Professional plans and above. Upgrade to automate your French regulatory compliance.' },
   digital_audits: { title: 'Digital Audits', description: 'Digital audit workflows are available on Professional plans and above. Upgrade to streamline your inventory audits.' },
-  api_access: { title: 'API Access', description: 'API access is available on Business and Enterprise plans. Upgrade to integrate TraviXO with your existing systems.' },
+  api_access: { title: 'API Access', description: 'API access is available on Business and Enterprise plans. Upgrade to integrate LOXAM with your existing systems.' },
   custom_branding: { title: 'Custom Branding', description: 'Custom branding is available on Enterprise plans. Upgrade to white-label the platform for your organization.' },
   priority_support: { title: 'Priority Support', description: 'Priority customer support channels.' },
   dedicated_support: { title: 'Dedicated Support', description: 'Dedicated support is available on Business and Enterprise plans. Upgrade for priority assistance.' },

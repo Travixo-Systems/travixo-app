@@ -1,6 +1,6 @@
 // =============================================================================
 // Database types for Supabase client
-// Covers all tables used across the TraviXO codebase
+// Covers all tables used across the LOXAM codebase
 // =============================================================================
 
 export type Database = {

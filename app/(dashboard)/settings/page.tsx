@@ -122,10 +122,10 @@ export default function SettingsPage() {
                         }
                     </p>
                     <a
-                        href="mailto:info@travixosystems.com"
+                        href="mailto:info@loxam.fr"
                         className="text-sm font-medium text-blue-600 hover:text-blue-500"
                     >
-                        support@travixosystems.com
+                        support@loxam.fr
                     </a>
                 </div>
             </div>

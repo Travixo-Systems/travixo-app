@@ -10,7 +10,7 @@ import { render } from '@react-email/render';
 import { AuditMissingAssetsEmail } from '@/lib/email/templates/audit-missing-assets';
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://app.travixosystems.com';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://app.loxam.fr';
 
 export async function POST(
   request: NextRequest,
@@ -124,8 +124,8 @@ export async function POST(
     );
 
     await resend.emails.send({
-      from: 'TraviXO Systems <noreply@travixosystems.com>',
-      replyTo: 'contact@travixosystems.com',
+      from: 'LOXAM <noreply@loxam.fr>',
+      replyTo: 'contact@loxam.fr',
       to: adminEmails,
       subject: `Audit termine: ${missingAssets.length} equipement(s) manquant(s) - ${audit.name}`,
       html: emailHtml,

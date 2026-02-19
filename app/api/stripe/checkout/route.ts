@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     // Enterprise requires sales contact
     if (planSlug === 'enterprise') {
       return NextResponse.json(
-        { error: 'Veuillez contacter les ventes pour le forfait Enterprise : contact@travixosystems.com' },
+        { error: 'Veuillez contacter les ventes pour le forfait Enterprise : contact@loxam.fr' },
         { status: 400 }
       );
     }
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
 
     // Step 8: Create Stripe Checkout session
     step = 'create_session';
-    const origin = request.headers.get('origin') || 'https://app.travixosystems.com';
+    const origin = request.headers.get('origin') || 'https://app.loxam.fr';
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',

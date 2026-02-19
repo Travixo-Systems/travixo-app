@@ -18,8 +18,8 @@ import { EmailHeader } from './components/email-header';
 import { EmailFooter } from './components/email-footer';
 
 const BRAND = {
-  navy: '#00252b',
-  orange: '#f26f00',
+  navy: '#1A1A1A',
+  orange: '#E30613',
   danger: '#b91c1c',
   darkGray: '#2d3a39',
   white: '#ffffff',

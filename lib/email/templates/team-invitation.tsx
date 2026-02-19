@@ -18,8 +18,8 @@ import { EmailHeader } from './components/email-header';
 import { EmailFooter } from './components/email-footer';
 
 const BRAND = {
-  navy: '#00252b',
-  orange: '#f26f00',
+  navy: '#1A1A1A',
+  orange: '#E30613',
   darkGray: '#2d3a39',
   white: '#ffffff',
 };
@@ -51,7 +51,7 @@ export function TeamInvitationEmail({
     <Html>
       <Head />
       <Preview>
-        {`Invitation a rejoindre ${organizationName} sur TraviXO`}
+        {`Invitation a rejoindre ${organizationName} sur LOXAM`}
       </Preview>
       <Body style={bodyStyle}>
         <Container style={containerStyle}>
@@ -64,12 +64,12 @@ export function TeamInvitationEmail({
 
             <Text style={summaryStyle}>
               Vous avez ete invite(e) a rejoindre <strong>{organizationName}</strong> sur
-              TraviXO en tant que <strong>{roleLabel.fr}</strong>.
+              LOXAM en tant que <strong>{roleLabel.fr}</strong>.
             </Text>
 
             <Text style={detailStyle}>
               Cette invitation a ete envoyee par <strong>{inviterEmail}</strong>.
-              TraviXO est une plateforme de suivi d'equipements et de conformite VGP
+              LOXAM est une plateforme de suivi d'equipements et de conformite VGP
               pour les entreprises de location de materiel.
             </Text>
 
@@ -90,7 +90,7 @@ export function TeamInvitationEmail({
               <Text style={englishTitleStyle}>English Summary</Text>
               <Text style={englishTextStyle}>
                 You have been invited to join <strong>{organizationName}</strong> on
-                TraviXO as a <strong>{roleLabel.en}</strong>. Click the button above
+                LOXAM as a <strong>{roleLabel.en}</strong>. Click the button above
                 to accept. This link expires in 7 days.
               </Text>
             </Section>

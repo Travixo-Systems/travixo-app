@@ -431,7 +431,7 @@ export function generateVGPReport(
     
     // Generator info
     doc.text(
-      safeText(`Genere par TraviXO Systems • ${formatDate(new Date().toISOString().split('T')[0])}`),
+      safeText(`Genere par LOXAM • ${formatDate(new Date().toISOString().split('T')[0])}`),
       20,
       288
     );

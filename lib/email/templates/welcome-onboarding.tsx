@@ -18,8 +18,8 @@ import { EmailHeader } from './components/email-header';
 import { EmailFooter } from './components/email-footer';
 
 const BRAND = {
-  navy: '#00252b',
-  orange: '#f26f00',
+  navy: '#1A1A1A',
+  orange: '#E30613',
   darkGray: '#2d3a39',
   white: '#ffffff',
 };
@@ -39,7 +39,7 @@ export function WelcomeOnboardingEmail({
     <Html>
       <Head />
       <Preview>
-        {`Bienvenue sur TraviXO — Votre compte ${companyName} est pret`}
+        {`Bienvenue sur LOXAM — Votre compte ${companyName} est pret`}
       </Preview>
       <Body style={bodyStyle}>
         <Container style={containerStyle}>
@@ -51,7 +51,7 @@ export function WelcomeOnboardingEmail({
             </Text>
 
             <Text style={paragraphStyle}>
-              Votre compte TraviXO est active pour <strong>{companyName}</strong>.
+              Votre compte LOXAM est active pour <strong>{companyName}</strong>.
             </Text>
 
             <Text style={paragraphStyle}>
@@ -79,7 +79,7 @@ export function WelcomeOnboardingEmail({
             {/* CTA Button */}
             <Section style={ctaContainerStyle}>
               <Button style={ctaButtonStyle} href={`${appUrl}/login`}>
-                Acceder a mon espace TraviXO
+                Acceder a mon espace LOXAM
               </Button>
             </Section>
 
@@ -96,7 +96,7 @@ export function WelcomeOnboardingEmail({
             </Text>
 
             <Text style={stepsStyle}>
-              1. Connectez-vous a TraviXO{'\n'}
+              1. Connectez-vous a LOXAM{'\n'}
               2. Allez dans Equipements {'>'} Importer{'\n'}
               3. Glissez-deposez le fichier Excel{'\n'}
               4. Verifiez la detection automatique des colonnes{'\n'}
@@ -114,14 +114,14 @@ export function WelcomeOnboardingEmail({
             {/* Help */}
             <Text style={helpStyle}>
               Besoin d'aide ? Repondez directement a cet email ou
-              contactez-nous a contact@travixosystems.com.
+              contactez-nous a contact@loxam.fr.
             </Text>
 
             {/* English summary */}
             <Section style={englishSectionStyle}>
               <Text style={englishTitleStyle}>English Summary</Text>
               <Text style={englishTextStyle}>
-                Your TraviXO account for <strong>{companyName}</strong> is active.
+                Your LOXAM account for <strong>{companyName}</strong> is active.
                 Your 15-day free evaluation starts today with full VGP compliance
                 access. We've pre-loaded demo equipment in your dashboard. Import the
                 attached Excel file to experience smart column detection.

@@ -20,8 +20,8 @@ import { RentalRecallTable } from './components/rental-recall-table';
 import type { RecallTableRow } from './components/rental-recall-table';
 
 const BRAND = {
-  navy: '#00252b',
-  orange: '#f26f00',
+  navy: '#1A1A1A',
+  orange: '#E30613',
   darkGray: '#2d3a39',
   red: '#dc2626',
 };
@@ -74,7 +74,7 @@ export function ClientRecall14Day({
               <Text style={warningBoxTextStyle}>
                 Ces equipements doivent etre rappeles immediatement pour inspection.
                 Sans inspection VGP valide, les sorties seront bloquees automatiquement
-                par le systeme TraviXO.
+                par le systeme LOXAM.
               </Text>
             </Section>
 

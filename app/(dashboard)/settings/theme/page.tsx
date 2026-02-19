@@ -14,12 +14,12 @@ import { useOrganization, useUpdateBranding, type BrandingColors } from '@/hooks
 import toast from 'react-hot-toast';
 
 const COLOR_PRESETS = {
-  industrial_blue: {
-    name: { en: 'Industrial Blue', fr: 'Bleu Industriel' },
+  loxam_red: {
+    name: { en: 'LOXAM Red', fr: 'Rouge LOXAM' },
     colors: {
-      primary: '#1e3a5f',
-      secondary: '#2d5a7b',
-      accent: '#d97706',
+      primary: '#E30613',
+      secondary: '#1A1A1A',
+      accent: '#E30613',
       success: '#047857',
       warning: '#eab308',
       danger: '#b91c1c',
@@ -56,9 +56,9 @@ export default function ThemeSettingsPage() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [colors, setColors] = useState<BrandingColors>({
-    primary: '#1e3a5f',
-    secondary: '#2d5a7b',
-    accent: '#d97706',
+    primary: '#E30613',
+    secondary: '#1A1A1A',
+    accent: '#E30613',
     success: '#047857',
     warning: '#eab308',
     danger: '#b91c1c',

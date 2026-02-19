@@ -10,9 +10,9 @@ import { CheckCircle, XCircle, Clock, Loader2, UserPlus, LogIn, LogOut, Mail } f
 import { createClient } from '@/lib/supabase/client';
 
 const BRAND = {
-  primary: '#1e3a5f',
-  secondary: '#2d5a7b',
-  orange: '#f26f00',
+  primary: '#E30613',
+  secondary: '#1A1A1A',
+  orange: '#E30613',
   success: '#047857',
   danger: '#b91c1c',
 };
@@ -102,10 +102,10 @@ export default function AcceptInvitePage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold" style={{ color: BRAND.primary }}>
-            TraviXO
+            LOXAM
           </h1>
-          <p className="text-xs font-semibold tracking-widest" style={{ color: BRAND.orange }}>
-            SYSTEMS
+          <p className="text-xs font-semibold tracking-widest text-gray-500">
+            EQUIPMENT SOLUTIONS
           </p>
         </div>
 

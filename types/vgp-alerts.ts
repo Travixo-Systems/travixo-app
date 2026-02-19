@@ -1,6 +1,6 @@
 // =============================================================================
 // VGP Email Alert System - Type Definitions
-// TraviXO Systems
+// LOXAM
 // =============================================================================
 
 export type VGPAlertType = 'reminder_30day' | 'reminder_15day' | 'reminder_7day' | 'reminder_1day' | 'overdue';

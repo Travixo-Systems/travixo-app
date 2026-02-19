@@ -1,5 +1,5 @@
 // =============================================================================
-// Email Footer Component - TraviXO
+// Email Footer Component - LOXAM
 // Shared across all VGP alert email templates
 // =============================================================================
 
@@ -11,8 +11,8 @@ import {
 } from '@react-email/components';
 
 const BRAND = {
-  navy: '#00252b',
-  orange: '#f26f00',
+  navy: '#1A1A1A',
+  orange: '#E30613',
   darkGray: '#2d3a39',
   mediumGray: '#6b7280',
   lightGray: '#f3f4f6',
@@ -28,7 +28,7 @@ export function EmailFooter({ appUrl }: EmailFooterProps) {
       <Hr style={dividerStyle} />
 
       <Text style={footerTextStyle}>
-        TraviXO Systems - Suivi QR et conformite VGP pour la location de materiel
+        LOXAM - Suivi QR et conformite VGP pour la location de materiel
       </Text>
 
       <Text style={footerLinksStyle}>
@@ -53,7 +53,7 @@ export function EmailFooter({ appUrl }: EmailFooterProps) {
       </Text>
 
       <Text style={addressStyle}>
-        noreply@travixosystems.com
+        noreply@loxam.fr
       </Text>
     </Section>
   );

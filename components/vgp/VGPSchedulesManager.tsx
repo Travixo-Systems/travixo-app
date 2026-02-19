@@ -17,7 +17,7 @@ import { useVGPAccess } from '@/hooks/useSubscription';
 // ============================================================================
 
 const BRAND_COLORS = {
-  primary: '#1e3a5f',     // Deep slate blue
+  primary: '#E30613',     // Deep slate blue
   danger: '#b91c1c',      // Red
   warning: '#d97706',     // Safety orange
   warningYellow: '#eab308', // Yellow

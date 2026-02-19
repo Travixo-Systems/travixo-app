@@ -9,11 +9,11 @@ import * as path from 'path';
 import { WelcomeOnboardingEmail } from './templates/welcome-onboarding';
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://app.travixosystems.com';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://app.loxam.fr';
 
-const SENDER_EMAIL = 'noreply@travixosystems.com';
-const SENDER_NAME = 'TraviXO Systems';
-const REPLY_TO = 'contact@travixosystems.com';
+const SENDER_EMAIL = 'noreply@loxam.fr';
+const SENDER_NAME = 'LOXAM';
+const REPLY_TO = 'contact@loxam.fr';
 
 function getResendClient(): Resend {
   if (!RESEND_API_KEY) {
@@ -67,7 +67,7 @@ export async function sendWelcomeEmail(
       from: `${SENDER_NAME} <${SENDER_EMAIL}>`,
       to: params.email,
       replyTo: REPLY_TO,
-      subject: `Bienvenue sur TraviXO — Votre compte est pret`,
+      subject: `Bienvenue sur LOXAM — Votre compte est pret`,
       html,
       attachments,
     });

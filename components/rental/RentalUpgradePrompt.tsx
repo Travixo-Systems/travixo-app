@@ -22,7 +22,7 @@ export default function RentalUpgradePrompt() {
       </p>
       <Link
         href="/settings/subscription"
-        className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#f26f00] text-white font-bold rounded-lg hover:bg-[#d96200] transition-colors text-sm"
+        className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#E30613] text-white font-bold rounded-lg hover:bg-[#d96200] transition-colors text-sm"
       >
         {t('rental.upgradeToUnlock')}
       </Link>

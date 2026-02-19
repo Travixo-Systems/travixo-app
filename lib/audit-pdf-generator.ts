@@ -543,7 +543,7 @@ export function generateAuditReport(data: AuditReportData): Buffer {
 
     // Generation date and branding
     doc.text(
-      safeText(`Genere par TraviXO Systems • ${formatDate(new Date().toISOString().split('T')[0])}`),
+      safeText(`Genere par LOXAM • ${formatDate(new Date().toISOString().split('T')[0])}`),
       20,
       288
     );

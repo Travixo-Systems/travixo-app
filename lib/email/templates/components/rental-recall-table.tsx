@@ -11,8 +11,8 @@ import {
 } from '@react-email/components';
 
 const BRAND = {
-  navy: '#00252b',
-  orange: '#f26f00',
+  navy: '#1A1A1A',
+  orange: '#E30613',
   darkGray: '#2d3a39',
   red: '#dc2626',
   amber: '#d97706',
@@ -90,7 +90,7 @@ const tableContainerStyle: React.CSSProperties = {
 };
 
 const headerRowStyle: React.CSSProperties = {
-  backgroundColor: '#00252b',
+  backgroundColor: '#1A1A1A',
 };
 
 const headerCellStyle: React.CSSProperties = {

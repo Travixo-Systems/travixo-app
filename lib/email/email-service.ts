@@ -35,11 +35,11 @@ import type { RecallTableRow } from './templates/components/rental-recall-table'
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://app.travixosystems.com';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://app.loxam.fr';
 
-const SENDER_EMAIL = 'noreply@travixosystems.com';
-const SENDER_NAME = 'TraviXO Systems';
-const REPLY_TO = 'contact@travixosystems.com';
+const SENDER_EMAIL = 'noreply@loxam.fr';
+const SENDER_NAME = 'LOXAM';
+const REPLY_TO = 'contact@loxam.fr';
 
 // Resend free tier: 100 emails/day, 3,000/month
 const MAX_DAILY_EMAILS = 90; // Leave buffer below 100 limit
@@ -72,15 +72,15 @@ function getAdminSupabase() {
 
 const SUBJECT_LINES: Record<VGPAlertType, (count: number, orgName: string) => string> = {
   reminder_30day: (count, orgName) =>
-    `[TraviXO] ${count} inspection${count > 1 ? 's' : ''} VGP a planifier - ${orgName}`,
+    `[LOXAM] ${count} inspection${count > 1 ? 's' : ''} VGP a planifier - ${orgName}`,
   reminder_15day: (count, orgName) =>
-    `[TraviXO] ${count} inspection${count > 1 ? 's' : ''} VGP dans 15 jours - ${orgName}`,
+    `[LOXAM] ${count} inspection${count > 1 ? 's' : ''} VGP dans 15 jours - ${orgName}`,
   reminder_7day: (count, orgName) =>
-    `[TraviXO] URGENT : ${count} inspection${count > 1 ? 's' : ''} VGP dans 7 jours - ${orgName}`,
+    `[LOXAM] URGENT : ${count} inspection${count > 1 ? 's' : ''} VGP dans 7 jours - ${orgName}`,
   reminder_1day: (count, orgName) =>
-    `[TraviXO] CRITIQUE : ${count} inspection${count > 1 ? 's' : ''} VGP due${count > 1 ? 's' : ''} demain - ${orgName}`,
+    `[LOXAM] CRITIQUE : ${count} inspection${count > 1 ? 's' : ''} VGP due${count > 1 ? 's' : ''} demain - ${orgName}`,
   overdue: (count, orgName) =>
-    `[TraviXO] EN RETARD : ${count} inspection${count > 1 ? 's' : ''} VGP - Risque d'amende - ${orgName}`,
+    `[LOXAM] EN RETARD : ${count} inspection${count > 1 ? 's' : ''} VGP - Risque d'amende - ${orgName}`,
 };
 
 // ---------------------------------------------------------------------------
@@ -399,9 +399,9 @@ export type RecallAlertType = 'recall_30day' | 'recall_14day';
 
 const RECALL_SUBJECT_LINES: Record<RecallAlertType, (count: number, orgName: string) => string> = {
   recall_30day: (count, orgName) =>
-    `[TraviXO] Rappel VGP : ${count} equipement${count > 1 ? 's' : ''} en location a planifier - ${orgName}`,
+    `[LOXAM] Rappel VGP : ${count} equipement${count > 1 ? 's' : ''} en location a planifier - ${orgName}`,
   recall_14day: (count, orgName) =>
-    `[TraviXO] URGENT : ${count} equipement${count > 1 ? 's' : ''} en location - VGP dans 14 jours - ${orgName}`,
+    `[LOXAM] URGENT : ${count} equipement${count > 1 ? 's' : ''} en location - VGP dans 14 jours - ${orgName}`,
 };
 
 /**

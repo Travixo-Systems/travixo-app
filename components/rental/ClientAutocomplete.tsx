@@ -103,7 +103,7 @@ export default function ClientAutocomplete({
       )}
       {loading && value.length >= 2 && (
         <div className="absolute right-3 top-1/2 -translate-y-1/2">
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#f26f00]" />
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#E30613]" />
         </div>
       )}
     </div>

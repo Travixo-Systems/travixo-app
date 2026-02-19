@@ -449,7 +449,7 @@ export default function ScanPage({ params }: PageProps) {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#f26f00]"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#E30613]"></div>
       </div>
     )
   }
@@ -465,7 +465,7 @@ export default function ScanPage({ params }: PageProps) {
           </p>
           <button
             onClick={() => router.push('/')}
-            className="px-6 py-3 bg-[#f26f00] text-white rounded-lg hover:bg-[#d96200] font-semibold transition-all"
+            className="px-6 py-3 bg-[#E30613] text-white rounded-lg hover:bg-[#d96200] font-semibold transition-all"
           >
             Go to Homepage
           </button>
@@ -501,7 +501,7 @@ export default function ScanPage({ params }: PageProps) {
       <div className="max-w-2xl mx-auto">
         {/* Active Audit Banner */}
         {auditContext && isAuthenticated && (
-          <div className="mb-4 bg-gradient-to-r from-[#1e3a5f] to-[#2d5a7b] rounded-lg shadow-lg p-4 text-white">
+          <div className="mb-4 bg-gradient-to-r from-[#E30613] to-[#2d5a7b] rounded-lg shadow-lg p-4 text-white">
             <div className="flex items-center gap-3 mb-3">
               <ClipboardCheck className="w-6 h-6 text-orange-400" />
               <div className="flex-1">
@@ -561,7 +561,7 @@ export default function ScanPage({ params }: PageProps) {
         <div className="mb-6">
           <button
             onClick={() => router.push(isAuthenticated ? '/dashboard' : '/')}
-            className="text-[#f26f00] hover:text-[#d96200] font-semibold mb-4 flex items-center"
+            className="text-[#E30613] hover:text-[#d96200] font-semibold mb-4 flex items-center"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
             {isAuthenticated ? 'Back to Dashboard' : 'Go to Homepage'}
@@ -604,7 +604,7 @@ export default function ScanPage({ params }: PageProps) {
           {asset.purchase_price && (
             <div className="bg-[#00252b] rounded-lg p-4 mt-4">
               <h3 className="font-semibold text-white mb-2">Purchase Price</h3>
-              <p className="text-3xl font-bold text-[#f26f00]">
+              <p className="text-3xl font-bold text-[#E30613]">
                 €{asset.purchase_price.toLocaleString()}
               </p>
             </div>
@@ -652,7 +652,7 @@ export default function ScanPage({ params }: PageProps) {
             </p>
             <button
               onClick={() => router.push(`/login?redirectTo=/scan/${qr_code}`)}
-              className="px-6 py-3 bg-[#f26f00] text-white rounded-lg hover:bg-[#d96200] font-bold transition-all"
+              className="px-6 py-3 bg-[#E30613] text-white rounded-lg hover:bg-[#d96200] font-bold transition-all"
             >
               Login to Update
             </button>
@@ -660,7 +660,7 @@ export default function ScanPage({ params }: PageProps) {
         )}
 
         {isAuthenticated && (
-          <div className="bg-gray-50 rounded-lg shadow-md border-t-[5px] border-r-[5px] border-[#f26f00] p-6 mb-6">
+          <div className="bg-gray-50 rounded-lg shadow-md border-t-[5px] border-r-[5px] border-[#E30613] p-6 mb-6">
             <h2 className="text-xl font-bold text-[#00252b] mb-4">Quick Status Update</h2>
             <div className="grid grid-cols-2 gap-3">
               <button
@@ -707,13 +707,13 @@ export default function ScanPage({ params }: PageProps) {
           <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-[#00252b] flex items-center gap-2">
-                <MapPin className="w-6 h-6 text-[#f26f00]" />
+                <MapPin className="w-6 h-6 text-[#E30613]" />
                 Update Location
               </h2>
               {!showLocationForm && (
                 <button
                   onClick={() => setShowLocationForm(true)}
-                  className="px-4 py-2 bg-[#f26f00] text-white rounded-lg hover:bg-[#d96200] font-semibold transition-all"
+                  className="px-4 py-2 bg-[#E30613] text-white rounded-lg hover:bg-[#d96200] font-semibold transition-all"
                 >
                   Update
                 </button>
@@ -731,7 +731,7 @@ export default function ScanPage({ params }: PageProps) {
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     placeholder="Enter location"
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E30613] focus:border-[#E30613] font-medium"
                     style={{ fontSize: '16px' }}
                     maxLength={255}
                   />
@@ -745,7 +745,7 @@ export default function ScanPage({ params }: PageProps) {
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Add notes..."
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00]"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E30613] focus:border-[#E30613]"
                     style={{ fontSize: '16px' }}
                     rows={3}
                     maxLength={500}
@@ -765,7 +765,7 @@ export default function ScanPage({ params }: PageProps) {
                   <button
                     onClick={handleLocationUpdate}
                     disabled={updating || !location.trim()}
-                    className="flex-1 px-4 py-3 bg-[#f26f00] text-white rounded-lg hover:bg-[#d96200] font-bold disabled:opacity-50 min-h-[48px]"
+                    className="flex-1 px-4 py-3 bg-[#E30613] text-white rounded-lg hover:bg-[#d96200] font-bold disabled:opacity-50 min-h-[48px]"
                   >
                     {updating ? 'Saving...' : 'Save'}
                   </button>
@@ -813,7 +813,7 @@ export default function ScanPage({ params }: PageProps) {
             Scanned at {new Date().toLocaleString()}
           </p>
           <p className="text-sm text-[#00252b] mt-4 font-semibold">
-            Powered by <span className="text-[#f26f00]">TraviXO</span>
+            Powered by <span className="text-[#E30613]">LOXAM</span>
           </p>
         </div>
       </div>

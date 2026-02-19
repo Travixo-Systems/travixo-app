@@ -7,9 +7,9 @@ import { createClient } from '@/lib/supabase/client'
 import { CheckCircle, XCircle, Loader2, ArrowRight } from 'lucide-react'
 
 const BRAND = {
-  primary: '#1e3a5f',
-  secondary: '#2d5a7b',
-  orange: '#f26f00',
+  primary: '#E30613',
+  secondary: '#1A1A1A',
+  orange: '#E30613',
 }
 
 type ConfirmState = 'loading' | 'success' | 'error'
@@ -18,7 +18,7 @@ export default function ConfirmPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: '#f26f00' }} />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: '#E30613' }} />
       </div>
     }>
       <ConfirmContent />
@@ -158,16 +158,16 @@ function ConfirmContent() {
         style={{ background: `linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.secondary} 100%)` }}
       >
         <div>
-          <h1 className="text-3xl font-bold text-white">TraviXO</h1>
-          <p className="text-sm font-semibold tracking-widest" style={{ color: BRAND.orange }}>
-            SYSTEMS
+          <h1 className="text-4xl font-bold text-white tracking-wide">LOXAM</h1>
+          <p className="text-sm font-semibold tracking-widest text-white/60">
+            EQUIPMENT SOLUTIONS
           </p>
         </div>
 
         <div className="space-y-8">
           <div>
             <h2 className="text-3xl font-bold text-white leading-tight">
-              Bienvenue chez TraviXO.
+              Bienvenue chez LOXAM.
             </h2>
             <p className="mt-4 text-white/70 text-lg">
               Votre compte est en cours de verification. Vous serez redirige automatiquement.
@@ -176,7 +176,7 @@ function ConfirmContent() {
         </div>
 
         <p className="text-white/40 text-xs">
-          &copy; {new Date().getFullYear()} TraviXO Systems. Tous droits reserves.
+          &copy; {new Date().getFullYear()} LOXAM Systems. Tous droits reserves.
         </p>
       </div>
 
@@ -185,8 +185,8 @@ function ConfirmContent() {
         <div className="max-w-md w-full space-y-8 text-center">
           {/* Mobile logo */}
           <div className="lg:hidden">
-            <h1 className="text-2xl font-bold" style={{ color: BRAND.primary }}>TraviXO</h1>
-            <p className="text-xs font-semibold tracking-widest" style={{ color: BRAND.orange }}>SYSTEMS</p>
+            <h1 className="text-2xl font-bold" style={{ color: BRAND.primary }}>LOXAM</h1>
+            <p className="text-xs font-semibold tracking-widest text-gray-500">EQUIPMENT SOLUTIONS</p>
           </div>
 
           {state === 'loading' && (

@@ -6,8 +6,8 @@ import { createClient } from '@/lib/supabase/client';
 import { Sparkles, Upload, BarChart3, X } from 'lucide-react';
 
 const BRAND = {
-  primary: '#1e3a5f',
-  orange: '#f26f00',
+  primary: '#E30613',
+  orange: '#E30613',
 };
 
 interface OnboardingBannerProps {
@@ -45,7 +45,7 @@ export default function OnboardingBanner({
       <div className="flex items-center gap-2 mb-3">
         <Sparkles className="w-5 h-5" style={{ color: BRAND.orange }} />
         <h3 className="text-base font-semibold text-slate-900">
-          Bienvenue sur TraviXO !
+          Bienvenue sur LOXAM !
         </h3>
       </div>
 

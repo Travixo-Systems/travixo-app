@@ -42,13 +42,13 @@ export default function AccountLockedOverlay({ children }: { children: React.Rea
         <Link
           href="/settings/subscription"
           className="inline-flex items-center gap-2 px-8 py-3 rounded-lg text-sm font-semibold text-white transition-colors"
-          style={{ backgroundColor: '#f26f00' }}
+          style={{ backgroundColor: '#E30613' }}
         >
           Voir les abonnements
           <ArrowUpRight className="w-4 h-4" />
         </Link>
         <p className="text-xs text-gray-400">
-          Besoin d'aide ? Contactez-nous a contact@travixosystems.com
+          Besoin d'aide ? Contactez-nous a contact@loxam.fr
         </p>
       </div>
     </div>

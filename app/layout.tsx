@@ -16,10 +16,10 @@ const robotoMono = Roboto_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "TraviXO",
-    template: "%s | TraviXO",
+    default: "LOXAM",
+    template: "%s | LOXAM",
   },
-  description: "Asset Tracking & VGP Compliance for Equipment Rental Companies",
+  description: "Gestion d'Equipements & Conformite VGP — LOXAM",
   icons: {
     icon: "/favicon.svg",
   },

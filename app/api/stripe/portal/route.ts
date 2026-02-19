@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const origin = request.headers.get('origin') || 'https://app.travixosystems.com';
+    const origin = request.headers.get('origin') || 'https://app.loxam.fr';
     const session = await stripe.billingPortal.sessions.create({
       customer: org.stripe_customer_id,
       return_url: `${origin}/settings/subscription`,

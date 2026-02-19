@@ -12,7 +12,7 @@ import { TeamInvitationEmail } from '@/lib/email/templates/team-invitation';
 import { validateRequest, inviteTeamMemberSchema } from '@/lib/validations/schemas';
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const APP_URL = process.env.APP_URL || 'https://app.travixosystems.com';
+const APP_URL = process.env.APP_URL || 'https://app.loxam.fr';
 
 function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
@@ -209,10 +209,10 @@ export async function POST(request: NextRequest) {
         );
 
         await resend.emails.send({
-          from: 'TraviXO Systems <noreply@travixosystems.com>',
-          replyTo: 'contact@travixosystems.com',
+          from: 'LOXAM <noreply@loxam.fr>',
+          replyTo: 'contact@loxam.fr',
           to: normalizedEmail,
-          subject: `Invitation a rejoindre ${orgName} sur TraviXO`,
+          subject: `Invitation a rejoindre ${orgName} sur LOXAM`,
           html: emailHtml,
         });
       } catch (emailError) {

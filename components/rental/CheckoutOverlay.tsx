@@ -290,7 +290,7 @@ export default function CheckoutOverlay({
                     }
                   }}
                   placeholder={language === 'fr' ? 'Rechercher un client...' : 'Search clients...'}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E30613] focus:border-[#E30613] font-medium"
                   style={{ fontSize: '16px' }}
                 />
                 {!selectedClientId && clients.length > 0 && (
@@ -336,7 +336,7 @@ export default function CheckoutOverlay({
                     value={clientName}
                     onChange={(e) => setClientName(e.target.value)}
                     placeholder={language === 'fr' ? 'ex: Bouygues Construction' : 'e.g., Bouygues Construction'}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E30613] focus:border-[#E30613] font-medium"
                     style={{ fontSize: '16px' }}
                     maxLength={255}
                   />
@@ -351,7 +351,7 @@ export default function CheckoutOverlay({
                       value={clientEmail}
                       onChange={(e) => setClientEmail(e.target.value)}
                       placeholder="email@example.com"
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E30613] focus:border-[#E30613] font-medium"
                       style={{ fontSize: '16px' }}
                       maxLength={255}
                     />
@@ -365,7 +365,7 @@ export default function CheckoutOverlay({
                       value={clientPhone}
                       onChange={(e) => setClientPhone(e.target.value)}
                       placeholder="+33 6..."
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E30613] focus:border-[#E30613] font-medium"
                       style={{ fontSize: '16px' }}
                       maxLength={20}
                     />
@@ -385,7 +385,7 @@ export default function CheckoutOverlay({
                   value={clientContact}
                   onChange={(e) => setClientContact(e.target.value)}
                   placeholder={language === 'fr' ? 'Téléphone ou email' : 'Phone or email'}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E30613] focus:border-[#E30613] font-medium"
                   style={{ fontSize: '16px' }}
                   maxLength={255}
                 />
@@ -402,7 +402,7 @@ export default function CheckoutOverlay({
                 value={expectedReturn}
                 onChange={(e) => setExpectedReturn(e.target.value)}
                 min={new Date().toISOString().split('T')[0]}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E30613] focus:border-[#E30613] font-medium"
                 style={{ fontSize: '16px' }}
               />
             </div>
@@ -416,7 +416,7 @@ export default function CheckoutOverlay({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder={language === 'fr' ? 'Notes de sortie...' : 'Checkout notes...'}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E30613] focus:border-[#E30613] font-medium"
                 style={{ fontSize: '16px' }}
                 rows={2}
                 maxLength={500}
@@ -428,7 +428,7 @@ export default function CheckoutOverlay({
               <button
                 type="submit"
                 disabled={submitting || vgpBlocked || vgpLoading || !isValid}
-                className="flex-1 py-3 bg-[#f26f00] text-white rounded-lg font-bold hover:bg-[#d96200] transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px] flex items-center justify-center gap-2"
+                className="flex-1 py-3 bg-[#E30613] text-white rounded-lg font-bold hover:bg-[#d96200] transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px] flex items-center justify-center gap-2"
               >
                 {submitting ? (
                   <>

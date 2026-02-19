@@ -214,7 +214,7 @@ export default function ReturnOverlay({
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   placeholder={language === 'fr' ? 'ex: Dépôt Paris' : 'e.g., Paris Depot'}
-                  className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
+                  className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E30613] focus:border-[#E30613] font-medium"
                   style={{ fontSize: '16px' }}
                   maxLength={255}
                 />
@@ -239,7 +239,7 @@ export default function ReturnOverlay({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder={language === 'fr' ? 'Notes de retour...' : 'Return notes...'}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E30613] focus:border-[#E30613] font-medium"
                 style={{ fontSize: '16px' }}
                 rows={2}
                 maxLength={500}
@@ -251,7 +251,7 @@ export default function ReturnOverlay({
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex-1 py-3 bg-[#f26f00] text-white rounded-lg font-bold hover:bg-[#d96200] transition-colors disabled:opacity-50 min-h-[48px] flex items-center justify-center gap-2"
+                className="flex-1 py-3 bg-[#E30613] text-white rounded-lg font-bold hover:bg-[#d96200] transition-colors disabled:opacity-50 min-h-[48px] flex items-center justify-center gap-2"
               >
                 {submitting ? (
                   <>

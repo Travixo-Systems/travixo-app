@@ -9,17 +9,17 @@ import { Mail, Loader2, ArrowLeft, RefreshCw } from 'lucide-react'
 import { Suspense } from 'react'
 
 const BRAND = {
-  primary: '#1e3a5f',
-  secondary: '#2d5a7b',
-  orange: '#f26f00',
-  orangeHover: '#d96200',
+  primary: '#E30613',
+  secondary: '#1A1A1A',
+  orange: '#E30613',
+  orangeHover: '#B8050F',
 }
 
 export default function CheckEmailPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: '#f26f00' }} />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: '#E30613' }} />
       </div>
     }>
       <CheckEmailContent />
@@ -64,9 +64,9 @@ function CheckEmailContent() {
         style={{ background: `linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.secondary} 100%)` }}
       >
         <div>
-          <h1 className="text-3xl font-bold text-white">TraviXO</h1>
-          <p className="text-sm font-semibold tracking-widest" style={{ color: BRAND.orange }}>
-            SYSTEMS
+          <h1 className="text-4xl font-bold text-white tracking-wide">LOXAM</h1>
+          <p className="text-sm font-semibold tracking-widest text-white/60">
+            EQUIPMENT SOLUTIONS
           </p>
         </div>
 
@@ -82,7 +82,7 @@ function CheckEmailContent() {
         </div>
 
         <p className="text-white/40 text-xs">
-          &copy; {new Date().getFullYear()} TraviXO Systems. Tous droits reserves.
+          &copy; {new Date().getFullYear()} LOXAM Systems. Tous droits reserves.
         </p>
       </div>
 
@@ -91,8 +91,8 @@ function CheckEmailContent() {
         <div className="max-w-md w-full space-y-8 text-center">
           {/* Mobile logo */}
           <div className="lg:hidden">
-            <h1 className="text-2xl font-bold" style={{ color: BRAND.primary }}>TraviXO</h1>
-            <p className="text-xs font-semibold tracking-widest" style={{ color: BRAND.orange }}>SYSTEMS</p>
+            <h1 className="text-2xl font-bold" style={{ color: BRAND.primary }}>LOXAM</h1>
+            <p className="text-xs font-semibold tracking-widest text-gray-500">EQUIPMENT SOLUTIONS</p>
           </div>
 
           {/* Mail icon */}
@@ -122,7 +122,7 @@ function CheckEmailContent() {
             <p className="text-sm font-semibold text-gray-700">L'email n'arrive pas ?</p>
             <ul className="text-sm text-gray-500 space-y-1">
               <li>- Verifiez votre dossier spam / courrier indesirable</li>
-              <li>- L'email vient de <span className="font-medium">noreply@travixosystems.com</span></li>
+              <li>- L'email vient de <span className="font-medium">noreply@loxam.fr</span></li>
               <li>- Le lien expire dans 24 heures</li>
             </ul>
           </div>

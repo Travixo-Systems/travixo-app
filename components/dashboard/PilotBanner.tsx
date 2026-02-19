@@ -66,8 +66,8 @@ export default function PilotBanner() {
       <div className="border-b px-4 py-2.5" style={{ backgroundColor: '#f0f4f8', borderColor: '#d1dbe6' }}>
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Clock className="w-4 h-4 flex-shrink-0" style={{ color: '#1e3a5f' }} />
-            <p className="text-sm" style={{ color: '#1e3a5f' }}>
+            <Clock className="w-4 h-4 flex-shrink-0" style={{ color: '#E30613' }} />
+            <p className="text-sm" style={{ color: '#E30613' }}>
               <span className="font-semibold">Pilote : {daysRemaining} jour{daysRemaining !== 1 ? 's' : ''} restant{daysRemaining !== 1 ? 's' : ''}</span>
               {' '}&bull; 50 equipements max &bull; Conformite VGP active
               {usage.assets > 0 && (

@@ -20,8 +20,8 @@ import { RentalRecallTable } from './components/rental-recall-table';
 import type { RecallTableRow } from './components/rental-recall-table';
 
 const BRAND = {
-  navy: '#00252b',
-  orange: '#f26f00',
+  navy: '#1A1A1A',
+  orange: '#E30613',
   darkGray: '#2d3a39',
   warning: '#f59e0b',
 };

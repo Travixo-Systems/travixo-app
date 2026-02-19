@@ -8,17 +8,17 @@ import toast from 'react-hot-toast'
 import { LogIn, Loader2, Mail, Lock, Users } from 'lucide-react'
 
 const BRAND = {
-  primary: '#1e3a5f',
-  secondary: '#2d5a7b',
-  orange: '#f26f00',
-  orangeHover: '#d96200',
+  primary: '#E30613',
+  secondary: '#1A1A1A',
+  orange: '#E30613',
+  orangeHover: '#B8050F',
 }
 
 export default function LoginPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: '#f26f00' }} />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: '#E30613' }} />
       </div>
     }>
       <LoginContent />
@@ -127,9 +127,9 @@ function LoginContent() {
         style={{ background: `linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.secondary} 100%)` }}
       >
         <div>
-          <h1 className="text-3xl font-bold text-white">TraviXO</h1>
-          <p className="text-sm font-semibold tracking-widest" style={{ color: BRAND.orange }}>
-            SYSTEMS
+          <h1 className="text-4xl font-bold text-white tracking-wide">LOXAM</h1>
+          <p className="text-sm font-semibold tracking-widest text-white/60">
+            EQUIPMENT SOLUTIONS
           </p>
         </div>
 
@@ -140,7 +140,7 @@ function LoginContent() {
               En toute conformite.
             </h2>
             <p className="mt-4 text-white/70 text-lg">
-              Manage your equipment fleet with full VGP compliance, digital audits, and real-time tracking.
+              Gerez votre flotte d'equipements avec conformite VGP, audits digitaux et suivi en temps reel.
             </p>
           </div>
 
@@ -161,7 +161,7 @@ function LoginContent() {
         </div>
 
         <p className="text-white/40 text-xs">
-          &copy; {new Date().getFullYear()} TraviXO Systems. Tous droits reserves.
+          &copy; {new Date().getFullYear()} LOXAM. Tous droits reserves.
         </p>
       </div>
 
@@ -170,8 +170,8 @@ function LoginContent() {
         <div className="max-w-md w-full space-y-8">
           {/* Mobile logo */}
           <div className="lg:hidden text-center">
-            <h1 className="text-2xl font-bold" style={{ color: BRAND.primary }}>TraviXO</h1>
-            <p className="text-xs font-semibold tracking-widest" style={{ color: BRAND.orange }}>SYSTEMS</p>
+            <h1 className="text-2xl font-bold" style={{ color: BRAND.primary }}>LOXAM</h1>
+            <p className="text-xs font-semibold tracking-widest text-gray-500">EQUIPMENT SOLUTIONS</p>
           </div>
 
           <div>

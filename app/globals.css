@@ -4,18 +4,18 @@
   --background: #ffffff;
   --foreground: #171717;
   
-  /* Theme colors - default values, will be overridden by ThemeProvider */
-  --color-primary: #1e3a5f;
-  --color-secondary: #2d5a7b;
-  --color-accent: #d97706;
+  /* Theme colors - LOXAM brand defaults, will be overridden by ThemeProvider */
+  --color-primary: #E30613;
+  --color-secondary: #1A1A1A;
+  --color-accent: #E30613;
   --color-success: #047857;
   --color-warning: #eab308;
   --color-danger: #b91c1c;
-  
+
   /* RGB versions for opacity support */
-  --color-primary-rgb: 30, 58, 95;
-  --color-secondary-rgb: 45, 90, 123;
-  --color-accent-rgb: 217, 119, 6;
+  --color-primary-rgb: 227, 6, 19;
+  --color-secondary-rgb: 26, 26, 26;
+  --color-accent-rgb: 227, 6, 19;
   --color-success-rgb: 4, 120, 87;
   --color-warning-rgb: 234, 179, 8;
   --color-danger-rgb: 185, 28, 28;

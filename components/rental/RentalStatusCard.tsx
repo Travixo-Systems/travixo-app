@@ -80,7 +80,7 @@ export default function RentalStatusCard({
         {isAuthenticated && (
           <button
             onClick={onCheckout}
-            className="w-full py-3 bg-[#f26f00] text-white rounded-lg font-bold hover:bg-[#d96200] transition-colors text-sm"
+            className="w-full py-3 bg-[#E30613] text-white rounded-lg font-bold hover:bg-[#d96200] transition-colors text-sm"
           >
             {t('rental.checkoutToClient')}
           </button>
@@ -168,7 +168,7 @@ export default function RentalStatusCard({
           className={`w-full py-3 rounded-lg font-bold transition-colors text-sm ${
             isOverdue
               ? 'bg-red-600 text-white hover:bg-red-700'
-              : 'bg-[#f26f00] text-white hover:bg-[#d96200]'
+              : 'bg-[#E30613] text-white hover:bg-[#d96200]'
           }`}
         >
           {t('rental.processReturn')}

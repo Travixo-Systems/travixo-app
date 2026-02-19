@@ -5,9 +5,9 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { useOrganization, type BrandingColors } from '@/hooks/useOrganization';
 
 const DEFAULT_COLORS: BrandingColors = {
-  primary: '#1e3a5f',
-  secondary: '#2d5a7b',
-  accent: '#d97706',
+  primary: '#E30613',
+  secondary: '#1A1A1A',
+  accent: '#E30613',
   success: '#047857',
   warning: '#eab308',
   danger: '#b91c1c',
@@ -23,7 +23,7 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType>({
   colors: DEFAULT_COLORS,
   logo: null,
-  orgName: 'TraviXO',
+  orgName: 'LOXAM',
   isLoading: true,
 });
 
@@ -35,7 +35,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const { data: organization, isLoading } = useOrganization();
   const [colors, setColors] = useState<BrandingColors>(DEFAULT_COLORS);
   const [logo, setLogo] = useState<string | null>(null);
-  const [orgName, setOrgName] = useState('TraviXO');
+  const [orgName, setOrgName] = useState('LOXAM');
 
   useEffect(() => {
     if (organization) {

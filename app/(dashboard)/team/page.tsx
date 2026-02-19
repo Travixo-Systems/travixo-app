@@ -34,7 +34,7 @@ import {
 // ============================================================================
 
 const BRAND_COLORS = {
-  primary: '#1e3a5f',
+  primary: '#E30613',
   danger: '#b91c1c',
   warning: '#d97706',
   success: '#047857',

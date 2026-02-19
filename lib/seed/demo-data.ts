@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://app.travixosystems.com';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://app.loxam.fr';
 
 function getAdminSupabase() {
   return createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {

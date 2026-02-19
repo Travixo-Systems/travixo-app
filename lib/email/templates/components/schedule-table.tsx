@@ -13,8 +13,8 @@ import {
 import type { ScheduleTableRow, VGPAlertType } from '@/types/vgp-alerts';
 
 const BRAND = {
-  navy: '#00252b',
-  orange: '#f26f00',
+  navy: '#1A1A1A',
+  orange: '#E30613',
   darkGray: '#2d3a39',
   success: '#10b981',
   warning: '#f59e0b',

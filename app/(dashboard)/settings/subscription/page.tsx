@@ -26,7 +26,7 @@ import { createTranslator } from '@/lib/i18n';
 
 // B2B Professional brand colors
 const BRAND = {
-  primary: '#1e3a5f',
+  primary: '#E30613',
   warning: '#d97706',
   success: '#047857',
   danger: '#b91c1c',
@@ -363,7 +363,7 @@ export default function SubscriptionPage() {
                   {/* CTA Button */}
                   {isEnterprise ? (
                     <a
-                      href="mailto:contact@travixosystems.com?subject=Enterprise Plan Inquiry"
+                      href="mailto:contact@loxam.fr?subject=Enterprise Plan Inquiry"
                       className="w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-colors bg-gray-900 text-white hover:bg-gray-800 text-center block"
                     >
                       {t('subscription.contactSales')}
@@ -488,7 +488,7 @@ export default function SubscriptionPage() {
           <p className="text-sm text-gray-500">{t('subscription.securePayment')}</p>
           <p className="text-sm text-gray-500">{t('subscription.cancelAnytime')}</p>
           <p className="text-sm text-gray-600 mt-2">
-            {t('subscription.questions')} <a href="mailto:support@travixosystems.com" className="font-medium hover:underline" style={{ color: BRAND.warning }}>
+            {t('subscription.questions')} <a href="mailto:support@loxam.fr" className="font-medium hover:underline" style={{ color: BRAND.warning }}>
               {t('subscription.contactSupport')}
             </a>
           </p>

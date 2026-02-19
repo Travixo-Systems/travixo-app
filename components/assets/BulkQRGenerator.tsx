@@ -62,7 +62,7 @@ export default function BulkQRGenerator({ assets }: BulkQRGeneratorProps) {
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `TraviXO-${t('assets.pageTitle')}-${new Date().toISOString().split('T')[0]}.csv`
+    link.download = `LOXAM-${t('assets.pageTitle')}-${new Date().toISOString().split('T')[0]}.csv`
     link.click()
     window.URL.revokeObjectURL(url)
     toast.success(t('assets.toastCsvExported'))
@@ -149,7 +149,7 @@ export default function BulkQRGenerator({ assets }: BulkQRGeneratorProps) {
       })
 
       // Download PDF
-      pdf.save(`TraviXO-QR-Codes-${new Date().toISOString().split('T')[0]}.pdf`)
+      pdf.save(`LOXAM-QR-Codes-${new Date().toISOString().split('T')[0]}.pdf`)
       
       toast.success(`${selectedAssets.size} ${t('assets.toastQrGenerated')}`)
       deselectAll()

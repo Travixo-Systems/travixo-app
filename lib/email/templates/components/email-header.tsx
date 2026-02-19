@@ -1,5 +1,5 @@
 // =============================================================================
-// Email Header Component - TraviXO Branding
+// Email Header Component - LOXAM Branding
 // Shared across all VGP alert email templates
 // =============================================================================
 
@@ -12,8 +12,8 @@ import {
 } from '@react-email/components';
 
 const BRAND = {
-  navy: '#00252b',
-  orange: '#f26f00',
+  navy: '#1A1A1A',
+  orange: '#E30613',
   darkGray: '#2d3a39',
   white: '#ffffff',
   lightGray: '#f8f9fa',
@@ -24,8 +24,7 @@ export function EmailHeader() {
     <Section style={headerStyle}>
       <Row>
         <Column>
-          <Text style={logoTextStyle}>TraviXO</Text>
-          <Text style={logoSubtextStyle}>SYSTEMS</Text>
+          <Text style={logoTextStyle}>LOXAM</Text>
         </Column>
       </Row>
       <Hr style={dividerStyle} />

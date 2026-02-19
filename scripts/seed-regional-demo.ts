@@ -16,7 +16,7 @@ import { v4 as uuidv4 } from 'uuid'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.travixosystems.com'
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.loxam.fr'
 
 if (!supabaseUrl || !serviceRoleKey) {
   console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')

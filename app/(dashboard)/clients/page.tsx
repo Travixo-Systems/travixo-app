@@ -167,7 +167,7 @@ export default function ClientsPage() {
           </div>
           <button
             onClick={openAdd}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#f26f00] text-white rounded-lg font-bold hover:bg-[#d96200] transition-colors text-sm"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#E30613] text-white rounded-lg font-bold hover:bg-[#d96200] transition-colors text-sm"
           >
             <Plus className="w-4 h-4" />
             {t('clients.addClient')}
@@ -182,7 +182,7 @@ export default function ClientsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('clients.searchClients')}
-            className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
+            className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#E30613] focus:border-[#E30613] font-medium"
             style={{ fontSize: '16px' }}
           />
         </div>
@@ -298,7 +298,7 @@ export default function ClientsPage() {
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
                     placeholder={language === 'fr' ? 'ex: Bouygues Construction' : 'e.g., Bouygues Construction'}
-                    className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
+                    className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E30613] focus:border-[#E30613] font-medium"
                     style={{ fontSize: '16px' }}
                     maxLength={255}
                     autoFocus
@@ -314,7 +314,7 @@ export default function ClientsPage() {
                     value={formEmail}
                     onChange={(e) => setFormEmail(e.target.value)}
                     placeholder="email@example.com"
-                    className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
+                    className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E30613] focus:border-[#E30613] font-medium"
                     style={{ fontSize: '16px' }}
                     maxLength={255}
                   />
@@ -330,7 +330,7 @@ export default function ClientsPage() {
                       value={formPhone}
                       onChange={(e) => setFormPhone(e.target.value)}
                       placeholder="+33 6..."
-                      className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
+                      className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E30613] focus:border-[#E30613] font-medium"
                       style={{ fontSize: '16px' }}
                       maxLength={20}
                     />
@@ -344,7 +344,7 @@ export default function ClientsPage() {
                       value={formCompany}
                       onChange={(e) => setFormCompany(e.target.value)}
                       placeholder={language === 'fr' ? 'Entreprise' : 'Company'}
-                      className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
+                      className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E30613] focus:border-[#E30613] font-medium"
                       style={{ fontSize: '16px' }}
                       maxLength={255}
                     />
@@ -359,7 +359,7 @@ export default function ClientsPage() {
                     value={formNotes}
                     onChange={(e) => setFormNotes(e.target.value)}
                     placeholder={language === 'fr' ? 'Notes...' : 'Notes...'}
-                    className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
+                    className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E30613] focus:border-[#E30613] font-medium"
                     style={{ fontSize: '16px' }}
                     rows={2}
                     maxLength={500}
@@ -370,7 +370,7 @@ export default function ClientsPage() {
                   <button
                     type="submit"
                     disabled={formSubmitting || !formName.trim()}
-                    className="flex-1 py-2.5 bg-[#f26f00] text-white rounded-lg font-bold hover:bg-[#d96200] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="flex-1 py-2.5 bg-[#E30613] text-white rounded-lg font-bold hover:bg-[#d96200] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {formSubmitting ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
