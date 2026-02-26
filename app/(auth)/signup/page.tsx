@@ -223,21 +223,21 @@ function SignUpContent() {
       </div>
 
       {/* Right panel — form */}
-      <div className="flex-1 flex items-center justify-center bg-gray-50 p-6">
-        <div className="max-w-md w-full space-y-6">
+      <div className="flex-1 flex items-center justify-center bg-gray-50 px-6 py-10 lg:p-6">
+        <div className="max-w-md w-full space-y-5 lg:space-y-6">
           {/* Mobile logo */}
           <div className="lg:hidden text-center">
-            <h1 className="text-2xl font-bold" style={{ color: BRAND.primary }}>TraviXO</h1>
-            <p className="text-xs font-semibold tracking-widest" style={{ color: BRAND.orange }}>SYSTEMS</p>
+            <h1 className="text-3xl font-bold" style={{ color: BRAND.primary }}>TraviXO</h1>
+            <p className="text-sm font-semibold tracking-widest" style={{ color: BRAND.orange }}>SYSTEMS</p>
           </div>
 
           {isInviteRedirect ? (
             /* ---- Invite signup header ---- */
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-3xl lg:text-2xl font-bold text-gray-900">
                 Créez votre compte / Create your account
               </h2>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-2 text-base lg:text-sm text-gray-500">
                 pour rejoindre l&apos;équipe / to join the team
               </p>
 
@@ -254,10 +254,10 @@ function SignUpContent() {
           ) : (
             /* ---- Normal signup header ---- */
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-3xl lg:text-2xl font-bold text-gray-900">
                 Essai gratuit de 15 jours / Free 15-day trial
               </h2>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-2 text-base lg:text-sm text-gray-500">
                 Conformité VGP incluse &bull; Aucune carte requise
                 <br />
                 VGP compliance included &bull; No credit card required
@@ -269,12 +269,12 @@ function SignUpContent() {
             {/* Company name — only for normal signup */}
             {!isInviteRedirect && (
               <div>
-                <label htmlFor="company" className="block text-sm font-semibold text-gray-700 mb-1.5">
+                <label htmlFor="company" className="block text-base lg:text-sm font-semibold text-gray-700 mb-2">
                   Nom de l&apos;entreprise / Company name
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Building2 className="h-4 w-4 text-gray-400" />
+                    <Building2 className="h-5 w-5 lg:h-4 lg:w-4 text-gray-400" />
                   </div>
                   <input
                     id="company"
@@ -282,7 +282,7 @@ function SignUpContent() {
                     required
                     value={formData.companyName}
                     onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                    className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    className="block w-full pl-10 pr-3 py-3.5 lg:py-2.5 border border-gray-300 rounded-lg text-base lg:text-sm text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                     placeholder="Acme Equipment Rentals"
                     disabled={isLoading}
                   />
@@ -291,12 +291,12 @@ function SignUpContent() {
             )}
 
             <div>
-              <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-1.5">
+              <label htmlFor="name" className="block text-base lg:text-sm font-semibold text-gray-700 mb-2">
                 Votre nom complet / Your full name
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-4 w-4 text-gray-400" />
+                  <User className="h-5 w-5 lg:h-4 lg:w-4 text-gray-400" />
                 </div>
                 <input
                   id="name"
@@ -304,7 +304,7 @@ function SignUpContent() {
                   required
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="block w-full pl-10 pr-3 py-3.5 lg:py-2.5 border border-gray-300 rounded-lg text-base lg:text-sm text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                   placeholder="Jean Dupont"
                   disabled={isLoading}
                 />
@@ -312,12 +312,12 @@ function SignUpContent() {
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1.5">
+              <label htmlFor="email" className="block text-base lg:text-sm font-semibold text-gray-700 mb-2">
                 Adresse email / Email address
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-4 w-4 text-gray-400" />
+                  <Mail className="h-5 w-5 lg:h-4 lg:w-4 text-gray-400" />
                 </div>
                 <input
                   id="email"
@@ -325,7 +325,7 @@ function SignUpContent() {
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className={`block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${prefillEmail ? 'bg-gray-100 text-gray-600' : 'bg-white'}`}
+                  className={`block w-full pl-10 pr-3 py-3.5 lg:py-2.5 border border-gray-300 rounded-lg text-base lg:text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${prefillEmail ? 'bg-gray-100 text-gray-600' : 'bg-white'}`}
                   placeholder="john@company.com"
                   disabled={isLoading}
                   readOnly={!!prefillEmail}
@@ -339,12 +339,12 @@ function SignUpContent() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-1.5">
+              <label htmlFor="password" className="block text-base lg:text-sm font-semibold text-gray-700 mb-2">
                 Mot de passe / Password
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-4 w-4 text-gray-400" />
+                  <Lock className="h-5 w-5 lg:h-4 lg:w-4 text-gray-400" />
                 </div>
                 <input
                   id="password"
@@ -353,7 +353,7 @@ function SignUpContent() {
                   minLength={6}
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="block w-full pl-10 pr-3 py-3.5 lg:py-2.5 border border-gray-300 rounded-lg text-base lg:text-sm text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                   placeholder="Minimum 6 caractères / At least 6 characters"
                   disabled={isLoading}
                 />
@@ -363,26 +363,26 @@ function SignUpContent() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-semibold text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 py-4 lg:py-3 px-4 rounded-lg text-base lg:text-sm font-semibold text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ backgroundColor: BRAND.orange }}
               onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = BRAND.orangeHover)}
               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = BRAND.orange)}
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-5 h-5 lg:w-4 lg:h-4 animate-spin" />
                   {isInviteRedirect ? 'Création du compte... / Creating account...' : 'Création en cours... / Creating...'}
                 </>
               ) : (
                 <>
-                  <UserPlus className="w-4 h-4" />
+                  <UserPlus className="w-5 h-5 lg:w-4 lg:h-4" />
                   {isInviteRedirect ? 'Créer mon compte / Create my account' : 'Démarrer l\'essai gratuit / Start free trial'}
                 </>
               )}
             </button>
           </form>
 
-          <div className="text-center text-sm">
+          <div className="text-center text-base lg:text-sm">
             <span className="text-gray-500">Déjà un compte ? / Already have an account? </span>
             <Link
               href={isInviteRedirect ? `/login?redirect=${encodeURIComponent(redirectTo)}` : '/login'}
