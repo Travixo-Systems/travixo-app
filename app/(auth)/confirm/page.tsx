@@ -5,6 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { CheckCircle, XCircle, Loader2, ArrowRight } from 'lucide-react'
+import { useLanguage } from '@/lib/LanguageContext'
+import { translations } from '@/lib/i18n'
+import { LanguageToggle } from '@/components/LanguageToggle'
 
 const BRAND = {
   primary: '#1e3a5f',
@@ -31,6 +34,8 @@ function ConfirmContent() {
   const searchParams = useSearchParams()
   const [state, setState] = useState<ConfirmState>('loading')
   const [errorMessage, setErrorMessage] = useState('')
+  const { language } = useLanguage()
+  const t = translations.auth
 
   useEffect(() => {
     handleConfirmation()
@@ -66,7 +71,7 @@ function ConfirmContent() {
           const { data: { user: verifiedUser }, error: refetchError } = await supabase.auth.getUser()
 
           if (refetchError || !verifiedUser) {
-            throw new Error('Impossible de recuperer le compte apres verification')
+            throw new Error(t.confirmFetchError[language])
           }
 
           // Create org + user profile for the newly confirmed user
@@ -77,7 +82,7 @@ function ConfirmContent() {
           return
         }
 
-        throw new Error('Lien de confirmation invalide ou expire')
+        throw new Error(t.confirmInvalidLink[language])
       }
 
       // User is authenticated — check if they already have an org
@@ -101,7 +106,7 @@ function ConfirmContent() {
 
     } catch (error: any) {
       console.error('Confirmation error:', error)
-      setErrorMessage(error.message || 'La confirmation a echoue')
+      setErrorMessage(error.message || t.confirmErrorTitle[language])
       setState('error')
     }
   }
@@ -146,7 +151,7 @@ function ConfirmContent() {
         console.log('Organization already exists, skipping creation')
         return
       }
-      throw new Error(`Erreur lors de la creation du compte: ${orgError.message}`)
+      throw new Error(`${t.confirmOrgError[language]} ${orgError.message}`)
     }
   }
 
@@ -160,33 +165,38 @@ function ConfirmContent() {
         <div>
           <h1 className="text-3xl font-bold text-white">TraviXO</h1>
           <p className="text-sm font-semibold tracking-widest" style={{ color: BRAND.orange }}>
-            SYSTEMS
+            {t.systems[language]}
           </p>
         </div>
 
         <div className="space-y-8">
           <div>
             <h2 className="text-3xl font-bold text-white leading-tight">
-              Bienvenue chez TraviXO.
+              {t.confirmHeroTitle[language]}
             </h2>
             <p className="mt-4 text-white/70 text-lg">
-              Votre compte est en cours de verification. Vous serez redirige automatiquement.
+              {t.confirmHeroSubtitle[language]}
             </p>
           </div>
         </div>
 
         <p className="text-white/40 text-xs">
-          &copy; {new Date().getFullYear()} TraviXO Systems. Tous droits reserves.
+          &copy; {new Date().getFullYear()} TraviXO Systems. {t.allRightsReserved[language]}
         </p>
       </div>
 
       {/* Right panel — confirmation state */}
       <div className="flex-1 flex items-center justify-center bg-gray-50 p-6">
         <div className="max-w-md w-full space-y-8 text-center">
+          {/* Language toggle */}
+          <div className="flex justify-end">
+            <LanguageToggle />
+          </div>
+
           {/* Mobile logo */}
           <div className="lg:hidden">
             <h1 className="text-2xl font-bold" style={{ color: BRAND.primary }}>TraviXO</h1>
-            <p className="text-xs font-semibold tracking-widest" style={{ color: BRAND.orange }}>SYSTEMS</p>
+            <p className="text-xs font-semibold tracking-widest" style={{ color: BRAND.orange }}>{t.systems[language]}</p>
           </div>
 
           {state === 'loading' && (
@@ -195,9 +205,9 @@ function ConfirmContent() {
                 <Loader2 className="w-10 h-10 animate-spin" style={{ color: BRAND.primary }} />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Verification en cours...</h2>
+                <h2 className="text-2xl font-bold text-gray-900">{t.confirmLoadingTitle[language]}</h2>
                 <p className="mt-3 text-gray-600">
-                  Configuration de votre compte et activation du pilote de 15 jours.
+                  {t.confirmLoadingSubtitle[language]}
                 </p>
               </div>
             </>
@@ -209,12 +219,12 @@ function ConfirmContent() {
                 <CheckCircle className="w-10 h-10 text-green-600" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Email verifie !</h2>
+                <h2 className="text-2xl font-bold text-gray-900">{t.confirmSuccessTitle[language]}</h2>
                 <p className="mt-3 text-gray-600">
-                  Votre compte est pret. Votre pilote gratuit de 15 jours est actif.
+                  {t.confirmSuccessSubtitle[language]}
                 </p>
                 <p className="mt-2 text-sm text-gray-500">
-                  50 equipements max &bull; Conformite VGP incluse &bull; Aucune carte requise
+                  {t.confirmSuccessDetails[language]}
                 </p>
               </div>
 
@@ -223,7 +233,7 @@ function ConfirmContent() {
                 className="inline-flex items-center gap-2 px-8 py-3 rounded-lg text-sm font-semibold text-white transition-colors"
                 style={{ backgroundColor: BRAND.orange }}
               >
-                Se connecter
+                {t.signIn[language]}
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </>
@@ -235,10 +245,10 @@ function ConfirmContent() {
                 <XCircle className="w-10 h-10 text-red-600" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Erreur de confirmation</h2>
+                <h2 className="text-2xl font-bold text-gray-900">{t.confirmErrorTitle[language]}</h2>
                 <p className="mt-3 text-gray-600">{errorMessage}</p>
                 <p className="mt-2 text-sm text-gray-500">
-                  Le lien a peut-etre expire. Essayez de vous reconnecter ou de renvoyer l'email.
+                  {t.confirmErrorSubtitle[language]}
                 </p>
               </div>
 
@@ -248,14 +258,14 @@ function ConfirmContent() {
                   className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-lg text-sm font-semibold text-white transition-colors"
                   style={{ backgroundColor: BRAND.orange }}
                 >
-                  Aller a la connexion
+                  {t.goToLogin[language]}
                 </Link>
                 <Link
                   href="/signup"
                   className="text-sm font-medium hover:underline"
                   style={{ color: BRAND.primary }}
                 >
-                  Recreer un compte
+                  {t.recreateAccount[language]}
                 </Link>
               </div>
             </>

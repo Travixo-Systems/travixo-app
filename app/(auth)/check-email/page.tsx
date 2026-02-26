@@ -7,6 +7,9 @@ import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
 import { Mail, Loader2, ArrowLeft, RefreshCw } from 'lucide-react'
 import { Suspense } from 'react'
+import { useLanguage } from '@/lib/LanguageContext'
+import { translations } from '@/lib/i18n'
+import { LanguageToggle } from '@/components/LanguageToggle'
 
 const BRAND = {
   primary: '#1e3a5f',
@@ -32,6 +35,8 @@ function CheckEmailContent() {
   const email = searchParams.get('email') || ''
   const [isResending, setIsResending] = useState(false)
   const [resendCount, setResendCount] = useState(0)
+  const { language } = useLanguage()
+  const t = translations.auth
 
   const handleResend = async () => {
     if (!email || resendCount >= 3) return
@@ -47,14 +52,18 @@ function CheckEmailContent() {
       if (error) throw error
 
       setResendCount(prev => prev + 1)
-      toast.success('Email de confirmation renvoye !')
+      toast.success(t.confirmationResent[language])
     } catch (error: any) {
       console.error('Resend error:', error)
-      toast.error(error.message || 'Impossible de renvoyer l\'email')
+      toast.error(error.message || t.resendFailed[language])
     } finally {
       setIsResending(false)
     }
   }
+
+  const resendCountText = t.checkEmailResendCount[language]
+    .replace('{count}', String(resendCount))
+    .replace('{remaining}', String(3 - resendCount))
 
   return (
     <div className="min-h-screen flex">
@@ -66,33 +75,38 @@ function CheckEmailContent() {
         <div>
           <h1 className="text-3xl font-bold text-white">TraviXO</h1>
           <p className="text-sm font-semibold tracking-widest" style={{ color: BRAND.orange }}>
-            SYSTEMS
+            {t.systems[language]}
           </p>
         </div>
 
         <div className="space-y-8">
           <div>
             <h2 className="text-3xl font-bold text-white leading-tight">
-              Plus qu'une etape.
+              {t.checkEmailHeroTitle[language]}
             </h2>
             <p className="mt-4 text-white/70 text-lg">
-              Verifiez votre adresse email pour activer votre compte et demarrer votre pilote de 15 jours.
+              {t.checkEmailHeroSubtitle[language]}
             </p>
           </div>
         </div>
 
         <p className="text-white/40 text-xs">
-          &copy; {new Date().getFullYear()} TraviXO Systems. Tous droits reserves.
+          &copy; {new Date().getFullYear()} TraviXO Systems. {t.allRightsReserved[language]}
         </p>
       </div>
 
       {/* Right panel — check email message */}
       <div className="flex-1 flex items-center justify-center bg-gray-50 p-6">
         <div className="max-w-md w-full space-y-8 text-center">
+          {/* Language toggle */}
+          <div className="flex justify-end">
+            <LanguageToggle />
+          </div>
+
           {/* Mobile logo */}
           <div className="lg:hidden">
             <h1 className="text-2xl font-bold" style={{ color: BRAND.primary }}>TraviXO</h1>
-            <p className="text-xs font-semibold tracking-widest" style={{ color: BRAND.orange }}>SYSTEMS</p>
+            <p className="text-xs font-semibold tracking-widest" style={{ color: BRAND.orange }}>{t.systems[language]}</p>
           </div>
 
           {/* Mail icon */}
@@ -102,10 +116,10 @@ function CheckEmailContent() {
 
           <div>
             <h2 className="text-2xl font-bold text-gray-900">
-              Verifiez votre boite mail
+              {t.checkEmailTitle[language]}
             </h2>
             <p className="mt-3 text-gray-600">
-              Nous avons envoye un email de confirmation a :
+              {t.checkEmailSentTo[language]}
             </p>
             {email && (
               <p className="mt-2 font-semibold text-lg" style={{ color: BRAND.primary }}>
@@ -113,17 +127,17 @@ function CheckEmailContent() {
               </p>
             )}
             <p className="mt-4 text-sm text-gray-500">
-              Cliquez sur le lien dans l'email pour verifier votre compte et activer votre pilote gratuit de 15 jours.
+              {t.checkEmailClickLink[language]}
             </p>
           </div>
 
           {/* Tips */}
           <div className="bg-white rounded-lg border border-gray-200 p-4 text-left space-y-2">
-            <p className="text-sm font-semibold text-gray-700">L'email n'arrive pas ?</p>
+            <p className="text-sm font-semibold text-gray-700">{t.checkEmailTipsTitle[language]}</p>
             <ul className="text-sm text-gray-500 space-y-1">
-              <li>- Verifiez votre dossier spam / courrier indesirable</li>
-              <li>- L'email vient de <span className="font-medium">noreply@travixosystems.com</span></li>
-              <li>- Le lien expire dans 24 heures</li>
+              <li>- {t.checkEmailTip1[language]}</li>
+              <li>- {t.checkEmailTip2[language]} <span className="font-medium">noreply@travixosystems.com</span></li>
+              <li>- {t.checkEmailTip3[language]}</li>
             </ul>
           </div>
 
@@ -141,19 +155,19 @@ function CheckEmailContent() {
             {isResending ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Envoi en cours...
+                {t.checkEmailResendSending[language]}
               </>
             ) : (
               <>
                 <RefreshCw className="w-4 h-4" />
-                {resendCount >= 3 ? 'Limite atteinte' : 'Renvoyer l\'email de confirmation'}
+                {resendCount >= 3 ? t.checkEmailResendLimit[language] : t.checkEmailResendButton[language]}
               </>
             )}
           </button>
 
           {resendCount > 0 && resendCount < 3 && (
             <p className="text-xs text-gray-400">
-              Email renvoye {resendCount} fois. {3 - resendCount} envoi(s) restant(s).
+              {resendCountText}
             </p>
           )}
 
@@ -165,7 +179,7 @@ function CheckEmailContent() {
               style={{ color: BRAND.primary }}
             >
               <ArrowLeft className="w-4 h-4" />
-              Retour a la connexion
+              {t.backToLogin[language]}
             </Link>
           </div>
         </div>

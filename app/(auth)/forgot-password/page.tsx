@@ -4,9 +4,14 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
+import { useLanguage } from '@/lib/LanguageContext'
+import { translations } from '@/lib/i18n'
+import { LanguageToggle } from '@/components/LanguageToggle'
 
 export default function ForgotPasswordPage() {
   const supabase = createClient()
+  const { language } = useLanguage()
+  const t = translations.auth
 
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState('')
@@ -24,10 +29,10 @@ export default function ForgotPasswordPage() {
       if (error) throw error
 
       setEmailSent(true)
-      toast.success('Reset link sent! Check your inbox.')
+      toast.success(t.resetLinkSentToast[language])
     } catch (error: any) {
       console.error('Password reset error:', error)
-      toast.error('Something went wrong. Please try again.')
+      toast.error(t.resetLinkErrorToast[language])
     } finally {
       setIsLoading(false)
     }
@@ -36,14 +41,18 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-lg">
+        <div className="flex justify-end">
+          <LanguageToggle />
+        </div>
+
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900">
-            Reset Password
+            {t.resetPasswordTitle[language]}
           </h1>
           <p className="mt-2 text-sm text-gray-600">
             {emailSent
-              ? 'Check your email for the reset link.'
-              : "Enter your email and we'll send you a reset link."}
+              ? t.resetPasswordSent[language]
+              : t.resetPasswordPrompt[language]}
           </p>
         </div>
 
@@ -51,11 +60,10 @@ export default function ForgotPasswordPage() {
           <div className="space-y-6">
             <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
               <p className="text-sm text-green-800">
-                If an account exists for <span className="font-medium">{email}</span>,
-                you will receive a password reset link shortly.
+                {t.resetPasswordConfirmation[language]} <span className="font-medium">{email}</span>{t.resetPasswordConfirmation2[language]}
               </p>
               <p className="text-xs text-green-600 mt-2">
-                {"Don't see it? Check your spam folder."}
+                {t.checkSpam[language]}
               </p>
             </div>
 
@@ -66,12 +74,12 @@ export default function ForgotPasswordPage() {
               }}
               className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
             >
-              Try a different email
+              {t.tryDifferentEmail[language]}
             </button>
 
             <div className="text-center text-sm">
               <Link href="/login" className="font-medium text-orange-600 hover:text-orange-500">
-                Back to sign in
+                {t.backToSignIn[language]}
               </Link>
             </div>
           </div>
@@ -79,7 +87,7 @@ export default function ForgotPasswordPage() {
           <form onSubmit={handleResetRequest} className="mt-8 space-y-6">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email Address
+                {t.emailLabel[language]}
               </label>
               <input
                 id="email"
@@ -88,7 +96,7 @@ export default function ForgotPasswordPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500"
-                placeholder="john@company.com"
+                placeholder={t.emailPlaceholder[language]}
                 disabled={isLoading}
               />
             </div>
@@ -98,12 +106,12 @@ export default function ForgotPasswordPage() {
               disabled={isLoading}
               className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Sending...' : 'Send Reset Link'}
+              {isLoading ? t.sending[language] : t.sendResetLink[language]}
             </button>
 
             <div className="text-center text-sm">
               <Link href="/login" className="font-medium text-orange-600 hover:text-orange-500">
-                Back to sign in
+                {t.backToSignIn[language]}
               </Link>
             </div>
           </form>
