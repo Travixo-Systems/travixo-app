@@ -3466,6 +3466,389 @@ export const translations = {
       fr: "Fermer",
     },
   },
+
+  // ============================================================================
+  // AUTH PAGES (login, signup, forgot-password, reset-password, check-email, confirm)
+  // ============================================================================
+  auth: {
+    // ---------- shared ----------
+    systems: { en: "SYSTEMS", fr: "SYSTEMS" },
+    allRightsReserved: {
+      en: "All rights reserved.",
+      fr: "Tous droits réservés.",
+    },
+    emailLabel: { en: "Email address", fr: "Adresse email" },
+    passwordLabel: { en: "Password", fr: "Mot de passe" },
+    emailPlaceholder: { en: "john@company.com", fr: "john@company.com" },
+
+    // ---------- login ----------
+    loginHeroTitle: {
+      en: "Manage your equipment.\nIn full compliance.",
+      fr: "Gérez vos équipements.\nEn toute conformité.",
+    },
+    loginHeroSubtitle: {
+      en: "Manage your equipment fleet with full VGP compliance, digital audits, and real-time tracking.",
+      fr: "Gérez votre parc d'équipements en toute conformité VGP, avec audits digitaux et suivi en temps réel.",
+    },
+    loginFeature1: {
+      en: "Invitations & team management",
+      fr: "Invitations & gestion d'équipe",
+    },
+    loginFeature2: {
+      en: "Inventory audits & DIRECCTE compliance",
+      fr: "Audits d'inventaire & conformité DIRECCTE",
+    },
+    welcomeBack: { en: "Welcome back", fr: "Bon retour" },
+    signInSubtitle: {
+      en: "Sign in to your account",
+      fr: "Connectez-vous à votre compte",
+    },
+    signInInvitePrompt: {
+      en: "Sign in to accept your team invitation",
+      fr: "Connectez-vous pour accepter votre invitation",
+    },
+    signInInviteSubPrompt: {
+      en: "Sign in to accept your team invitation",
+      fr: "Connectez-vous pour accepter votre invitation d'équipe",
+    },
+    verifyEmailTitle: {
+      en: "Please verify your email",
+      fr: "Veuillez vérifier votre email",
+    },
+    verifyEmailBody: {
+      en: "A confirmation email has been sent to",
+      fr: "Un email de confirmation a été envoyé à",
+    },
+    verifyEmailAction: {
+      en: "Click the link to activate your account.",
+      fr: "Cliquez sur le lien pour activer votre compte.",
+    },
+    resending: { en: "Sending...", fr: "Envoi en cours..." },
+    resendConfirmation: {
+      en: "Resend confirmation email",
+      fr: "Renvoyer l'email de confirmation",
+    },
+    passwordPlaceholder: { en: "Your password", fr: "Votre mot de passe" },
+    rememberMe: { en: "Remember me", fr: "Se souvenir de moi" },
+    forgotPassword: { en: "Forgot password?", fr: "Mot de passe oublié ?" },
+    signingIn: { en: "Signing in...", fr: "Connexion..." },
+    signIn: { en: "Sign in", fr: "Se connecter" },
+    noAccountYet: { en: "Don't have an account? ", fr: "Pas encore de compte ? " },
+    createAccount: { en: "Create an account", fr: "Créer un compte" },
+    freeTrial15Days: {
+      en: "Free 15-day trial",
+      fr: "Évaluation gratuite de 15 jours",
+    },
+    loginSuccessInvite: {
+      en: "Login successful! Accepting invitation...",
+      fr: "Connexion réussie ! Acceptation de l'invitation...",
+    },
+    invitationAccepted: {
+      en: "Invitation accepted!",
+      fr: "Invitation acceptée !",
+    },
+    welcomeBackToast: { en: "Welcome back!", fr: "Bon retour !" },
+    confirmationResent: {
+      en: "Confirmation email resent!",
+      fr: "Email de confirmation renvoyé !",
+    },
+    resendFailed: {
+      en: "Unable to resend the email",
+      fr: "Impossible de renvoyer l'email",
+    },
+
+    // ---------- signup ----------
+    signupHeroInviteTitle: {
+      en: "Join your team.\nIn seconds.",
+      fr: "Rejoignez votre équipe.\nEn quelques secondes.",
+    },
+    signupHeroInviteSubtitle: {
+      en: "Your team is already using TraviXO. Create your account to start collaborating.",
+      fr: "Votre équipe utilise déjà TraviXO. Créez votre compte pour commencer à collaborer.",
+    },
+    signupHeroTitle: {
+      en: "Manage your equipment.\nIn full compliance.",
+      fr: "Gérez vos équipements.\nEn toute conformité.",
+    },
+    signupHeroSubtitle: {
+      en: "Start your 15-day free pilot. Full access, no credit card required.",
+      fr: "Démarrez votre pilote gratuit de 15 jours. Accès complet, aucune carte requise.",
+    },
+    signupFeature1: {
+      en: "Digital inventory audits",
+      fr: "Audits d'inventaire digitaux",
+    },
+    signupFeature2: {
+      en: "VGP & DIRECCTE compliance",
+      fr: "Conformité VGP & DIRECCTE",
+    },
+    signupFeature3: {
+      en: "Team management & collaboration",
+      fr: "Gestion d'équipe & collaboration",
+    },
+    signupInviteHeader: {
+      en: "Create your account",
+      fr: "Créez votre compte",
+    },
+    signupInviteSubheader: {
+      en: "to join the team",
+      fr: "pour rejoindre l'équipe",
+    },
+    inviteEmailLabel: {
+      en: "Your invitation email",
+      fr: "Votre adresse d'invitation",
+    },
+    signupNormalHeader: {
+      en: "Free 15-day trial",
+      fr: "Évaluation gratuite de 15 jours",
+    },
+    signupNormalSubheader: {
+      en: "VGP compliance included • No credit card required",
+      fr: "Conformité VGP incluse • Aucune carte requise",
+    },
+    companyNameLabel: { en: "Company name", fr: "Nom de l'entreprise" },
+    fullNameLabel: { en: "Your full name", fr: "Votre nom complet" },
+    emailMatchesInvite: {
+      en: "This address matches your invitation",
+      fr: "Cette adresse correspond à votre invitation",
+    },
+    passwordMinChars: {
+      en: "At least 6 characters",
+      fr: "Minimum 6 caractères",
+    },
+    creatingInviteAccount: {
+      en: "Creating account...",
+      fr: "Création du compte...",
+    },
+    creatingAccount: {
+      en: "Creating account...",
+      fr: "Création en cours...",
+    },
+    createAndJoin: {
+      en: "Create my account and join",
+      fr: "Créer mon compte et rejoindre",
+    },
+    startFreeTrial: {
+      en: "Start free trial",
+      fr: "Démarrer l'essai gratuit",
+    },
+    alreadyHaveAccount: {
+      en: "Already have an account? ",
+      fr: "Vous avez déjà un compte ? ",
+    },
+    termsNotice: {
+      en: "By creating an account, you agree to our Terms of Service and Privacy Policy",
+      fr: "En créant un compte, vous acceptez nos Conditions d'utilisation et notre Politique de confidentialité",
+    },
+    accountCreatedInvite: {
+      en: "Account created and invitation accepted!",
+      fr: "Compte créé et invitation acceptée !",
+    },
+    accountCreatedInvitePending: {
+      en: "Account created! Finalizing invitation...",
+      fr: "Compte créé ! Finalisation de l'invitation...",
+    },
+    accountCreated: { en: "Account created!", fr: "Compte créé !" },
+
+    // ---------- forgot-password ----------
+    resetPasswordTitle: {
+      en: "Reset Password",
+      fr: "Réinitialiser le mot de passe",
+    },
+    resetPasswordPrompt: {
+      en: "Enter your email and we'll send you a reset link.",
+      fr: "Entrez votre email et nous vous enverrons un lien de réinitialisation.",
+    },
+    resetPasswordSent: {
+      en: "Check your email for the reset link.",
+      fr: "Vérifiez votre email pour le lien de réinitialisation.",
+    },
+    resetPasswordConfirmation: {
+      en: "If an account exists for",
+      fr: "Si un compte existe pour",
+    },
+    resetPasswordConfirmation2: {
+      en: ", you will receive a password reset link shortly.",
+      fr: ", vous recevrez un lien de réinitialisation sous peu.",
+    },
+    checkSpam: {
+      en: "Don't see it? Check your spam folder.",
+      fr: "Vous ne le voyez pas ? Vérifiez votre dossier spam.",
+    },
+    tryDifferentEmail: {
+      en: "Try a different email",
+      fr: "Essayer avec un autre email",
+    },
+    backToSignIn: { en: "Back to sign in", fr: "Retour à la connexion" },
+    sending: { en: "Sending...", fr: "Envoi en cours..." },
+    sendResetLink: {
+      en: "Send Reset Link",
+      fr: "Envoyer le lien de réinitialisation",
+    },
+    resetLinkSentToast: {
+      en: "Reset link sent! Check your inbox.",
+      fr: "Lien envoyé ! Vérifiez votre boîte de réception.",
+    },
+    resetLinkErrorToast: {
+      en: "Something went wrong. Please try again.",
+      fr: "Une erreur est survenue. Veuillez réessayer.",
+    },
+
+    // ---------- reset-password ----------
+    setNewPasswordTitle: {
+      en: "Set New Password",
+      fr: "Nouveau mot de passe",
+    },
+    setNewPasswordSubtitle: {
+      en: "Enter your new password below.",
+      fr: "Entrez votre nouveau mot de passe ci-dessous.",
+    },
+    newPasswordLabel: {
+      en: "New Password",
+      fr: "Nouveau mot de passe",
+    },
+    confirmNewPasswordLabel: {
+      en: "Confirm New Password",
+      fr: "Confirmer le mot de passe",
+    },
+    newPasswordPlaceholder: {
+      en: "At least 6 characters",
+      fr: "Minimum 6 caractères",
+    },
+    confirmPasswordPlaceholder: {
+      en: "Confirm your password",
+      fr: "Confirmez votre mot de passe",
+    },
+    updating: { en: "Updating...", fr: "Mise à jour..." },
+    updatePassword: {
+      en: "Update Password",
+      fr: "Mettre à jour le mot de passe",
+    },
+    passwordsDoNotMatch: {
+      en: "Passwords do not match.",
+      fr: "Les mots de passe ne correspondent pas.",
+    },
+    passwordTooShort: {
+      en: "Password must be at least 6 characters.",
+      fr: "Le mot de passe doit contenir au moins 6 caractères.",
+    },
+    passwordUpdated: {
+      en: "Password updated successfully!",
+      fr: "Mot de passe mis à jour avec succès !",
+    },
+    passwordSameError: {
+      en: "New password must be different from your current password.",
+      fr: "Le nouveau mot de passe doit être différent de l'actuel.",
+    },
+    passwordUpdateFailed: {
+      en: "Failed to update password. The link may have expired.",
+      fr: "Impossible de mettre à jour le mot de passe. Le lien a peut-être expiré.",
+    },
+
+    // ---------- check-email ----------
+    checkEmailHeroTitle: {
+      en: "One more step.",
+      fr: "Plus qu'une étape.",
+    },
+    checkEmailHeroSubtitle: {
+      en: "Verify your email address to activate your account and start your 15-day pilot.",
+      fr: "Vérifiez votre adresse email pour activer votre compte et démarrer votre pilote de 15 jours.",
+    },
+    checkEmailTitle: {
+      en: "Check your inbox",
+      fr: "Vérifiez votre boîte mail",
+    },
+    checkEmailSentTo: {
+      en: "We sent a confirmation email to:",
+      fr: "Nous avons envoyé un email de confirmation à :",
+    },
+    checkEmailClickLink: {
+      en: "Click the link in the email to verify your account and activate your free 15-day pilot.",
+      fr: "Cliquez sur le lien dans l'email pour vérifier votre compte et activer votre pilote gratuit de 15 jours.",
+    },
+    checkEmailTipsTitle: {
+      en: "Didn't receive the email?",
+      fr: "L'email n'arrive pas ?",
+    },
+    checkEmailTip1: {
+      en: "Check your spam / junk folder",
+      fr: "Vérifiez votre dossier spam / courrier indésirable",
+    },
+    checkEmailTip2: {
+      en: "The email comes from",
+      fr: "L'email vient de",
+    },
+    checkEmailTip3: {
+      en: "The link expires in 24 hours",
+      fr: "Le lien expire dans 24 heures",
+    },
+    checkEmailResendSending: { en: "Sending...", fr: "Envoi en cours..." },
+    checkEmailResendLimit: {
+      en: "Limit reached",
+      fr: "Limite atteinte",
+    },
+    checkEmailResendButton: {
+      en: "Resend confirmation email",
+      fr: "Renvoyer l'email de confirmation",
+    },
+    checkEmailResendCount: {
+      en: "Email resent {count} time(s). {remaining} send(s) remaining.",
+      fr: "Email renvoyé {count} fois. {remaining} envoi(s) restant(s).",
+    },
+    backToLogin: { en: "Back to login", fr: "Retour à la connexion" },
+
+    // ---------- confirm ----------
+    confirmHeroTitle: {
+      en: "Welcome to TraviXO.",
+      fr: "Bienvenue chez TraviXO.",
+    },
+    confirmHeroSubtitle: {
+      en: "Your account is being verified. You will be redirected automatically.",
+      fr: "Votre compte est en cours de vérification. Vous serez redirigé automatiquement.",
+    },
+    confirmLoadingTitle: {
+      en: "Verifying...",
+      fr: "Vérification en cours...",
+    },
+    confirmLoadingSubtitle: {
+      en: "Setting up your account and activating your 15-day pilot.",
+      fr: "Configuration de votre compte et activation du pilote de 15 jours.",
+    },
+    confirmSuccessTitle: {
+      en: "Email verified!",
+      fr: "Email vérifié !",
+    },
+    confirmSuccessSubtitle: {
+      en: "Your account is ready. Your free 15-day pilot is active.",
+      fr: "Votre compte est prêt. Votre pilote gratuit de 15 jours est actif.",
+    },
+    confirmSuccessDetails: {
+      en: "50 equipment max • VGP compliance included • No credit card required",
+      fr: "50 équipements max • Conformité VGP incluse • Aucune carte requise",
+    },
+    confirmErrorTitle: {
+      en: "Confirmation error",
+      fr: "Erreur de confirmation",
+    },
+    confirmErrorSubtitle: {
+      en: "The link may have expired. Try signing in again or resending the email.",
+      fr: "Le lien a peut-être expiré. Essayez de vous reconnecter ou de renvoyer l'email.",
+    },
+    goToLogin: { en: "Go to login", fr: "Aller à la connexion" },
+    recreateAccount: { en: "Create a new account", fr: "Recréer un compte" },
+    confirmInvalidLink: {
+      en: "Invalid or expired confirmation link",
+      fr: "Lien de confirmation invalide ou expiré",
+    },
+    confirmFetchError: {
+      en: "Unable to retrieve account after verification",
+      fr: "Impossible de récupérer le compte après vérification",
+    },
+    confirmOrgError: {
+      en: "Error creating account:",
+      fr: "Erreur lors de la création du compte :",
+    },
+  },
 } as const;
 
 /**

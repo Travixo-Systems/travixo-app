@@ -52,9 +52,9 @@ function LoginContent() {
         email: unconfirmedEmail,
       })
       if (error) throw error
-      toast.success('Email de confirmation renvoye !')
+      toast.success('Email de confirmation renvoyé ! / Confirmation email resent!')
     } catch (error: any) {
-      toast.error(error.message || 'Impossible de renvoyer l\'email')
+      toast.error(error.message || 'Impossible de renvoyer l\'email / Unable to resend the email')
     } finally {
       setIsResending(false)
     }
@@ -89,7 +89,7 @@ function LoginContent() {
           const inviteToken = tokenMatch?.[1]
 
           if (inviteToken) {
-            toast.success('Connexion reussie ! Acceptation de l\'invitation...')
+            toast.success('Connexion réussie ! / Login successful!')
             const acceptResponse = await fetch('/api/team/invitations/accept', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -101,11 +101,11 @@ function LoginContent() {
             const acceptData = await acceptResponse.json()
 
             if (acceptData.success) {
-              toast.success('Invitation acceptee !')
+              toast.success('Invitation acceptée ! / Invitation accepted!')
             }
           }
         } else {
-          toast.success('Welcome back!')
+          toast.success('Bon retour ! / Welcome back!')
         }
 
         router.push('/dashboard')
@@ -136,8 +136,8 @@ function LoginContent() {
         <div className="space-y-8">
           <div>
             <h2 className="text-3xl font-bold text-white leading-tight">
-              Gerez vos equipements.<br />
-              En toute conformite.
+              Gérez vos équipements.<br />
+              En toute conformité.
             </h2>
             <p className="mt-4 text-white/70 text-lg">
               Manage your equipment fleet with full VGP compliance, digital audits, and real-time tracking.
@@ -149,19 +149,19 @@ function LoginContent() {
               <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
                 <Mail className="w-5 h-5" style={{ color: BRAND.orange }} />
               </div>
-              <span className="text-sm">Invitations & gestion d'equipe</span>
+              <span className="text-sm">Invitations & gestion d&apos;équipe / Team management</span>
             </div>
             <div className="flex items-center gap-3 text-white/80">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
                 <Users className="w-5 h-5" style={{ color: BRAND.orange }} />
               </div>
-              <span className="text-sm">Audits d'inventaire & conformite DIRECCTE</span>
+              <span className="text-sm">Audits d&apos;inventaire & conformité DIRECCTE / Inventory audits</span>
             </div>
           </div>
         </div>
 
         <p className="text-white/40 text-xs">
-          &copy; {new Date().getFullYear()} TraviXO Systems. Tous droits reserves.
+          &copy; {new Date().getFullYear()} TraviXO Systems. Tous droits réservés / All rights reserved.
         </p>
       </div>
 
@@ -176,10 +176,10 @@ function LoginContent() {
 
           <div>
             <h2 className="text-2xl font-bold text-gray-900">
-              Bon retour
+              Bon retour / Welcome back
             </h2>
             <p className="mt-1 text-sm text-gray-500">
-              Connectez-vous a votre compte / Sign in to your account
+              Connectez-vous à votre compte / Sign in to your account
             </p>
           </div>
 
@@ -200,11 +200,12 @@ function LoginContent() {
           {showUnconfirmed && (
             <div className="rounded-lg p-4 bg-amber-50 border border-amber-200">
               <p className="text-sm font-semibold text-amber-800">
-                Veuillez verifier votre email
+                Veuillez vérifier votre email / Please verify your email
               </p>
               <p className="text-xs text-amber-700 mt-1">
-                Un email de confirmation a ete envoye a <span className="font-medium">{unconfirmedEmail}</span>.
-                Cliquez sur le lien pour activer votre compte.
+                Un email de confirmation a été envoyé à <span className="font-medium">{unconfirmedEmail}</span>.
+                <br />
+                A confirmation email has been sent. Click the link to activate your account.
               </p>
               <button
                 onClick={handleResendConfirmation}
@@ -212,7 +213,7 @@ function LoginContent() {
                 className="mt-2 text-xs font-medium underline disabled:opacity-50"
                 style={{ color: BRAND.orange }}
               >
-                {isResending ? 'Envoi en cours...' : 'Renvoyer l\'email de confirmation'}
+                {isResending ? 'Envoi en cours... / Sending...' : 'Renvoyer l\'email / Resend email'}
               </button>
             </div>
           )}
@@ -220,7 +221,7 @@ function LoginContent() {
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
               <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Adresse email
+                Adresse email / Email address
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -242,7 +243,7 @@ function LoginContent() {
 
             <div>
               <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Mot de passe
+                Mot de passe / Password
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -256,7 +257,7 @@ function LoginContent() {
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-shadow"
                   style={{ ['--tw-ring-color' as string]: BRAND.orange } as React.CSSProperties}
-                  placeholder="Votre mot de passe"
+                  placeholder="Votre mot de passe / Your password"
                   disabled={isLoading}
                 />
               </div>
@@ -271,12 +272,12 @@ function LoginContent() {
                   style={{ accentColor: BRAND.orange }}
                 />
                 <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-600">
-                  Se souvenir de moi
+                  Se souvenir de moi / Remember me
                 </label>
               </div>
 
               <Link href="/forgot-password" className="text-sm font-medium hover:underline" style={{ color: BRAND.orange }}>
-                Mot de passe oublie ?
+                Mot de passe oublié ?
               </Link>
             </div>
 
@@ -291,25 +292,25 @@ function LoginContent() {
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Connexion...
+                  Connexion... / Signing in...
                 </>
               ) : (
                 <>
                   <LogIn className="w-4 h-4" />
-                  Se connecter
+                  Se connecter / Sign in
                 </>
               )}
             </button>
           </form>
 
           <div className="text-center text-sm">
-            <span className="text-gray-500">Pas encore de compte ? </span>
+            <span className="text-gray-500">Pas encore de compte ? / No account yet? </span>
             <Link
               href={isInviteRedirect ? `/signup?redirect=${encodeURIComponent(redirectTo)}` : '/signup'}
               className="font-semibold hover:underline"
               style={{ color: BRAND.primary }}
             >
-              {isInviteRedirect ? 'Creer un compte' : 'Evaluation gratuite de 15 jours'}
+              {isInviteRedirect ? 'Créer un compte / Create account' : 'Essai gratuit 15 jours / Free 15-day trial'}
             </Link>
           </div>
         </div>

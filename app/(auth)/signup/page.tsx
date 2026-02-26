@@ -96,20 +96,20 @@ function SignUpContent() {
           const acceptData = await acceptResponse.json()
 
           if (acceptData.success) {
-            toast.success('Compte cree et invitation acceptee !')
+            toast.success('Compte créé et invitation acceptée ! / Account created & invitation accepted!')
             router.push('/dashboard')
             router.refresh()
             return
           } else {
             console.error('Accept invitation failed after signup:', acceptData)
-            toast.success('Compte cree ! Finalisation de l\'invitation...')
+            toast.success('Compte créé ! Finalisation... / Account created! Finalizing...')
             router.push(redirectTo)
             router.refresh()
             return
           }
         }
 
-        toast.success('Account created!')
+        toast.success('Compte créé ! / Account created!')
         router.push('/dashboard')
         router.refresh()
       } else {
@@ -174,18 +174,20 @@ function SignUpContent() {
           {isInviteRedirect ? (
             <div>
               <h2 className="text-3xl font-bold text-white leading-tight">
-                Rejoignez votre equipe.<br />
-                En quelques secondes.
+                Rejoignez votre équipe.<br />
+                Join your team.
               </h2>
               <p className="mt-4 text-white/70 text-lg">
+                Votre équipe utilise déjà TraviXO. Créez votre compte pour collaborer.
+                <br />
                 Your team is already using TraviXO. Create your account to start collaborating.
               </p>
             </div>
           ) : (
             <div>
               <h2 className="text-3xl font-bold text-white leading-tight">
-                Gerez vos equipements.<br />
-                En toute conformite.
+                Gérez vos équipements.<br />
+                En toute conformité.
               </h2>
               <p className="mt-4 text-white/70 text-lg">
                 Start your 15-day free pilot. Full access, no credit card required.
@@ -198,25 +200,25 @@ function SignUpContent() {
               <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
                 <ClipboardCheck className="w-5 h-5" style={{ color: BRAND.orange }} />
               </div>
-              <span className="text-sm">Audits d'inventaire digitaux</span>
+              <span className="text-sm">Audits d&apos;inventaire digitaux / Digital inventory audits</span>
             </div>
             <div className="flex items-center gap-3 text-white/80">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
                 <Shield className="w-5 h-5" style={{ color: BRAND.orange }} />
               </div>
-              <span className="text-sm">Conformite VGP & DIRECCTE</span>
+              <span className="text-sm">Conformité VGP & DIRECCTE / VGP & DIRECCTE compliance</span>
             </div>
             <div className="flex items-center gap-3 text-white/80">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
                 <Users className="w-5 h-5" style={{ color: BRAND.orange }} />
               </div>
-              <span className="text-sm">Gestion d'equipe & collaboration</span>
+              <span className="text-sm">Gestion d&apos;équipe / Team management & collaboration</span>
             </div>
           </div>
         </div>
 
         <p className="text-white/40 text-xs">
-          &copy; {new Date().getFullYear()} TraviXO Systems. Tous droits reserves.
+          &copy; {new Date().getFullYear()} TraviXO Systems. Tous droits réservés / All rights reserved.
         </p>
       </div>
 
@@ -233,10 +235,10 @@ function SignUpContent() {
             /* ---- Invite signup header ---- */
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
-                Creez votre compte
+                Créez votre compte / Create your account
               </h2>
               <p className="mt-1 text-sm text-gray-500">
-                pour rejoindre l'equipe / to join the team
+                pour rejoindre l&apos;équipe / to join the team
               </p>
 
               {prefillEmail && (
@@ -244,7 +246,7 @@ function SignUpContent() {
                   className="mt-4 rounded-lg p-3"
                   style={{ backgroundColor: '#f0f4f8', borderLeft: `4px solid ${BRAND.primary}` }}
                 >
-                  <p className="text-xs text-gray-500">Votre adresse d'invitation</p>
+                  <p className="text-xs text-gray-500">Votre adresse d&apos;invitation / Your invitation email</p>
                   <p className="font-bold text-sm" style={{ color: BRAND.primary }}>{prefillEmail}</p>
                 </div>
               )}
@@ -253,10 +255,12 @@ function SignUpContent() {
             /* ---- Normal signup header ---- */
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
-                Evaluation gratuite de 15 jours
+                Essai gratuit de 15 jours / Free 15-day trial
               </h2>
               <p className="mt-1 text-sm text-gray-500">
-                Conformite VGP incluse • Aucune carte requise
+                Conformité VGP incluse &bull; Aucune carte requise
+                <br />
+                VGP compliance included &bull; No credit card required
               </p>
             </div>
           )}
@@ -266,7 +270,7 @@ function SignUpContent() {
             {!isInviteRedirect && (
               <div>
                 <label htmlFor="company" className="block text-sm font-semibold text-gray-700 mb-1.5">
-                  Nom de l'entreprise
+                  Nom de l&apos;entreprise / Company name
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -288,7 +292,7 @@ function SignUpContent() {
 
             <div>
               <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Votre nom complet
+                Votre nom complet / Your full name
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -309,7 +313,7 @@ function SignUpContent() {
 
             <div>
               <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Adresse email
+                Adresse email / Email address
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -329,14 +333,14 @@ function SignUpContent() {
               </div>
               {prefillEmail && (
                 <p className="mt-1 text-xs text-gray-400">
-                  Cette adresse correspond a votre invitation
+                  Cette adresse correspond à votre invitation / This matches your invitation
                 </p>
               )}
             </div>
 
             <div>
               <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Mot de passe
+                Mot de passe / Password
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -350,7 +354,7 @@ function SignUpContent() {
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  placeholder="Minimum 6 caracteres"
+                  placeholder="Minimum 6 caractères / At least 6 characters"
                   disabled={isLoading}
                 />
               </div>
@@ -367,30 +371,32 @@ function SignUpContent() {
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  {isInviteRedirect ? 'Creation du compte...' : 'Creation en cours...'}
+                  {isInviteRedirect ? 'Création du compte... / Creating account...' : 'Création en cours... / Creating...'}
                 </>
               ) : (
                 <>
                   <UserPlus className="w-4 h-4" />
-                  {isInviteRedirect ? 'Creer mon compte et rejoindre' : 'Demarrer l\'essai gratuit'}
+                  {isInviteRedirect ? 'Créer mon compte / Create my account' : 'Démarrer l\'essai gratuit / Start free trial'}
                 </>
               )}
             </button>
           </form>
 
           <div className="text-center text-sm">
-            <span className="text-gray-500">Vous avez deja un compte ? </span>
+            <span className="text-gray-500">Déjà un compte ? / Already have an account? </span>
             <Link
               href={isInviteRedirect ? `/login?redirect=${encodeURIComponent(redirectTo)}` : '/login'}
               className="font-semibold hover:underline"
               style={{ color: BRAND.primary }}
             >
-              Se connecter
+              Se connecter / Sign in
             </Link>
           </div>
 
           <div className="text-center text-xs text-gray-400">
-            En creant un compte, vous acceptez nos Conditions d'utilisation et notre Politique de confidentialite
+            En créant un compte, vous acceptez nos Conditions d&apos;utilisation et notre Politique de confidentialité.
+            <br />
+            By creating an account, you agree to our Terms of Service and Privacy Policy.
           </div>
         </div>
       </div>
