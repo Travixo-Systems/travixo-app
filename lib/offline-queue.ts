@@ -27,6 +27,15 @@ class OfflineQueueDB extends Dexie {
 // Singleton — safe to import multiple times in the same browser tab
 export const db = new OfflineQueueDB()
 
+/** Custom event name dispatched whenever the queue is mutated. */
+export const QUEUE_UPDATED_EVENT = 'offline-queue-updated' as const
+
+function notifyQueueUpdated(): void {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(QUEUE_UPDATED_EVENT))
+  }
+}
+
 /**
  * Add a write action to the queue.
  */
@@ -35,7 +44,7 @@ export async function enqueueAction(
   method: string,
   body: unknown,
 ): Promise<number> {
-  return db.pending_actions.add({
+  const id = await db.pending_actions.add({
     endpoint,
     method,
     body: JSON.stringify(body),
@@ -43,6 +52,8 @@ export async function enqueueAction(
     retries: 0,
     status: 'pending',
   })
+  notifyQueueUpdated()
+  return id
 }
 
 /**
@@ -83,6 +94,7 @@ export async function processQueue(): Promise<void> {
       }
     }
   }
+  notifyQueueUpdated()
 }
 
 /**

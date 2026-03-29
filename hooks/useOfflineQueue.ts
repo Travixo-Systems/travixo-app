@@ -1,13 +1,23 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { db } from '@/lib/offline-queue'
+import { db, processQueue, QUEUE_UPDATED_EVENT } from '@/lib/offline-queue'
 import { registerSyncListener, unregisterSyncListener } from '@/lib/sync-manager'
-import { processQueue } from '@/lib/offline-queue'
 
 interface UseOfflineQueueResult {
   isOnline: boolean
   pendingCount: number
+}
+
+/**
+ * Dispatch the queue-updated event to trigger a count refresh in any mounted
+ * useOfflineQueue hook. Call this after any external operation that changes
+ * the queue (e.g. manual clearCompleted()).
+ */
+export function refreshPendingCount(): void {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(QUEUE_UPDATED_EVENT))
+  }
 }
 
 export function useOfflineQueue(): UseOfflineQueueResult {
@@ -16,7 +26,7 @@ export function useOfflineQueue(): UseOfflineQueueResult {
   )
   const [pendingCount, setPendingCount] = useState<number>(0)
 
-  // Sync pendingCount from IndexedDB
+  // Re-read count from IndexedDB whenever the queue is mutated
   useEffect(() => {
     let cancelled = false
 
@@ -28,14 +38,18 @@ export function useOfflineQueue(): UseOfflineQueueResult {
       if (!cancelled) setPendingCount(count)
     }
 
-    refreshCount()
+    // Seed on mount
+    refreshCount().catch(console.error)
 
-    // Re-read count whenever the table changes (Dexie liveQuery-lite via hook interval)
-    const interval = setInterval(refreshCount, 5000)
+    function handleQueueUpdate() {
+      refreshCount().catch(console.error)
+    }
+
+    window.addEventListener(QUEUE_UPDATED_EVENT, handleQueueUpdate)
 
     return () => {
       cancelled = true
-      clearInterval(interval)
+      window.removeEventListener(QUEUE_UPDATED_EVENT, handleQueueUpdate)
     }
   }, [])
 

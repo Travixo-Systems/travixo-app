@@ -31,7 +31,6 @@ import { createTranslator } from '@/lib/i18n'
 import { enqueueAction, processQueue } from '@/lib/offline-queue'
 import { useOfflineQueue } from '@/hooks/useOfflineQueue'
 
-const SCAN_CACHE_KEY_PREFIX = 'travixo_scan_asset_'
 
 interface Asset {
   id: string
@@ -82,7 +81,6 @@ export default function ScanPage({ params }: PageProps) {
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const [savedOffline, setSavedOffline] = useState(false)
-  const [assetCachedAt, setAssetCachedAt] = useState<Date | null>(null)
   const [assetUnavailableOffline, setAssetUnavailableOffline] = useState(false)
   const [auditContext, setAuditContext] = useState<ActiveAuditContext | null>(null)
   const [verifying, setVerifying] = useState(false)
@@ -227,67 +225,23 @@ export default function ScanPage({ params }: PageProps) {
     }
   }
 
-  function tryAssetFromCache(): void {
-    try {
-      const raw = localStorage.getItem(SCAN_CACHE_KEY_PREFIX + qr_code)
-      if (raw) {
-        const { asset: cachedAsset, cachedAt } = JSON.parse(raw) as { asset: Asset; cachedAt: number }
-        setAsset(cachedAsset)
-        setSelectedStatus(cachedAsset.status ?? 'available')
-        setAssetCachedAt(new Date(cachedAt))
-      } else {
-        setAssetUnavailableOffline(true)
-      }
-    } catch {
-      setAssetUnavailableOffline(true)
-    }
-  }
-
   async function fetchAsset() {
     if (!qr_code) return
 
     try {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from('assets')
-        .select(`
-          *,
-          asset_categories (
-            name
-          )
-        `)
-        .eq('qr_code', qr_code)
-        .single()
+      const response = await fetch(`/api/scan/${qr_code}`)
 
-      if (error || !data) {
-        if (!navigator.onLine) {
-          tryAssetFromCache()
-        } else {
-          setErrorMessage('Asset not found')
-        }
+      if (!response.ok) {
+        setErrorMessage(response.status === 404 ? 'Asset not found' : 'Failed to load asset')
         return
       }
 
-      const loadedAsset = data as unknown as Asset
-      setAsset(loadedAsset)
+      const { asset: data } = await response.json() as { asset: Asset }
+      setAsset(data)
       setSelectedStatus(data.status ?? 'available')
-      setAssetCachedAt(null)
-
-      // Persist to localStorage for offline fallback
-      try {
-        localStorage.setItem(
-          SCAN_CACHE_KEY_PREFIX + qr_code,
-          JSON.stringify({ asset: loadedAsset, cachedAt: Date.now() }),
-        )
-      } catch {
-        // localStorage unavailable or quota exceeded
-      }
     } catch {
-      if (!navigator.onLine) {
-        tryAssetFromCache()
-      } else {
-        setErrorMessage('Failed to load asset')
-      }
+      // Network failure — SW has no cached entry for this asset
+      setAssetUnavailableOffline(true)
     } finally {
       setLoading(false)
     }
@@ -541,17 +495,6 @@ export default function ScanPage({ params }: PageProps) {
   }
 
   if (assetUnavailableOffline) {
-    const lastSyncStr = (() => {
-      try {
-        const raw = localStorage.getItem(SCAN_CACHE_KEY_PREFIX + qr_code)
-        if (raw) {
-          const { cachedAt } = JSON.parse(raw) as { cachedAt: number }
-          return new Date(cachedAt).toLocaleString(language === 'fr' ? 'fr-FR' : 'en-US')
-        }
-      } catch { /* ignore */ }
-      return null
-    })()
-
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center border-l-4 border-b-4 border-amber-500">
@@ -559,11 +502,6 @@ export default function ScanPage({ params }: PageProps) {
           <h1 className="text-2xl font-bold text-[#00252b] mb-2">
             {t('offline.unavailableOffline')}
           </h1>
-          {lastSyncStr && (
-            <p className="text-gray-600 text-sm mb-4">
-              {t('offline.lastSync').replace('{date}', lastSyncStr)}
-            </p>
-          )}
           <button
             onClick={() => window.location.reload()}
             className="px-6 py-3 bg-[#f26f00] text-white rounded-lg hover:bg-[#d96200] font-semibold transition-all"
@@ -644,15 +582,6 @@ export default function ScanPage({ params }: PageProps) {
             >
               {t('offline.syncNow')}
             </button>
-          </div>
-        )}
-        {assetCachedAt && (
-          <div className="mb-4 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 font-medium">
-            <WifiOff className="w-4 h-4 flex-shrink-0" />
-            <span>
-              {t('offline.offlineData')} —{' '}
-              {t('offline.lastSync').replace('{date}', assetCachedAt.toLocaleString(language === 'fr' ? 'fr-FR' : 'en-US'))}
-            </span>
           </div>
         )}
         {/* Active Audit Banner */}
