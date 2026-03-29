@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter, Roboto_Mono } from "next/font/google";
+import Script from 'next/script';
 import { Providers } from './providers';
 import "./globals.css";
 
@@ -36,6 +37,13 @@ export default function RootLayout({
         <Providers>
           {children}
         </Providers>
+        <Script
+          id="register-sw"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(console.error); }`,
+          }}
+        />
       </body>
     </html>
   );
