@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Loader2, Navigation } from 'lucide-react'
+import { X, Loader2, Navigation, WifiOff } from 'lucide-react'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
 import type { ActiveRental } from './RentalStatusCard'
+import { enqueueAction } from '@/lib/offline-queue'
 
 interface ReturnOverlayProps {
   rental: ActiveRental
@@ -28,6 +29,7 @@ export default function ReturnOverlay({
   const [submitting, setSubmitting] = useState(false)
   const [gettingGPS, setGettingGPS] = useState(false)
   const [error, setError] = useState('')
+  const [savedOffline, setSavedOffline] = useState(false)
 
   const daysSince = Math.floor(
     (Date.now() - new Date(rental.checkout_date).getTime()) / 86400000
@@ -60,6 +62,28 @@ export default function ReturnOverlay({
 
     setSubmitting(true)
     setError('')
+
+    // Offline path — queue return for later sync
+    if (!navigator.onLine) {
+      try {
+        await enqueueAction('/api/rentals/return', 'POST', {
+          rental_id: rental.id,
+          return_condition: condition || null,
+          return_notes: notes.trim() || null,
+          location: location.trim() || null,
+        })
+        setSavedOffline(true)
+        setTimeout(() => {
+          setSavedOffline(false)
+          onClose()
+        }, 2000)
+      } catch {
+        setError(language === 'fr' ? 'Erreur lors de la mise en file hors ligne' : 'Failed to queue offline action')
+      } finally {
+        setSubmitting(false)
+      }
+      return
+    }
 
     try {
       let latitude: number | undefined
@@ -174,6 +198,13 @@ export default function ReturnOverlay({
               </div>
             </div>
           </div>
+
+          {savedOffline && (
+            <div className="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 mb-4">
+              <WifiOff className="w-4 h-4 text-amber-700 flex-shrink-0" />
+              <p className="text-amber-800 text-sm font-medium">{t('offline.savedOffline')}</p>
+            </div>
+          )}
 
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">

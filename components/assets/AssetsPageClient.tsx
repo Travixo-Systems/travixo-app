@@ -12,6 +12,9 @@ import { MagnifyingGlassIcon, FunnelIcon } from '@heroicons/react/24/outline'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
 
+const ASSETS_CACHE_NAME = 'assets-list-v1'
+const ORG_ID_KEY = 'travixo_org_id'
+
 interface Asset {
     id: string
     name: string
@@ -39,6 +42,7 @@ export default function AssetsPageClient() {
     
     const [assets, setAssets] = useState<Asset[]>([])
     const [loading, setLoading] = useState(true)
+    const [offlineCachedAt, setOfflineCachedAt] = useState<Date | null>(null)
     
     // Search and filter states
     const [searchQuery, setSearchQuery] = useState('')
@@ -51,6 +55,23 @@ export default function AssetsPageClient() {
         loadAssets()
     }, [])
 
+    async function tryOfflineFallback() {
+        if (typeof window === 'undefined' || !('caches' in window)) return
+        const lastOrgId = sessionStorage.getItem(ORG_ID_KEY)
+        if (!lastOrgId) return
+        try {
+            const cache = await caches.open(ASSETS_CACHE_NAME)
+            const cached = await cache.match(`/offline/assets/${lastOrgId}`)
+            if (cached) {
+                const { assets: cachedAssets, cachedAt } = await cached.json()
+                setAssets(cachedAssets as unknown as Asset[])
+                setOfflineCachedAt(new Date(cachedAt as number))
+            }
+        } catch {
+            // Silent fail — no cache available
+        }
+    }
+
     async function loadAssets() {
         try {
             const { data: { user } } = await supabase.auth.getUser()
@@ -59,15 +80,21 @@ export default function AssetsPageClient() {
                 return
             }
 
-            const { data: userData } = await supabase
+            const { data: userData, error: userError } = await supabase
                 .from('users')
                 .select('organization_id')
                 .eq('id', user.id)
                 .single()
 
-            if (!userData?.organization_id) return
+            if (userError || !userData?.organization_id) {
+                await tryOfflineFallback()
+                return
+            }
 
-            const { data } = await supabase
+            // Persist org_id so offline fallback can find the right cache entry
+            sessionStorage.setItem(ORG_ID_KEY, userData.organization_id)
+
+            const { data, error: assetsError } = await supabase
                 .from('assets')
                 .select(`
                     *,
@@ -80,7 +107,32 @@ export default function AssetsPageClient() {
                 .eq('organization_id', userData.organization_id)
                 .order('created_at', { ascending: false })
 
-            setAssets((data || []) as unknown as Asset[])
+            if (assetsError) {
+                await tryOfflineFallback()
+                return
+            }
+
+            const assetList = (data || []) as unknown as Asset[]
+            setAssets(assetList)
+            setOfflineCachedAt(null)
+
+            // Write fresh snapshot to Cache API for offline use
+            if ('caches' in window) {
+                try {
+                    const cache = await caches.open(ASSETS_CACHE_NAME)
+                    await cache.put(
+                        `/offline/assets/${userData.organization_id}`,
+                        new Response(
+                            JSON.stringify({ assets: assetList, cachedAt: Date.now() }),
+                            { headers: { 'Content-Type': 'application/json' } },
+                        ),
+                    )
+                } catch {
+                    // Non-critical
+                }
+            }
+        } catch {
+            await tryOfflineFallback()
         } finally {
             setLoading(false)
         }
@@ -171,6 +223,15 @@ export default function AssetsPageClient() {
 
     return (
         <div className="p-8">
+            {offlineCachedAt && (
+                <div className="mb-4 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 font-medium">
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                    </svg>
+                    {t('offline.offlineData')} —{' '}
+                    {t('offline.lastSync').replace('{date}', offlineCachedAt.toLocaleString(language === 'fr' ? 'fr-FR' : 'en-US'))}
+                </div>
+            )}
             <div className="flex justify-between items-center mb-6">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">{t('assets.pageTitle')}</h1>

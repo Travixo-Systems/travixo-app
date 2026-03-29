@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { X, Loader2, ShieldAlert, ShieldCheck, UserPlus, Users } from 'lucide-react'
+import { X, Loader2, ShieldAlert, ShieldCheck, UserPlus, Users, WifiOff } from 'lucide-react'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
 import { useVGPBlockStatus } from './VGPComplianceBadge'
+import { enqueueAction } from '@/lib/offline-queue'
 
 interface Client {
   id: string
@@ -47,6 +48,7 @@ export default function CheckoutOverlay({
   const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [savedOffline, setSavedOffline] = useState(false)
 
   const { blocked: vgpBlocked, loading: vgpLoading } = useVGPBlockStatus(assetId)
 
@@ -111,6 +113,30 @@ export default function CheckoutOverlay({
 
     setSubmitting(true)
     setError('')
+
+    // Offline path — queue checkout for later sync
+    if (!navigator.onLine) {
+      try {
+        await enqueueAction('/api/rentals/checkout', 'POST', {
+          asset_id: assetId,
+          client_name: name.trim(),
+          client_contact: clientContact.trim() || null,
+          expected_return_date: expectedReturn || null,
+          notes: notes.trim() || null,
+          client_id: selectedClientId || null,
+        })
+        setSavedOffline(true)
+        setTimeout(() => {
+          setSavedOffline(false)
+          onClose()
+        }, 2000)
+      } catch {
+        setError(language === 'fr' ? 'Erreur lors de la mise en file hors ligne' : 'Failed to queue offline action')
+      } finally {
+        setSubmitting(false)
+      }
+      return
+    }
 
     try {
       let latitude: number | undefined
@@ -235,6 +261,13 @@ export default function CheckoutOverlay({
             <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2 mb-6">
               <ShieldCheck className="w-4 h-4 text-green-600" />
               <span className="text-green-800 text-xs font-medium">{t('rental.vgpCompliant')}</span>
+            </div>
+          )}
+
+          {savedOffline && (
+            <div className="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 mb-4">
+              <WifiOff className="w-4 h-4 text-amber-700 flex-shrink-0" />
+              <p className="text-amber-800 text-sm font-medium">{t('offline.savedOffline')}</p>
             </div>
           )}
 

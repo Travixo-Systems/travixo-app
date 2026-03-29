@@ -3849,6 +3849,24 @@ export const translations = {
       fr: "Erreur lors de la création du compte :",
     },
   },
+  offline: {
+    savedOffline: {
+      en: "Saved offline",
+      fr: "Enregistré hors ligne",
+    },
+    pendingSync: {
+      en: "{count} action(s) pending sync",
+      fr: "{count} action(s) en attente de synchronisation",
+    },
+    offlineData: {
+      en: "Offline data",
+      fr: "Données hors ligne",
+    },
+    lastSync: {
+      en: "Last sync: {date}",
+      fr: "Dernière synchro : {date}",
+    },
+  },
 } as const;
 
 /**

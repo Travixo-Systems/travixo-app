@@ -25,6 +25,11 @@ import ReturnOverlay from '@/components/rental/ReturnOverlay'
 import VGPComplianceBadge from '@/components/rental/VGPComplianceBadge'
 import RentalUpgradePrompt from '@/components/rental/RentalUpgradePrompt'
 import { useFeatureAccess } from '@/hooks/useSubscription'
+import { useLanguage } from '@/lib/LanguageContext'
+import { createTranslator } from '@/lib/i18n'
+import { enqueueAction } from '@/lib/offline-queue'
+import { useOfflineQueue } from '@/hooks/useOfflineQueue'
+import { WifiOff } from 'lucide-react'
 
 interface Asset {
   id: string
@@ -57,20 +62,24 @@ interface PageProps {
 
 export default function ScanPage({ params }: PageProps) {
   const router = useRouter()
-  
+  const { language } = useLanguage()
+  const t = createTranslator(language)
+  const { isOnline, pendingCount } = useOfflineQueue()
+
   const [qr_code, setQrCode] = useState<string>('')
   const [asset, setAsset] = useState<Asset | null>(null)
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
   const [showLocationForm, setShowLocationForm] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  
+
   const [location, setLocation] = useState('')
   const [notes, setNotes] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('')
-  
+
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+  const [savedOffline, setSavedOffline] = useState(false)
   const [auditContext, setAuditContext] = useState<ActiveAuditContext | null>(null)
   const [verifying, setVerifying] = useState(false)
 
@@ -292,9 +301,27 @@ export default function ScanPage({ params }: PageProps) {
     }
 
     if (!asset) return
-    
+
     setUpdating(true)
     setErrorMessage('')
+
+    if (!navigator.onLine) {
+      try {
+        await enqueueAction('/api/scan/update', 'POST', {
+          asset_id: asset.id,
+          qr_code,
+          status: newStatus,
+        })
+        setSelectedStatus(newStatus)
+        setSavedOffline(true)
+        setTimeout(() => setSavedOffline(false), 3000)
+      } catch {
+        setErrorMessage(language === 'fr' ? 'Erreur lors de la mise en file hors ligne' : 'Failed to queue offline action')
+      } finally {
+        setUpdating(false)
+      }
+      return
+    }
 
     try {
       const response = await fetch('/api/scan/update', {
@@ -333,6 +360,27 @@ export default function ScanPage({ params }: PageProps) {
 
     setUpdating(true)
     setErrorMessage('')
+
+    if (!navigator.onLine) {
+      try {
+        await enqueueAction('/api/scan/update', 'POST', {
+          asset_id: asset.id,
+          qr_code,
+          location: location.trim(),
+          notes: notes.trim() || undefined,
+        })
+        setSavedOffline(true)
+        setTimeout(() => setSavedOffline(false), 3000)
+        setShowLocationForm(false)
+        setLocation('')
+        setNotes('')
+      } catch {
+        setErrorMessage(language === 'fr' ? 'Erreur lors de la mise en file hors ligne' : 'Failed to queue offline action')
+      } finally {
+        setUpdating(false)
+      }
+      return
+    }
 
     try {
       const response = await fetch('/api/scan/update', {
@@ -498,7 +546,24 @@ export default function ScanPage({ params }: PageProps) {
         </div>
       )}
 
+      {savedOffline && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4">
+          <div className="bg-amber-500 rounded-lg p-4 shadow-xl">
+            <div className="flex items-center gap-3">
+              <WifiOff className="w-6 h-6 text-white flex-shrink-0" />
+              <p className="text-white font-semibold">{t('offline.savedOffline')}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-2xl mx-auto">
+        {pendingCount > 0 && (
+          <div className="mb-4 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 font-medium">
+            <WifiOff className="w-4 h-4 flex-shrink-0" />
+            {t('offline.pendingSync').replace('{count}', String(pendingCount))}
+          </div>
+        )}
         {/* Active Audit Banner */}
         {auditContext && isAuthenticated && (
           <div className="mb-4 bg-gradient-to-r from-[#1e3a5f] to-[#2d5a7b] rounded-lg shadow-lg p-4 text-white">
