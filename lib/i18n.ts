@@ -3866,6 +3866,18 @@ export const translations = {
       en: "Last sync: {date}",
       fr: "Dernière synchro : {date}",
     },
+    syncNow: {
+      en: "Sync now",
+      fr: "Synchroniser",
+    },
+    unavailableOffline: {
+      en: "Unavailable offline",
+      fr: "Données indisponibles hors réseau",
+    },
+    retry: {
+      en: "Try again",
+      fr: "Réessayer",
+    },
   },
 } as const;
 
