@@ -29,7 +29,7 @@ import { createClient } from '@/lib/supabase/client';
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { language } = useLanguage();
+  const { language, setLanguage } = useLanguage();
   const t = createTranslator(language);
   const { colors, logo, orgName } = useTheme();
   const [vgpOpen, setVgpOpen] = useState(pathname.startsWith('/vgp'));
@@ -153,38 +153,58 @@ export default function Sidebar() {
         {!collapsed && (
           <div className="flex items-center space-x-2 flex-1 min-w-0">
             {logo ? (
-              <Image 
-                src={logo} 
-                alt={orgName} 
-                width={32} 
-                height={32} 
+              <Image
+                src={logo}
+                alt={orgName}
+                width={32}
+                height={32}
                 className="w-8 h-8 object-contain rounded flex-shrink-0"
               />
-            ) : null}
-            <h1 
-              className="text-xl font-bold text-white truncate" 
+            ) : (
+              // Fallback: org initials pill in brand orange
+              <span
+                className="inline-flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0 text-white text-xs font-bold tracking-wide"
+                style={{ backgroundColor: '#f26f00' }}
+                aria-hidden="true"
+              >
+                {orgName.split(/\s+/).map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
+              </span>
+            )}
+            <h1
+              className="text-xl font-bold text-white truncate"
               title={orgName}
             >
               {orgName}
             </h1>
           </div>
         )}
-        {collapsed && logo && (
-          <Image 
-            src={logo} 
-            alt={orgName} 
-            width={32} 
-            height={32} 
-            className="w-8 h-8 object-contain rounded mx-auto"
-          />
+        {collapsed && (
+          <div className="flex-1 flex justify-center">
+            {logo ? (
+              <Image
+                src={logo}
+                alt={orgName}
+                width={32}
+                height={32}
+                className="w-8 h-8 object-contain rounded"
+              />
+            ) : (
+              // Fallback: initials pill when collapsed too
+              <span
+                className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-white text-xs font-bold"
+                style={{ backgroundColor: '#f26f00' }}
+                aria-label={orgName}
+              >
+                {orgName.split(/\s+/).map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
+              </span>
+            )}
+          </div>
         )}
         <button
           onClick={toggleCollapsed}
-          className={cn(
-            "p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors flex-shrink-0",
-            collapsed && !logo && "mx-auto"
-          )}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
+          aria-label={collapsed ? 'Agrandir la barre latérale' : 'Réduire la barre latérale'}
+          aria-expanded={!collapsed}
         >
           {collapsed ? (
             <Bars3Icon className="w-5 h-5" />
@@ -364,12 +384,22 @@ export default function Sidebar() {
           </div>
         )}
 
-        {/* Language Toggle */}
-        {!collapsed && (
-          <div className="px-2 pb-2">
+        {/* Language Toggle — visible expanded and collapsed */}
+        <div className={cn("pb-2", collapsed ? "px-1" : "px-2")}>
+          {collapsed ? (
+            // Compact: single button showing current language, tapping toggles
+            <button
+              onClick={() => setLanguage(language === 'fr' ? 'en' : 'fr')}
+              className="inline-flex items-center justify-center w-full min-h-[44px] py-2.5 rounded-lg text-xs font-bold text-gray-300 hover:text-white hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
+              aria-label={`Langue : ${language.toUpperCase()}. Basculer vers ${language === 'fr' ? 'EN' : 'FR'}`}
+              title={`Basculer vers ${language === 'fr' ? 'English' : 'Français'}`}
+            >
+              {language.toUpperCase()}
+            </button>
+          ) : (
             <LanguageToggle />
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
