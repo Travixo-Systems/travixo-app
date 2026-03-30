@@ -7,7 +7,16 @@ import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-export async function GET() {
+export async function GET(request: Request) {
+  // Optional bearer token auth — set HEALTH_TOKEN env var to require it
+  const token = process.env.HEALTH_TOKEN
+  if (token) {
+    const auth = request.headers.get('authorization') ?? ''
+    if (auth !== `Bearer ${token}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+  }
+
   const start = Date.now()
 
   // Quick DB ping — single-row query to confirm Supabase is reachable
