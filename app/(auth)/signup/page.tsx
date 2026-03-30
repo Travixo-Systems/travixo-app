@@ -8,7 +8,7 @@ import toast from 'react-hot-toast'
 import { UserPlus, Loader2, Mail, Lock, User, Building2, Users, ClipboardCheck, Shield } from 'lucide-react'
 
 const BRAND = {
-  primary: '#1e3a5f',
+  primary: '#00252b',
   secondary: '#2d5a7b',
   orange: '#f26f00',
   orangeHover: '#d96200',

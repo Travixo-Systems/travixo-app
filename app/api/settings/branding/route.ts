@@ -257,7 +257,7 @@ export async function POST(request: NextRequest) {
 
     // Reset to default industrial colors
     const defaultColors: BrandingColors = {
-      primary: "#1e3a5f",
+      primary: "#00252b",
       secondary: "#2d5a7b",
       accent: "#d97706",
       success: "#047857",

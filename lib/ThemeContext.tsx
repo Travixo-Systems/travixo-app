@@ -5,9 +5,9 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { useOrganization, type BrandingColors } from '@/hooks/useOrganization';
 
 const DEFAULT_COLORS: BrandingColors = {
-  primary: '#1e3a5f',
-  secondary: '#2d5a7b',
-  accent: '#d97706',
+  primary: '#00252b',
+  secondary: '#003d45',
+  accent: '#f26f00',
   success: '#047857',
   warning: '#eab308',
   danger: '#b91c1c',

@@ -12,7 +12,7 @@ import { EditScheduleModal } from './EditScheduleModal';
 // ============================================================================
 
 const BRAND_COLORS = {
-  primary: '#1e3a5f',     // Deep slate blue
+  primary: '#00252b',     // Deep slate blue
   danger: '#b91c1c',      // Red
   warning: '#d97706',     // Safety orange
   warningYellow: '#eab308', // Yellow

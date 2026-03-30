@@ -17,7 +17,7 @@ import { useVGPAccess } from '@/hooks/useSubscription';
 // ============================================================================
 
 const BRAND_COLORS = {
-  primary: '#1e3a5f',     // Deep slate blue
+  primary: '#00252b',     // Deep slate blue
   danger: '#b91c1c',      // Red
   warning: '#d97706',     // Safety orange
   warningYellow: '#eab308', // Yellow
@@ -479,8 +479,12 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
                           {!isReadOnly && (
                             <button
                               onClick={() => window.location.href = `/vgp/inspection/${schedule.id}`}
-                              className="px-2 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+                              className="inline-flex items-center justify-center min-h-[44px] px-3 py-2.5 text-xs font-semibold text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
+                              style={{ backgroundColor: '#00252b' }}
+                              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#003d45')}
+                              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#00252b')}
                               title={t('vgpSchedules.inspection')}
+                              aria-label={t('vgpSchedules.inspection')}
                             >
                               {t('vgpSchedules.inspection')}
                             </button>
@@ -488,10 +492,11 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
                           {!isReadOnly && (
                             <button
                               onClick={() => handleEdit(schedule)}
-                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                              className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 text-[#00252b] hover:bg-[#00252b]/10 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
                               title={t('vgpSchedules.edit')}
+                              aria-label={t('vgpSchedules.edit')}
                             >
-                              <Edit className="w-4 h-4" />
+                              <Edit className="w-5 h-5" aria-hidden="true" />
                             </button>
                           )}
                           <button
@@ -499,18 +504,20 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
                               setSelectedSchedule(schedule);
                               setShowDetails(true);
                             }}
-                            className="p-1.5 text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                            className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
                             title={t('vgpSchedules.details')}
+                            aria-label={t('vgpSchedules.details')}
                           >
-                            <Eye className="w-4 h-4" />
+                            <Eye className="w-5 h-5" aria-hidden="true" />
                           </button>
                           {!isReadOnly && (
                             <button
                               onClick={() => handleArchive(schedule.id)}
-                              className="p-1.5 text-orange-600 hover:bg-orange-50 rounded transition-colors"
+                              className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 text-[#f26f00] hover:bg-[#f26f00]/10 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
                               title={t('vgpSchedules.archive')}
+                              aria-label={t('vgpSchedules.archive')}
                             >
-                              <Archive className="w-4 h-4" />
+                              <Archive className="w-5 h-5" aria-hidden="true" />
                             </button>
                           )}
                         </div>
