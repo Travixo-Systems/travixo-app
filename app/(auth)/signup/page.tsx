@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
 import { UserPlus, Loader2, Mail, Lock, User, Building2, Users, ClipboardCheck, Shield } from 'lucide-react'
+import { useLanguage } from '@/lib/LanguageContext'
+import { translations } from '@/lib/i18n'
 
 const BRAND = {
   primary: '#00252b',
@@ -29,6 +31,8 @@ export default function SignUpPage() {
 function SignUpContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { language } = useLanguage()
+  const ta = translations.auth
 
   const redirectTo = searchParams.get('redirect') || '/dashboard'
   const prefillEmail = searchParams.get('email') || ''
@@ -200,13 +204,13 @@ function SignUpContent() {
               <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
                 <ClipboardCheck className="w-5 h-5" style={{ color: BRAND.orange }} />
               </div>
-              <span className="text-sm">Audits d&apos;inventaire digitaux / Digital inventory audits</span>
+              <span className="text-sm">{ta.loginFeature2[language]}</span>
             </div>
             <div className="flex items-center gap-3 text-white/80">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
                 <Shield className="w-5 h-5" style={{ color: BRAND.orange }} />
               </div>
-              <span className="text-sm">Conformité VGP & DIRECCTE / VGP & DIRECCTE compliance</span>
+              <span className="text-sm">{ta.loginFeature1[language]}</span>
             </div>
             <div className="flex items-center gap-3 text-white/80">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
@@ -235,10 +239,10 @@ function SignUpContent() {
             /* ---- Invite signup header ---- */
             <div>
               <h2 className="text-3xl lg:text-2xl font-bold text-gray-900">
-                Créez votre compte / Create your account
+                {ta.signupInviteHeader[language]}
               </h2>
               <p className="mt-2 text-base lg:text-sm text-gray-500">
-                pour rejoindre l&apos;équipe / to join the team
+                {ta.signupInviteSubheader[language]}
               </p>
 
               {prefillEmail && (
@@ -246,7 +250,7 @@ function SignUpContent() {
                   className="mt-4 rounded-lg p-3"
                   style={{ backgroundColor: '#f0f4f8', borderLeft: `4px solid ${BRAND.primary}` }}
                 >
-                  <p className="text-xs text-gray-500">Votre adresse d&apos;invitation / Your invitation email</p>
+                  <p className="text-xs text-gray-500">{ta.inviteEmailLabel[language]}</p>
                   <p className="font-bold text-sm" style={{ color: BRAND.primary }}>{prefillEmail}</p>
                 </div>
               )}
@@ -255,12 +259,10 @@ function SignUpContent() {
             /* ---- Normal signup header ---- */
             <div>
               <h2 className="text-3xl lg:text-2xl font-bold text-gray-900">
-                Essai gratuit de 15 jours / Free 15-day trial
+                {ta.signupNormalHeader[language]}
               </h2>
               <p className="mt-2 text-base lg:text-sm text-gray-500">
-                Conformité VGP incluse &bull; Aucune carte requise
-                <br />
-                VGP compliance included &bull; No credit card required
+                {ta.signupNormalSubheader[language]}
               </p>
             </div>
           )}
@@ -270,7 +272,7 @@ function SignUpContent() {
             {!isInviteRedirect && (
               <div>
                 <label htmlFor="company" className="block text-base lg:text-sm font-semibold text-gray-700 mb-2">
-                  Nom de l&apos;entreprise / Company name
+                  {ta.companyNameLabel[language]}
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -292,7 +294,7 @@ function SignUpContent() {
 
             <div>
               <label htmlFor="name" className="block text-base lg:text-sm font-semibold text-gray-700 mb-2">
-                Votre nom complet / Your full name
+                {ta.fullNameLabel[language]}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

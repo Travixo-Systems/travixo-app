@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
 import { LogIn, Loader2, Mail, Lock, Users } from 'lucide-react'
+import { useLanguage } from '@/lib/LanguageContext'
+import { translations } from '@/lib/i18n'
 
 const BRAND = {
   primary: '#00252b',
@@ -30,6 +32,8 @@ function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
+  const { language } = useLanguage()
+  const t = translations.auth
 
   const redirectTo = searchParams.get('redirect') || '/dashboard'
   const isInviteRedirect = redirectTo.startsWith('/accept-invite/')
@@ -89,7 +93,7 @@ function LoginContent() {
           const inviteToken = tokenMatch?.[1]
 
           if (inviteToken) {
-            toast.success('Connexion réussie ! / Login successful!')
+            toast.success(t.loginSuccessInvite[language])
             const acceptResponse = await fetch('/api/team/invitations/accept', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -101,11 +105,11 @@ function LoginContent() {
             const acceptData = await acceptResponse.json()
 
             if (acceptData.success) {
-              toast.success('Invitation acceptée ! / Invitation accepted!')
+              toast.success(t.invitationAccepted[language])
             }
           }
         } else {
-          toast.success('Bon retour ! / Welcome back!')
+          toast.success(t.welcomeBackToast[language])
         }
 
         router.push('/dashboard')
@@ -221,7 +225,7 @@ function LoginContent() {
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
               <label htmlFor="email" className="block text-base lg:text-sm font-semibold text-gray-700 mb-2">
-                Adresse email / Email address
+                {t.emailLabel[language]}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -243,7 +247,7 @@ function LoginContent() {
 
             <div>
               <label htmlFor="password" className="block text-base lg:text-sm font-semibold text-gray-700 mb-2">
-                Mot de passe / Password
+                {t.passwordLabel[language]}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -272,12 +276,12 @@ function LoginContent() {
                   style={{ accentColor: BRAND.orange }}
                 />
                 <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-600">
-                  Se souvenir de moi / Remember me
+                  {t.rememberMe[language]}
                 </label>
               </div>
 
               <Link href="/forgot-password" className="text-sm font-medium hover:underline" style={{ color: BRAND.orange }}>
-                Mot de passe oublié ?
+                {t.forgotPassword[language]}
               </Link>
             </div>
 
@@ -292,25 +296,25 @@ function LoginContent() {
               {isLoading ? (
                 <>
                   <Loader2 className="w-5 h-5 lg:w-4 lg:h-4 animate-spin" />
-                  Connexion... / Signing in...
+                  {t.signingIn[language]}
                 </>
               ) : (
                 <>
                   <LogIn className="w-5 h-5 lg:w-4 lg:h-4" />
-                  Se connecter / Sign in
+                  {t.signIn[language]}
                 </>
               )}
             </button>
           </form>
 
           <div className="text-center text-base lg:text-sm">
-            <span className="text-gray-500">Pas encore de compte ? / No account yet? </span>
+            <span className="text-gray-500">{t.noAccountYet[language]}</span>
             <Link
               href={isInviteRedirect ? `/signup?redirect=${encodeURIComponent(redirectTo)}` : '/signup'}
               className="font-semibold hover:underline"
               style={{ color: BRAND.primary }}
             >
-              {isInviteRedirect ? 'Créer un compte / Create account' : 'Essai gratuit 15 jours / Free 15-day trial'}
+              {isInviteRedirect ? t.createAccount[language] : t.freeTrial15Days[language]}
             </Link>
           </div>
         </div>
