@@ -282,7 +282,7 @@ function SignUpContent() {
                     required
                     value={formData.companyName}
                     onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                    className="block w-full pl-10 pr-3 py-3.5 lg:py-2.5 border border-gray-300 rounded-lg text-base lg:text-sm text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    className="block w-full pl-10 pr-3 py-3.5 lg:py-2.5 border border-gray-300 rounded-lg text-base lg:text-sm text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#f26f00] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                     placeholder="Acme Equipment Rentals"
                     disabled={isLoading}
                   />
@@ -304,7 +304,7 @@ function SignUpContent() {
                   required
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  className="block w-full pl-10 pr-3 py-3.5 lg:py-2.5 border border-gray-300 rounded-lg text-base lg:text-sm text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="block w-full pl-10 pr-3 py-3.5 lg:py-2.5 border border-gray-300 rounded-lg text-base lg:text-sm text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#f26f00] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                   placeholder="Jean Dupont"
                   disabled={isLoading}
                 />
@@ -325,7 +325,7 @@ function SignUpContent() {
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className={`block w-full pl-10 pr-3 py-3.5 lg:py-2.5 border border-gray-300 rounded-lg text-base lg:text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${prefillEmail ? 'bg-gray-100 text-gray-600' : 'bg-white'}`}
+                  className={`block w-full pl-10 pr-3 py-3.5 lg:py-2.5 border border-gray-300 rounded-lg text-base lg:text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#f26f00] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${prefillEmail ? 'bg-gray-100 text-gray-600' : 'bg-white'}`}
                   placeholder="john@company.com"
                   disabled={isLoading}
                   readOnly={!!prefillEmail}
@@ -353,7 +353,7 @@ function SignUpContent() {
                   minLength={6}
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="block w-full pl-10 pr-3 py-3.5 lg:py-2.5 border border-gray-300 rounded-lg text-base lg:text-sm text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="block w-full pl-10 pr-3 py-3.5 lg:py-2.5 border border-gray-300 rounded-lg text-base lg:text-sm text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#f26f00] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                   placeholder="Minimum 6 caractères / At least 6 characters"
                   disabled={isLoading}
                 />

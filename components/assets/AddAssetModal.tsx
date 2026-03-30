@@ -143,7 +143,7 @@ export default function AddAssetModal({ isOpen, onClose, onSuccess }: AddAssetMo
                         required
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-transparent"
                         placeholder={t('assets.placeholderAssetName')}
                       />
                     </div>
@@ -156,7 +156,7 @@ export default function AddAssetModal({ isOpen, onClose, onSuccess }: AddAssetMo
                         type="text"
                         value={formData.serial_number}
                         onChange={(e) => setFormData({ ...formData, serial_number: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-transparent"
                         placeholder={t('assets.placeholderSerial')}
                       />
                     </div>
@@ -169,7 +169,7 @@ export default function AddAssetModal({ isOpen, onClose, onSuccess }: AddAssetMo
                         type="text"
                         value={formData.current_location}
                         onChange={(e) => setFormData({ ...formData, current_location: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-transparent"
                         placeholder={t('assets.placeholderLocation')}
                       />
                     </div>
@@ -181,7 +181,7 @@ export default function AddAssetModal({ isOpen, onClose, onSuccess }: AddAssetMo
                       <select
                         value={formData.status}
                         onChange={(e) => setFormData({ ...formData, status: e.target.value as typeof formData.status })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-transparent"
                       >
                         <option value="available">{t('assets.statusAvailable')}</option>
                         <option value="in_use">{t('assets.statusInUse')}</option>
@@ -198,7 +198,7 @@ export default function AddAssetModal({ isOpen, onClose, onSuccess }: AddAssetMo
                         type="date"
                         value={formData.purchase_date}
                         onChange={(e) => setFormData({ ...formData, purchase_date: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-transparent"
                       />
                     </div>
 
@@ -211,7 +211,7 @@ export default function AddAssetModal({ isOpen, onClose, onSuccess }: AddAssetMo
                         step="0.01"
                         value={formData.purchase_price}
                         onChange={(e) => setFormData({ ...formData, purchase_price: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-transparent"
                         placeholder={t('assets.placeholderPrice')}
                       />
                     </div>
@@ -225,7 +225,7 @@ export default function AddAssetModal({ isOpen, onClose, onSuccess }: AddAssetMo
                         step="0.01"
                         value={formData.current_value}
                         onChange={(e) => setFormData({ ...formData, current_value: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-transparent"
                         placeholder={t('assets.placeholderPrice')}
                       />
                     </div>
@@ -238,7 +238,7 @@ export default function AddAssetModal({ isOpen, onClose, onSuccess }: AddAssetMo
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-transparent"
                         placeholder={t('assets.placeholderDescription')}
                       />
                     </div>

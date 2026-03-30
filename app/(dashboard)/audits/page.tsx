@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/lib/LanguageContext';
 import { createTranslator } from '@/lib/i18n';
 import { createClient } from '@/lib/supabase/client';
+import { ErrorStatePage } from '@/components/ui/ErrorStateAlert';
 import {
   ClipboardCheck,
   Calendar,
@@ -152,6 +153,7 @@ export default function AuditsPage() {
   const [audits, setAudits] = useState<Audit[]>([]);
   const [stats, setStats] = useState<AuditStats>({ total: 0, planned: 0, inProgress: 0, completed: 0 });
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | AuditStatus>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -190,6 +192,7 @@ export default function AuditsPage() {
   }, [formData.scope, formData.selectedLocation, formData.selectedCategory]);
 
   async function fetchAudits() {
+    setFetchError(null);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -229,8 +232,9 @@ export default function AuditsPage() {
         inProgress: auditsData.filter(a => a.status === 'in_progress').length,
         completed: auditsData.filter(a => a.status === 'completed').length,
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching audits:', err);
+      setFetchError(err?.message || 'Impossible de charger les audits. Vérifiez votre connexion.');
     } finally {
       setLoading(false);
     }
@@ -404,6 +408,14 @@ export default function AuditsPage() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
         <span className="ml-3 text-gray-600">{t('common.loading')}</span>
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="p-6">
+        <ErrorStatePage message={fetchError} onRetry={fetchAudits} />
       </div>
     );
   }
