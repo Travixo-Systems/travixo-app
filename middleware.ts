@@ -17,7 +17,9 @@ function getRateLimitConfig(pathname: string) {
   if (pathname.startsWith('/api/stripe/webhook')) return RATE_LIMITS.webhook
   if (pathname.startsWith('/api/settings/profile/password')) return RATE_LIMITS.password
   if (pathname === '/login' || pathname === '/signup') return RATE_LIMITS.auth
+  if (pathname.startsWith('/api/cron/')) return RATE_LIMITS.cron
   if (pathname.startsWith('/api/')) return RATE_LIMITS.api
+  if (pathname.startsWith('/scan/')) return RATE_LIMITS.scan
   return null
 }
 
@@ -28,7 +30,11 @@ export async function middleware(request: NextRequest) {
   // --- Rate Limiting ---
   const rlConfig = getRateLimitConfig(pathname)
   if (rlConfig) {
-    const key = `${ip}:${pathname}`
+    // Collapse all /scan/<qr_code> variants into one bucket per IP so
+    // attackers can't enumerate assets by cycling through unique QR codes
+    const key = pathname.startsWith('/scan/')
+      ? `${ip}:/scan`
+      : `${ip}:${pathname}`
     const result = rateLimit(key, rlConfig)
     if (!result.allowed) {
       const retryAfter = Math.ceil((result.resetAt - Date.now()) / 1000)
@@ -152,6 +158,7 @@ export const config = {
     '/vgp/:path*',
     '/subscription/:path*',
     '/api/:path*',
+    '/scan/:path*',
     '/login',
     '/signup'
   ],

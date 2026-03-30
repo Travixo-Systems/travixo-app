@@ -31,12 +31,16 @@ async function createClient() {
 }
 
 export const ourFileRouter = {
-  // VGP Certificate uploads (PDF)
-  vgpCertificate: f({ 
-    pdf: { 
-      maxFileSize: "4MB",
+  // VGP Certificate uploads (PDF or image)
+  vgpCertificate: f({
+    pdf: {
+      maxFileSize: "10MB",
       maxFileCount: 1,
-    } 
+    },
+    image: {
+      maxFileSize: "10MB",
+      maxFileCount: 1,
+    },
   })
     .middleware(async () => {
       const supabase = await createClient();

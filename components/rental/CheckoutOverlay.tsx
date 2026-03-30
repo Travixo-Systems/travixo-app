@@ -2,9 +2,23 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { X, Loader2, ShieldAlert, ShieldCheck, UserPlus, Users } from 'lucide-react'
+import { z } from 'zod'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
 import { useVGPBlockStatus } from './VGPComplianceBadge'
+
+const checkoutSchema = z.object({
+  clientName: z.string().min(1, { message: 'Le nom du client est requis' }),
+  clientContact: z.string().optional(),
+  clientEmail: z.string().email({ message: 'Email invalide' }).optional().or(z.literal('')),
+  expectedReturn: z
+    .string()
+    .optional()
+    .refine(val => !val || new Date(val) > new Date(), {
+      message: 'La date de retour doit être dans le futur',
+    }),
+  notes: z.string().max(500, { message: 'Notes : 500 caractères maximum' }).optional(),
+})
 
 interface Client {
   id: string
@@ -103,9 +117,16 @@ export default function CheckoutOverlay({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
-    const name = mode === 'select' ? clientName : clientName
-    if (!name.trim()) {
-      setError(language === 'fr' ? 'Le nom du client est requis' : 'Client name is required')
+    // Zod client-side validation before any API call
+    const parsed = checkoutSchema.safeParse({
+      clientName: clientName.trim(),
+      clientContact: clientContact.trim(),
+      clientEmail: clientEmail.trim(),
+      expectedReturn,
+      notes: notes.trim(),
+    })
+    if (!parsed.success) {
+      setError(parsed.error.errors[0].message)
       return
     }
 
