@@ -176,7 +176,7 @@ export default function CheckoutOverlay({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           asset_id: assetId,
-          client_name: name.trim(),
+          client_name: clientName.trim(),
           client_contact: clientContact.trim() || null,
           expected_return_date: expectedReturn || null,
           notes: notes.trim() || null,
