@@ -126,7 +126,7 @@ export default function CheckoutOverlay({
       notes: notes.trim(),
     })
     if (!parsed.success) {
-      setError(parsed.error.errors[0].message)
+      setError(parsed.error.issues[0].message)
       return
     }
 
