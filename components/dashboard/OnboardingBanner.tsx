@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Sparkles, Upload, BarChart3, X } from 'lucide-react';
 
 const BRAND = {
-  primary: '#1e3a5f',
+  primary: '#00252b',
   orange: '#f26f00',
 };
 

@@ -12,7 +12,7 @@ import { translations } from '@/lib/i18n'
 import { LanguageToggle } from '@/components/LanguageToggle'
 
 const BRAND = {
-  primary: '#1e3a5f',
+  primary: '#00252b',
   secondary: '#2d5a7b',
   orange: '#f26f00',
   orangeHover: '#d96200',

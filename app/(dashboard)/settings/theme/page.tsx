@@ -17,7 +17,7 @@ const COLOR_PRESETS = {
   industrial_blue: {
     name: { en: 'Industrial Blue', fr: 'Bleu Industriel' },
     colors: {
-      primary: '#1e3a5f',
+      primary: '#00252b',
       secondary: '#2d5a7b',
       accent: '#d97706',
       success: '#047857',
@@ -56,7 +56,7 @@ export default function ThemeSettingsPage() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [colors, setColors] = useState<BrandingColors>({
-    primary: '#1e3a5f',
+    primary: '#00252b',
     secondary: '#2d5a7b',
     accent: '#d97706',
     success: '#047857',

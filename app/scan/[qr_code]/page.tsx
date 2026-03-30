@@ -501,7 +501,7 @@ export default function ScanPage({ params }: PageProps) {
       <div className="max-w-2xl mx-auto">
         {/* Active Audit Banner */}
         {auditContext && isAuthenticated && (
-          <div className="mb-4 bg-gradient-to-r from-[#1e3a5f] to-[#2d5a7b] rounded-lg shadow-lg p-4 text-white">
+          <div className="mb-4 bg-gradient-to-r from-[#00252b] to-[#003d45] rounded-lg shadow-lg p-4 text-white">
             <div className="flex items-center gap-3 mb-3">
               <ClipboardCheck className="w-6 h-6 text-orange-400" />
               <div className="flex-1">
