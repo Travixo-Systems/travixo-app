@@ -1,4 +1,4 @@
-import { jsPDF } from 'jspdf';
+import { jsPDF, GState } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 /**
@@ -150,9 +150,9 @@ export function generateAuditReport(data: AuditReportData): Buffer {
     doc.setFontSize(54);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(220, 53, 69);
-    doc.setGState(new (doc as any).GState({ opacity: 0.12 }));
+    doc.setGState(new GState({ opacity: 0.12 }));
     doc.text('AUDIT EN COURS', 105, 160, { align: 'center', angle: 45 });
-    doc.setGState(new (doc as any).GState({ opacity: 1.0 }));
+    doc.setGState(new GState({ opacity: 1.0 }));
 
     // Top banner
     doc.setFillColor(220, 53, 69);
@@ -525,7 +525,7 @@ export function generateAuditReport(data: AuditReportData): Buffer {
   // ============================================================================
   // FOOTER
   // ============================================================================
-  const pageCount = (doc as any).internal.getNumberOfPages();
+  const pageCount = doc.getNumberOfPages();
 
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
