@@ -6,6 +6,7 @@ import FeatureGate from '@/components/subscription/FeatureGate';
 import { useLanguage } from '@/lib/LanguageContext';
 import { createTranslator } from '@/lib/i18n';
 import { VGPReadOnlyBanner } from './VGPUpgradeOverlay';
+import { VGPCountdownPill } from './VGPStatusBadge';
 import { useVGPAccess } from '@/hooks/useSubscription';
 
 export default function VGPComplianceDashboard() {
@@ -235,7 +236,7 @@ function VGPContent() {
                     </span>
                   </div>
                   <div className="flex-shrink-0">
-                    <span className="text-gray-600 text-xs">{t('vgpDashboard.in')} {daysUntil}j</span>
+                    <VGPCountdownPill daysUntil={daysUntil} />
                   </div>
                 </div>
               );

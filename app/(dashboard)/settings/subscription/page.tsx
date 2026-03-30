@@ -26,7 +26,7 @@ import { createTranslator } from '@/lib/i18n';
 
 // B2B Professional brand colors
 const BRAND = {
-  primary: '#1e3a5f',
+  primary: '#00252b',
   warning: '#d97706',
   success: '#047857',
   danger: '#b91c1c',

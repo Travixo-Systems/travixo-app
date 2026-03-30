@@ -123,41 +123,45 @@ export default function AssetsTableClient({ assets }: { assets: Asset[] }) {
                                 </td>
                                 {/* Actions Column */}
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <div className="flex justify-end space-x-2">
+                                    <div className="flex justify-end items-center gap-1">
                                         {/* VGP Button */}
                                         <button
                                             onClick={() => setVgpAsset(asset)}
-                                            className="text-blue-600 hover:text-blue-900 transition-colors"
+                                            className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 text-[#00252b] hover:bg-[#00252b]/10 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
                                             title={t('assets.tooltipAddVgp')}
+                                            aria-label={t('assets.tooltipAddVgp')}
                                         >
-                                            <Shield className="h-5 w-5" />
+                                            <Shield className="h-5 w-5" aria-hidden="true" />
                                         </button>
-                                        
+
                                         {/* QR Button */}
                                         <button
                                             onClick={() => setQrAsset(asset)}
-                                            className="text-indigo-600 hover:text-indigo-900 transition-colors"
+                                            className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
                                             title={t('assets.tooltipViewQr')}
+                                            aria-label={t('assets.tooltipViewQr')}
                                         >
-                                            <QrCodeIcon className="h-5 w-5" />
+                                            <QrCodeIcon className="h-5 w-5" aria-hidden="true" />
                                         </button>
-                                        
+
                                         {/* Edit Button */}
                                         <button
                                             onClick={() => setEditAsset(asset)}
-                                            className="text-gray-600 hover:text-gray-900 transition-colors"
+                                            className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
                                             title={t('assets.tooltipEdit')}
+                                            aria-label={t('assets.tooltipEdit')}
                                         >
-                                            <PencilIcon className="h-5 w-5" />
+                                            <PencilIcon className="h-5 w-5" aria-hidden="true" />
                                         </button>
-                                        
+
                                         {/* Delete Button */}
                                         <button
                                             onClick={() => setDeleteAsset(asset)}
-                                            className="text-red-600 hover:text-red-900 transition-colors"
+                                            className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-400"
                                             title={t('assets.tooltipDelete')}
+                                            aria-label={t('assets.tooltipDelete')}
                                         >
-                                            <TrashIcon className="h-5 w-5" />
+                                            <TrashIcon className="h-5 w-5" aria-hidden="true" />
                                         </button>
                                     </div>
                                 </td>

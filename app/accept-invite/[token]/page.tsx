@@ -10,7 +10,7 @@ import { CheckCircle, XCircle, Clock, Loader2, UserPlus, LogIn, LogOut, Mail } f
 import { createClient } from '@/lib/supabase/client';
 
 const BRAND = {
-  primary: '#1e3a5f',
+  primary: '#00252b',
   secondary: '#2d5a7b',
   orange: '#f26f00',
   success: '#047857',
