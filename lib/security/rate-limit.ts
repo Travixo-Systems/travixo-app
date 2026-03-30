@@ -72,4 +72,10 @@ export const RATE_LIMITS = {
 
   /** Webhooks (Stripe, etc.) — lenient */
   webhook: { limit: 200, windowSeconds: 60 } satisfies RateLimitConfig,
+
+  /** Public QR scan page — per-IP bucket collapsed to /scan, not per code */
+  scan: { limit: 30, windowSeconds: 60 } satisfies RateLimitConfig,
+
+  /** Cron jobs — strict; protected by CRON_SECRET but limit DoS if secret leaks */
+  cron: { limit: 5, windowSeconds: 60 } satisfies RateLimitConfig,
 } as const

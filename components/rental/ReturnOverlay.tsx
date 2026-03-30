@@ -2,9 +2,17 @@
 
 import { useState } from 'react'
 import { X, Loader2, Navigation } from 'lucide-react'
+import { z } from 'zod'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
 import type { ActiveRental } from './RentalStatusCard'
+
+const returnSchema = z.object({
+  rentalId: z.string().uuid({ message: 'ID de location invalide' }),
+  condition: z.enum(['good', 'fair', 'damaged', '']).optional(),
+  notes: z.string().max(500, { message: 'Notes : 500 caractères maximum' }).optional(),
+  location: z.string().max(200, { message: 'Localisation : 200 caractères maximum' }).optional(),
+})
 
 interface ReturnOverlayProps {
   rental: ActiveRental
@@ -57,6 +65,18 @@ export default function ReturnOverlay({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+
+    // Zod client-side validation before API call
+    const parsed = returnSchema.safeParse({
+      rentalId: rental.id,
+      condition: condition || '',
+      notes: notes.trim(),
+      location: location.trim(),
+    })
+    if (!parsed.success) {
+      setError(parsed.error.errors[0].message)
+      return
+    }
 
     setSubmitting(true)
     setError('')

@@ -64,6 +64,12 @@ export default function ScanPage({ params }: PageProps) {
   const [updating, setUpdating] = useState(false)
   const [showLocationForm, setShowLocationForm] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+  // Scan-specific error state: differentiated type + manual retry
+  const [scanError, setScanError] = useState<{
+    type: 'not_found' | 'timeout' | 'network' | 'unknown'
+    message: string
+  } | null>(null)
   
   const [location, setLocation] = useState('')
   const [notes, setNotes] = useState('')
@@ -214,33 +220,65 @@ export default function ScanPage({ params }: PageProps) {
     }
   }
 
-  async function fetchAsset() {
+  async function fetchAsset(attempt = 0) {
     if (!qr_code) return
+
+    setScanError(null)
+    setLoading(true)
+
+    // Exponential backoff delays: attempt 0 = immediate, 1 = 1s, 2 = 2s, 3 = 4s
+    if (attempt > 0) {
+      await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt - 1) * 1000))
+    }
 
     try {
       const supabase = createClient()
-      const { data, error } = await supabase
+
+      // 10-second hard timeout
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(Object.assign(new Error('timeout'), { type: 'timeout' })), 10_000)
+      )
+
+      const query = supabase
         .from('assets')
-        .select(`
-          *,
-          asset_categories (
-            name
-          )
-        `)
+        .select(`*, asset_categories (name)`)
         .eq('qr_code', qr_code)
         .single()
 
-      if (error || !data) {
-        setErrorMessage('Asset not found')
+      const { data, error } = await Promise.race([query, timeout]) as Awaited<typeof query>
+
+      // PostgREST PGRST116 = no rows (.single() with no match) → definitive 404
+      if (error?.code === 'PGRST116' || (!data && error)) {
+        setScanError({
+          type: 'not_found',
+          message: 'Équipement introuvable. Ce QR code n\'est pas enregistré dans le système.',
+        })
         setLoading(false)
         return
       }
 
+      if (error) throw error
+
       setAsset(data as unknown as Asset)
       setSelectedStatus(data.status || 'available')
-    } catch (error) {
-      console.error('Error fetching asset:', error)
-      setErrorMessage('Failed to load asset')
+    } catch (err: any) {
+      const isTimeout = err?.type === 'timeout' || err?.message === 'timeout'
+      const isNetwork = !navigator.onLine || err?.name === 'TypeError'
+
+      // Retry up to 3 times (attempt 0,1,2) for transient errors; never retry 404
+      if (attempt < 3 && !isTimeout) {
+        return fetchAsset(attempt + 1)
+      }
+
+      console.error('QR scan fetchAsset error:', err)
+      setScanError({
+        type: isTimeout ? 'timeout' : isNetwork ? 'network' : 'unknown',
+        message: isTimeout
+          ? 'Délai dépassé. Vérifiez votre connexion et réessayez.'
+          : isNetwork
+          ? 'Pas de connexion réseau. Vérifiez votre signal et réessayez.'
+          : 'Impossible de charger l\'équipement. Réessayez.',
+      })
     } finally {
       setLoading(false)
     }
@@ -454,20 +492,54 @@ export default function ScanPage({ params }: PageProps) {
     )
   }
 
+  // Differentiated scan error screen (not_found vs network/timeout)
+  if (scanError) {
+    const isNotFound = scanError.type === 'not_found'
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center border-l-4 border-b-4 border-red-500">
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" aria-hidden="true" />
+          <h1 className="text-xl font-bold text-[#00252b] mb-2">
+            {isNotFound ? 'Équipement introuvable' : 'Erreur de chargement'}
+          </h1>
+          <p className="text-gray-600 mb-6 text-sm">{scanError.message}</p>
+
+          <div className="flex flex-col gap-3">
+            {/* Retry — always shown except definitive 404 */}
+            {!isNotFound && (
+              <button
+                onClick={() => fetchAsset(0)}
+                className="inline-flex items-center justify-center gap-2 min-h-[44px] w-full px-6 py-3 bg-[#f26f00] text-white rounded-lg hover:bg-[#d96200] font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-[#f26f00] focus:ring-offset-2"
+              >
+                Réessayer
+              </button>
+            )}
+            <button
+              onClick={() => router.push('/')}
+              className="inline-flex items-center justify-center min-h-[44px] w-full px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-gray-400"
+            >
+              Retour à l&apos;accueil
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (!asset) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center border-l-4 border-b-4 border-red-500">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-[#00252b] mb-2">Asset Not Found</h1>
-          <p className="text-gray-600 mb-6">
-            The QR code is not recognized in our system.
+          <h1 className="text-xl font-bold text-[#00252b] mb-2">Équipement introuvable</h1>
+          <p className="text-gray-600 mb-6 text-sm">
+            Ce QR code n&apos;est pas enregistré dans le système.
           </p>
           <button
             onClick={() => router.push('/')}
-            className="px-6 py-3 bg-[#f26f00] text-white rounded-lg hover:bg-[#d96200] font-semibold transition-all"
+            className="inline-flex items-center justify-center min-h-[44px] w-full px-6 py-3 bg-[#f26f00] text-white rounded-lg hover:bg-[#d96200] font-semibold transition-all"
           >
-            Go to Homepage
+            Retour à l&apos;accueil
           </button>
         </div>
       </div>
