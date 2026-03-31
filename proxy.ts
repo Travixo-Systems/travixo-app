@@ -1,4 +1,4 @@
-// middleware.ts
+// proxy.ts
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import type { CookieOptions } from '@supabase/ssr'
@@ -23,7 +23,7 @@ function getRateLimitConfig(pathname: string) {
   return null
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   const ip = getClientIp(request)
 
