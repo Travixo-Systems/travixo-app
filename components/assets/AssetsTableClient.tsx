@@ -40,7 +40,6 @@ export default function AssetsTableClient({ assets }: { assets: Asset[] }) {
     const [deleteAsset, setDeleteAsset] = useState<Asset | null>(null)
     const [vgpAsset, setVgpAsset] = useState<Asset | null>(null)
 
-    // Helper to get translated status
     const getStatusLabel = (status: string) => {
         switch (status) {
             case 'available': return t('assets.statusAvailable')
@@ -51,7 +50,6 @@ export default function AssetsTableClient({ assets }: { assets: Asset[] }) {
         }
     }
 
-    // Helper to get status badge color
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'available': return 'bg-green-100 text-green-800'
@@ -97,7 +95,6 @@ export default function AssetsTableClient({ assets }: { assets: Asset[] }) {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {asset.serial_number || '-'}
                                 </td>
-                                {/* Category Column - NEW */}
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     {asset.asset_categories?.name ? (
                                         <span 
@@ -111,20 +108,16 @@ export default function AssetsTableClient({ assets }: { assets: Asset[] }) {
                                         <span className="text-sm text-gray-400">-</span>
                                     )}
                                 </td>
-                                {/* Status Column */}
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(asset.status)}`}>
                                         {getStatusLabel(asset.status)}
                                     </span>
                                 </td>
-                                {/* Location Column */}
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {asset.current_location || '-'}
                                 </td>
-                                {/* Actions Column */}
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div className="flex justify-end items-center gap-1">
-                                        {/* VGP Button */}
                                         <button
                                             onClick={() => setVgpAsset(asset)}
                                             className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 text-[#00252b] hover:bg-[#00252b]/10 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
@@ -133,8 +126,6 @@ export default function AssetsTableClient({ assets }: { assets: Asset[] }) {
                                         >
                                             <Shield className="h-5 w-5" aria-hidden="true" />
                                         </button>
-
-                                        {/* QR Button */}
                                         <button
                                             onClick={() => setQrAsset(asset)}
                                             className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
@@ -143,8 +134,6 @@ export default function AssetsTableClient({ assets }: { assets: Asset[] }) {
                                         >
                                             <QrCodeIcon className="h-5 w-5" aria-hidden="true" />
                                         </button>
-
-                                        {/* Edit Button */}
                                         <button
                                             onClick={() => setEditAsset(asset)}
                                             className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
@@ -153,8 +142,6 @@ export default function AssetsTableClient({ assets }: { assets: Asset[] }) {
                                         >
                                             <PencilIcon className="h-5 w-5" aria-hidden="true" />
                                         </button>
-
-                                        {/* Delete Button */}
                                         <button
                                             onClick={() => setDeleteAsset(asset)}
                                             className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-400"
@@ -195,7 +182,6 @@ export default function AssetsTableClient({ assets }: { assets: Asset[] }) {
                 />
             )}
 
-            {/* VGP Modal */}
             {vgpAsset && (
                 <AddVGPScheduleModal
                     asset={{
