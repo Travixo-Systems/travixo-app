@@ -121,7 +121,7 @@ export default function EditAssetModal({ isOpen, onClose, asset }: EditAssetModa
             >
               <Dialog.Panel className="w-full max-w-[560px] transform overflow-hidden rounded-xl p-6 transition-all" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
                 <div className="flex justify-between items-center mb-4">
-                  <Dialog.Title className="text-lg font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                  <Dialog.Title className="text-lg font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                     {t('assets.editAssetTitle')}
                   </Dialog.Title>
                   <button onClick={onClose} className="transition-colors" style={{ color: 'var(--text-muted, #777)' }} onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary, #1a1a1a)' }} onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted, #777)' }}>

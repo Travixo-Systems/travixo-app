@@ -158,7 +158,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
         {/* Header */}
         <div className="flex items-center justify-between p-6" style={{ borderBottom: '0.5px solid #dcdee3' }}>
           <div>
-            <h2 className="text-lg font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpScheduleModal.title')}</h2>
+            <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpScheduleModal.title')}</h2>
             <p className="text-[13px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>
               {t('vgpScheduleModal.subtitle')}
             </p>

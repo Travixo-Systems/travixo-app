@@ -79,7 +79,7 @@ export default function DeleteAssetDialog({ isOpen, onClose, asset }: DeleteAsse
                     <ExclamationTriangleIcon className="h-10 w-10" style={{ color: 'var(--status-retard, #dc2626)' }} />
                   </div>
                   <div>
-                    <Dialog.Title className="text-lg font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                    <Dialog.Title className="text-lg font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                       {t('assets.deleteTitle')}
                     </Dialog.Title>
                     <p className="text-[13px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>

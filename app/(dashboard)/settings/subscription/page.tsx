@@ -132,7 +132,7 @@ export default function SubscriptionPage() {
         {/* Header */}
         <div className="flex items-end justify-between">
           <div>
-            <h1 className="text-xl font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('subscription.pageTitle')}</h1>
+            <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('subscription.pageTitle')}</h1>
             <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted, #777)' }}>{t('subscription.pageSubtitle')}</p>
           </div>
         </div>

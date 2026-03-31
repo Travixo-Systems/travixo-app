@@ -73,7 +73,7 @@ export default function SettingsPage() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-xl font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+          <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
             {labels.pageTitle[language]}
           </h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted, #777)' }}>

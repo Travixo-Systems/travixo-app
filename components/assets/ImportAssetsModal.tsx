@@ -252,7 +252,7 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
             >
               <Dialog.Panel className="w-full max-w-[720px] transform overflow-hidden rounded-xl p-6 transition-all" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
                 <div className="flex justify-between items-center mb-4">
-                  <Dialog.Title className="text-lg font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                  <Dialog.Title className="text-lg font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                     {t('assets.importTitle')}
                   </Dialog.Title>
                   <button onClick={resetModal} className="transition-colors" style={{ color: 'var(--text-muted, #777)' }} onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary, #1a1a1a)' }} onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted, #777)' }}>
@@ -348,10 +348,10 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
                       <table className="min-w-full">
                         <thead className="sticky top-0" style={{ backgroundColor: 'var(--page-bg, #cbcdd4)' }}>
                           <tr>
-                            <th className="px-4 py-2 text-left text-[11px] font-medium uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888)' }}>{t('assets.tableHeaderName')}</th>
-                            <th className="px-4 py-2 text-left text-[11px] font-medium uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888)' }}>{t('assets.tableHeaderSerial')}</th>
-                            <th className="px-4 py-2 text-left text-[11px] font-medium uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888)' }}>{t('assets.tableHeaderLocation')}</th>
-                            <th className="px-4 py-2 text-left text-[11px] font-medium uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888)' }}>{t('assets.tableHeaderStatus')}</th>
+                            <th className="px-4 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888)' }}>{t('assets.tableHeaderName')}</th>
+                            <th className="px-4 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888)' }}>{t('assets.tableHeaderSerial')}</th>
+                            <th className="px-4 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888)' }}>{t('assets.tableHeaderLocation')}</th>
+                            <th className="px-4 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888)' }}>{t('assets.tableHeaderStatus')}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y" style={{ borderColor: '#dcdee3' }}>

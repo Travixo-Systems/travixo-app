@@ -428,7 +428,7 @@ export default function TeamPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('team.pageTitle')}</h1>
+          <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('team.pageTitle')}</h1>
           <p className="mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('team.pageSubtitle')}</p>
         </div>
         {canManageTeam && (
@@ -568,7 +568,7 @@ export default function TeamPage() {
       {filteredMembers.length === 0 ? (
         <div className="rounded-lg p-12 text-center" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
           <Users className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--text-hint, #888)' }} />
-          <h3 className="text-lg font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+          <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
             {activeFilter === 'pending' 
               ? (language === 'fr' ? 'Aucune invitation en attente' : 'No pending invitations')
               : t('team.noMembers')

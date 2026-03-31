@@ -80,7 +80,7 @@ function VGPContent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpDashboard.pageTitle')}</h1>
+          <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpDashboard.pageTitle')}</h1>
           <p className="mt-1" style={{ color: 'var(--text-muted, #777)' }}>
             {t('vgpDashboard.pageSubtitle')}
           </p>
@@ -108,7 +108,7 @@ function VGPContent() {
           <span className="text-[26px] font-medium" style={{ color: 'var(--status-conforme, #059669)' }}>
             {summary?.compliance_rate || 0}%
           </span>
-          <h3 className="text-xs font-medium mt-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpDashboard.complianceRate')}</h3>
+          <h3 className="text-xs font-semibold mt-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpDashboard.complianceRate')}</h3>
           <p className="text-[11px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>
             {summary?.compliant_assets || 0} {t('vgpDashboard.compliantEquipment')}
           </p>
@@ -121,7 +121,7 @@ function VGPContent() {
           style={{ backgroundColor: 'var(--card-bg, #edeff2)', borderLeftColor: 'var(--status-bientot, #d97706)' }}
         >
           <span className="text-[26px] font-medium" style={{ color: 'var(--status-bientot, #d97706)' }}>{upcoming.length}</span>
-          <h3 className="text-xs font-medium mt-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpDashboard.upcoming')}</h3>
+          <h3 className="text-xs font-semibold mt-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpDashboard.upcoming')}</h3>
           <p className="text-[11px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('vgpDashboard.plannedInspections')}</p>
         </div>
 
@@ -132,7 +132,7 @@ function VGPContent() {
           style={{ backgroundColor: 'var(--card-bg, #edeff2)', borderLeftColor: 'var(--status-retard, #dc2626)' }}
         >
           <span className="text-[26px] font-medium" style={{ color: 'var(--status-retard, #dc2626)' }}>{overdue.length}</span>
-          <h3 className="text-xs font-medium mt-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpDashboard.overdue')}</h3>
+          <h3 className="text-xs font-semibold mt-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpDashboard.overdue')}</h3>
           <p className="text-[11px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('vgpDashboard.immediateAction')}</p>
         </div>
 
@@ -145,7 +145,7 @@ function VGPContent() {
           <span className="text-[26px] font-medium" style={{ color: 'var(--status-neutral, #6b7280)' }}>
             {totalEquipments}
           </span>
-          <h3 className="text-xs font-medium mt-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpDashboard.totalEquipment')}</h3>
+          <h3 className="text-xs font-semibold mt-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpDashboard.totalEquipment')}</h3>
           <p className="text-[11px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('vgpDashboard.underVGPMonitoring')}</p>
         </div>
       </div>
@@ -157,7 +157,7 @@ function VGPContent() {
           style={{ backgroundColor: 'var(--card-bg, #edeff2)', borderLeftColor: 'var(--status-retard, #dc2626)' }}
         >
           <div className="flex items-center gap-2 mb-3">
-            <h2 className="text-[13px] font-medium" style={{ color: 'var(--status-retard, #dc2626)' }}>
+            <h2 className="text-[13px] font-semibold" style={{ color: 'var(--status-retard, #dc2626)' }}>
               {t('vgpDashboard.overdueSection')} ({overdue.length}) - {t('vgpDashboard.risk')}: €{financialRiskMin.toLocaleString()}-€{financialRiskMax.toLocaleString()}
             </h2>
           </div>
@@ -176,7 +176,7 @@ function VGPContent() {
                     </span>
                   </div>
                   <div className="flex-shrink-0">
-                    <span className="text-white text-xs font-medium px-2 py-0.5 rounded" style={{ backgroundColor: 'var(--status-retard, #dc2626)' }}>{daysOverdue}j</span>
+                    <span className="text-white text-xs font-semibold px-2 py-0.5 rounded" style={{ backgroundColor: 'var(--status-retard, #dc2626)' }}>{daysOverdue}j</span>
                   </div>
                 </div>
               );
@@ -186,7 +186,7 @@ function VGPContent() {
           {overdue.length > 4 && (
             <button
               onClick={() => window.location.href = '/vgp/schedules?status=overdue'}
-              className="mt-3 text-xs font-medium transition-colors"
+              className="mt-3 text-xs font-semibold transition-colors"
               style={{ color: 'var(--accent, #e8600a)' }}
             >
               {t('vgpDashboard.viewAll')} →
@@ -202,7 +202,7 @@ function VGPContent() {
           style={{ backgroundColor: 'var(--card-bg, #edeff2)', borderLeftColor: 'var(--status-bientot, #d97706)' }}
         >
           <div className="flex items-center gap-2 mb-3">
-            <h2 className="text-[13px] font-medium" style={{ color: 'var(--status-bientot, #d97706)' }}>
+            <h2 className="text-[13px] font-semibold" style={{ color: 'var(--status-bientot, #d97706)' }}>
               {t('vgpDashboard.upcomingSection')} ({upcoming.length}) - {t('vgpDashboard.next30Days')}
             </h2>
           </div>
@@ -228,7 +228,7 @@ function VGPContent() {
           {upcoming.length > 3 && (
             <button
               onClick={() => window.location.href = '/vgp/schedules?status=upcoming'}
-              className="mt-3 text-xs font-medium transition-colors"
+              className="mt-3 text-xs font-semibold transition-colors"
               style={{ color: 'var(--accent, #e8600a)' }}
             >
               {t('vgpDashboard.viewAllInTracking')} →

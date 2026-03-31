@@ -34,7 +34,7 @@ interface Asset {
     } | null
 }
 
-export default function AssetsTableClient({ assets }: { assets: Asset[] }) {
+export default function AssetsTableClient({ assets, onRefresh }: { assets: Asset[]; onRefresh?: () => void }) {
     const { language } = useLanguage()
     const t = createTranslator(language)
     
@@ -89,25 +89,25 @@ export default function AssetsTableClient({ assets }: { assets: Asset[] }) {
                 <table className="min-w-full">
                     <thead>
                         <tr>
-                            <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
+                            <th className="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
                                 {t('assets.tableHeaderName')}
                             </th>
-                            <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
+                            <th className="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
                                 {t('assets.tableHeaderSerial')}
                             </th>
-                            <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
+                            <th className="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
                                 {t('assets.tableHeaderCategory')}
                             </th>
-                            <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
+                            <th className="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
                                 {t('assets.tableHeaderStatus')}
                             </th>
-                            <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
+                            <th className="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
                                 VGP
                             </th>
-                            <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
+                            <th className="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
                                 {t('assets.tableHeaderLocation')}
                             </th>
-                            <th className="px-6 py-3 text-right text-[11px] font-medium uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
+                            <th className="px-6 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
                                 {t('assets.tableHeaderActions')}
                             </th>
                         </tr>
@@ -115,7 +115,7 @@ export default function AssetsTableClient({ assets }: { assets: Asset[] }) {
                     <tbody className="divide-y" style={{ borderColor: '#dcdee3' }}>
                         {assets.map((asset) => (
                             <tr key={asset.id} className="hover:bg-black/[0.02]" style={{ borderColor: '#dcdee3' }}>
-                                <td className="px-6 py-4 whitespace-nowrap text-[13px] font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                                <td className="px-6 py-4 whitespace-nowrap text-[13px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                                     {asset.name}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-[13px]" style={{ color: 'var(--text-secondary, #444444)' }}>
@@ -204,7 +204,7 @@ export default function AssetsTableClient({ assets }: { assets: Asset[] }) {
             {editAsset && (
                 <EditAssetModal
                     isOpen={!!editAsset}
-                    onClose={() => setEditAsset(null)}
+                    onClose={() => { setEditAsset(null); onRefresh?.() }}
                     asset={editAsset}
                 />
             )}
@@ -212,7 +212,7 @@ export default function AssetsTableClient({ assets }: { assets: Asset[] }) {
             {deleteAsset && (
                 <DeleteAssetDialog
                     isOpen={!!deleteAsset}
-                    onClose={() => setDeleteAsset(null)}
+                    onClose={() => { setDeleteAsset(null); onRefresh?.() }}
                     asset={deleteAsset}
                 />
             )}
@@ -229,6 +229,7 @@ export default function AssetsTableClient({ assets }: { assets: Asset[] }) {
                     onSuccess={() => {
                         setVgpAsset(null)
                         toast.success(t('assets.toastVgpScheduleCreated'))
+                        onRefresh?.()
                     }}
                 />
             )}

@@ -61,7 +61,7 @@ export function EditScheduleModal({ schedule, isOpen, onClose, onSuccess }: Edit
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="rounded-xl max-w-[560px] w-full p-6" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpEditModal.title')}</h2>
+          <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpEditModal.title')}</h2>
           <button onClick={onClose} className="transition-colors" style={{ color: 'var(--text-muted, #777)' }} onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary, #1a1a1a)' }} onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted, #777)' }}>
             <X className="w-5 h-5" />
           </button>

@@ -117,7 +117,7 @@ function StatusBadge({ status, t }: { status: StatusFilter; t: (key: string) => 
 
   const { key, bg, text } = config[status];
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${bg} ${text}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${bg} ${text}`}>
       {t(key)}
     </span>
   );
@@ -329,7 +329,7 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
 
       {/* Header */}
       <div>
-        <h1 className="text-xl font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpSchedules.pageTitle')}</h1>
+        <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpSchedules.pageTitle')}</h1>
         <p className="mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('vgpSchedules.pageSubtitle')}</p>
       </div>
 
@@ -577,7 +577,7 @@ export default function VGPSchedulesManager() {
 
 function TableHeader({ children }: { children: React.ReactNode }) {
   return (
-    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-hint,#888)] uppercase tracking-wider">
       {children}
     </th>
   );
@@ -611,7 +611,7 @@ function StatCard({
       }}
     >
       <p className="text-[26px] font-medium" style={{ color }}>{value}</p>
-      <p className="text-xs font-medium mt-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{title}</p>
+      <p className="text-xs font-semibold mt-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{title}</p>
     </button>
   );
 }
@@ -624,7 +624,7 @@ function DetailsModal({ schedule, onClose, t }: { schedule: Schedule; onClose: (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="rounded-xl max-w-[720px] w-full max-h-[90vh] overflow-y-auto" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
         <div className="sticky top-0 px-6 py-4 flex items-center justify-between" style={{ backgroundColor: 'var(--card-bg, #edeff2)', borderBottom: '0.5px solid #dcdee3' }}>
-          <h2 className="text-lg font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpSchedules.detailsModal.title')}</h2>
+          <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpSchedules.detailsModal.title')}</h2>
           <button
             onClick={onClose}
             className="transition-colors" style={{ color: 'var(--text-muted, #777)' }}

@@ -373,7 +373,7 @@ export default function AuditDetailPage() {
     return (
       <div className="p-6 text-center">
         <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <h2 className="text-lg font-medium text-gray-900">{t('audits.auditNotFound')}</h2>
+        <h2 className="text-lg font-semibold text-gray-900">{t('audits.auditNotFound')}</h2>
         <button
           onClick={() => router.push('/audits')}
           className="mt-4 text-blue-600 hover:underline"
@@ -525,7 +525,7 @@ export default function AuditDetailPage() {
       {audit.status === 'planned' && (
         <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-sm p-12 text-center">
           <Clock className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900">{t('audits.auditNotStarted')}</h3>
+          <h3 className="text-lg font-semibold text-gray-900">{t('audits.auditNotStarted')}</h3>
           <p className="text-gray-500 mt-1">{t('audits.auditNotStartedDesc')}</p>
           <button
             onClick={startAudit}
@@ -557,7 +557,7 @@ export default function AuditDetailPage() {
           {filteredItems.length === 0 ? (
             <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-sm p-12 text-center">
               <Package className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900">{t('audits.noAssetsFound')}</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{t('audits.noAssetsFound')}</h3>
             </div>
           ) : (
             <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-sm overflow-hidden">

@@ -267,7 +267,7 @@ export default function DashboardPage() {
       <div className="grid gap-3 md:grid-cols-4">
         <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-[var(--text-secondary,#444)]">{t('dashboard.totalEquipment')}</p>
+            <p className="text-sm font-semibold text-[var(--text-secondary,#444)]">{t('dashboard.totalEquipment')}</p>
             <svg className="h-4 w-4 text-[var(--text-hint,#888)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
@@ -280,7 +280,7 @@ export default function DashboardPage() {
 
         <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-[var(--text-secondary,#444)]">{t('dashboard.vgpCompliance')}</p>
+            <p className="text-sm font-semibold text-[var(--text-secondary,#444)]">{t('dashboard.vgpCompliance')}</p>
             <svg className="h-4 w-4 text-[var(--text-hint,#888)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -293,7 +293,7 @@ export default function DashboardPage() {
 
         <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-[var(--text-secondary,#444)]">{t('dashboard.scans7Days')}</p>
+            <p className="text-sm font-semibold text-[var(--text-secondary,#444)]">{t('dashboard.scans7Days')}</p>
             <svg className="h-4 w-4 text-[var(--text-hint,#888)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
             </svg>
@@ -304,7 +304,7 @@ export default function DashboardPage() {
 
         <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-[var(--text-secondary,#444)]">{t('dashboard.utilization')}</p>
+            <p className="text-sm font-semibold text-[var(--text-secondary,#444)]">{t('dashboard.utilization')}</p>
             <svg className="h-4 w-4 text-[var(--text-hint,#888)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
             </svg>
@@ -367,7 +367,7 @@ export default function DashboardPage() {
                 </svg>
               </div>
               <div>
-                <p className="font-medium text-sm text-[var(--text-primary,#1a1a1a)]">{t('dashboard.vgpOverdueLabel')}</p>
+                <p className="font-semibold text-sm text-[var(--text-primary,#1a1a1a)]">{t('dashboard.vgpOverdueLabel')}</p>
                 <p className="text-xs text-[var(--text-secondary,#444)]">{t('dashboard.vgpOverdueDesc')}</p>
               </div>
             </div>
@@ -389,7 +389,7 @@ export default function DashboardPage() {
                 </svg>
               </div>
               <div>
-                <p className="font-medium text-sm text-[var(--text-primary,#1a1a1a)]">{t('dashboard.vgpUpcomingLabel')}</p>
+                <p className="font-semibold text-sm text-[var(--text-primary,#1a1a1a)]">{t('dashboard.vgpUpcomingLabel')}</p>
                 <p className="text-xs text-[var(--text-secondary,#444)]">{t('dashboard.vgpUpcomingDesc')}</p>
               </div>
             </div>
@@ -411,7 +411,7 @@ export default function DashboardPage() {
                 </svg>
               </div>
               <div>
-                <p className="font-medium text-sm text-[var(--text-primary,#1a1a1a)]">{t('dashboard.compliant')}</p>
+                <p className="font-semibold text-sm text-[var(--text-primary,#1a1a1a)]">{t('dashboard.compliant')}</p>
                 <p className="text-xs text-[var(--text-secondary,#444)]">{t('dashboard.inspectionsUpToDate')}</p>
               </div>
             </div>
@@ -422,7 +422,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="mt-4 pt-4 border-t border-slate-200">
-          <Link href="/vgp" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+          <Link href="/vgp" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[var(--accent,#e8600a)] text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium">
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>

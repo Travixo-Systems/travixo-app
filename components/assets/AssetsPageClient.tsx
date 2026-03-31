@@ -24,11 +24,16 @@ interface Asset {
     current_value: number | null
     qr_code: string
     category_id: string | null
+    vgp_status?: 'overdue' | 'upcoming' | 'compliant' | 'unknown' | null
     asset_categories?: {
         id: string
         name: string
         color: string
     } | null
+    vgp_schedules?: {
+        id: string
+        next_due_date: string
+    }[] | null
 }
 
 export default function AssetsPageClient() {
@@ -75,12 +80,41 @@ export default function AssetsPageClient() {
                         id,
                         name,
                         color
+                    ),
+                    vgp_schedules (
+                        id,
+                        next_due_date
                     )
                 `)
                 .eq('organization_id', userData.organization_id)
                 .order('created_at', { ascending: false })
 
-            setAssets((data || []) as unknown as Asset[])
+            // Compute vgp_status from the most urgent schedule
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+
+            const enriched = (data || []).map((asset: any) => {
+                const schedules = asset.vgp_schedules as { id: string; next_due_date: string }[] | null
+                if (!schedules || schedules.length === 0) {
+                    return { ...asset, vgp_status: 'unknown' as const }
+                }
+                // Find the most urgent (nearest) schedule
+                let worstStatus: 'overdue' | 'upcoming' | 'compliant' = 'compliant'
+                for (const s of schedules) {
+                    const due = new Date(s.next_due_date)
+                    due.setHours(0, 0, 0, 0)
+                    const daysUntil = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+                    if (daysUntil < 0) {
+                        worstStatus = 'overdue'
+                        break // can't get worse
+                    } else if (daysUntil <= 30) {
+                        worstStatus = 'upcoming'
+                    }
+                }
+                return { ...asset, vgp_status: worstStatus }
+            })
+
+            setAssets(enriched as Asset[])
         } finally {
             setLoading(false)
         }
@@ -173,7 +207,7 @@ export default function AssetsPageClient() {
         <div className="p-8">
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-xl font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('assets.pageTitle')}</h1>
+                    <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('assets.pageTitle')}</h1>
                     <p className="mt-1" style={{ color: 'var(--text-muted, #777777)' }}>
                         {t('assets.pageSubtitle')}
                     </p>
@@ -262,7 +296,7 @@ export default function AssetsPageClient() {
                         </div>
                     ) : (
                         <>
-                            <AssetsTableClient assets={paginatedAssets} />
+                            <AssetsTableClient assets={paginatedAssets} onRefresh={loadAssets} />
 
                             {/* Pagination */}
                             {totalPages > 1 && (

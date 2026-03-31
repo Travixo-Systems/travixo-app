@@ -158,7 +158,7 @@ export default function ClientsPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-xl font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+            <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
               {t('clients.pageTitle')}
             </h1>
             <p className="text-sm mt-1" style={{ color: 'var(--text-muted, #777)' }}>
@@ -201,7 +201,7 @@ export default function ClientsPage() {
             <div className="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
               <Users className="w-8 h-8" style={{ color: 'var(--text-hint, #888)' }} />
             </div>
-            <h3 className="text-lg font-medium mb-2" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+            <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
               {t('clients.noClients')}
             </h3>
             <p className="text-sm max-w-md mx-auto" style={{ color: 'var(--text-muted, #777)' }}>
@@ -272,7 +272,7 @@ export default function ClientsPage() {
             <div className="relative w-full max-w-[560px] rounded-xl mx-4" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
               <div className="px-6 pt-6 pb-2">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                  <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                     {editingClient ? t('clients.editClient') : t('clients.addClient')}
                   </h2>
                   <button

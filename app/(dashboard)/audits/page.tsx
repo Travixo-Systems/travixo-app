@@ -425,7 +425,7 @@ export default function AuditsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('audits.pageTitle')}</h1>
+          <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('audits.pageTitle')}</h1>
           <p className="mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('audits.pageSubtitle')}</p>
         </div>
         <button
@@ -536,7 +536,7 @@ export default function AuditsPage() {
       {filteredAudits.length === 0 ? (
         <div className="rounded-lg p-12 text-center" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
           <ClipboardCheck className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--text-hint, #888)' }} />
-          <h3 className="text-lg font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('audits.noAudits')}</h3>
+          <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('audits.noAudits')}</h3>
           <p className="mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('audits.noAuditsDesc')}</p>
           <button
             onClick={() => setShowCreateModal(true)}
