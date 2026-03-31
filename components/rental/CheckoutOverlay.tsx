@@ -2,23 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { X, Loader2, ShieldAlert, ShieldCheck, UserPlus, Users } from 'lucide-react'
-import { z } from 'zod'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
 import { useVGPBlockStatus } from './VGPComplianceBadge'
-
-const checkoutSchema = z.object({
-  clientName: z.string().min(1, { message: 'Le nom du client est requis' }),
-  clientContact: z.string().optional(),
-  clientEmail: z.string().email({ message: 'Email invalide' }).optional().or(z.literal('')),
-  expectedReturn: z
-    .string()
-    .optional()
-    .refine(val => !val || new Date(val) > new Date(), {
-      message: 'La date de retour doit être dans le futur',
-    }),
-  notes: z.string().max(500, { message: 'Notes : 500 caractères maximum' }).optional(),
-})
+import { rentalCheckoutSchema } from '@/lib/validations/schemas'
 
 interface Client {
   id: string
@@ -61,6 +48,7 @@ export default function CheckoutOverlay({
   const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   const { blocked: vgpBlocked, loading: vgpLoading } = useVGPBlockStatus(assetId)
 
@@ -118,7 +106,8 @@ export default function CheckoutOverlay({
     e.preventDefault()
 
     // Zod client-side validation before any API call
-    const parsed = checkoutSchema.safeParse({
+    setFieldErrors({})
+    const parsed = rentalCheckoutSchema.safeParse({
       clientName: clientName.trim(),
       clientContact: clientContact.trim(),
       clientEmail: clientEmail.trim(),
@@ -126,6 +115,12 @@ export default function CheckoutOverlay({
       notes: notes.trim(),
     })
     if (!parsed.success) {
+      const errors: Record<string, string> = {}
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0]?.toString()
+        if (key && !errors[key]) errors[key] = issue.message
+      }
+      setFieldErrors(errors)
       setError(parsed.error.issues[0].message)
       return
     }
@@ -361,6 +356,9 @@ export default function CheckoutOverlay({
                     style={{ fontSize: '16px' }}
                     maxLength={255}
                   />
+                  {fieldErrors.clientName && (
+                    <p className="text-xs text-red-600 mt-1">{fieldErrors.clientName}</p>
+                  )}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -376,6 +374,9 @@ export default function CheckoutOverlay({
                       style={{ fontSize: '16px' }}
                       maxLength={255}
                     />
+                    {fieldErrors.clientEmail && (
+                      <p className="text-xs text-red-600 mt-1">{fieldErrors.clientEmail}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-[#00252b] mb-2">
@@ -426,6 +427,9 @@ export default function CheckoutOverlay({
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
                 style={{ fontSize: '16px' }}
               />
+              {fieldErrors.expectedReturn && (
+                <p className="text-xs text-red-600 mt-1">{fieldErrors.expectedReturn}</p>
+              )}
             </div>
 
             {/* Notes */}
@@ -442,6 +446,9 @@ export default function CheckoutOverlay({
                 rows={2}
                 maxLength={500}
               />
+              {fieldErrors.notes && (
+                <p className="text-xs text-red-600 mt-1">{fieldErrors.notes}</p>
+              )}
             </div>
 
             {/* Actions */}

@@ -9,6 +9,7 @@ import toast from 'react-hot-toast'
 import { v4 as uuidv4 } from 'uuid'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
+import { assetSchema } from '@/lib/validations/schemas'
 
 interface AddAssetModalProps {
   isOpen: boolean
@@ -22,6 +23,7 @@ export default function AddAssetModal({ isOpen, onClose, onSuccess }: AddAssetMo
   const { language } = useLanguage()
   const t = createTranslator(language)
   const [isLoading, setIsLoading] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   const [formData, setFormData] = useState({
     name: '',
@@ -36,6 +38,20 @@ export default function AddAssetModal({ isOpen, onClose, onSuccess }: AddAssetMo
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Zod validation
+    setFieldErrors({})
+    const parsed = assetSchema.safeParse(formData)
+    if (!parsed.success) {
+      const errors: Record<string, string> = {}
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0]?.toString()
+        if (key && !errors[key]) errors[key] = issue.message
+      }
+      setFieldErrors(errors)
+      return
+    }
+
     setIsLoading(true)
 
     try {
@@ -146,6 +162,9 @@ export default function AddAssetModal({ isOpen, onClose, onSuccess }: AddAssetMo
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-transparent"
                         placeholder={t('assets.placeholderAssetName')}
                       />
+                      {fieldErrors.name && (
+                        <p className="text-xs text-red-600 mt-1">{fieldErrors.name}</p>
+                      )}
                     </div>
 
                     <div>

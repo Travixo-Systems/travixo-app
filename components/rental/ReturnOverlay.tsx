@@ -2,17 +2,10 @@
 
 import { useState } from 'react'
 import { X, Loader2, Navigation } from 'lucide-react'
-import { z } from 'zod'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
 import type { ActiveRental } from './RentalStatusCard'
-
-const returnSchema = z.object({
-  rentalId: z.string().uuid({ message: 'ID de location invalide' }),
-  condition: z.enum(['good', 'fair', 'damaged', '']).optional(),
-  notes: z.string().max(500, { message: 'Notes : 500 caractères maximum' }).optional(),
-  location: z.string().max(200, { message: 'Localisation : 200 caractères maximum' }).optional(),
-})
+import { rentalReturnSchema } from '@/lib/validations/schemas'
 
 interface ReturnOverlayProps {
   rental: ActiveRental
@@ -36,6 +29,7 @@ export default function ReturnOverlay({
   const [submitting, setSubmitting] = useState(false)
   const [gettingGPS, setGettingGPS] = useState(false)
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   const daysSince = Math.floor(
     (Date.now() - new Date(rental.checkout_date).getTime()) / 86400000
@@ -67,13 +61,20 @@ export default function ReturnOverlay({
     e.preventDefault()
 
     // Zod client-side validation before API call
-    const parsed = returnSchema.safeParse({
+    setFieldErrors({})
+    const parsed = rentalReturnSchema.safeParse({
       rentalId: rental.id,
       condition: condition || '',
       notes: notes.trim(),
       location: location.trim(),
     })
     if (!parsed.success) {
+      const errors: Record<string, string> = {}
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0]?.toString()
+        if (key && !errors[key]) errors[key] = issue.message
+      }
+      setFieldErrors(errors)
       setError(parsed.error.issues[0].message)
       return
     }
@@ -238,6 +239,9 @@ export default function ReturnOverlay({
                   style={{ fontSize: '16px' }}
                   maxLength={255}
                 />
+                {fieldErrors.location && (
+                  <p className="text-xs text-red-600 mt-1">{fieldErrors.location}</p>
+                )}
                 <button
                   type="button"
                   onClick={handleUseGPS}
@@ -264,6 +268,9 @@ export default function ReturnOverlay({
                 rows={2}
                 maxLength={500}
               />
+              {fieldErrors.notes && (
+                <p className="text-xs text-red-600 mt-1">{fieldErrors.notes}</p>
+              )}
             </div>
 
             {/* Actions */}
