@@ -4,6 +4,8 @@
 import { useState } from 'react'
 import { QrCodeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
 import { Shield } from 'lucide-react'
+import { VGPStatusBadge } from '@/components/vgp/VGPStatusBadge'
+import type { VGPStatus } from '@/components/vgp/VGPStatusBadge'
 import ViewQRModal from './ViewQRModal'
 import EditAssetModal from './EditAssetModal'
 import DeleteAssetDialog from './DeleteAssetDialog'
@@ -24,6 +26,7 @@ interface Asset {
     current_value: number | null
     qr_code: string
     category_id: string | null
+    vgp_status?: VGPStatus | null
     asset_categories?: {
         id: string
         name: string
@@ -78,6 +81,9 @@ export default function AssetsTableClient({ assets }: { assets: Asset[] }) {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                 {t('assets.tableHeaderStatus')}
                             </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium uppercase" style={{ color: '#00252b' }}>
+                                VGP
+                            </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                 {t('assets.tableHeaderLocation')}
                             </th>
@@ -112,6 +118,9 @@ export default function AssetsTableClient({ assets }: { assets: Asset[] }) {
                                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(asset.status)}`}>
                                         {getStatusLabel(asset.status)}
                                     </span>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <VGPStatusBadge status={asset.vgp_status ?? 'unknown'} />
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {asset.current_location || '-'}
