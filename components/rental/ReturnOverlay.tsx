@@ -10,8 +10,8 @@ import type { ActiveRental } from './RentalStatusCard'
 const returnSchema = z.object({
   rentalId: z.string().uuid({ message: 'ID de location invalide' }),
   condition: z.enum(['good', 'fair', 'damaged', '']).optional(),
-  notes: z.string().max(500, { message: 'Notes : 500 caractères maximum' }).optional(),
-  location: z.string().max(200, { message: 'Localisation : 200 caractères maximum' }).optional(),
+  notes: z.string().max(500, { message: 'Notes : 500 caractères maximum' }).optional(),
+  location: z.string().max(200, { message: 'Localisation : 200 caractères maximum' }).optional(),
 })
 
 interface ReturnOverlayProps {

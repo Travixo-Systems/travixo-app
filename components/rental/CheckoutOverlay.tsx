@@ -17,7 +17,7 @@ const checkoutSchema = z.object({
     .refine(val => !val || new Date(val) > new Date(), {
       message: 'La date de retour doit être dans le futur',
     }),
-  notes: z.string().max(500, { message: 'Notes : 500 caractères maximum' }).optional(),
+  notes: z.string().max(500, { message: 'Notes : 500 caractères maximum' }).optional(),
 })
 
 interface Client {
