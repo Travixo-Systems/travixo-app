@@ -56,7 +56,7 @@ function LoginContent() {
         email: unconfirmedEmail,
       })
       if (error) throw error
-      toast.success('Email de confirmation renvoyé ! / Confirmation email resent!')
+      toast.success('Email de confirmation renvoyé ! / Confirmation email resent!')
     } catch (error: any) {
       toast.error(error.message || 'Impossible de renvoyer l\'email / Unable to resend the email')
     } finally {
@@ -78,16 +78,13 @@ function LoginContent() {
       if (error) throw error
 
       if (data.user) {
-        // Check if email is confirmed
         if (!data.user.email_confirmed_at) {
-          // Sign out immediately — unconfirmed users cannot access the app
           await supabase.auth.signOut()
           setUnconfirmedEmail(formData.email)
           setShowUnconfirmed(true)
           return
         }
 
-        // For invite flow, accept the invitation directly
         if (isInviteRedirect) {
           const tokenMatch = redirectTo.match(/\/accept-invite\/(.+)/)
           const inviteToken = tokenMatch?.[1]
@@ -125,7 +122,6 @@ function LoginContent() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left panel — brand */}
       <div
         className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12"
         style={{ background: `linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.secondary} 100%)` }}
@@ -153,13 +149,13 @@ function LoginContent() {
               <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
                 <Mail className="w-5 h-5" style={{ color: BRAND.orange }} />
               </div>
-              <span className="text-sm">Invitations & gestion d&apos;équipe / Team management</span>
+              <span className="text-sm">Invitations &amp; gestion d&apos;équipe / Team management</span>
             </div>
             <div className="flex items-center gap-3 text-white/80">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
                 <Users className="w-5 h-5" style={{ color: BRAND.orange }} />
               </div>
-              <span className="text-sm">Audits d&apos;inventaire & conformité DIRECCTE / Inventory audits</span>
+              <span className="text-sm">Audits d&apos;inventaire &amp; conformité DIRECCTE / Inventory audits</span>
             </div>
           </div>
         </div>
@@ -169,10 +165,8 @@ function LoginContent() {
         </p>
       </div>
 
-      {/* Right panel — form */}
       <div className="flex-1 flex items-center justify-center bg-gray-50 px-6 py-10 lg:p-6">
         <div className="max-w-md w-full space-y-6 lg:space-y-8">
-          {/* Mobile logo */}
           <div className="lg:hidden text-center">
             <h1 className="text-3xl font-bold" style={{ color: BRAND.primary }}>TraviXO</h1>
             <p className="text-sm font-semibold tracking-widest" style={{ color: BRAND.orange }}>SYSTEMS</p>
