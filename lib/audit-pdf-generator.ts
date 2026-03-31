@@ -5,7 +5,7 @@ import autoTable from 'jspdf-autotable';
  * AUDIT INVENTORY COMPLETION PDF REPORT GENERATOR
  * Generates a PDF report for inventory audit completion/progress.
  *
- * Follows the same encoding and formatting conventions as the VGP DIRECCTE
+ * Follows the same encoding and formatting conventions as the VGP DREETS
  * report generator (pdf-generator.ts).
  */
 

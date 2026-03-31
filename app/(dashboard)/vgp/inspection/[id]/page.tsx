@@ -116,7 +116,7 @@ export default function InspectionRecorderPage({
     }
     if (!selectedFile) {
       setError(
-        "Le certificat VGP est obligatoire pour la conformité DIRECCTE.\n\n" +
+        "Le certificat VGP est obligatoire pour la conformité DREETS.\n\n" +
           "Sans certificat officiel, l'inspection n'est pas conforme à la réglementation " +
           "française (Article R4323-23) et votre équipement reste exposé aux amendes."
       );
@@ -183,7 +183,7 @@ export default function InspectionRecorderPage({
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Chargement...</p>
+            <p className="mt-4 text-[var(--text-muted,#777)]">Chargement...</p>
           </div>
         </div>
       </FeatureGate>
@@ -208,8 +208,8 @@ export default function InspectionRecorderPage({
         <div className="p-8 max-w-4xl mx-auto">
           <VGPReadOnlyBanner />
           <div className="mt-4">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Enregistrer une Inspection VGP</h1>
-            <p className="text-gray-600">
+            <h1 className="text-2xl font-bold text-[var(--text-primary,#1a1a1a)] mb-2">Enregistrer une Inspection VGP</h1>
+            <p className="text-[var(--text-muted,#777)]">
               L'enregistrement d'inspections n'est pas disponible en mode lecture seule.
               Passez au plan Professionnel pour enregistrer de nouvelles inspections.
             </p>
@@ -229,37 +229,37 @@ export default function InspectionRecorderPage({
     <FeatureGate feature="vgp_compliance">
       <div className="p-8 max-w-4xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Enregistrer une Inspection VGP</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-[var(--text-primary,#1a1a1a)]">Enregistrer une Inspection VGP</h1>
+          <p className="text-[var(--text-muted,#777)] mt-2">
             Enregistrement de l'inspection pour {schedule?.assets?.name}
           </p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">Informations sur l'Équipement</h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-gray-600">Équipement</p>
+              <p className="text-sm text-[var(--text-muted,#777)]">Équipement</p>
               <p className="font-semibold">{schedule?.assets?.name}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Numéro de Série</p>
+              <p className="text-sm text-[var(--text-muted,#777)]">Numéro de Série</p>
               <p className="font-semibold">{schedule?.assets?.serial_number || 'N/A'}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Catégorie</p>
+              <p className="text-sm text-[var(--text-muted,#777)]">Catégorie</p>
               <p className="font-semibold">
                 {schedule?.assets?.asset_categories?.name || 'Non catégorisé'}
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Localisation</p>
+              <p className="text-sm text-[var(--text-muted,#777)]">Localisation</p>
               <p className="font-semibold">{schedule?.assets?.current_location || 'N/A'}</p>
             </div>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6">
+        <form onSubmit={handleSubmit} className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md p-6">
           <h2 className="text-xl font-semibold mb-6">Détails de l'Inspection</h2>
 
           {error && (
@@ -271,7 +271,7 @@ export default function InspectionRecorderPage({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-2">
                 Date d'Inspection <span className="text-red-500">*</span>
               </label>
               <input
@@ -284,7 +284,7 @@ export default function InspectionRecorderPage({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-2">
                 Nom de l'Inspecteur <span className="text-red-500">*</span>
               </label>
               <input
@@ -298,7 +298,7 @@ export default function InspectionRecorderPage({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-2">
                 Organisme de Contrôle <span className="text-red-500">*</span>
               </label>
               <input
@@ -312,7 +312,7 @@ export default function InspectionRecorderPage({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-2">
                 Numéro de Certificat
               </label>
               <input
@@ -328,7 +328,7 @@ export default function InspectionRecorderPage({
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-2">
               Résultat de l'Inspection <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -380,7 +380,7 @@ export default function InspectionRecorderPage({
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-2">
               Constatations / Remarques
             </label>
             <textarea
@@ -393,7 +393,7 @@ export default function InspectionRecorderPage({
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-2">
               Certificat VGP (PDF) <span className="text-red-500">*</span>
             </label>
 
@@ -419,12 +419,12 @@ export default function InspectionRecorderPage({
               </div>
             ) : (
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                <Upload className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+                <Upload className="w-12 h-12 mx-auto text-[var(--text-hint,#888)] mb-3" />
                 <label htmlFor="certificate-upload" className="cursor-pointer">
                   <span className="text-blue-600 hover:text-blue-700 font-medium">
                     Choisir un fichier
                   </span>
-                  <span className="text-gray-600"> ou glissez-déposez</span>
+                  <span className="text-[var(--text-muted,#777)]"> ou glissez-déposez</span>
                   <input
                     id="certificate-upload"
                     type="file"
@@ -434,14 +434,14 @@ export default function InspectionRecorderPage({
                     disabled={submitting}
                   />
                 </label>
-                <p className="text-sm text-gray-500 mt-2">PDF uniquement, maximum 4 MB</p>
+                <p className="text-sm text-[var(--text-hint,#888)] mt-2">PDF uniquement, maximum 4 MB</p>
               </div>
             )}
 
             {uploadProgress > 0 && uploadProgress < 100 && (
               <div className="mt-3">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm text-gray-600">Téléchargement...</span>
+                  <span className="text-sm text-[var(--text-muted,#777)]">Téléchargement...</span>
                   <span className="text-sm font-medium text-blue-600">{uploadProgress}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
@@ -453,9 +453,9 @@ export default function InspectionRecorderPage({
               </div>
             )}
 
-            <p className="text-sm text-gray-600 mt-2">
+            <p className="text-sm text-[var(--text-muted,#777)] mt-2">
               <strong className="text-red-600">Obligatoire:</strong> Le certificat VGP est exigé
-              par DIRECCTE. Sans certificat officiel de l'organisme de contrôle, l'inspection
+              par DREETS. Sans certificat officiel de l'organisme de contrôle, l'inspection
               n'est pas conforme et votre équipement reste exposé aux amendes (€3K–€15K par
               violation).
             </p>

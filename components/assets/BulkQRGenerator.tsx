@@ -163,7 +163,7 @@ export default function BulkQRGenerator({ assets }: BulkQRGeneratorProps) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow p-6">
       <div className="flex justify-between items-center mb-4">
         <div>
           <h2 className="text-xl font-bold text-gray-900">{t('assets.bulkQrTitle')}</h2>
@@ -243,7 +243,7 @@ export default function BulkQRGenerator({ assets }: BulkQRGeneratorProps) {
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('assets.tableHeaderLocation')}</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-[var(--card-bg,#edeff2)] divide-y divide-gray-200">
             {assets.map((asset) => (
               <tr
                 key={asset.id}

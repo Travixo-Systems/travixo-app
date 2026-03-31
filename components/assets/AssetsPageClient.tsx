@@ -164,7 +164,7 @@ export default function AssetsPageClient() {
     if (loading) {
         return (
             <div className="p-8 flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#e8600a]"></div>
             </div>
         )
     }
@@ -173,17 +173,18 @@ export default function AssetsPageClient() {
         <div className="p-8">
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">{t('assets.pageTitle')}</h1>
-                    <p className="text-gray-600 mt-1">
+                    <h1 className="text-xl font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('assets.pageTitle')}</h1>
+                    <p className="mt-1" style={{ color: 'var(--text-muted, #777777)' }}>
                         {t('assets.pageSubtitle')}
                     </p>
                 </div>
                 <div className="flex gap-3">
                     <ImportAssetsButton onSuccess={loadAssets} />
                     <AddAssetButton onSuccess={loadAssets} />
-                    <Link 
-                        href="/qr-codes" 
-                        className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold transition-colors"
+                    <Link
+                        href="/qr-codes"
+                        className="flex items-center gap-2 px-4 py-2 text-white rounded-lg font-semibold transition-colors hover:opacity-90"
+                        style={{ backgroundColor: 'var(--accent, #e8600a)' }}
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <rect x="3" y="3" width="7" height="7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -197,34 +198,36 @@ export default function AssetsPageClient() {
             </div>
 
             {assets.length === 0 ? (
-                <div className="text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300">
-                    <h3 className="mt-2 text-sm font-semibold text-gray-900">{t('assets.noAssets')}</h3>
-                    <p className="mt-1 text-sm text-gray-500">{t('assets.noAssetsDescription')}</p>
+                <div className="text-center py-12 rounded-lg border-2 border-dashed" style={{ backgroundColor: 'var(--card-bg, #edeff2)', borderColor: '#b8b8b8' }}>
+                    <h3 className="mt-2 text-sm font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('assets.noAssets')}</h3>
+                    <p className="mt-1 text-sm" style={{ color: 'var(--text-muted, #777777)' }}>{t('assets.noAssetsDescription')}</p>
                 </div>
             ) : (
                 <>
                     {/* Search and Filter Bar */}
-                    <div className="bg-white rounded-lg shadow mb-4 p-4">
+                    <div className="rounded-lg mb-4 p-4" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
                         <div className="flex flex-col md:flex-row gap-4">
                             {/* Search */}
                             <div className="flex-1 relative">
-                                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5" style={{ color: 'var(--text-hint, #888888)' }} />
                                 <input
                                     type="text"
                                     placeholder={t('assets.searchPlaceholder')}
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-transparent"
+                                    className="w-full pl-10 pr-4 py-2 rounded-md text-[13px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
+                                    style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
                                 />
                             </div>
 
                             {/* Status Filter */}
                             <div className="flex items-center gap-2">
-                                <FunnelIcon className="h-5 w-5 text-gray-400" />
+                                <FunnelIcon className="h-5 w-5" style={{ color: 'var(--text-hint, #888888)' }} />
                                 <select
                                     value={statusFilter}
                                     onChange={(e) => setStatusFilter(e.target.value)}
-                                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-transparent"
+                                    className="px-4 py-2 rounded-md text-[13px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
+                                    style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-secondary, #444444)' }}
                                 >
                                     <option value="all">{t('assets.allStatus')} ({statusCounts.all})</option>
                                     <option value="available">{t('assets.statusAvailable')} ({statusCounts.available})</option>
@@ -238,7 +241,8 @@ export default function AssetsPageClient() {
                             <select
                                 value={categoryFilter}
                                 onChange={(e) => setCategoryFilter(e.target.value)}
-                                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-transparent"
+                                className="px-4 py-2 rounded-md text-[13px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
+                                style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-secondary, #444444)' }}
                             >
                                 <option value="all">{t('assets.allCategories')} ({assets.length})</option>
                                 {categories.map(cat => (
@@ -252,9 +256,9 @@ export default function AssetsPageClient() {
 
                     {/* Assets Table */}
                     {filteredAssets.length === 0 ? (
-                        <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-                            <h3 className="text-sm font-semibold text-gray-900">{t('assets.noAssetsFound')}</h3>
-                            <p className="mt-1 text-sm text-gray-500">{t('assets.adjustFilters')}</p>
+                        <div className="text-center py-12 rounded-lg" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
+                            <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('assets.noAssetsFound')}</h3>
+                            <p className="mt-1 text-sm" style={{ color: 'var(--text-muted, #777777)' }}>{t('assets.adjustFilters')}</p>
                         </div>
                     ) : (
                         <>
@@ -262,8 +266,8 @@ export default function AssetsPageClient() {
 
                             {/* Pagination */}
                             {totalPages > 1 && (
-                                <div className="mt-4 flex items-center justify-between bg-white px-4 py-3 rounded-lg shadow">
-                                    <div className="text-sm text-gray-700">
+                                <div className="mt-4 flex items-center justify-between px-4 py-3 rounded-lg" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
+                                    <div className="text-sm" style={{ color: 'var(--text-secondary, #444444)' }}>
                                         {t('assets.showing')} {((currentPage - 1) * itemsPerPage) + 1} {t('assets.to')} {Math.min(currentPage * itemsPerPage, filteredAssets.length)} {t('assets.of')} {filteredAssets.length} {t('assets.results')}
                                     </div>
                                     <div className="flex gap-2">
@@ -292,8 +296,8 @@ export default function AssetsPageClient() {
                                                         onClick={() => setCurrentPage(pageNum)}
                                                         className={`px-3 py-1 border rounded-md ${
                                                             currentPage === pageNum
-                                                                ? 'bg-indigo-600 text-white border-indigo-600'
-                                                                : 'border-gray-300 hover:bg-gray-50'
+                                                                ? 'text-white border-[#e8600a] bg-[#e8600a]'
+                                                                : 'border-gray-300 hover:bg-black/[0.03]'
                                                         }`}
                                                     >
                                                         {pageNum}

@@ -212,7 +212,7 @@ export default function CheckoutOverlay({
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
       {/* Panel */}
-      <div className="relative w-full max-w-lg bg-white rounded-t-2xl shadow-2xl animate-slide-up max-h-[85vh] overflow-y-auto">
+      <div className="relative w-full max-w-lg bg-[var(--card-bg,#edeff2)] rounded-t-2xl shadow-2xl animate-slide-up max-h-[85vh] overflow-y-auto">
         {/* Drag handle */}
         <div className="flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 bg-gray-300 rounded-full" />
@@ -269,7 +269,7 @@ export default function CheckoutOverlay({
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-bold text-sm border-2 transition-all ${
                   mode === 'select'
                     ? 'bg-[#00252b] text-white border-[#00252b]'
-                    : 'bg-white text-[#00252b] border-gray-300 hover:border-[#00252b]'
+                    : 'bg-[var(--card-bg,#edeff2)] text-[#00252b] border-gray-300 hover:border-[#00252b]'
                 }`}
               >
                 <Users className="w-4 h-4" />
@@ -281,7 +281,7 @@ export default function CheckoutOverlay({
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-bold text-sm border-2 transition-all ${
                   mode === 'new'
                     ? 'bg-[#00252b] text-white border-[#00252b]'
-                    : 'bg-white text-[#00252b] border-gray-300 hover:border-[#00252b]'
+                    : 'bg-[var(--card-bg,#edeff2)] text-[#00252b] border-gray-300 hover:border-[#00252b]'
                 }`}
               >
                 <UserPlus className="w-4 h-4" />
@@ -471,7 +471,7 @@ export default function CheckoutOverlay({
                 type="button"
                 onClick={onClose}
                 disabled={submitting}
-                className="px-6 py-3 bg-white text-[#00252b] border-2 border-[#00252b] rounded-lg font-bold hover:bg-[#00252b] hover:text-white transition-all disabled:opacity-50 min-h-[48px]"
+                className="px-6 py-3 bg-[var(--card-bg,#edeff2)] text-[#00252b] border-2 border-[#00252b] rounded-lg font-bold hover:bg-[#00252b] hover:text-white transition-all disabled:opacity-50 min-h-[48px]"
               >
                 {t('common.cancel')}
               </button>

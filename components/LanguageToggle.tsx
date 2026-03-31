@@ -7,7 +7,7 @@ export function LanguageToggle() {
   const { language, setLanguage } = useLanguage();
 
   return (
-    <div className="inline-flex items-center bg-white rounded-lg border border-gray-200 p-1">
+    <div className="inline-flex items-center bg-[var(--card-bg,#edeff2)] rounded-lg border border-gray-200 p-1">
       <button
         onClick={() => setLanguage('en')}
         className={`px-3 py-2.5 min-h-[44px] rounded text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00] ${

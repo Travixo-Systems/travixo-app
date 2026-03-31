@@ -70,7 +70,7 @@ TraviXO has **TWO separate projects** with **DIFFERENT design philosophies**:
 **4. French Market Standards**
 - French equipment rental managers expect professionalism
 - Familiar with ERP systems (SAP, Oracle)
-- Appreciate attention to regulatory compliance (DIRECCTE)
+- Appreciate attention to regulatory compliance (DREETS)
 - Bilingual support (French primary, English secondary)
 - **Both projects** follow this principle
 
@@ -1030,7 +1030,7 @@ animation: spin 1s linear infinite;
 
 **Good:**
 - "Importez vos actifs en moins de 5 minutes"
-- "Évitez les amendes DIRECCTE grâce à la conformité automatisée"
+- "Évitez les amendes DREETS grâce à la conformité automatisée"
 - "Suivez vos équipements en temps réel"
 
 **Bad:**

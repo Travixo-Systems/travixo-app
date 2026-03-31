@@ -2,7 +2,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 /**
- * VGP DIRECCTE COMPLIANT PDF GENERATOR - ENCODING FIXED
+ * VGP DREETS COMPLIANT PDF GENERATOR - ENCODING FIXED
  * 100% compliant with French regulatory requirements (Articles R.4323-21 à R.4323-28)
  * 
  * ENCODING FIXES (Nov 17, 2025):
@@ -98,7 +98,7 @@ export function generateVGPReport(
   doc.setLanguage('fr');
   
   // ============================================================================
-  // CALCULATE STATISTICS (DIRECCTE COMPLIANT)
+  // CALCULATE STATISTICS (DREETS COMPLIANT)
   // ============================================================================
   const totalInspections = inspections.length;
   const passedCount = inspections.filter(i => i.result === 'passed').length;
@@ -144,7 +144,7 @@ export function generateVGPReport(
   } else {
     doc.setTextColor(200, 0, 0);
     doc.setFontSize(9);
-    doc.text(safeText('SIRET manquant (requis pour conformite DIRECCTE)'), 20, 51);
+    doc.text(safeText('SIRET manquant (requis pour conformite DREETS)'), 20, 51);
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(10);
   }
@@ -462,7 +462,7 @@ function formatDate(dateString: string): string {
 }
 
 /**
- * TYPESCRIPT TYPE DEFINITIONS FOR DIRECCTE COMPLIANCE
+ * TYPESCRIPT TYPE DEFINITIONS FOR DREETS COMPLIANCE
  */
 export type VGPVerificationType = 'PERIODIQUE' | 'INITIALE' | 'REMISE_SERVICE';
 export type VGPResultStatus = 'CONFORME' | 'CONDITIONNEL' | 'NON_CONFORME';

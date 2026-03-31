@@ -3,7 +3,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  
+
   /* Theme colors - default values, will be overridden by ThemeProvider */
   --color-primary: #00252b;
   --color-secondary: #003d45;
@@ -26,6 +26,25 @@
   --color-success-rgb: 4, 120, 87;
   --color-warning-rgb: 234, 179, 8;
   --color-danger-rgb: 185, 28, 28;
+
+  /* Design spec surface palette */
+  --page-bg: #cbcdd4;
+  --card-bg: #edeff2;
+  --sidebar-bg: #0a2730;
+  --accent: #e8600a;
+  --input-bg: #e3e5e9;
+
+  /* Design spec semantic status colors */
+  --status-conforme: #059669;
+  --status-bientot: #d97706;
+  --status-retard: #dc2626;
+  --status-neutral: #6b7280;
+
+  /* Design spec text colors */
+  --text-primary: #1a1a1a;
+  --text-secondary: #444444;
+  --text-muted: #777777;
+  --text-hint: #888888;
 }
 
 @theme inline {

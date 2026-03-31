@@ -158,16 +158,17 @@ export default function ClientsPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-[#00252b]">
+            <h1 className="text-xl font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
               {t('clients.pageTitle')}
             </h1>
-            <p className="text-gray-600 text-sm mt-1">
+            <p className="text-sm mt-1" style={{ color: 'var(--text-muted, #777)' }}>
               {t('clients.pageSubtitle')}
             </p>
           </div>
           <button
             onClick={openAdd}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#f26f00] text-white rounded-lg font-bold hover:bg-[#d96200] transition-colors text-sm"
+            className="flex items-center gap-2 px-4 py-2.5 text-white rounded-md font-medium hover:opacity-90 transition-colors text-sm"
+            style={{ backgroundColor: 'var(--accent, #e8600a)' }}
           >
             <Plus className="w-4 h-4" />
             {t('clients.addClient')}
@@ -176,14 +177,14 @@ export default function ClientsPage() {
 
         {/* Search */}
         <div className="relative mb-6">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-hint, #888)' }} />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('clients.searchClients')}
-            className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
-            style={{ fontSize: '16px' }}
+            className="w-full pl-10 pr-4 py-3 rounded-lg font-medium border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
+            style={{ fontSize: '16px', backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
           />
         </div>
 
@@ -197,13 +198,13 @@ export default function ClientsPage() {
         {/* Empty state */}
         {!loading && clients.length === 0 && (
           <div className="text-center py-16">
-            <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <Users className="w-8 h-8 text-gray-400" />
+            <div className="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
+              <Users className="w-8 h-8" style={{ color: 'var(--text-hint, #888)' }} />
             </div>
-            <h3 className="text-lg font-bold text-[#00252b] mb-2">
+            <h3 className="text-lg font-medium mb-2" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
               {t('clients.noClients')}
             </h3>
-            <p className="text-gray-600 text-sm max-w-md mx-auto">
+            <p className="text-sm max-w-md mx-auto" style={{ color: 'var(--text-muted, #777)' }}>
               {t('clients.noClientsDescription')}
             </p>
           </div>
@@ -215,42 +216,43 @@ export default function ClientsPage() {
             {clients.map((client) => (
               <div
                 key={client.id}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow"
+                className="rounded-lg p-5 hover:bg-black/[0.02] transition-colors"
+                style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}
               >
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-[#00252b] text-base truncate">
+                    <h3 className="font-medium text-base truncate" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                       {client.name}
                     </h3>
                     {client.company && (
-                      <p className="text-gray-500 text-xs mt-0.5 truncate">{client.company}</p>
+                      <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--text-muted, #777)' }}>{client.company}</p>
                     )}
                   </div>
                   <button
                     onClick={() => openEdit(client)}
-                    className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors ml-2"
+                    className="p-1.5 hover:bg-black/[0.05] rounded-lg transition-colors ml-2"
                   >
-                    <Edit3 className="w-4 h-4 text-gray-400" />
+                    <Edit3 className="w-4 h-4" style={{ color: 'var(--text-muted, #777)' }} />
                   </button>
                 </div>
 
                 <div className="space-y-1.5 mb-3">
                   {client.email && (
-                    <p className="text-xs text-gray-600 truncate">{client.email}</p>
+                    <p className="text-xs truncate" style={{ color: 'var(--text-secondary, #444)' }}>{client.email}</p>
                   )}
                   {client.phone && (
-                    <p className="text-xs text-gray-600">{client.phone}</p>
+                    <p className="text-xs" style={{ color: 'var(--text-secondary, #444)' }}>{client.phone}</p>
                   )}
                 </div>
 
                 {client.notes && (
-                  <p className="text-xs text-gray-400 line-clamp-2 mb-3">{client.notes}</p>
+                  <p className="text-xs line-clamp-2 mb-3" style={{ color: 'var(--text-hint, #888)' }}>{client.notes}</p>
                 )}
 
-                <div className="flex items-center gap-3 pt-3 border-t border-gray-100">
+                <div className="flex items-center gap-3 pt-3 border-t" style={{ borderColor: '#dcdee3' }}>
                   <div className="flex items-center gap-1.5">
-                    <Package className="w-3.5 h-3.5 text-gray-400" />
-                    <span className="text-xs text-gray-500">
+                    <Package className="w-3.5 h-3.5" style={{ color: 'var(--text-hint, #888)' }} />
+                    <span className="text-xs" style={{ color: 'var(--text-muted, #777)' }}>
                       {new Date(client.created_at).toLocaleDateString(
                         language === 'fr' ? 'fr-FR' : 'en-US',
                         { day: 'numeric', month: 'short', year: 'numeric' }
@@ -267,17 +269,17 @@ export default function ClientsPage() {
         {showAddForm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="absolute inset-0 bg-black/50" onClick={closeForm} />
-            <div className="relative w-full max-w-md bg-white rounded-xl shadow-2xl mx-4">
+            <div className="relative w-full max-w-[560px] rounded-xl mx-4" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
               <div className="px-6 pt-6 pb-2">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-bold text-[#00252b]">
+                  <h2 className="text-lg font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                     {editingClient ? t('clients.editClient') : t('clients.addClient')}
                   </h2>
                   <button
                     onClick={closeForm}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="p-2 hover:bg-black/[0.05] rounded-lg transition-colors"
                   >
-                    <X className="w-5 h-5 text-gray-500" />
+                    <X className="w-5 h-5" style={{ color: 'var(--text-muted, #777)' }} />
                   </button>
                 </div>
               </div>
@@ -290,7 +292,7 @@ export default function ClientsPage() {
                 )}
 
                 <div>
-                  <label className="block text-sm font-bold text-[#00252b] mb-1.5">
+                  <label className="block text-[13px] font-medium mb-1.5" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                     {t('clients.name')} *
                   </label>
                   <input
@@ -298,15 +300,15 @@ export default function ClientsPage() {
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
                     placeholder={language === 'fr' ? 'ex: Bouygues Construction' : 'e.g., Bouygues Construction'}
-                    className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
-                    style={{ fontSize: '16px' }}
+                    className="w-full px-4 py-2.5 rounded-lg font-medium border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
+                    style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)', fontSize: '16px' }}
                     maxLength={255}
                     autoFocus
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-[#00252b] mb-1.5">
+                  <label className="block text-[13px] font-medium mb-1.5" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                     {t('clients.email')}
                   </label>
                   <input
@@ -314,15 +316,15 @@ export default function ClientsPage() {
                     value={formEmail}
                     onChange={(e) => setFormEmail(e.target.value)}
                     placeholder="email@example.com"
-                    className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
-                    style={{ fontSize: '16px' }}
+                    className="w-full px-4 py-2.5 rounded-lg font-medium border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
+                    style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)', fontSize: '16px' }}
                     maxLength={255}
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-bold text-[#00252b] mb-1.5">
+                    <label className="block text-[13px] font-medium mb-1.5" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                       {t('clients.phone')}
                     </label>
                     <input
@@ -330,13 +332,13 @@ export default function ClientsPage() {
                       value={formPhone}
                       onChange={(e) => setFormPhone(e.target.value)}
                       placeholder="+33 6..."
-                      className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
-                      style={{ fontSize: '16px' }}
+                      className="w-full px-4 py-2.5 rounded-lg font-medium border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
+                      style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)', fontSize: '16px' }}
                       maxLength={20}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-[#00252b] mb-1.5">
+                    <label className="block text-[13px] font-medium mb-1.5" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                       {t('clients.company')}
                     </label>
                     <input
@@ -344,23 +346,23 @@ export default function ClientsPage() {
                       value={formCompany}
                       onChange={(e) => setFormCompany(e.target.value)}
                       placeholder={language === 'fr' ? 'Entreprise' : 'Company'}
-                      className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
-                      style={{ fontSize: '16px' }}
+                      className="w-full px-4 py-2.5 rounded-lg font-medium border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
+                      style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)', fontSize: '16px' }}
                       maxLength={255}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-[#00252b] mb-1.5">
+                  <label className="block text-[13px] font-medium mb-1.5" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                     {t('clients.notes')}
                   </label>
                   <textarea
                     value={formNotes}
                     onChange={(e) => setFormNotes(e.target.value)}
                     placeholder={language === 'fr' ? 'Notes...' : 'Notes...'}
-                    className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
-                    style={{ fontSize: '16px' }}
+                    className="w-full px-4 py-2.5 rounded-lg font-medium border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
+                    style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)', fontSize: '16px' }}
                     rows={2}
                     maxLength={500}
                   />
@@ -370,7 +372,8 @@ export default function ClientsPage() {
                   <button
                     type="submit"
                     disabled={formSubmitting || !formName.trim()}
-                    className="flex-1 py-2.5 bg-[#f26f00] text-white rounded-lg font-bold hover:bg-[#d96200] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="flex-1 py-2.5 text-white rounded-md font-medium hover:opacity-90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    style={{ backgroundColor: 'var(--accent, #e8600a)' }}
                   >
                     {formSubmitting ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -384,7 +387,7 @@ export default function ClientsPage() {
                     type="button"
                     onClick={closeForm}
                     disabled={formSubmitting}
-                    className="px-6 py-2.5 bg-white text-[#00252b] border-2 border-[#00252b] rounded-lg font-bold hover:bg-[#00252b] hover:text-white transition-all disabled:opacity-50"
+                    className="px-6 py-2.5 rounded-md font-medium transition-colors disabled:opacity-50" style={{ color: 'var(--text-muted, #777)' }}
                   >
                     {t('common.cancel')}
                   </button>

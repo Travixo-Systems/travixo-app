@@ -27,7 +27,7 @@ export default function FeatureGate({ feature, children, fallback, readOnlyFallb
   if (loading) {
     return (
       <div className="min-h-[400px] flex items-center justify-center p-8">
-        <div className="max-w-md w-full bg-white rounded-lg border-2 border-gray-100 p-8 text-center animate-pulse">
+        <div className="max-w-md w-full bg-[var(--card-bg,#edeff2)] rounded-lg border-2 border-gray-100 p-8 text-center animate-pulse">
           <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full mb-4" />
           <div className="h-6 bg-gray-100 rounded w-3/4 mx-auto mb-2" />
           <div className="h-4 bg-gray-100 rounded w-full mx-auto mb-2" />
@@ -62,7 +62,7 @@ export default function FeatureGate({ feature, children, fallback, readOnlyFallb
 
   return (
     <div className="min-h-[400px] flex items-center justify-center p-8">
-      <div className="max-w-md w-full bg-white rounded-lg border-2 border-gray-200 p-8 text-center">
+      <div className="max-w-md w-full bg-[var(--card-bg,#edeff2)] rounded-lg border-2 border-gray-200 p-8 text-center">
         <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
           <LockClosedIcon className="w-6 h-6 text-gray-600" />
         </div>

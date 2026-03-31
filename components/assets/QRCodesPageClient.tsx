@@ -71,7 +71,7 @@ export default function QRCodesPageClient() {
             </div>
 
             {assets.length === 0 ? (
-                <div className="text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300">
+                <div className="text-center py-12 bg-[var(--card-bg,#edeff2)] rounded-lg border-2 border-dashed border-gray-300">
                     <h3 className="mt-2 text-sm font-semibold text-gray-900">{t('assets.noAssetsFound')}</h3>
                     <p className="mt-1 text-sm text-gray-500">{t('assets.addEquipmentFirst')}</p>
                     <div className="mt-6">

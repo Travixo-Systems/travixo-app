@@ -33,7 +33,7 @@ export default function OnboardingBanner({
   }
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg p-5 relative">
+    <div className="bg-[var(--card-bg,#edeff2)] border border-slate-200 rounded-lg p-5 relative">
       <button
         onClick={handleDismiss}
         className="absolute top-3 right-3 p-1 text-slate-400 hover:text-slate-600 transition-colors"

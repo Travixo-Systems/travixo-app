@@ -17,11 +17,11 @@ import { useVGPAccess } from '@/hooks/useSubscription';
 // ============================================================================
 
 const BRAND_COLORS = {
-  primary: '#00252b',     // Deep slate blue
-  danger: '#b91c1c',      // Red
-  warning: '#d97706',     // Safety orange
-  warningYellow: '#eab308', // Yellow
-  success: '#047857',     // Forest green
+  primary: '#0a2730',     // Sidebar bg
+  danger: '#dc2626',      // --status-retard
+  warning: '#d97706',     // --status-bientot
+  warningYellow: '#d97706', // Same as warning per spec
+  success: '#059669',     // --status-conforme
 } as const;
 
 // Org-modular: Toggle between bordered cards or filled cards
@@ -329,8 +329,8 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
 
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">{t('vgpSchedules.pageTitle')}</h1>
-        <p className="text-gray-600 mt-1">{t('vgpSchedules.pageSubtitle')}</p>
+        <h1 className="text-xl font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpSchedules.pageTitle')}</h1>
+        <p className="mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('vgpSchedules.pageSubtitle')}</p>
       </div>
 
       {isReadOnly && <VGPReadOnlyBanner />}
@@ -372,15 +372,16 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
       </div>
 
       {/* Search Bar */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-hint, #888)' }} />
           <input
             type="text"
             placeholder={t('vgpSchedules.search')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-10 pr-10 py-2.5 rounded-lg text-[13px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
+            style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
           />
           {search && (
             <button
@@ -409,10 +410,10 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--card-bg, #edeff2)', padding: '16px 20px' }}>
         {loading ? (
           <div className="p-12 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#e8600a] mx-auto" />
             <p className="mt-4 text-gray-600">{t('vgpSchedules.loading')}</p>
           </div>
         ) : error ? (
@@ -439,7 +440,7 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead>
                 <tr>
                   <TableHeader>{t('vgpSchedules.equipment')}</TableHeader>
                   <TableHeader>{t('vgpSchedules.category')}</TableHeader>
@@ -449,13 +450,13 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
                   <TableHeader>{t('vgpSchedules.actions')}</TableHeader>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y" style={{ borderColor: '#dcdee3' }}>
                 {filteredSchedules.map((schedule) => {
                   const days = daysUntilDue(schedule.next_due_date);
                   const status = deriveStatus(schedule.next_due_date);
 
                   return (
-                    <tr key={schedule.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={schedule.id} className="hover:bg-black/[0.02] transition-colors">
                       <td className="px-3 py-2">
                         <div>
                           <p className="font-semibold text-gray-900 text-sm">{schedule.assets?.name || 'N/A'}</p>
@@ -479,10 +480,10 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
                           {!isReadOnly && (
                             <button
                               onClick={() => window.location.href = `/vgp/inspection/${schedule.id}`}
-                              className="inline-flex items-center justify-center min-h-[44px] px-3 py-2.5 text-xs font-semibold text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
-                              style={{ backgroundColor: '#00252b' }}
-                              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#003d45')}
-                              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#00252b')}
+                              className="inline-flex items-center justify-center min-h-[44px] px-3 py-2.5 text-[11px] font-semibold text-white rounded transition-colors focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
+                              style={{ backgroundColor: 'var(--sidebar-bg, #0a2730)' }}
+                              onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
+                              onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
                               title={t('vgpSchedules.inspection')}
                               aria-label={t('vgpSchedules.inspection')}
                             >
@@ -597,41 +598,20 @@ function StatCard({
   onClick: () => void;
   color: string;
 }) {
-  if (CARD_STYLE === 'bordered') {
-    return (
-      <button
-        onClick={onClick}
-        className={`bg-white rounded-lg p-4 text-left hover:shadow-md transition-all hover:scale-[1.02] cursor-pointer border-l-4 ${
-          active ? 'shadow-lg ring-2 ring-offset-1' : 'shadow-sm border-r border-t border-b border-gray-200'
-        }`}
-        style={{ 
-          borderLeftColor: color,
-          ...(active ? { '--tw-ring-color': color } as any : {})
-        }}
-      >
-        <div className="flex items-start justify-between mb-2">
-          <div style={{ color }}>{icon}</div>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
-        </div>
-        <p className="text-sm font-medium text-gray-700">{title}</p>
-      </button>
-    );
-  }
-
-  // Filled style (for org modularity)
   return (
     <button
       onClick={onClick}
-      className={`rounded-lg p-4 text-left hover:shadow-md transition-all hover:scale-[1.02] cursor-pointer border-2 ${
-        active ? 'ring-2 ring-offset-2' : ''
+      className={`rounded-lg p-[14px_16px] text-left transition-all cursor-pointer border-l-[3px] ${
+        active ? 'ring-2 ring-offset-1' : ''
       }`}
-      style={active ? { borderColor: color, '--tw-ring-color': color } as any : {}}
+      style={{
+        backgroundColor: 'var(--card-bg, #edeff2)',
+        borderLeftColor: color,
+        ...(active ? { '--tw-ring-color': color } as any : {})
+      }}
     >
-      <div className="flex items-start justify-between mb-2">
-        <div style={{ color }}>{icon}</div>
-        <p className="text-3xl font-bold text-gray-900">{value}</p>
-      </div>
-      <p className="text-sm font-medium text-gray-700">{title}</p>
+      <p className="text-[26px] font-medium" style={{ color }}>{value}</p>
+      <p className="text-xs font-medium mt-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{title}</p>
     </button>
   );
 }
@@ -641,13 +621,15 @@ function DetailsModal({ schedule, onClose, t }: { schedule: Schedule; onClose: (
   const days = daysUntilDue(schedule.next_due_date);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">{t('vgpSchedules.detailsModal.title')}</h2>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="rounded-xl max-w-[720px] w-full max-h-[90vh] overflow-y-auto" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
+        <div className="sticky top-0 px-6 py-4 flex items-center justify-between" style={{ backgroundColor: 'var(--card-bg, #edeff2)', borderBottom: '0.5px solid #dcdee3' }}>
+          <h2 className="text-lg font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpSchedules.detailsModal.title')}</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100"
+            className="transition-colors" style={{ color: 'var(--text-muted, #777)' }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary, #1a1a1a)' }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted, #777)' }}
           >
             <X className="w-6 h-6" />
           </button>

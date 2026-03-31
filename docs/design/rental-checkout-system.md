@@ -450,7 +450,7 @@ Shown to everyone (even unauthenticated). Positioned below asset info.
 └─────────────────────────────────┘
 ```
 
-Only shows: compliant/non-compliant status + next inspection month. No inspector names, no certificate numbers, no accreditation details. This is sufficient for a DIRECCTE inspector doing a spot check on a construction site, while hiding competitive intelligence.
+Only shows: compliant/non-compliant status + next inspection month. No inspector names, no certificate numbers, no accreditation details. This is sufficient for a DREETS inspector doing a spot check on a construction site, while hiding competitive intelligence.
 
 **Authenticated org-member view:**
 Full VGP details (inspector, certificate, dates) shown in the existing dashboard -- not on the public scan page.
@@ -495,7 +495,7 @@ Triggered by tapping "Checkout to Client" or "Process Return". A bottom sheet th
   is completed.
   [View VGP Details]  ← links to VGP dashboard (auth required)
 ```
-This is legally necessary for DIRECCTE compliance. Renting non-compliant equipment exposes the rental company to EUR 15K-75K fines.
+This is legally necessary for DREETS compliance. Renting non-compliant equipment exposes the rental company to EUR 15K-75K fines.
 
 **Client Name Autocomplete:**
 ```typescript

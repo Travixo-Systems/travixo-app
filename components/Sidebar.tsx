@@ -171,7 +171,8 @@ export default function Sidebar() {
               </span>
             )}
             <h1
-              className="text-xl font-bold text-white truncate"
+              className="text-xl font-bold truncate"
+              style={{ color: '#e8600a' }}
               title={orgName}
             >
               {orgName}
@@ -228,11 +229,11 @@ export default function Sidebar() {
               className={cn(
                 "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors group relative",
                 isActive
-                  ? 'text-white'
-                  : 'text-gray-300 hover:text-white',
+                  ? 'text-white border-l-2 border-[#e8600a]'
+                  : 'text-white/50 hover:text-white',
                 collapsed && "justify-center"
               )}
-              style={isActive ? { backgroundColor: colors.secondary } : undefined}
+              style={isActive ? { backgroundColor: 'rgba(226,128,38,0.15)' } : undefined}
               title={collapsed ? item.name : undefined}
             >
               <Icon className={cn("w-5 h-5", !collapsed && "mr-3")} />
@@ -256,11 +257,11 @@ export default function Sidebar() {
             className={cn(
               "w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors",
               pathname.startsWith('/vgp')
-                ? 'text-white'
-                : 'text-gray-300 hover:text-white',
+                ? 'text-white border-l-2 border-[#e8600a]'
+                : 'text-white/50 hover:text-white',
               collapsed && "justify-center"
             )}
-            style={pathname.startsWith('/vgp') ? { backgroundColor: colors.secondary } : undefined}
+            style={pathname.startsWith('/vgp') ? { backgroundColor: 'rgba(226,128,38,0.15)' } : undefined}
             title={collapsed ? t('navigation.vgp') : undefined}
           >
             <div className={cn("flex items-center", collapsed && "justify-center w-full")}>
@@ -290,10 +291,10 @@ export default function Sidebar() {
                     className={cn(
                       "flex items-center px-4 py-2 text-sm rounded-lg transition-colors",
                       isActive
-                        ? 'text-white font-medium'
+                        ? 'text-white font-medium border-l-2 border-[#e8600a]'
                         : 'text-gray-400 hover:text-white'
                     )}
-                    style={isActive ? { backgroundColor: colors.secondary } : undefined}
+                    style={isActive ? { backgroundColor: 'rgba(226,128,38,0.15)' } : undefined}
                   >
                     <Icon className="w-4 h-4 mr-3" />
                     {item.name}
@@ -316,11 +317,11 @@ export default function Sidebar() {
               className={cn(
                 "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors",
                 isActive
-                  ? 'text-white'
-                  : 'text-gray-300 hover:text-white',
+                  ? 'text-white border-l-2 border-[#e8600a]'
+                  : 'text-white/50 hover:text-white',
                 collapsed && "justify-center"
               )}
-              style={isActive ? { backgroundColor: colors.secondary } : undefined}
+              style={isActive ? { backgroundColor: 'rgba(226,128,38,0.15)' } : undefined}
               title={collapsed ? item.name : undefined}
             >
               <Icon className={cn("w-5 h-5", !collapsed && "mr-3")} />

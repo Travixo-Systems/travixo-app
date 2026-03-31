@@ -19,7 +19,7 @@ TraviXO Systems is a B2B SaaS platform providing QR-based asset tracking and VGP
 - ⏳ Pilot program: 3-4 weeks from launch-ready (deployment + critical tasks)
 
 **Two-Pillar Value Proposition:**
-1. **VGP Compliance Automation** - Prevent €15K-€75K DIRECCTE fines via automated inspection tracking
+1. **VGP Compliance Automation** - Prevent €15K-€75K DREETS fines via automated inspection tracking
 2. **Last Known Location Tracking** - QR scan logging shows where assets were last seen and by whom
 
 **Key Differentiator:** "15-minute setup" via Excel import with smart column detection vs. competitors' 40+ hours of manual data entry.
@@ -35,11 +35,11 @@ TraviXO Systems is a B2B SaaS platform providing QR-based asset tracking and VGP
 **DUAL-PILLAR STRATEGY:** TraviXO solves TWO interconnected problems for equipment rental companies:
 
 **Pillar 1: VGP Compliance Automation (Legal Necessity)**
-- Automated French DIRECCTE compliance tracking
+- Automated French DREETS compliance tracking
 - Mandatory inspection schedule management
 - Email alerts (30/7 days before deadlines)
 - PDF certificate uploads and storage
-- DIRECCTE-compliant reporting
+- DREETS-compliant reporting
 - **Prevents €15K-€75K fines per violation**
 - **ROI**: Legal risk mitigation (compliance is mandatory, not optional)
 
@@ -253,7 +253,7 @@ USING (
 - Notes and observations field
 - Auto-generate next inspection schedule
 
-**DIRECCTE Compliance Reporting:**
+**DREETS Compliance Reporting:**
 - Generate PDF reports for French authorities
 - Organization information display
 - Inspection summary tables
@@ -471,7 +471,7 @@ Assets auto-update `status`, `last_seen_at`, `last_seen_by`, and `current_locati
 - Up to 500 equipment
 - **✅ VGP Compliance Automation**
 - All Démarrage features
-- DIRECCTE reporting
+- DREETS reporting
 - Inspection management
 - Certificate storage
 
@@ -530,7 +530,7 @@ WHERE slug = 'enterprise';
 
 **Customer Value Delivered:**
 - Prevent €50K-€200K asset losses (1-2% of fleet value)
-- Avoid €15K-€75K DIRECCTE fines
+- Avoid €15K-€75K DREETS fines
 - **ROI: 500-1,300%**
 
 **VGP Compliance Alone Worth €750/month:**
@@ -693,7 +693,7 @@ feat(vgp): Add edit history tracking to schedules
 - Track old/new values with timestamps and user_id
 - Require change_reason for date modifications
 - Update EditScheduleModal with reason input
-- DIRECCTE compliance requirement
+- DREETS compliance requirement
 
 Fixes #42
 ```
@@ -844,7 +844,7 @@ Fixes #42
 
 ### French VGP Regulations
 - Mandatory periodic inspections for equipment
-- DIRECCTE authority oversight
+- DREETS authority oversight
 - Certificate retention requirements
 - Inspection frequency standards (6/12/24 months)
 - Fine structure: €3K-€10K per violation

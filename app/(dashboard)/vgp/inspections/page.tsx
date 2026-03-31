@@ -160,8 +160,8 @@ function VGPInspectionsContent() {
     <div className="p-6 max-w-7xl mx-auto">
       <div className="mb-6 flex justify-between items-start">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('vgpInspections.pageTitle')}</h1>
-          <p className="text-sm text-gray-600 mt-1">
+          <h1 className="text-2xl font-bold text-[var(--text-primary,#1a1a1a)]">{t('vgpInspections.pageTitle')}</h1>
+          <p className="text-sm text-[var(--text-muted,#777)] mt-1">
             {filteredInspections.length} {countText}
           </p>
         </div>
@@ -175,10 +175,10 @@ function VGPInspectionsContent() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+      <div className="bg-[var(--card-bg,#edeff2)] rounded-lg border border-gray-200 p-4 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-1">
               {t('vgpInspections.search')}
             </label>
             <input
@@ -191,7 +191,7 @@ function VGPInspectionsContent() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-1">
               {t('vgpInspections.result')}
             </label>
             <select
@@ -207,7 +207,7 @@ function VGPInspectionsContent() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-1">
               {t('vgpInspections.startDate')}
             </label>
             <input
@@ -219,7 +219,7 @@ function VGPInspectionsContent() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-1">
               {t('vgpInspections.endDate')}
             </label>
             <input
@@ -233,36 +233,36 @@ function VGPInspectionsContent() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-[var(--card-bg,#edeff2)] rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-[var(--text-secondary,#444)] uppercase">
                   {t('vgpInspections.equipment')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-[var(--text-secondary,#444)] uppercase">
                   {t('vgpInspections.date')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-[var(--text-secondary,#444)] uppercase">
                   {t('vgpInspections.inspector')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-[var(--text-secondary,#444)] uppercase">
                   {t('vgpInspections.company')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-[var(--text-secondary,#444)] uppercase">
                   Type vérif.
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-[var(--text-secondary,#444)] uppercase">
                   Observations
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-[var(--text-secondary,#444)] uppercase">
                   {t('vgpInspections.result')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-[var(--text-secondary,#444)] uppercase">
                   {t('vgpInspections.certificate')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-[var(--text-secondary,#444)] uppercase">
                   {t('vgpInspections.nextInspection')}
                 </th>
               </tr>
@@ -270,7 +270,7 @@ function VGPInspectionsContent() {
             <tbody className="divide-y divide-gray-200">
               {paginatedInspections.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center text-gray-500">
+                  <td colSpan={9} className="px-4 py-12 text-center text-[var(--text-hint,#888)]">
                     {t('vgpInspections.noResults')}
                   </td>
                 </tr>
@@ -278,30 +278,30 @@ function VGPInspectionsContent() {
                 paginatedInspections.map((inspection) => (
                   <tr key={inspection.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
-                      <div className="font-medium text-gray-900">{inspection.asset_name}</div>
-                      <div className="text-xs text-gray-500">{inspection.asset_category}</div>
-                      <div className="text-xs text-gray-400">
+                      <div className="font-medium text-[var(--text-primary,#1a1a1a)]">{inspection.asset_name}</div>
+                      <div className="text-xs text-[var(--text-hint,#888)]">{inspection.asset_category}</div>
+                      <div className="text-xs text-[var(--text-hint,#888)]">
                         {t('vgpInspections.serialNumber')}: {inspection.asset_serial}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">
+                    <td className="px-4 py-3 text-sm text-[var(--text-secondary,#444)]">
                       {format(new Date(inspection.inspection_date), 'dd/MM/yyyy')}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">
+                    <td className="px-4 py-3 text-sm text-[var(--text-secondary,#444)]">
                       {inspection.inspector_name}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">
+                    <td className="px-4 py-3 text-sm text-[var(--text-secondary,#444)]">
                       {inspection.inspector_company}
                     </td>
                     {/*ADD: Verification Type Cell */}
-                    <td className="px-4 py-3 text-sm text-gray-700">
+                    <td className="px-4 py-3 text-sm text-[var(--text-secondary,#444)]">
                       {inspection.verification_type === 'PERIODIQUE' && 'Périodique'}
                       {inspection.verification_type === 'INITIALE' && 'Initiale'}
                       {inspection.verification_type === 'REMISE_SERVICE' && 'Remise service'}
                     </td>
 
                     {/* ADD: Observations Cell */}
-                    <td className="px-4 py-3 text-sm text-gray-600">
+                    <td className="px-4 py-3 text-sm text-[var(--text-muted,#777)]">
                       <div className="max-w-[200px] truncate" title={inspection.observations || 'RAS'}>
                         {inspection.observations || 'RAS'}
                       </div>
@@ -324,12 +324,12 @@ function VGPInspectionsContent() {
                           <ExternalLink className="w-3 h-3" />
                         </a>
                       ) : (
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-[var(--text-hint,#888)]">
                           {t('vgpInspections.noCertificate')}
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">
+                    <td className="px-4 py-3 text-sm text-[var(--text-secondary,#444)]">
                       {format(new Date(inspection.next_inspection_date), 'dd/MM/yyyy')}
                     </td>
                   </tr>
@@ -342,7 +342,7 @@ function VGPInspectionsContent() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
-            <div className="text-sm text-gray-700">
+            <div className="text-sm text-[var(--text-secondary,#444)]">
               {t('vgpInspections.pageOf')
                 .replace('{current}', String(currentPage))
                 .replace('{total}', String(totalPages))}

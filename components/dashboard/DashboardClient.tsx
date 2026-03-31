@@ -91,7 +91,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
 
       {/* Key Metrics */}
       <div className="grid gap-3 md:grid-cols-3">
-        <div className="bg-white border border-slate-200 rounded-lg p-5">
+        <div className="bg-[var(--card-bg,#edeff2)] border border-slate-200 rounded-lg p-5">
           <p className="text-xs text-slate-600 uppercase tracking-wide">{t('dashboard.equipmentLoss')}</p>
           <p className="text-3xl font-bold text-green-600 mt-1">0.8%</p>
           <p className="text-xs text-slate-600 mt-2">{t('dashboard.vsIndustry')} 2-5%</p>
@@ -100,15 +100,15 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
           </p>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg p-5">
+        <div className="bg-[var(--card-bg,#edeff2)] border border-slate-200 rounded-lg p-5">
           <p className="text-xs text-slate-600 uppercase tracking-wide">{t('dashboard.vgpCompliance')}</p>
-          <p className="text-3xl font-bold text-blue-600 mt-1">{vgpComplianceRate}%</p>
+          <p className="text-3xl font-bold text-[var(--accent,#e8600a)] mt-1">{vgpComplianceRate}%</p>
           <p className="text-xs text-slate-600 mt-2">
             {vgpOverdue} {vgpOverdue !== 1 ? t('dashboard.overduePlural') : t('dashboard.overdue')}, {vgpUpcoming} {t('dashboard.upcoming')}
           </p>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg p-5">
+        <div className="bg-[var(--card-bg,#edeff2)] border border-slate-200 rounded-lg p-5">
           <p className="text-xs text-slate-600 uppercase tracking-wide">{t('dashboard.utilizationRate')}</p>
           <p className="text-3xl font-bold text-green-600 mt-1">{utilizationRate}%</p>
           <p className="text-xs text-slate-600 mt-2">{t('dashboard.vsTarget')} 65%</p>
@@ -120,7 +120,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
 
       {/* Stats Grid */}
       <div className="grid gap-3 md:grid-cols-4">
-        <div className="bg-white border border-slate-200 rounded-lg p-4">
+        <div className="bg-[var(--card-bg,#edeff2)] border border-slate-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-slate-600">{t('dashboard.totalEquipment')}</p>
             <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -133,7 +133,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
           </p>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg p-4">
+        <div className="bg-[var(--card-bg,#edeff2)] border border-slate-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-slate-600">{t('dashboard.vgpCompliance')}</p>
             <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -146,7 +146,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg p-4">
+        <div className="bg-[var(--card-bg,#edeff2)] border border-slate-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-slate-600">{t('dashboard.scans7Days')}</p>
             <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -157,7 +157,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
           <p className="text-xs text-slate-500 mt-1">{t('dashboard.tracingActivity')}</p>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg p-4">
+        <div className="bg-[var(--card-bg,#edeff2)] border border-slate-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-slate-600">{t('dashboard.utilization')}</p>
             <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -172,7 +172,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white border border-slate-200 rounded-lg p-5">
+      <div className="bg-[var(--card-bg,#edeff2)] border border-slate-200 rounded-lg p-5">
         <h2 className="text-base font-semibold text-slate-900">{t('dashboard.quickActions')}</h2>
         <p className="text-xs text-slate-600 mt-0.5">{t('dashboard.quickActionsSubtitle')}</p>
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4 mt-4">
@@ -207,7 +207,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
       </div>
 
       {/* VGP Compliance Details */}
-      <div className="bg-white border border-slate-200 rounded-lg p-5">
+      <div className="bg-[var(--card-bg,#edeff2)] border border-slate-200 rounded-lg p-5">
         <h2 className="text-base font-semibold text-slate-900">{t('dashboard.vgpComplianceRegulatory')}</h2>
         <p className="text-xs text-slate-600 mt-0.5">
           {t('dashboard.vgpComplianceSubtitle')}
@@ -229,7 +229,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
             <div className="text-right">
               <p className="text-xl font-bold text-red-600">{vgpOverdue}</p>
               {vgpOverdue > 0 && (
-                <Link href="/vgp/schedules?filter=overdue" className="text-xs text-blue-600 hover:underline">
+                <Link href="/vgp/schedules?filter=overdue" className="text-xs text-[var(--accent,#e8600a)] hover:underline">
                   {t('dashboard.handleNow')}
                 </Link>
               )}
@@ -251,7 +251,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
             <div className="text-right">
               <p className="text-xl font-bold text-yellow-600">{vgpUpcoming}</p>
               {vgpUpcoming > 0 && (
-                <Link href="/vgp/schedules?filter=upcoming" className="text-xs text-blue-600 hover:underline">
+                <Link href="/vgp/schedules?filter=upcoming" className="text-xs text-[var(--accent,#e8600a)] hover:underline">
                   {t('dashboard.schedule')}
                 </Link>
               )}
@@ -305,7 +305,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
           </div>
           <div>
             <p className="text-xs text-slate-600">{t('dashboard.auditGain')}</p>
-            <p className="text-2xl font-bold text-blue-600">32 {t('dashboard.hours')}</p>
+            <p className="text-2xl font-bold text-[var(--accent,#e8600a)]">32 {t('dashboard.hours')}</p>
             <p className="text-xs text-slate-500 mt-0.5">{t('dashboard.perQuarter')}</p>
           </div>
           <div>

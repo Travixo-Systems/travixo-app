@@ -59,7 +59,7 @@ export function ErrorStateBanner({ message, onRetry, title = 'Erreur de chargeme
       {onRetry && (
         <button
           onClick={onRetry}
-          className="inline-flex items-center gap-1.5 min-h-[36px] px-3 py-1.5 flex-shrink-0 text-xs font-semibold text-red-700 bg-white border border-red-300 rounded-lg hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400"
+          className="inline-flex items-center gap-1.5 min-h-[36px] px-3 py-1.5 flex-shrink-0 text-xs font-semibold text-red-700 bg-[var(--card-bg,#edeff2)] border border-red-300 rounded-lg hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400"
           aria-label="Réessayer le chargement"
         >
           <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />

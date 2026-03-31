@@ -69,66 +69,67 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="p-8">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900">
+          <h1 className="text-xl font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
             {labels.pageTitle[language]}
           </h1>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm mt-1" style={{ color: 'var(--text-muted, #777)' }}>
             {labels.pageSubtitle[language]}
           </p>
         </div>
 
         {/* Settings Links */}
-        <div className="bg-white shadow rounded-lg divide-y divide-gray-200">
+        <div className="rounded-lg divide-y" style={{ backgroundColor: 'var(--card-bg, #edeff2)', borderColor: '#dcdee3' }}>
           {settingsLinks.map((link) => {
             const Icon = link.icon;
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className="flex items-center justify-between p-6 hover:bg-gray-50 transition-colors"
+                className="flex items-center justify-between p-6 hover:bg-black/[0.02] transition-colors"
+                style={{ borderColor: '#dcdee3' }}
               >
                 <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Icon className="w-5 h-5 text-blue-600" />
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--page-bg, #cbcdd4)' }}>
+                    <Icon className="w-5 h-5" style={{ color: 'var(--accent, #e8600a)' }} />
                   </div>
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900">
+                    <h3 className="text-sm font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                       {link.label}
                     </h3>
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted, #777)' }}>
                       {link.description}
                     </p>
                   </div>
                 </div>
-                <ChevronRightIcon className="w-5 h-5 text-gray-400" />
+                <ChevronRightIcon className="w-5 h-5" style={{ color: 'var(--text-hint, #888)' }} />
               </Link>
             );
           })}
         </div>
 
-                {/* Help Section */}
-                <div className="mt-8 bg-white shadow rounded-lg p-6">
-                    <h3 className="text-sm font-medium text-gray-900 mb-2">
-                        {language === 'fr' ? 'Besoin d\'aide ?' : 'Need Help?'}
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-4">
-                        {language === 'fr'
-                            ? 'Notre équipe support est disponible pour vous aider avec la configuration.'
-                            : 'Our support team is available to help you with configuration.'
-                        }
-                    </p>
-                    <a
-                        href="mailto:info@travixosystems.com"
-                        className="text-sm font-medium text-blue-600 hover:text-blue-500"
-                    >
-                        support@travixosystems.com
-                    </a>
-                </div>
-            </div>
+        {/* Help Section */}
+        <div className="mt-8 rounded-lg p-6" style={{ backgroundColor: 'var(--card-bg, #edeff2)', border: '0.5px solid #dcdee3' }}>
+          <h3 className="text-sm font-medium mb-2" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+            {language === 'fr' ? 'Besoin d\'aide ?' : 'Need Help?'}
+          </h3>
+          <p className="text-sm mb-4" style={{ color: 'var(--text-muted, #777)' }}>
+            {language === 'fr'
+              ? 'Notre équipe support est disponible pour vous aider avec la configuration.'
+              : 'Our support team is available to help you with configuration.'
+            }
+          </p>
+          <a
+            href="mailto:info@travixosystems.com"
+            className="text-sm font-medium" style={{ color: 'var(--accent, #e8600a)' }}
+          >
+            support@travixosystems.com
+          </a>
         </div>
+      </div>
+    </div>
     );
 }

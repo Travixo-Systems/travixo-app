@@ -11,11 +11,14 @@ export default async function DashboardLayout({
 }) {
   return (
     <ThemeProvider>
-      <div className="flex h-screen bg-gray-50">
+      <div className="flex h-screen" style={{ backgroundColor: 'var(--page-bg)' }}>
         <Sidebar />
+        {/* Immutable brand divider: vertical on desktop, horizontal on mobile */}
+        <div className="hidden md:block w-[3px] flex-shrink-0 bg-[#e8600a]" />
         <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="block md:hidden h-[3px] flex-shrink-0 bg-[#e8600a]" />
           <PilotBanner />
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1 overflow-y-auto" style={{ backgroundColor: 'var(--page-bg)' }}>
             <AccountLockedOverlay>
               {children}
             </AccountLockedOverlay>

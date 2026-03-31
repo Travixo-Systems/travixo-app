@@ -421,7 +421,7 @@ USING (
 
 **Use Cases:**
 - Bulk QR code PDF (30 codes per A4 page)
-- DIRECCTE compliance reports (future server-side with better lib)
+- DREETS compliance reports (future server-side with better lib)
 
 **Version:** Latest  
 **Alternatives:** PDFKit (server-side, better quality but more setup)
@@ -617,7 +617,7 @@ feat(vgp): Add edit history tracking
 - Add edit_history JSONB column
 - Track old/new values with timestamps
 - Require change_reason for date mods
-- DIRECCTE compliance requirement
+- DREETS compliance requirement
 
 Fixes #42
 ```
@@ -784,7 +784,7 @@ WITH CHECK (organization_id IN (
 
 ### Compliance
 - ✅ GDPR: Privacy policy, data export (planned)
-- ✅ French VGP: DIRECCTE-compliant reports
+- ✅ French VGP: DREETS-compliant reports
 - ✅ Audit trails: VGP edit history tracking
 - ⏳ ISO 27001: Not yet certified (enterprise requirement)
 

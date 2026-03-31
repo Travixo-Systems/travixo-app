@@ -176,7 +176,7 @@ export default function OrganizationSettingsPage() {
         {/* Back Button */}
         <Link
           href="/settings"
-          className="flex items-center text-sm text-gray-600 hover:text-gray-900 mb-6"
+          className="flex items-center text-sm text-[var(--text-muted,#777)] hover:text-[var(--text-primary,#1a1a1a)] mb-6"
         >
           <ArrowLeftIcon className="w-4 h-4 mr-2" />
           {labels.back[language]}
@@ -189,10 +189,10 @@ export default function OrganizationSettingsPage() {
               <BuildingOfficeIcon className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900">
+              <h1 className="text-2xl font-semibold text-[var(--text-primary,#1a1a1a)]">
                 {labels.pageTitle[language]}
               </h1>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-[var(--text-muted,#777)]">
                 {labels.pageSubtitle[language]}
               </p>
             </div>
@@ -201,7 +201,7 @@ export default function OrganizationSettingsPage() {
           {!isEditing && (
             <button
               onClick={() => setIsEditing(true)}
-              className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-[var(--text-secondary,#444)] bg-[var(--card-bg,#edeff2)] border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               <PencilIcon className="w-4 h-4" />
               <span>{labels.edit[language]}</span>
@@ -213,15 +213,15 @@ export default function OrganizationSettingsPage() {
         {!isEditing && (
           <div className="space-y-6">
             {/* Company Information */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-gray-900 mb-4">
+            <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
+              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-4">
                 {labels.companyInfo[language]}
               </h3>
 
               <div className="space-y-4">
                 {/* Logo */}
                 <div className="flex items-center pb-4 border-b border-gray-200">
-                  <div className="text-sm font-medium text-gray-700 w-32">
+                  <div className="text-sm font-medium text-[var(--text-secondary,#444)] w-32">
                     {labels.logo[language]}
                   </div>
                   <div>
@@ -235,7 +235,7 @@ export default function OrganizationSettingsPage() {
                       />
                     ) : (
                       <div className="w-20 h-20 bg-gray-100 rounded flex items-center justify-center">
-                        <BuildingOfficeIcon className="w-10 h-10 text-gray-400" />
+                        <BuildingOfficeIcon className="w-10 h-10 text-[var(--text-hint,#888)]" />
                       </div>
                     )}
                   </div>
@@ -243,67 +243,67 @@ export default function OrganizationSettingsPage() {
 
                 {/* Company Name */}
                 <div className="flex items-center py-3 border-b border-gray-200">
-                  <div className="text-sm font-medium text-gray-700 w-32">
+                  <div className="text-sm font-medium text-[var(--text-secondary,#444)] w-32">
                     {labels.companyName[language]}
                   </div>
-                  <div className="text-sm text-gray-900">
-                    {orgData.name || <span className="text-gray-400">{labels.notSet[language]}</span>}
+                  <div className="text-sm text-[var(--text-primary,#1a1a1a)]">
+                    {orgData.name || <span className="text-[var(--text-hint,#888)]">{labels.notSet[language]}</span>}
                   </div>
                 </div>
 
                 {/* Website */}
                 <div className="flex items-center py-3 border-b border-gray-200">
-                  <div className="text-sm font-medium text-gray-700 w-32">
+                  <div className="text-sm font-medium text-[var(--text-secondary,#444)] w-32">
                     {labels.website[language]}
                   </div>
-                  <div className="text-sm text-gray-900">
+                  <div className="text-sm text-[var(--text-primary,#1a1a1a)]">
                     {orgData.website ? (
                       <a href={orgData.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                         {orgData.website}
                       </a>
                     ) : (
-                      <span className="text-gray-400">{labels.notSet[language]}</span>
+                      <span className="text-[var(--text-hint,#888)]">{labels.notSet[language]}</span>
                     )}
                   </div>
                 </div>
 
                 {/* Phone */}
                 <div className="flex items-center py-3">
-                  <div className="text-sm font-medium text-gray-700 w-32">
+                  <div className="text-sm font-medium text-[var(--text-secondary,#444)] w-32">
                     {labels.phone[language]}
                   </div>
-                  <div className="text-sm text-gray-900">
-                    {orgData.phone || <span className="text-gray-400">{labels.notSet[language]}</span>}
+                  <div className="text-sm text-[var(--text-primary,#1a1a1a)]">
+                    {orgData.phone || <span className="text-[var(--text-hint,#888)]">{labels.notSet[language]}</span>}
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Location */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-gray-900 mb-4">
+            <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
+              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-4">
                 {labels.location[language]}
               </h3>
 
               <div className="space-y-4">
                 <div className="flex items-center py-3 border-b border-gray-200">
-                  <div className="text-sm font-medium text-gray-700 w-32">{labels.address[language]}</div>
-                  <div className="text-sm text-gray-900">{orgData.address || <span className="text-gray-400">{labels.notSet[language]}</span>}</div>
+                  <div className="text-sm font-medium text-[var(--text-secondary,#444)] w-32">{labels.address[language]}</div>
+                  <div className="text-sm text-[var(--text-primary,#1a1a1a)]">{orgData.address || <span className="text-[var(--text-hint,#888)]">{labels.notSet[language]}</span>}</div>
                 </div>
 
                 <div className="flex items-center py-3 border-b border-gray-200">
-                  <div className="text-sm font-medium text-gray-700 w-32">{labels.city[language]}</div>
-                  <div className="text-sm text-gray-900">{orgData.city || <span className="text-gray-400">{labels.notSet[language]}</span>}</div>
+                  <div className="text-sm font-medium text-[var(--text-secondary,#444)] w-32">{labels.city[language]}</div>
+                  <div className="text-sm text-[var(--text-primary,#1a1a1a)]">{orgData.city || <span className="text-[var(--text-hint,#888)]">{labels.notSet[language]}</span>}</div>
                 </div>
 
                 <div className="flex items-center py-3 border-b border-gray-200">
-                  <div className="text-sm font-medium text-gray-700 w-32">{labels.postalCode[language]}</div>
-                  <div className="text-sm text-gray-900">{orgData.postal_code || <span className="text-gray-400">{labels.notSet[language]}</span>}</div>
+                  <div className="text-sm font-medium text-[var(--text-secondary,#444)] w-32">{labels.postalCode[language]}</div>
+                  <div className="text-sm text-[var(--text-primary,#1a1a1a)]">{orgData.postal_code || <span className="text-[var(--text-hint,#888)]">{labels.notSet[language]}</span>}</div>
                 </div>
 
                 <div className="flex items-center py-3">
-                  <div className="text-sm font-medium text-gray-700 w-32">{labels.country[language]}</div>
-                  <div className="text-sm text-gray-900">
+                  <div className="text-sm font-medium text-[var(--text-secondary,#444)] w-32">{labels.country[language]}</div>
+                  <div className="text-sm text-[var(--text-primary,#1a1a1a)]">
                     {orgData.country === 'FR' && labels.france[language]}
                     {orgData.country === 'BE' && labels.belgium[language]}
                     {orgData.country === 'CH' && labels.switzerland[language]}
@@ -314,52 +314,52 @@ export default function OrganizationSettingsPage() {
             </div>
 
             {/* Regional Settings */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-gray-900 mb-4">
+            <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
+              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-4">
                 {labels.regional[language]}
               </h3>
 
               <div className="space-y-4">
                 <div className="flex items-center py-3 border-b border-gray-200">
-                  <div className="text-sm font-medium text-gray-700 w-32">{labels.timezone[language]}</div>
-                  <div className="text-sm text-gray-900">{orgData.timezone}</div>
+                  <div className="text-sm font-medium text-[var(--text-secondary,#444)] w-32">{labels.timezone[language]}</div>
+                  <div className="text-sm text-[var(--text-primary,#1a1a1a)]">{orgData.timezone}</div>
                 </div>
 
                 <div className="flex items-center py-3">
-                  <div className="text-sm font-medium text-gray-700 w-32">{labels.currency[language]}</div>
-                  <div className="text-sm text-gray-900">{orgData.currency}</div>
+                  <div className="text-sm font-medium text-[var(--text-secondary,#444)] w-32">{labels.currency[language]}</div>
+                  <div className="text-sm text-[var(--text-primary,#1a1a1a)]">{orgData.currency}</div>
                 </div>
               </div>
             </div>
 
             {/* Additional Information */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-gray-900 mb-4">
+            <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
+              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-4">
                 {labels.additional[language]}
               </h3>
 
               <div className="space-y-4">
                 <div className="flex items-center py-3 border-b border-gray-200">
-                  <div className="text-sm font-medium text-gray-700 w-32">{labels.industrySector[language]}</div>
-                  <div className="text-sm text-gray-900">
+                  <div className="text-sm font-medium text-[var(--text-secondary,#444)] w-32">{labels.industrySector[language]}</div>
+                  <div className="text-sm text-[var(--text-primary,#1a1a1a)]">
                     {orgData.industry_sector === 'construction_equipment' && labels.constructionEquipment[language]}
                     {orgData.industry_sector === 'industrial_equipment' && labels.industrialEquipment[language]}
                     {orgData.industry_sector === 'logistics' && labels.logistics[language]}
                     {orgData.industry_sector === 'events' && labels.events[language]}
                     {orgData.industry_sector === 'other' && labels.other[language]}
-                    {!orgData.industry_sector && <span className="text-gray-400">{labels.notSet[language]}</span>}
+                    {!orgData.industry_sector && <span className="text-[var(--text-hint,#888)]">{labels.notSet[language]}</span>}
                   </div>
                 </div>
 
                 <div className="flex items-center py-3">
-                  <div className="text-sm font-medium text-gray-700 w-32">{labels.companySize[language]}</div>
-                  <div className="text-sm text-gray-900">
+                  <div className="text-sm font-medium text-[var(--text-secondary,#444)] w-32">{labels.companySize[language]}</div>
+                  <div className="text-sm text-[var(--text-primary,#1a1a1a)]">
                     {orgData.company_size === '1-10' && labels.size_1_10[language]}
                     {orgData.company_size === '11-50' && labels.size_11_50[language]}
                     {orgData.company_size === '51-200' && labels.size_51_200[language]}
                     {orgData.company_size === '201-500' && labels.size_201_500[language]}
                     {orgData.company_size === '500+' && labels.size_500_plus[language]}
-                    {!orgData.company_size && <span className="text-gray-400">{labels.notSet[language]}</span>}
+                    {!orgData.company_size && <span className="text-[var(--text-hint,#888)]">{labels.notSet[language]}</span>}
                   </div>
                 </div>
               </div>
@@ -371,18 +371,18 @@ export default function OrganizationSettingsPage() {
         {isEditing && (
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Company Information */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-gray-900 mb-4">
+            <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
+              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-4">
                 {labels.companyInfo[language]}
               </h3>
 
               <div className="space-y-4">
                 {/* Logo Upload */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-1">
                     {labels.logo[language]}
                   </label>
-                  <p className="text-xs text-gray-500 mb-3">{labels.logoHelp[language]}</p>
+                  <p className="text-xs text-[var(--text-hint,#888)] mb-3">{labels.logoHelp[language]}</p>
                   
                   <div className="flex items-center space-x-4">
                     {orgData.logo_url ? (
@@ -404,7 +404,7 @@ export default function OrganizationSettingsPage() {
                       </div>
                     ) : (
                       <div className="w-20 h-20 bg-gray-100 rounded flex items-center justify-center">
-                        <BuildingOfficeIcon className="w-10 h-10 text-gray-400" />
+                        <BuildingOfficeIcon className="w-10 h-10 text-[var(--text-hint,#888)]" />
                       </div>
                     )}
 
@@ -422,7 +422,7 @@ export default function OrganizationSettingsPage() {
                         console.error('Upload error:', error);
                       }}
                       appearance={{
-                        button: "bg-gray-100 text-gray-700 hover:bg-gray-200 text-sm font-medium px-4 py-2 rounded-lg",
+                        button: "bg-gray-100 text-[var(--text-secondary,#444)] hover:bg-gray-200 text-sm font-medium px-4 py-2 rounded-lg",
                         allowedContent: "hidden",
                       }}
                     />
@@ -431,7 +431,7 @@ export default function OrganizationSettingsPage() {
 
                 {/* Company Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-1">
                     {labels.companyName[language]}
                   </label>
                   <input
@@ -445,7 +445,7 @@ export default function OrganizationSettingsPage() {
 
                 {/* Website */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-1">
                     {labels.website[language]}
                   </label>
                   <input
@@ -459,7 +459,7 @@ export default function OrganizationSettingsPage() {
 
                 {/* Phone */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-1">
                     {labels.phone[language]}
                   </label>
                   <input
@@ -474,14 +474,14 @@ export default function OrganizationSettingsPage() {
             </div>
 
             {/* Location */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-gray-900 mb-4">
+            <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
+              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-4">
                 {labels.location[language]}
               </h3>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{labels.address[language]}</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-1">{labels.address[language]}</label>
                   <input
                     type="text"
                     value={orgData.address}
@@ -492,7 +492,7 @@ export default function OrganizationSettingsPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{labels.city[language]}</label>
+                    <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-1">{labels.city[language]}</label>
                     <input
                       type="text"
                       value={orgData.city}
@@ -502,7 +502,7 @@ export default function OrganizationSettingsPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{labels.postalCode[language]}</label>
+                    <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-1">{labels.postalCode[language]}</label>
                     <input
                       type="text"
                       value={orgData.postal_code}
@@ -513,7 +513,7 @@ export default function OrganizationSettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{labels.country[language]}</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-1">{labels.country[language]}</label>
                   <select
                     value={orgData.country}
                     onChange={(e) => handleChange('country', e.target.value)}
@@ -529,14 +529,14 @@ export default function OrganizationSettingsPage() {
             </div>
 
             {/* Regional Settings */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-gray-900 mb-4">
+            <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
+              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-4">
                 {labels.regional[language]}
               </h3>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{labels.timezone[language]}</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-1">{labels.timezone[language]}</label>
                   <select
                     value={orgData.timezone}
                     onChange={(e) => handleChange('timezone', e.target.value)}
@@ -550,7 +550,7 @@ export default function OrganizationSettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{labels.currency[language]}</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-1">{labels.currency[language]}</label>
                   <select
                     value={orgData.currency}
                     onChange={(e) => handleChange('currency', e.target.value)}
@@ -564,14 +564,14 @@ export default function OrganizationSettingsPage() {
             </div>
 
             {/* Additional Information */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-gray-900 mb-4">
+            <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
+              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-4">
                 {labels.additional[language]}
               </h3>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{labels.industrySector[language]}</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-1">{labels.industrySector[language]}</label>
                   <select
                     value={orgData.industry_sector}
                     onChange={(e) => handleChange('industry_sector', e.target.value)}
@@ -587,7 +587,7 @@ export default function OrganizationSettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{labels.companySize[language]}</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-1">{labels.companySize[language]}</label>
                   <select
                     value={orgData.company_size}
                     onChange={(e) => handleChange('company_size', e.target.value)}
@@ -609,7 +609,7 @@ export default function OrganizationSettingsPage() {
               <button
                 type="button"
                 onClick={handleCancelEdit}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 text-sm font-medium text-[var(--text-secondary,#444)] bg-[var(--card-bg,#edeff2)] border border-gray-300 rounded-lg hover:bg-gray-50"
               >
                 {labels.cancel[language]}
               </button>

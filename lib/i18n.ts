@@ -14,8 +14,8 @@ export const translations = {
       fr: "Vérifications Générales Périodiques - Article R4323-23",
     },
     generateReport: {
-      en: "DIRECCTE Report",
-      fr: "Rapport DIRECCTE",
+      en: "Export report",
+      fr: "Exporter le rapport",
     },
     complianceRate: {
       en: "Compliance Rate",
@@ -670,8 +670,8 @@ export const translations = {
   // ============================================================================
   vgpReport: {
     pageTitle: {
-      en: "VGP DIRECCTE Report",
-      fr: "Rapport VGP DIRECCTE",
+      en: "VGP DREETS Report",
+      fr: "Rapport VGP DREETS",
     },
     pageSubtitle: {
       en: "Verify data before official report generation",
@@ -854,8 +854,8 @@ export const translations = {
       fr: "Numéros de certificat et dates de prochaines inspections",
     },
     professionalFormat: {
-      en: "Professional format compliant with DIRECCTE",
-      fr: "Format professionnel conforme DIRECCTE",
+      en: "Professional format compliant with DREETS",
+      fr: "Format professionnel conforme DREETS",
     },
     errors: {
       selectDates: {
@@ -1042,8 +1042,8 @@ export const translations = {
       fr: "24 mois (Biennal)",
     },
     intervalHelp: {
-      en: "Inspection frequency according to DIRECCTE regulations",
-      fr: "Fréquence des inspections selon la réglementation DIRECCTE",
+      en: "Inspection frequency according to DREETS regulations",
+      fr: "Fréquence des inspections selon la réglementation DREETS",
     },
     lastInspectionDate: {
       en: "Last Inspection Date",
@@ -1168,8 +1168,8 @@ export const translations = {
       fr: "Ex: Extension accordée par l'inspecteur",
     },
     reasonHelp: {
-      en: "Required for DIRECCTE compliance",
-      fr: "Requis pour la conformité DIRECCTE",
+      en: "Required for DREETS compliance",
+      fr: "Requis pour la conformité DREETS",
     },
     cancel: {
       en: "Cancel",
@@ -2300,8 +2300,8 @@ export const translations = {
       fr: "Équipements VGP en Retard",
     },
     vgpRiskSanctions: {
-      en: "Risk of DIRECCTE sanctions",
-      fr: "Risque de sanctions DIRECCTE",
+      en: "Risk of DREETS sanctions",
+      fr: "Risque de sanctions DREETS",
     },
     handleNow: {
       en: "Handle now",
@@ -2400,8 +2400,8 @@ export const translations = {
       fr: "Conformité VGP (Réglementaire)",
     },
     vgpComplianceSubtitle: {
-      en: "Tracking mandatory inspections to avoid DIRECCTE sanctions",
-      fr: "Suivi des inspections obligatoires pour éviter les sanctions DIRECCTE",
+      en: "Tracking mandatory inspections to avoid DREETS sanctions",
+      fr: "Suivi des inspections obligatoires pour éviter les sanctions DREETS",
     },
     vgpOverdueLabel: {
       en: "Overdue",
@@ -2523,8 +2523,8 @@ export const translations = {
       fr: "Suivi",
     },
     vgpReport: {
-      en: "DIRECCTE Report",
-      fr: "Rapport DIRECCTE",
+      en: "Report",
+      fr: "Rapport",
     },
     vgpInspections: {
       en: "History",
@@ -3495,8 +3495,8 @@ export const translations = {
       fr: "Invitations & gestion d'équipe",
     },
     loginFeature2: {
-      en: "Inventory audits & DIRECCTE compliance",
-      fr: "Audits d'inventaire & conformité DIRECCTE",
+      en: "Inventory audits & DREETS compliance",
+      fr: "Audits d'inventaire & conformité DREETS",
     },
     welcomeBack: { en: "Welcome back", fr: "Bon retour" },
     signInSubtitle: {
@@ -3579,8 +3579,8 @@ export const translations = {
       fr: "Audits d'inventaire digitaux",
     },
     signupFeature2: {
-      en: "VGP & DIRECCTE compliance",
-      fr: "Conformité VGP & DIRECCTE",
+      en: "VGP & DREETS compliance",
+      fr: "Conformité VGP & DREETS",
     },
     signupFeature3: {
       en: "Team management & collaboration",

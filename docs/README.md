@@ -7,7 +7,7 @@
 - [Tech Stack](architecture/tech_stack.md) - Technical decisions
 
 ## Two-Pillar Value Proposition
-1. **VGP Compliance Automation** - Prevent €15K-€75K DIRECCTE fines
+1. **VGP Compliance Automation** - Prevent €15K-€75K DREETS fines
 2. **QR-based Real-Time Asset Visibility** - Know where assets are
 
 Last updated: November 10, 2025

@@ -406,8 +406,8 @@ export default function AuditsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
-        <span className="ml-3 text-gray-600">{t('common.loading')}</span>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'var(--text-primary, #1a1a1a)' }} />
+        <span className="ml-3" style={{ color: 'var(--text-secondary, #444)' }}>{t('common.loading')}</span>
       </div>
     );
   }
@@ -425,8 +425,8 @@ export default function AuditsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('audits.pageTitle')}</h1>
-          <p className="text-gray-600 mt-1">{t('audits.pageSubtitle')}</p>
+          <h1 className="text-xl font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('audits.pageTitle')}</h1>
+          <p className="mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('audits.pageSubtitle')}</p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
@@ -443,100 +443,101 @@ export default function AuditsPage() {
         {/* Total */}
         <button
           onClick={() => setStatusFilter('all')}
-          className={`bg-white rounded-lg p-5 text-left transition-shadow hover:shadow-md ${
+          className={`rounded-lg p-5 text-left transition-colors ${
             statusFilter === 'all' ? 'ring-2 ring-gray-400' : ''
           }`}
           style={{
-            borderLeft: `4px solid ${BRAND_COLORS.gray}`,
-            borderBottom: `4px solid ${BRAND_COLORS.gray}`,
+            backgroundColor: 'var(--card-bg, #edeff2)',
+            borderLeft: `3px solid ${BRAND_COLORS.gray}`,
           }}
         >
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-gray-600">{t('audits.totalAudits')}</p>
-            <ClipboardCheck className="w-5 h-5 text-gray-400" />
+            <p className="text-sm font-medium" style={{ color: 'var(--text-secondary, #444)' }}>{t('audits.totalAudits')}</p>
+            <ClipboardCheck className="w-5 h-5" style={{ color: 'var(--text-hint, #888)' }} />
           </div>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{stats.total}</p>
-          <p className="text-xs text-gray-500 mt-1">{t('audits.allTime')}</p>
+          <p className="text-3xl font-bold mt-2" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{stats.total}</p>
+          <p className="text-xs mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('audits.allTime')}</p>
         </button>
 
         {/* Planned */}
         <button
           onClick={() => setStatusFilter('planned')}
-          className={`bg-white rounded-lg p-5 text-left transition-shadow hover:shadow-md ${
+          className={`rounded-lg p-5 text-left transition-colors ${
             statusFilter === 'planned' ? 'ring-2 ring-blue-400' : ''
           }`}
           style={{
-            borderLeft: `4px solid ${BRAND_COLORS.primary}`,
-            borderBottom: `4px solid ${BRAND_COLORS.primary}`,
+            backgroundColor: 'var(--card-bg, #edeff2)',
+            borderLeft: `3px solid ${BRAND_COLORS.primary}`,
           }}
         >
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-gray-600">{t('audits.planned')}</p>
+            <p className="text-sm font-medium" style={{ color: 'var(--text-secondary, #444)' }}>{t('audits.planned')}</p>
             <Calendar className="w-5 h-5" style={{ color: BRAND_COLORS.primary }} />
           </div>
           <p className="text-3xl font-bold mt-2" style={{ color: BRAND_COLORS.primary }}>{stats.planned}</p>
-          <p className="text-xs text-gray-500 mt-1">{t('audits.scheduledAudits')}</p>
+          <p className="text-xs mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('audits.scheduledAudits')}</p>
         </button>
 
         {/* In Progress */}
         <button
           onClick={() => setStatusFilter('in_progress')}
-          className={`bg-white rounded-lg p-5 text-left transition-shadow hover:shadow-md ${
+          className={`rounded-lg p-5 text-left transition-colors ${
             statusFilter === 'in_progress' ? 'ring-2 ring-orange-400' : ''
           }`}
           style={{
-            borderLeft: `4px solid ${BRAND_COLORS.warning}`,
-            borderBottom: `4px solid ${BRAND_COLORS.warning}`,
+            backgroundColor: 'var(--card-bg, #edeff2)',
+            borderLeft: `3px solid ${BRAND_COLORS.warning}`,
           }}
         >
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-gray-600">{t('audits.inProgress')}</p>
+            <p className="text-sm font-medium" style={{ color: 'var(--text-secondary, #444)' }}>{t('audits.inProgress')}</p>
             <Clock className="w-5 h-5" style={{ color: BRAND_COLORS.warning }} />
           </div>
           <p className="text-3xl font-bold mt-2" style={{ color: BRAND_COLORS.warning }}>{stats.inProgress}</p>
-          <p className="text-xs text-gray-500 mt-1">{t('audits.activeAudits')}</p>
+          <p className="text-xs mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('audits.activeAudits')}</p>
         </button>
 
         {/* Completed */}
         <button
           onClick={() => setStatusFilter('completed')}
-          className={`bg-white rounded-lg p-5 text-left transition-shadow hover:shadow-md ${
+          className={`rounded-lg p-5 text-left transition-colors ${
             statusFilter === 'completed' ? 'ring-2 ring-green-400' : ''
           }`}
           style={{
-            borderLeft: `4px solid ${BRAND_COLORS.success}`,
-            borderBottom: `4px solid ${BRAND_COLORS.success}`,
+            backgroundColor: 'var(--card-bg, #edeff2)',
+            borderLeft: `3px solid ${BRAND_COLORS.success}`,
           }}
         >
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-gray-600">{t('audits.completed')}</p>
+            <p className="text-sm font-medium" style={{ color: 'var(--text-secondary, #444)' }}>{t('audits.completed')}</p>
             <CheckCircle className="w-5 h-5" style={{ color: BRAND_COLORS.success }} />
           </div>
           <p className="text-3xl font-bold mt-2" style={{ color: BRAND_COLORS.success }}>{stats.completed}</p>
-          <p className="text-xs text-gray-500 mt-1">{t('audits.finishedAudits')}</p>
+          <p className="text-xs mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('audits.finishedAudits')}</p>
         </button>
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-lg shadow-sm p-4">
+      <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: 'var(--text-hint, #888)' }} />
           <input
             type="text"
             placeholder={t('audits.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full pl-10 pr-4 py-2.5 rounded-lg focus:ring-2 focus:ring-[#e8600a] focus:border-transparent text-sm"
+            style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
           />
         </div>
       </div>
 
       {/* Audits List */}
       {filteredAudits.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-          <ClipboardCheck className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900">{t('audits.noAudits')}</h3>
-          <p className="text-gray-500 mt-1">{t('audits.noAuditsDesc')}</p>
+        <div className="rounded-lg p-12 text-center" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
+          <ClipboardCheck className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--text-hint, #888)' }} />
+          <h3 className="text-lg font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('audits.noAudits')}</h3>
+          <p className="mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('audits.noAuditsDesc')}</p>
           <button
             onClick={() => setShowCreateModal(true)}
             className="mt-4 px-4 py-2 text-white rounded-lg text-sm font-medium"
@@ -546,31 +547,31 @@ export default function AuditsPage() {
           </button>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead style={{ backgroundColor: 'var(--input-bg, #e3e5e9)' }}>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
                   {t('audits.auditName')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
                   {t('audits.status')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
                   {t('audits.progress')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
                   {t('audits.scheduledDate')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
                   {t('audits.createdBy')}
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
                   {t('audits.actions')}
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y" style={{ borderColor: '#dcdee3' }}>
               {filteredAudits.map((audit) => {
                 const config = STATUS_CONFIG[audit.status];
                 const StatusIcon = config.icon;
@@ -579,7 +580,7 @@ export default function AuditsPage() {
                   : 0;
 
                 return (
-                  <tr key={audit.id} className="hover:bg-gray-50">
+                  <tr key={audit.id} className="hover:bg-black/[0.02]">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div
@@ -588,7 +589,7 @@ export default function AuditsPage() {
                         >
                           <ClipboardCheck className="w-5 h-5" style={{ color: config.color }} />
                         </div>
-                        <span className="font-medium text-gray-900">{audit.name}</span>
+                        <span className="font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{audit.name}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -602,7 +603,7 @@ export default function AuditsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-24 bg-gray-200 rounded-full h-2">
+                        <div className="w-24 rounded-full h-2" style={{ backgroundColor: '#dcdee3' }}>
                           <div
                             className="h-2 rounded-full transition-all"
                             style={{
@@ -611,13 +612,13 @@ export default function AuditsPage() {
                             }}
                           />
                         </div>
-                        <span className="text-sm text-gray-600">{progress}%</span>
+                        <span className="text-sm" style={{ color: 'var(--text-secondary, #444)' }}>{progress}%</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
+                    <td className="px-6 py-4 text-sm" style={{ color: 'var(--text-secondary, #444)' }}>
                       {formatDateFR(audit.scheduled_date)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
+                    <td className="px-6 py-4 text-sm" style={{ color: 'var(--text-secondary, #444)' }}>
                       {audit.users?.full_name || audit.users?.email || '-'}
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -664,23 +665,24 @@ export default function AuditsPage() {
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div
-            className="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 p-6"
+            className="rounded-xl max-w-lg w-full mx-4 p-6"
+            style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">{t('audits.newAudit')}</h2>
+              <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('audits.newAudit')}</h2>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-black/[0.05] rounded-lg transition-colors"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-5 h-5" style={{ color: 'var(--text-muted, #777)' }} />
               </button>
             </div>
 
             <div className="space-y-4">
               {/* Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary, #444)' }}>
                   {t('audits.auditNameLabel')}
                 </label>
                 <input
@@ -688,26 +690,28 @@ export default function AuditsPage() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder={t('audits.auditNamePlaceholder')}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-[#e8600a] focus:border-transparent"
+                  style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
                 />
               </div>
 
               {/* Date */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary, #444)' }}>
                   {t('audits.scheduledDateLabel')}
                 </label>
                 <input
                   type="date"
                   value={formData.scheduled_date}
                   onChange={(e) => setFormData({ ...formData, scheduled_date: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-[#e8600a] focus:border-transparent"
+                  style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
                 />
               </div>
 
               {/* Scope */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary, #444)' }}>
                   {t('audits.auditScope')}
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -715,8 +719,8 @@ export default function AuditsPage() {
                     onClick={() => setFormData({ ...formData, scope: 'all', selectedLocation: '', selectedCategory: '' })}
                     className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
                       formData.scope === 'all'
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                        ? 'border-[#e8600a] bg-[#e8600a]/10 text-[#e8600a]'
+                        : 'border-[#dcdee3] hover:bg-black/[0.02]'
                     }`}
                   >
                     {t('audits.allAssets')}
@@ -725,8 +729,8 @@ export default function AuditsPage() {
                     onClick={() => setFormData({ ...formData, scope: 'location', selectedCategory: '' })}
                     className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
                       formData.scope === 'location'
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                        ? 'border-[#e8600a] bg-[#e8600a]/10 text-[#e8600a]'
+                        : 'border-[#dcdee3] hover:bg-black/[0.02]'
                     }`}
                   >
                     {t('audits.byLocation')}
@@ -735,8 +739,8 @@ export default function AuditsPage() {
                     onClick={() => setFormData({ ...formData, scope: 'category', selectedLocation: '' })}
                     className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
                       formData.scope === 'category'
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                        ? 'border-[#e8600a] bg-[#e8600a]/10 text-[#e8600a]'
+                        : 'border-[#dcdee3] hover:bg-black/[0.02]'
                     }`}
                   >
                     {t('audits.byCategory')}
@@ -747,21 +751,22 @@ export default function AuditsPage() {
               {/* Location selector */}
               {formData.scope === 'location' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary, #444)' }}>
                     {t('audits.selectLocation')}
                   </label>
                   <div className="relative">
                     <select
                       value={formData.selectedLocation}
                       onChange={(e) => setFormData({ ...formData, selectedLocation: e.target.value })}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
+                      className="w-full px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-[#e8600a] focus:border-transparent appearance-none"
+                      style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
                     >
                       <option value="">{t('audits.selectLocation')}</option>
                       {locations.map((loc) => (
                         <option key={loc} value={loc}>{loc}</option>
                       ))}
                     </select>
-                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'var(--text-hint, #888)' }} />
                   </div>
                 </div>
               )}
@@ -769,32 +774,33 @@ export default function AuditsPage() {
               {/* Category selector */}
               {formData.scope === 'category' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary, #444)' }}>
                     {t('audits.selectCategory')}
                   </label>
                   <div className="relative">
                     <select
                       value={formData.selectedCategory}
                       onChange={(e) => setFormData({ ...formData, selectedCategory: e.target.value })}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
+                      className="w-full px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-[#e8600a] focus:border-transparent appearance-none"
+                      style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
                     >
                       <option value="">{t('audits.selectCategory')}</option>
                       {categories.map((cat) => (
                         <option key={cat.id} value={cat.id}>{cat.name}</option>
                       ))}
                     </select>
-                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'var(--text-hint, #888)' }} />
                   </div>
                 </div>
               )}
 
               {/* Asset preview with exclusion support */}
               <div>
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-t-lg border border-gray-200">
+                <div className="flex items-center justify-between p-3 rounded-t-lg" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', borderColor: '#dcdee3' }}>
                   <div className="flex items-center gap-2">
-                    <Package className="w-5 h-5 text-gray-500" />
-                    <span className="text-lg font-semibold text-gray-900">{activeAssetCount}</span>
-                    <span className="text-sm text-gray-600">{t('audits.assetsFound')}</span>
+                    <Package className="w-5 h-5" style={{ color: 'var(--text-muted, #777)' }} />
+                    <span className="text-lg font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{activeAssetCount}</span>
+                    <span className="text-sm" style={{ color: 'var(--text-secondary, #444)' }}>{t('audits.assetsFound')}</span>
                   </div>
                   {excludedAssets.length > 0 && (
                     <span className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded-full flex items-center gap-1">
@@ -805,7 +811,7 @@ export default function AuditsPage() {
                 </div>
 
                 {scopeAssets.length > 0 && (
-                  <div className="border border-t-0 border-gray-200 rounded-b-lg max-h-48 overflow-y-auto">
+                  <div className="border border-t-0 rounded-b-lg max-h-48 overflow-y-auto" style={{ borderColor: '#dcdee3' }}>
                     {scopeAssets.map((asset) => {
                       const isExcluded = excludedAssets.some(e => e.asset_id === asset.id);
                       const isExcluding = excludingAssetId === asset.id;
@@ -813,17 +819,18 @@ export default function AuditsPage() {
                       return (
                         <div
                           key={asset.id}
-                          className={`px-3 py-2 border-b border-gray-100 last:border-b-0 ${
-                            isExcluded ? 'bg-red-50' : 'hover:bg-gray-50'
+                          className={`px-3 py-2 border-b last:border-b-0 ${
+                            isExcluded ? 'bg-red-50' : 'hover:bg-black/[0.02]'
                           }`}
+                          style={{ borderColor: '#dcdee3' }}
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex-1 min-w-0">
-                              <span className={`text-sm font-medium ${isExcluded ? 'text-red-700 line-through' : 'text-gray-900'}`}>
+                              <span className={`text-sm font-medium ${isExcluded ? 'text-red-700 line-through' : ''}`} style={isExcluded ? undefined : { color: 'var(--text-primary, #1a1a1a)' }}>
                                 {asset.name}
                               </span>
                               {asset.serial_number && (
-                                <span className="text-xs text-gray-500 ml-2">#{asset.serial_number}</span>
+                                <span className="text-xs ml-2" style={{ color: 'var(--text-muted, #777)' }}>#{asset.serial_number}</span>
                               )}
                             </div>
                             {isExcluded ? (
@@ -839,7 +846,7 @@ export default function AuditsPage() {
                                   setExcludingAssetId(isExcluding ? null : asset.id);
                                   setExclusionReason('');
                                 }}
-                                className="text-xs text-gray-500 hover:text-amber-700 font-medium ml-2 whitespace-nowrap"
+                                className="text-xs hover:text-amber-700 font-medium ml-2 whitespace-nowrap" style={{ color: 'var(--text-muted, #777)' }}
                               >
                                 {isExcluding ? 'Cancel' : 'Exclude'}
                               </button>
@@ -860,7 +867,8 @@ export default function AuditsPage() {
                                 placeholder="Reason for exclusion (required)"
                                 value={exclusionReason}
                                 onChange={(e) => setExclusionReason(e.target.value)}
-                                className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
+                                className="flex-1 px-2 py-1 text-xs rounded focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
+                                style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
                                 maxLength={200}
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter') handleExcludeAsset(asset.id);
@@ -885,7 +893,7 @@ export default function AuditsPage() {
                   <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
                     <p className="text-xs text-amber-800 flex items-center gap-1">
                       <AlertTriangle className="w-3 h-3" />
-                      Excluded assets will be documented in the audit report with their exclusion reasons (DIRECCTE compliant).
+                      Excluded assets will be documented in the audit report with their exclusion reasons (DREETS compliant).
                     </p>
                   </div>
                 )}
@@ -893,10 +901,11 @@ export default function AuditsPage() {
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3 mt-6 pt-4 border-t">
+            <div className="flex gap-3 mt-6 pt-4 border-t" style={{ borderColor: '#dcdee3' }}>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="flex-1 px-4 py-2.5 text-gray-700 bg-gray-100 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                className="flex-1 px-4 py-2.5 rounded-lg font-medium hover:bg-black/[0.05] transition-colors"
+                style={{ color: 'var(--text-secondary, #444)', backgroundColor: 'var(--input-bg, #e3e5e9)' }}
               >
                 {t('common.cancel')}
               </button>

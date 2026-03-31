@@ -39,7 +39,7 @@ TraviXO's roadmap is organized into phases aligned with business milestones:
   - [x] Dashboard with compliance stats
   - [x] Schedule management (create, edit, archive)
   - [x] Inspection recording with certificate uploads
-  - [x] DIRECCTE compliance reporting
+  - [x] DREETS compliance reporting
   - [x] Inspections history with filtering
 - [x] Subscription system with feature gating
 - [x] Pilot override infrastructure
@@ -115,7 +115,7 @@ TraviXO's roadmap is organized into phases aligned with business milestones:
 - **Estimated Time:** 2-3 hours
 
 **7. E2E Manual Test (Full VGP Workflow)**
-- [ ] Execute 9-step test (signup → DIRECCTE report)
+- [ ] Execute 9-step test (signup → DREETS report)
 - [ ] Document any bugs found
 - [ ] Test on mobile device + desktop browsers
 - **Why Critical:** Cannot launch without end-to-end validation
@@ -172,7 +172,7 @@ TraviXO's roadmap is organized into phases aligned with business milestones:
 - [ ] Generate and print QR codes
 - [ ] Create 10+ VGP schedules
 - [ ] Record 3+ inspections with certificates
-- [ ] Generate DIRECCTE compliance report
+- [ ] Generate DREETS compliance report
 - [ ] Provide actionable feedback
 
 ### Week 5-7: Iterate Based on Feedback (Dec 9-31)
@@ -354,7 +354,7 @@ TraviXO's roadmap is organized into phases aligned with business milestones:
 #### White-Label Customization (Enterprise)
 - [ ] Per-organization color schemes
 - [ ] Custom logos (header, reports)
-- [ ] Branded PDF reports (DIRECCTE, audits)
+- [ ] Branded PDF reports (DREETS, audits)
 - [ ] Custom domain mapping (customer.travixo.com)
 - [ ] Email customization (from addresses)
 - [ ] Terms of Service customization
@@ -546,7 +546,7 @@ TraviXO's roadmap is organized into phases aligned with business milestones:
 
 ### If US Competitor Enters France
 **Response:**
-1. **Emphasize French compliance** (they don't understand DIRECCTE)
+1. **Emphasize French compliance** (they don't understand DREETS)
 2. **Local support** (French-speaking team)
 3. **Partnerships** (Loxam, Kiloutou exclusive deals)
 4. **Regional expansion** (Spain, Italy before they do)
@@ -606,7 +606,7 @@ TraviXO's roadmap is organized into phases aligned with business milestones:
   **Mitigation:** Focus on niche (VGP), move fast, lock in customers
   
 - **Risk:** French regulation changes  
-  **Mitigation:** Monitor DIRECCTE updates, advisory board of inspectors
+  **Mitigation:** Monitor DREETS updates, advisory board of inspectors
 
 - **Risk:** Economic downturn (equipment rental decline)  
   **Mitigation:** VGP is legal requirement (recession-proof), diversify customers

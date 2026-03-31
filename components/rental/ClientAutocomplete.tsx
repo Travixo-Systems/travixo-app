@@ -88,7 +88,7 @@ export default function ClientAutocomplete({
         autoComplete="off"
       />
       {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-1 bg-[var(--card-bg,#edeff2)] border border-[#dcdee3] rounded-lg max-h-48 overflow-y-auto">
           {suggestions.map((client, index) => (
             <button
               key={index}

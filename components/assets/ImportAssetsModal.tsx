@@ -236,7 +236,7 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black bg-opacity-25" />
+          <div className="fixed inset-0 bg-black/50" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
@@ -250,19 +250,19 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white p-6 shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-[720px] transform overflow-hidden rounded-xl p-6 transition-all" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
                 <div className="flex justify-between items-center mb-4">
-                  <Dialog.Title className="text-2xl font-bold text-gray-900">
+                  <Dialog.Title className="text-lg font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                     {t('assets.importTitle')}
                   </Dialog.Title>
-                  <button onClick={resetModal} className="text-gray-400 hover:text-gray-500">
+                  <button onClick={resetModal} className="transition-colors" style={{ color: 'var(--text-muted, #777)' }} onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary, #1a1a1a)' }} onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted, #777)' }}>
                     <XMarkIcon className="h-6 w-6" />
                   </button>
                 </div>
 
                 {!preview ? (
                   <>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-indigo-500 transition-colors">
+                    <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-[#e8600a] transition-colors" style={{ borderColor: '#b8b8b8' }}>
                       <input
                         type="file"
                         accept=".xlsx,.xls,.csv"
@@ -271,11 +271,11 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
                         id="file-upload"
                       />
                       <label htmlFor="file-upload" className="cursor-pointer">
-                        <ArrowUpTrayIcon className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                        <ArrowUpTrayIcon className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--text-hint, #888)' }} />
                         <p className="text-lg mb-2">
                           {file ? file.name : t('assets.importDropzone')}
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm" style={{ color: 'var(--text-muted, #777)' }}>
                           {t('assets.importSupportedFormats')}
                         </p>
                       </label>
@@ -285,15 +285,15 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
                       <button
                         onClick={processFile}
                         disabled={isProcessing}
-                        className="w-full mt-6 bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 disabled:opacity-50"
+                        className="w-full mt-6 text-white py-3 rounded-md font-semibold hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: 'var(--accent, #e8600a)' }}
                       >
                         {isProcessing ? t('assets.importProcessing') : t('assets.importPreview')}
                       </button>
                     )}
 
-                    <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <h3 className="font-semibold mb-2 text-blue-900">{t('assets.importSmartDetection')}</h3>
-                      <p className="text-sm text-blue-800">
+                    <div className="mt-6 rounded-lg p-4" style={{ backgroundColor: 'rgba(5,150,105,0.08)', borderLeft: '3px solid var(--status-conforme, #059669)' }}>
+                      <h3 className="font-medium mb-2 text-[13px]" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('assets.importSmartDetection')}</h3>
+                      <p className="text-[13px]" style={{ color: 'var(--text-muted, #777)' }}>
                         {t('assets.importSmartDetectionDesc')}
                       </p>
                     </div>
@@ -302,41 +302,41 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
                   <>
                     <div className="mb-6">
                       <div className="grid grid-cols-3 gap-4 mb-4">
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--page-bg, #cbcdd4)', borderLeft: '3px solid var(--status-conforme, #059669)' }}>
                           <div className="flex items-center gap-2">
-                            <CheckCircleIcon className="h-6 w-6 text-green-600" />
+                            <CheckCircleIcon className="h-6 w-6" style={{ color: 'var(--status-conforme, #059669)' }} />
                             <div>
-                              <p className="text-2xl font-bold text-green-900">{preview.valid.length}</p>
-                              <p className="text-sm text-green-700">{t('assets.importValidRows')}</p>
+                              <p className="text-2xl font-medium" style={{ color: 'var(--status-conforme, #059669)' }}>{preview.valid.length}</p>
+                              <p className="text-xs font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('assets.importValidRows')}</p>
                             </div>
                           </div>
                         </div>
-                        
+
                         {preview.invalid.length > 0 && (
-                          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                          <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--page-bg, #cbcdd4)', borderLeft: '3px solid var(--status-retard, #dc2626)' }}>
                             <div className="flex items-center gap-2">
-                              <ExclamationCircleIcon className="h-6 w-6 text-red-600" />
+                              <ExclamationCircleIcon className="h-6 w-6" style={{ color: 'var(--status-retard, #dc2626)' }} />
                               <div>
-                                <p className="text-2xl font-bold text-red-900">{preview.invalid.length}</p>
-                                <p className="text-sm text-red-700">{t('assets.importInvalidRows')}</p>
+                                <p className="text-2xl font-medium" style={{ color: 'var(--status-retard, #dc2626)' }}>{preview.invalid.length}</p>
+                                <p className="text-xs font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('assets.importInvalidRows')}</p>
                               </div>
                             </div>
                           </div>
                         )}
 
-                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--page-bg, #cbcdd4)', borderLeft: '3px solid var(--status-neutral, #6b7280)' }}>
                           <div>
-                            <p className="text-2xl font-bold text-gray-900">{preview.total}</p>
-                            <p className="text-sm text-gray-700">{t('assets.importTotalRows')}</p>
+                            <p className="text-2xl font-medium" style={{ color: 'var(--status-neutral, #6b7280)' }}>{preview.total}</p>
+                            <p className="text-xs font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('assets.importTotalRows')}</p>
                           </div>
                         </div>
                       </div>
 
-                      <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
-                        <h4 className="font-semibold text-indigo-900 mb-2">{t('assets.importDetectedColumns')}</h4>
+                      <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--page-bg, #cbcdd4)' }}>
+                        <h4 className="font-medium text-[13px] mb-2" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('assets.importDetectedColumns')}</h4>
                         <div className="flex flex-wrap gap-2">
                           {Object.entries(preview.detectedColumns).map(([key, value]) => (
-                            <span key={key} className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm">
+                            <span key={key} className="px-3 py-1 rounded-full text-xs" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-secondary, #444)' }}>
                               {value} &rarr; {key}
                             </span>
                           ))}
@@ -344,28 +344,28 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
                       </div>
                     </div>
 
-                    <div className="max-h-96 overflow-y-auto border rounded-lg">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50 sticky top-0">
+                    <div className="max-h-96 overflow-y-auto rounded-lg" style={{ backgroundColor: 'var(--page-bg, #cbcdd4)' }}>
+                      <table className="min-w-full">
+                        <thead className="sticky top-0" style={{ backgroundColor: 'var(--page-bg, #cbcdd4)' }}>
                           <tr>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">{t('assets.tableHeaderName')}</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">{t('assets.tableHeaderSerial')}</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">{t('assets.tableHeaderLocation')}</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">{t('assets.tableHeaderStatus')}</th>
+                            <th className="px-4 py-2 text-left text-[11px] font-medium uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888)' }}>{t('assets.tableHeaderName')}</th>
+                            <th className="px-4 py-2 text-left text-[11px] font-medium uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888)' }}>{t('assets.tableHeaderSerial')}</th>
+                            <th className="px-4 py-2 text-left text-[11px] font-medium uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888)' }}>{t('assets.tableHeaderLocation')}</th>
+                            <th className="px-4 py-2 text-left text-[11px] font-medium uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888)' }}>{t('assets.tableHeaderStatus')}</th>
                           </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
+                        <tbody className="divide-y" style={{ borderColor: '#dcdee3' }}>
                           {preview.valid.slice(0, 10).map((row, idx) => (
                             <tr key={idx}>
-                              <td className="px-4 py-2 text-sm">{row.name}</td>
-                              <td className="px-4 py-2 text-sm">{row.serial_number || '-'}</td>
-                              <td className="px-4 py-2 text-sm">{row.current_location || '-'}</td>
-                              <td className="px-4 py-2 text-sm">
-                                <span className={`px-2 py-1 rounded-full text-xs ${
-                                  row.status === 'available' ? 'bg-green-100 text-green-800' :
-                                  row.status === 'in_use' ? 'bg-blue-100 text-blue-800' :
-                                  row.status === 'maintenance' ? 'bg-yellow-100 text-yellow-800' :
-                                  'bg-gray-100 text-gray-800'
+                              <td className="px-4 py-2 text-[13px] font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{row.name}</td>
+                              <td className="px-4 py-2 text-[13px]" style={{ color: 'var(--text-secondary, #444)' }}>{row.serial_number || '-'}</td>
+                              <td className="px-4 py-2 text-[13px]" style={{ color: 'var(--text-secondary, #444)' }}>{row.current_location || '-'}</td>
+                              <td className="px-4 py-2 text-[13px]">
+                                <span className={`font-medium ${
+                                  row.status === 'available' ? 'text-[#059669]' :
+                                  row.status === 'in_use' ? 'text-[#444]' :
+                                  row.status === 'maintenance' ? 'text-[#d97706]' :
+                                  'text-[#dc2626]'
                                 }`}>
                                   {getStatusLabel(row.status)}
                                 </span>
@@ -382,14 +382,14 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
                           setFile(null)
                           setPreview(null)
                         }}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                        className="px-4 py-2 text-sm font-medium rounded-md transition-colors" style={{ color: 'var(--text-muted, #777)' }}
                       >
                         {t('assets.importChooseDifferent')}
                       </button>
                       <button
                         onClick={handleImport}
                         disabled={isImporting || preview.valid.length === 0}
-                        className="px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-6 py-2 text-sm font-medium text-white rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed" style={{ backgroundColor: 'var(--accent, #e8600a)' }}
                       >
                         {isImporting ? t('assets.importImporting') : `${t('assets.importCount')} ${preview.valid.length} ${t('assets.importEquipmentUnit')}`}
                       </button>

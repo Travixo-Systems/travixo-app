@@ -75,7 +75,7 @@
 - Dashboard with compliance stats and financial risk calculation
 - Schedule management (create, edit, archive with audit trail)
 - Inspection recording with mandatory certificate uploads
-- DIRECCTE compliance reporting (PDF generation)
+- DREETS compliance reporting (PDF generation)
 - Inspections history with search, filter, CSV export
 - 14/14 test cases passing
 - **Impact:** Delivers on primary value proposition (prevent €15K-€75K fines)
@@ -200,7 +200,7 @@
 - **Blocker Risk:** MEDIUM (pricing confusion)
 
 **7. E2E Manual Test (Saturday-Sunday)**
-- [ ] Execute 9-step test scenario (signup → DIRECCTE report)
+- [ ] Execute 9-step test scenario (signup → DREETS report)
 - [ ] Document any bugs found
 - [ ] Test on mobile device
 - [ ] Test on desktop browsers

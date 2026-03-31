@@ -59,69 +59,69 @@ export function EditScheduleModal({ schedule, isOpen, onClose, onSuccess }: Edit
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-md w-full p-6">
+      <div className="rounded-xl max-w-[560px] w-full p-6" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">{t('vgpEditModal.title')}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <h2 className="text-lg font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpEditModal.title')}</h2>
+          <button onClick={onClose} className="transition-colors" style={{ color: 'var(--text-muted, #777)' }} onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary, #1a1a1a)' }} onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted, #777)' }}>
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-[13px] font-medium mb-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
               {t('vgpEditModal.equipment')}
             </label>
-            <div className="text-sm text-gray-900">{schedule.assets?.name}</div>
+            <div className="text-[13px]" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{schedule.assets?.name}</div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-[13px] font-medium mb-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
               {t('vgpEditModal.nextDueDate')} *
             </label>
             <input
               type="date"
               value={nextDueDate}
               onChange={(e) => setNextDueDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 rounded-lg text-[13px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-[13px] font-medium mb-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
               {t('vgpEditModal.notes')}
             </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 rounded-lg text-[13px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
               placeholder={t('vgpEditModal.notesPlaceholder')}
             />
           </div>
 
           {dateChanged && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-[13px] font-medium mb-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                 {t('vgpEditModal.reasonForChange')} *
               </label>
               <textarea
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 rounded-lg text-[13px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
                 placeholder={t('vgpEditModal.reasonPlaceholder')}
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-[11px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>
                 {t('vgpEditModal.reasonHelp')}
               </p>
             </div>
           )}
 
           {error && (
-            <div className="bg-red-50 text-red-600 px-3 py-2 rounded-lg text-sm">
+            <div className="px-3 py-2 rounded-lg text-sm" style={{ backgroundColor: 'rgba(220,38,38,0.08)', color: 'var(--status-retard, #dc2626)' }}>
               {error}
             </div>
           )}
@@ -130,14 +130,14 @@ export function EditScheduleModal({ schedule, isOpen, onClose, onSuccess }: Edit
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="flex-1 px-4 py-2 rounded-md font-medium transition-colors" style={{ color: 'var(--text-muted, #777)' }}
               disabled={isSubmitting}
             >
               {t('vgpEditModal.cancel')}
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="flex-1 px-4 py-2 text-white rounded-md font-medium hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: 'var(--accent, #e8600a)' }}
               disabled={isSubmitting}
             >
               {isSubmitting ? t('vgpEditModal.saving') : t('vgpEditModal.save')}

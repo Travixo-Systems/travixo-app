@@ -165,7 +165,7 @@ export default function ThemeSettingsPage() {
         {/* Back Button */}
         <Link
           href="/settings"
-          className="flex items-center text-sm text-gray-600 hover:text-gray-900 mb-6"
+          className="flex items-center text-sm text-[var(--text-muted,#777)] hover:text-[var(--text-primary,#1a1a1a)] mb-6"
         >
           <ArrowLeftIcon className="w-4 h-4 mr-2" />
           {labels.back[language]}
@@ -178,10 +178,10 @@ export default function ThemeSettingsPage() {
               <PaintBrushIcon className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900">
+              <h1 className="text-2xl font-semibold text-[var(--text-primary,#1a1a1a)]">
                 {labels.pageTitle[language]}
               </h1>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-[var(--text-muted,#777)]">
                 {labels.pageSubtitle[language]}
               </p>
             </div>
@@ -190,7 +190,7 @@ export default function ThemeSettingsPage() {
           {!isEditing && (
             <button
               onClick={() => setIsEditing(true)}
-              className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-[var(--text-secondary,#444)] bg-[var(--card-bg,#edeff2)] border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               <PencilIcon className="w-4 h-4" />
               <span>{labels.edit[language]}</span>
@@ -202,8 +202,8 @@ export default function ThemeSettingsPage() {
         {!isEditing && (
           <div className="space-y-6">
             {/* Current Colors */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-gray-900 mb-4">
+            <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
+              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-4">
                 {labels.colors[language]}
               </h3>
 
@@ -218,8 +218,8 @@ export default function ThemeSettingsPage() {
             </div>
 
             {/* Preview */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-gray-900 mb-4">
+            <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
+              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-4">
                 {labels.preview[language]}
               </h3>
 
@@ -263,11 +263,11 @@ export default function ThemeSettingsPage() {
         {isEditing && (
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Color Presets */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-gray-900 mb-2">
+            <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
+              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-2">
                 {labels.presets[language]}
               </h3>
-              <p className="text-xs text-gray-500 mb-4">{labels.presetsDesc[language]}</p>
+              <p className="text-xs text-[var(--text-hint,#888)] mb-4">{labels.presetsDesc[language]}</p>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {Object.entries(COLOR_PRESETS).map(([key, preset]) => (
@@ -291,7 +291,7 @@ export default function ThemeSettingsPage() {
                         style={{ backgroundColor: preset.colors.accent }}
                       />
                     </div>
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-sm font-medium text-[var(--text-primary,#1a1a1a)]">
                       {preset.name[language]}
                     </div>
                   </button>
@@ -300,11 +300,11 @@ export default function ThemeSettingsPage() {
             </div>
 
             {/* Color Customization */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-gray-900 mb-2">
+            <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
+              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-2">
                 {labels.colors[language]}
               </h3>
-              <p className="text-xs text-gray-500 mb-4">{labels.colorsDesc[language]}</p>
+              <p className="text-xs text-[var(--text-hint,#888)] mb-4">{labels.colorsDesc[language]}</p>
 
               <div className="space-y-4">
                 <ColorPicker
@@ -352,8 +352,8 @@ export default function ThemeSettingsPage() {
             </div>
 
             {/* Preview */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-gray-900 mb-4">
+            <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
+              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-4">
                 {labels.preview[language]}
               </h3>
 
@@ -397,7 +397,7 @@ export default function ThemeSettingsPage() {
               <button
                 type="button"
                 onClick={handleCancelEdit}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 text-sm font-medium text-[var(--text-secondary,#444)] bg-[var(--card-bg,#edeff2)] border border-gray-300 rounded-lg hover:bg-gray-50"
               >
                 {labels.cancel[language]}
               </button>
@@ -421,9 +421,9 @@ export default function ThemeSettingsPage() {
 function ColorDisplay({ label, color }: { label: string; color: string }) {
   return (
     <div className="flex items-center justify-between py-3 border-b border-gray-200 last:border-0">
-      <span className="text-sm font-medium text-gray-700">{label}</span>
+      <span className="text-sm font-medium text-[var(--text-secondary,#444)]">{label}</span>
       <div className="flex items-center space-x-3">
-        <span className="text-sm font-mono text-gray-600">{color}</span>
+        <span className="text-sm font-mono text-[var(--text-muted,#777)]">{color}</span>
         <div
           className="w-8 h-8 rounded border border-gray-300"
           style={{ backgroundColor: color }}
@@ -446,10 +446,10 @@ function ColorPicker({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+      <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-1">
         {label}
       </label>
-      <p className="text-xs text-gray-500 mb-2">{description}</p>
+      <p className="text-xs text-[var(--text-hint,#888)] mb-2">{description}</p>
       <div className="flex items-center space-x-3">
         <input
           type="color"

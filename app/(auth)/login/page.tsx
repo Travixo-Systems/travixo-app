@@ -155,7 +155,7 @@ function LoginContent() {
               <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
                 <Users className="w-5 h-5" style={{ color: BRAND.orange }} />
               </div>
-              <span className="text-sm">Audits d&apos;inventaire &amp; conformité DIRECCTE / Inventory audits</span>
+              <span className="text-sm">Audits d&apos;inventaire &amp; conformité DREETS / Inventory audits</span>
             </div>
           </div>
         </div>

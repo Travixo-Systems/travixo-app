@@ -156,7 +156,7 @@ export default function ReturnOverlay({
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
       {/* Panel */}
-      <div className="relative w-full max-w-lg bg-white rounded-t-2xl shadow-2xl animate-slide-up max-h-[85vh] overflow-y-auto">
+      <div className="relative w-full max-w-lg bg-[var(--card-bg,#edeff2)] rounded-t-2xl shadow-2xl animate-slide-up max-h-[85vh] overflow-y-auto">
         {/* Drag handle */}
         <div className="flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 bg-gray-300 rounded-full" />
@@ -215,7 +215,7 @@ export default function ReturnOverlay({
                     type="button"
                     onClick={() => setCondition(btn.value)}
                     className={`py-3 rounded-lg font-bold text-sm border-2 transition-all min-h-[48px] ${
-                      condition === btn.value ? btn.selectedColor : `bg-white ${btn.color}`
+                      condition === btn.value ? btn.selectedColor : `bg-[var(--card-bg,#edeff2)] ${btn.color}`
                     }`}
                   >
                     {btn.label}
@@ -293,7 +293,7 @@ export default function ReturnOverlay({
                 type="button"
                 onClick={onClose}
                 disabled={submitting}
-                className="px-6 py-3 bg-white text-[#00252b] border-2 border-[#00252b] rounded-lg font-bold hover:bg-[#00252b] hover:text-white transition-all disabled:opacity-50 min-h-[48px]"
+                className="px-6 py-3 bg-[var(--card-bg,#edeff2)] text-[#00252b] border-2 border-[#00252b] rounded-lg font-bold hover:bg-[#00252b] hover:text-white transition-all disabled:opacity-50 min-h-[48px]"
               >
                 {t('common.cancel')}
               </button>

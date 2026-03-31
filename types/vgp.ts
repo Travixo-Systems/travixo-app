@@ -1,5 +1,5 @@
 // ============================================================================
-// CORE VGP TYPES (DIRECCTE Compliant)
+// CORE VGP TYPES (DREETS Compliant)
 // ============================================================================
 
 /**
@@ -101,13 +101,13 @@ export interface VGPSchedule {
 }
 
 // ============================================================================
-// DIRECCTE REPORT TYPES
+// DREETS REPORT TYPES
 // ============================================================================
 
 /**
- * Complete VGP DIRECCTE Report structure
+ * Complete VGP DREETS Report structure
  */
-export interface VGPDIRECCTEReport {
+export interface VGPDREETSReport {
   rapportId: string;
   entreprise: {
     nom: string;
@@ -160,7 +160,7 @@ export interface VGPVerificationTypeDefinitions {
 }
 
 /**
- * Single inspection in DIRECCTE report
+ * Single inspection in DREETS report
  */
 export interface VGPReportInspection {
   date: string; // ISO date
@@ -186,7 +186,7 @@ export interface VGPReportInspection {
 }
 
 /**
- * Overdue equipment in DIRECCTE report
+ * Overdue equipment in DREETS report
  */
 export interface VGPOverdueEquipment {
   idInterne: string;
@@ -199,7 +199,7 @@ export interface VGPOverdueEquipment {
 }
 
 /**
- * Legal notice for DIRECCTE report
+ * Legal notice for DREETS report
  */
 export interface VGPLegalNotice {
   referenceCodeTravail: string;
@@ -282,7 +282,7 @@ export interface VGPReportGenerationResponse {
 // ============================================================================
 
 /**
- * Map legacy DB status to DIRECCTE status
+ * Map legacy DB status to DREETS status
  */
 export const mapResultToStatus = (
   result: VGPResultStatusLegacy
@@ -296,7 +296,7 @@ export const mapResultToStatus = (
 };
 
 /**
- * Map DIRECCTE status to legacy DB status
+ * Map DREETS status to legacy DB status
  */
 export const mapStatusToResult = (
   status: VGPResultStatus

@@ -1,5 +1,5 @@
 // app/api/vgp/report/route.ts
-// DIRECCTE-compliant VGP report generation
+// DREETS-compliant VGP report generation
 
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
@@ -183,7 +183,7 @@ export async function POST(request: Request) {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="rapport-vgp-direccte-${start_date}-${end_date}.pdf"`,
+        "Content-Disposition": `attachment; filename="rapport-vgp-dreets-${start_date}-${end_date}.pdf"`,
         "Content-Length": pdfBuffer.length.toString(),
       },
     });

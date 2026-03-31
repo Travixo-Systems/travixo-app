@@ -68,7 +68,7 @@ function VGPContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#e8600a]"></div>
       </div>
     );
   }
@@ -80,15 +80,16 @@ function VGPContent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">{t('vgpDashboard.pageTitle')}</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-xl font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpDashboard.pageTitle')}</h1>
+          <p className="mt-1" style={{ color: 'var(--text-muted, #777)' }}>
             {t('vgpDashboard.pageSubtitle')}
           </p>
         </div>
         {!isReadOnly && (
           <button
             onClick={() => (window.location.href = '/vgp/report')}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-md transition-colors hover:opacity-90"
+            style={{ backgroundColor: 'var(--card-bg, #edeff2)', color: 'var(--text-primary, #1a1a1a)', border: '0.5px solid #b8b8b8' }}
           >
             <FileText className="w-4 h-4" />
             {t('vgpDashboard.generateReport')}
@@ -101,110 +102,94 @@ function VGPContent() {
         {/* Compliance Rate - Green */}
         <div
           onClick={() => (window.location.href = '/vgp/schedules')}
-          className="bg-white rounded-lg shadow p-6 border-l-4 border-b-4 border-t border-r border-gray-200 hover:shadow-lg transition-all cursor-pointer"
-          style={{ borderLeftColor: '#047857', borderBottomColor: '#047857' }}
+          className="rounded-lg p-[14px_16px] border-l-[3px] hover:opacity-90 transition-all cursor-pointer"
+          style={{ backgroundColor: 'var(--card-bg, #edeff2)', borderLeftColor: 'var(--status-conforme, #059669)' }}
         >
-          <div className="flex items-center justify-between mb-2">
-            <CheckCircle className="w-8 h-8 text-green-600" />
-            <span className="text-2xl font-bold text-green-600">
-              {summary?.compliance_rate || 0}%
-            </span>
-          </div>
-          <h3 className="text-sm font-semibold text-gray-700">{t('vgpDashboard.complianceRate')}</h3>
-          <p className="text-xs text-gray-500 mt-1">
+          <span className="text-[26px] font-medium" style={{ color: 'var(--status-conforme, #059669)' }}>
+            {summary?.compliance_rate || 0}%
+          </span>
+          <h3 className="text-xs font-medium mt-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpDashboard.complianceRate')}</h3>
+          <p className="text-[11px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>
             {summary?.compliant_assets || 0} {t('vgpDashboard.compliantEquipment')}
           </p>
         </div>
 
-        {/* Upcoming - Yellow */}
+        {/* Upcoming - Amber */}
         <div
           onClick={() => (window.location.href = '/vgp/schedules?status=upcoming')}
-          className="bg-white rounded-lg shadow p-6 border-l-4 border-b-4 border-t border-r border-gray-200 hover:shadow-lg transition-all cursor-pointer"
-          style={{ borderLeftColor: '#eab308', borderBottomColor: '#eab308' }}
+          className="rounded-lg p-[14px_16px] border-l-[3px] hover:opacity-90 transition-all cursor-pointer"
+          style={{ backgroundColor: 'var(--card-bg, #edeff2)', borderLeftColor: 'var(--status-bientot, #d97706)' }}
         >
-          <div className="flex items-center justify-between mb-2">
-            <Calendar className="w-8 h-8 text-yellow-600" />
-            <span className="text-2xl font-bold text-yellow-600">{upcoming.length}</span>
-          </div>
-          <h3 className="text-sm font-semibold text-gray-700">{t('vgpDashboard.upcoming')}</h3>
-          <p className="text-xs text-gray-500 mt-1">{t('vgpDashboard.plannedInspections')}</p>
+          <span className="text-[26px] font-medium" style={{ color: 'var(--status-bientot, #d97706)' }}>{upcoming.length}</span>
+          <h3 className="text-xs font-medium mt-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpDashboard.upcoming')}</h3>
+          <p className="text-[11px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('vgpDashboard.plannedInspections')}</p>
         </div>
 
         {/* Overdue - Red */}
         <div
           onClick={() => (window.location.href = '/vgp/schedules?status=overdue')}
-          className="bg-white rounded-lg shadow p-6 border-l-4 border-b-4 border-t border-r border-gray-200 hover:shadow-lg transition-all cursor-pointer"
-          style={{ borderLeftColor: '#b91c1c', borderBottomColor: '#b91c1c' }}
+          className="rounded-lg p-[14px_16px] border-l-[3px] hover:opacity-90 transition-all cursor-pointer"
+          style={{ backgroundColor: 'var(--card-bg, #edeff2)', borderLeftColor: 'var(--status-retard, #dc2626)' }}
         >
-          <div className="flex items-center justify-between mb-2">
-            <AlertCircle className="w-8 h-8 text-red-600" />
-            <span className="text-2xl font-bold text-red-600">{overdue.length}</span>
-          </div>
-          <h3 className="text-sm font-semibold text-gray-700">{t('vgpDashboard.overdue')}</h3>
-          <p className="text-xs text-gray-500 mt-1">{t('vgpDashboard.immediateAction')}</p>
+          <span className="text-[26px] font-medium" style={{ color: 'var(--status-retard, #dc2626)' }}>{overdue.length}</span>
+          <h3 className="text-xs font-medium mt-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpDashboard.overdue')}</h3>
+          <p className="text-[11px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('vgpDashboard.immediateAction')}</p>
         </div>
 
-        {/* Total Equipment - Gray */}
+        {/* Total Equipment - Neutral */}
         <div
           onClick={() => (window.location.href = '/vgp/schedules')}
-          className="bg-white rounded-lg shadow p-6 border-l-4 border-b-4 border-t border-r border-gray-200 hover:shadow-lg transition-all cursor-pointer"
-          style={{ borderLeftColor: '#6b7280', borderBottomColor: '#6b7280' }}
+          className="rounded-lg p-[14px_16px] border-l-[3px] hover:opacity-90 transition-all cursor-pointer"
+          style={{ backgroundColor: 'var(--card-bg, #edeff2)', borderLeftColor: 'var(--status-neutral, #6b7280)' }}
         >
-          <div className="flex items-center justify-between mb-2">
-            <TrendingUp className="w-8 h-8 text-gray-600" />
-            <span className="text-2xl font-bold text-gray-600">
-              {totalEquipments}
-            </span>
-          </div>
-          <h3 className="text-sm font-semibold text-gray-700">{t('vgpDashboard.totalEquipment')}</h3>
-          <p className="text-xs text-gray-500 mt-1">{t('vgpDashboard.underVGPMonitoring')}</p>
+          <span className="text-[26px] font-medium" style={{ color: 'var(--status-neutral, #6b7280)' }}>
+            {totalEquipments}
+          </span>
+          <h3 className="text-xs font-medium mt-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpDashboard.totalEquipment')}</h3>
+          <p className="text-[11px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('vgpDashboard.underVGPMonitoring')}</p>
         </div>
       </div>
 
       {/* OVERDUE Section */}
       {overdue.length > 0 && (
-        <div 
-          className="bg-white rounded-lg shadow-sm p-4 border-t-[5px] border-r-[5px] border-l border-b border-gray-200"
-          style={{ borderTopColor: '#b91c1c', borderRightColor: '#b91c1c' }}
+        <div
+          className="rounded-lg p-4 border-l-[3px]"
+          style={{ backgroundColor: 'var(--card-bg, #edeff2)', borderLeftColor: 'var(--status-retard, #dc2626)' }}
         >
-          {/* Header */}
           <div className="flex items-center gap-2 mb-3">
-            <AlertCircle className="w-5 h-5 text-red-600" />
-            <h2 className="text-base font-bold text-red-900">
+            <h2 className="text-[13px] font-medium" style={{ color: 'var(--status-retard, #dc2626)' }}>
               {t('vgpDashboard.overdueSection')} ({overdue.length}) - {t('vgpDashboard.risk')}: €{financialRiskMin.toLocaleString()}-€{financialRiskMax.toLocaleString()}
             </h2>
           </div>
 
-          {/* Compact rows */}
-          <div className="space-y-2">
+          <div className="divide-y" style={{ borderColor: '#dcdee3' }}>
             {overdue.slice(0, 4).map((schedule) => {
               const daysOverdue = Math.abs(getDaysUntil(schedule.next_due_date));
               return (
-                <div key={schedule.id} className="flex items-center justify-between text-sm py-1">
+                <div key={schedule.id} className="flex items-center justify-between text-[13px] py-2">
                   <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <span className="font-medium text-gray-900 truncate">
+                    <span className="font-medium truncate" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                       {schedule.assets?.name || 'N/A'}
                     </span>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs" style={{ color: 'var(--text-hint, #888)' }}>
                       #{schedule.assets?.serial_number || 'N/A'}
                     </span>
                   </div>
                   <div className="flex-shrink-0">
-                    <span className="text-red-600 font-semibold">{daysOverdue}j</span>
+                    <span className="text-white text-xs font-medium px-2 py-0.5 rounded" style={{ backgroundColor: 'var(--status-retard, #dc2626)' }}>{daysOverdue}j</span>
                   </div>
                 </div>
               );
             })}
           </div>
 
-          {/* View more button */}
           {overdue.length > 4 && (
             <button
               onClick={() => window.location.href = '/vgp/schedules?status=overdue'}
-              className="mt-3 w-full py-2 px-4 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700 transition-colors flex items-center justify-center gap-2"
+              className="mt-3 text-xs font-medium transition-colors"
+              style={{ color: 'var(--accent, #e8600a)' }}
             >
-              + {overdue.length - 4} {t('vgpDashboard.otherEquipment')} • {t('vgpDashboard.viewAll')}
-              <ArrowRight className="w-4 h-4" />
+              {t('vgpDashboard.viewAll')} →
             </button>
           )}
         </div>
@@ -212,26 +197,23 @@ function VGPContent() {
 
       {/* UPCOMING Section */}
       {upcoming.length > 0 && (
-        <div 
-          className="bg-white rounded-lg shadow-sm p-4 border-t-[5px] border-r-[5px] border-l border-b border-gray-200"
-          style={{ borderTopColor: '#eab308', borderRightColor: '#eab308' }}
+        <div
+          className="rounded-lg p-4 border-l-[3px]"
+          style={{ backgroundColor: 'var(--card-bg, #edeff2)', borderLeftColor: 'var(--status-bientot, #d97706)' }}
         >
-          {/* Header */}
           <div className="flex items-center gap-2 mb-3">
-            <Calendar className="w-5 h-5 text-yellow-600" />
-            <h2 className="text-base font-bold text-gray-900">
+            <h2 className="text-[13px] font-medium" style={{ color: 'var(--status-bientot, #d97706)' }}>
               {t('vgpDashboard.upcomingSection')} ({upcoming.length}) - {t('vgpDashboard.next30Days')}
             </h2>
           </div>
 
-          {/* Compact rows */}
-          <div className="space-y-2">
+          <div className="divide-y" style={{ borderColor: '#dcdee3' }}>
             {upcoming.slice(0, 3).map((schedule) => {
               const daysUntil = getDaysUntil(schedule.next_due_date);
               return (
-                <div key={schedule.id} className="flex items-center justify-between text-sm py-1">
+                <div key={schedule.id} className="flex items-center justify-between text-[13px] py-2">
                   <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <span className="font-medium text-gray-900 truncate">
+                    <span className="font-medium truncate" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                       {schedule.assets?.name || 'N/A'}
                     </span>
                   </div>
@@ -243,14 +225,13 @@ function VGPContent() {
             })}
           </div>
 
-          {/* View more button */}
           {upcoming.length > 3 && (
             <button
               onClick={() => window.location.href = '/vgp/schedules?status=upcoming'}
-              className="mt-3 w-full py-2 px-4 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700 transition-colors flex items-center justify-center gap-2"
+              className="mt-3 text-xs font-medium transition-colors"
+              style={{ color: 'var(--accent, #e8600a)' }}
             >
-              {t('vgpDashboard.viewAllInTracking')}
-              <ArrowRight className="w-4 h-4" />
+              {t('vgpDashboard.viewAllInTracking')} →
             </button>
           )}
         </div>

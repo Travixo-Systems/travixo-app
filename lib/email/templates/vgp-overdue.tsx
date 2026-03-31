@@ -1,7 +1,7 @@
 // =============================================================================
 // VGP Overdue Alert
 // "OVERDUE: X inspections past due date - risk of fines"
-// Strongest urgency level. Includes DIRECCTE fine warning.
+// Strongest urgency level. Includes DREETS fine warning.
 // =============================================================================
 
 import {
@@ -77,13 +77,13 @@ export function VGPOverdue({
               </Text>
             </Section>
 
-            {/* DIRECCTE Fine Warning - Prominent at top for overdue */}
+            {/* DREETS Fine Warning - Prominent at top for overdue */}
             <Section style={fineWarningStyle}>
               <Text style={fineWarningTitleStyle}>
-                Amendes DIRECCTE applicables
+                Amendes DREETS applicables
               </Text>
               <Text style={fineWarningTextStyle}>
-                Rappel : Les amendes DIRECCTE pour non-conformite VGP vont de
+                Rappel : Les amendes DREETS pour non-conformite VGP vont de
                 3 000 EUR a 10 000 EUR par infraction. Avec {count} equipement
                 {count > 1 ? 's' : ''} en retard, l'amende potentielle totale
                 est de {(3000 * count).toLocaleString('fr-FR')} EUR a{' '}
@@ -114,7 +114,7 @@ export function VGPOverdue({
                 OVERDUE: {organizationName} has {count} VGP inspection
                 {count > 1 ? 's' : ''} past their due date. These assets are
                 non-compliant and should not be put into service until
-                inspected. DIRECCTE fines range from EUR 3,000 to EUR 10,000
+                inspected. DREETS fines range from EUR 3,000 to EUR 10,000
                 per violation. Total potential fine: EUR{' '}
                 {(3000 * count).toLocaleString()} to EUR{' '}
                 {(10000 * count).toLocaleString()}.

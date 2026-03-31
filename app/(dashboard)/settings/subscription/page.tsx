@@ -126,30 +126,30 @@ export default function SubscriptionPage() {
   const isExistingCustomer = currentPlan && currentPlan.slug !== 'trial' && !isTrial;
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
+    <div className="p-8 min-h-screen">
       <div className="max-w-7xl mx-auto space-y-6">
 
         {/* Header */}
         <div className="flex items-end justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{t('subscription.pageTitle')}</h1>
-            <p className="text-sm text-gray-600 mt-0.5">{t('subscription.pageSubtitle')}</p>
+            <h1 className="text-xl font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('subscription.pageTitle')}</h1>
+            <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted, #777)' }}>{t('subscription.pageSubtitle')}</p>
           </div>
         </div>
 
         {/* Current Status Bar */}
-        <div className="bg-white rounded-lg border-l-4 p-4 flex items-center justify-between" style={{ borderLeftColor: BRAND.primary }}>
+        <div className="rounded-lg border-l-4 p-4 flex items-center justify-between" style={{ backgroundColor: 'var(--card-bg, #edeff2)', borderLeftColor: BRAND.primary }}>
           <div className="flex items-center gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="font-semibold text-gray-900">{currentPlan?.name || t('subscription.noPlan')}</span>
+                <span className="font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{currentPlan?.name || t('subscription.noPlan')}</span>
                 {subscriptionStatus && (
                   <span className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusBadgeColor(subscriptionStatus)}`}>
                     {t(`subscription.status.${subscriptionStatus}`) || subscriptionStatus}
                   </span>
                 )}
               </div>
-              <p className="text-xs text-gray-600">{t('subscription.forMidSizeOps')}</p>
+              <p className="text-xs" style={{ color: 'var(--text-secondary, #444)' }}>{t('subscription.forMidSizeOps')}</p>
             </div>
           </div>
 
@@ -157,10 +157,10 @@ export default function SubscriptionPage() {
             {usage && (
               <div className="flex items-center gap-6">
                 <div className="text-right">
-                  <div className="text-xs text-gray-600 mb-1">{t('subscription.assetsUsed')}</div>
+                  <div className="text-xs mb-1" style={{ color: 'var(--text-secondary, #444)' }}>{t('subscription.assetsUsed')}</div>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-lg font-bold text-gray-900">{usage.assets}</span>
-                    <span className="text-xs text-gray-500">/ {usage.max_assets === 999999 ? '∞' : usage.max_assets}</span>
+                    <span className="text-lg font-bold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{usage.assets}</span>
+                    <span className="text-xs" style={{ color: 'var(--text-muted, #777)' }}>/ {usage.max_assets === 999999 ? '∞' : usage.max_assets}</span>
                   </div>
                 </div>
                 <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -174,8 +174,8 @@ export default function SubscriptionPage() {
 
             {isTrial && daysRemaining !== null && (
               <div className="text-right border-l border-gray-200 pl-6">
-                <div className="text-xs text-gray-600">{t('subscription.trialEndsIn')}</div>
-                <div className="text-lg font-bold text-gray-900">{daysRemaining} {t('subscription.days')}</div>
+                <div className="text-xs" style={{ color: 'var(--text-secondary, #444)' }}>{t('subscription.trialEndsIn')}</div>
+                <div className="text-lg font-bold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{daysRemaining} {t('subscription.days')}</div>
               </div>
             )}
 
@@ -185,7 +185,8 @@ export default function SubscriptionPage() {
                 <button
                   onClick={() => openPortal()}
                   disabled={portalPending}
-                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium border border-gray-300 rounded-lg disabled:opacity-50 transition-colors"
+                  style={{ color: 'var(--text-secondary, #444)', backgroundColor: 'var(--card-bg, #edeff2)' }}
                 >
                   <CreditCardIcon className="w-4 h-4" />
                   {portalPending ? t('subscription.loading') : t('subscription.manageBilling')}
@@ -207,26 +208,26 @@ export default function SubscriptionPage() {
         )}
 
         {isPilot && (
-          <div className="bg-purple-50 border-l-4 border-purple-600 rounded-lg p-4 flex items-start gap-3">
-            <SparklesIcon className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
+          <div className="rounded-lg border-l-4 p-4 flex items-start gap-3" style={{ backgroundColor: 'var(--card-bg, #edeff2)', borderLeftColor: 'var(--accent, #e8600a)' }}>
+            <SparklesIcon className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: 'var(--accent, #e8600a)' }} />
             <div>
-              <p className="text-sm font-semibold text-purple-900">{t('subscription.pilotAccess')}</p>
-              <p className="text-xs text-purple-700 mt-0.5">{t('subscription.pilotDescription')}</p>
+              <p className="text-sm font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('subscription.pilotAccess')}</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary, #444)' }}>{t('subscription.pilotDescription')}</p>
             </div>
           </div>
         )}
 
         {/* Billing Cycle Toggle */}
         <div className="flex justify-center">
-          <div className="inline-flex items-center bg-white border border-gray-200 rounded-lg p-1">
+          <div className="inline-flex items-center rounded-lg p-1" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
             <button
               onClick={() => setBillingCycle('monthly')}
               className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                 billingCycle === 'monthly'
                   ? 'text-white'
-                  : 'text-gray-600 hover:text-gray-900'
+                  : ''
               }`}
-              style={billingCycle === 'monthly' ? { backgroundColor: BRAND.primary } : {}}
+              style={billingCycle === 'monthly' ? { backgroundColor: BRAND.primary } : { color: 'var(--text-secondary, #444)' }}
             >
               {t('subscription.billingMonthly')}
             </button>
@@ -235,9 +236,9 @@ export default function SubscriptionPage() {
               className={`px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${
                 billingCycle === 'yearly'
                   ? 'text-white'
-                  : 'text-gray-600 hover:text-gray-900'
+                  : ''
               }`}
-              style={billingCycle === 'yearly' ? { backgroundColor: BRAND.primary } : {}}
+              style={billingCycle === 'yearly' ? { backgroundColor: BRAND.primary } : { color: 'var(--text-secondary, #444)' }}
             >
               {t('subscription.billingYearly')}
               <span className={`px-1.5 py-0.5 text-xs font-semibold rounded ${
@@ -287,14 +288,16 @@ export default function SubscriptionPage() {
             return (
               <div
                 key={plan.id}
-                className={`relative bg-white rounded-lg overflow-hidden transition-all ${
-                  isRecommended
-                    ? 'border-2 shadow-lg'
-                    : isCurrentPlan
-                    ? 'border-2 border-gray-900'
+                className={`relative rounded-lg overflow-hidden transition-all ${
+                  isCurrentPlan
+                    ? 'border-l-[3px]'
                     : 'border-2 border-gray-200'
-                }`}
-                style={isRecommended ? { borderColor: BRAND.warning } : {}}
+                } ${isRecommended ? 'border-2' : ''}`}
+                style={{
+                  backgroundColor: 'var(--card-bg, #edeff2)',
+                  ...(isCurrentPlan && !isRecommended ? { borderLeftColor: 'var(--accent, #e8600a)' } : {}),
+                  ...(isRecommended ? { borderColor: BRAND.warning } : {}),
+                }}
               >
                 {isRecommended && (
                   <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: BRAND.warning }}></div>
@@ -303,8 +306,8 @@ export default function SubscriptionPage() {
                 <div className="p-6 pb-4">
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
-                      <p className="text-xs text-gray-600 mt-1">{plan.description}</p>
+                      <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{plan.name}</h3>
+                      <p className="text-xs mt-1" style={{ color: 'var(--text-secondary, #444)' }}>{plan.description}</p>
                     </div>
                     {isCurrentPlan && (
                       <span className="px-2 py-1 bg-gray-900 text-white text-xs font-semibold rounded">
@@ -322,26 +325,26 @@ export default function SubscriptionPage() {
                   <div className="mb-4">
                     {isEnterprise ? (
                       <>
-                        <div className="text-2xl font-bold text-gray-900">
+                        <div className="text-2xl font-bold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                           {t('subscription.customPricing')}
                         </div>
-                        <div className="text-xs text-gray-600 mt-1">
+                        <div className="text-xs mt-1" style={{ color: 'var(--text-secondary, #444)' }}>
                           {t('subscription.contactForQuote')}
                         </div>
                       </>
                     ) : (
                       <>
-                        <div className="text-3xl font-bold text-green-600">
+                        <div className="text-3xl font-bold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                           {formatEuro(displayPrice)} €
                         </div>
-                        <div className="text-sm font-medium text-gray-700 mt-0.5">
+                        <div className="text-sm font-medium mt-0.5" style={{ color: 'var(--text-secondary, #444)' }}>
                           {billingCycle === 'yearly' ? t('subscription.perYear') : t('subscription.perMonth')}
                         </div>
 
                         {/* Show strikethrough + loyalty badge if discounted */}
                         {hasLoyaltyDiscount && (
                           <div className="flex items-center gap-2 mt-2">
-                            <span className="text-xs text-gray-500 line-through">
+                            <span className="text-xs line-through" style={{ color: 'var(--text-muted, #777)' }}>
                               {formatEuro(plan.price_yearly)} €
                             </span>
                             <span className="px-1.5 py-0.5 bg-green-50 text-green-700 text-xs font-semibold rounded">
@@ -351,7 +354,7 @@ export default function SubscriptionPage() {
                         )}
 
                         {/* Show the alternate cycle price */}
-                        <div className="text-xs text-gray-500 mt-2">
+                        <div className="text-xs mt-2" style={{ color: 'var(--text-muted, #777)' }}>
                           {billingCycle === 'yearly'
                             ? `${t('subscription.orMonthly')} ${formatEuro(plan.price_monthly)} €/${t('subscription.month')}`
                             : `${t('subscription.orMonthly')} ${formatEuro(plan.price_yearly)} €/${t('subscription.perYear')}`}
@@ -371,7 +374,7 @@ export default function SubscriptionPage() {
                   ) : isCurrentPlan ? (
                     <button
                       disabled
-                      className="w-full py-2.5 px-4 rounded-lg font-medium text-sm bg-gray-100 text-gray-400 cursor-not-allowed"
+                      className="w-full py-2.5 px-4 rounded-lg font-medium text-sm bg-gray-100 text-[var(--text-hint,#888)] cursor-not-allowed"
                     >
                       {t('subscription.currentPlan')}
                     </button>
@@ -379,12 +382,8 @@ export default function SubscriptionPage() {
                     <button
                       onClick={() => openPortal()}
                       disabled={portalPending}
-                      className={`w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-colors ${
-                        isRecommended
-                          ? 'text-white hover:opacity-90'
-                          : 'bg-gray-900 text-white hover:bg-gray-800'
-                      } ${portalPending ? 'opacity-60' : ''}`}
-                      style={isRecommended ? { backgroundColor: BRAND.warning } : {}}
+                      className={`w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-colors text-white hover:opacity-90 ${portalPending ? 'opacity-60' : ''}`}
+                      style={{ backgroundColor: 'var(--accent, #e8600a)' }}
                     >
                       {portalPending ? t('subscription.loading') : t('subscription.changePlan')}
                     </button>
@@ -392,12 +391,8 @@ export default function SubscriptionPage() {
                     <button
                       onClick={() => handlePlanAction(plan.slug)}
                       disabled={isActionLoading}
-                      className={`w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-colors ${
-                        isRecommended
-                          ? 'text-white hover:opacity-90'
-                          : 'bg-gray-900 text-white hover:bg-gray-800'
-                      } ${isActionLoading ? 'opacity-60' : ''}`}
-                      style={isRecommended ? { backgroundColor: BRAND.warning } : {}}
+                      className={`w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-colors text-white hover:opacity-90 ${isActionLoading ? 'opacity-60' : ''}`}
+                      style={{ backgroundColor: 'var(--accent, #e8600a)' }}
                     >
                       {isActionLoading
                         ? t('subscription.loading')
@@ -410,7 +405,7 @@ export default function SubscriptionPage() {
 
                 {/* Features */}
                 <div className="p-6 pt-4">
-                  <div className="text-xs font-semibold text-gray-700 mb-3 uppercase tracking-wide">
+                  <div className="text-xs font-semibold mb-3 uppercase tracking-wide" style={{ color: 'var(--text-secondary, #444)' }}>
                     {plan.max_assets === 999999
                       ? t('subscription.unlimitedAssets')
                       : `${plan.max_assets.toLocaleString()} ${t('subscription.assetsLabel')}`}
@@ -485,9 +480,9 @@ export default function SubscriptionPage() {
 
         {/* Footer */}
         <div className="text-center pt-4 space-y-1">
-          <p className="text-sm text-gray-500">{t('subscription.securePayment')}</p>
-          <p className="text-sm text-gray-500">{t('subscription.cancelAnytime')}</p>
-          <p className="text-sm text-gray-600 mt-2">
+          <p className="text-sm" style={{ color: 'var(--text-muted, #777)' }}>{t('subscription.securePayment')}</p>
+          <p className="text-sm" style={{ color: 'var(--text-muted, #777)' }}>{t('subscription.cancelAnytime')}</p>
+          <p className="text-sm mt-2" style={{ color: 'var(--text-secondary, #444)' }}>
             {t('subscription.questions')} <a href="mailto:support@travixosystems.com" className="font-medium hover:underline" style={{ color: BRAND.warning }}>
               {t('subscription.contactSupport')}
             </a>
@@ -521,24 +516,24 @@ function FeatureItem({
         <CheckIcon className="w-4 h-4 flex-shrink-0" style={{ color: BRAND.success }} />
       )}
       {isOnDemand && (
-        <ClockIcon className="w-4 h-4 text-blue-600 flex-shrink-0" />
+        <ClockIcon className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--accent, #e8600a)' }} />
       )}
       {isComingSoon && (
-        <ClockIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
+        <ClockIcon className="w-4 h-4 text-[var(--text-hint,#888)] flex-shrink-0" />
       )}
 
-      <span className={`text-sm ${isAvailable ? 'text-gray-900' : isOnDemand ? 'text-gray-700' : 'text-gray-400'}`}>
+      <span className={`text-sm ${isComingSoon ? 'text-[var(--text-hint,#888)]' : ''}`} style={isAvailable ? { color: 'var(--text-primary, #1a1a1a)' } : isOnDemand ? { color: 'var(--text-secondary, #444)' } : {}}>
         {text}
       </span>
 
       {isOnDemand && (
         <>
-          <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-xs font-medium rounded">
+          <span className="px-1.5 py-0.5 text-xs font-medium rounded" style={{ backgroundColor: 'var(--input-bg, #f5f5f5)', color: 'var(--text-secondary, #444)' }}>
             {t('subscription.onDemand')}
           </span>
           {tooltip && (
             <>
-              <InformationCircleIcon className="w-3.5 h-3.5 text-gray-400 cursor-help" />
+              <InformationCircleIcon className="w-3.5 h-3.5 text-[var(--text-hint,#888)] cursor-help" />
               <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block z-10 w-64 p-2 bg-gray-900 text-white text-xs rounded shadow-lg">
                 {tooltip}
               </div>
@@ -548,7 +543,7 @@ function FeatureItem({
       )}
 
       {isComingSoon && (
-        <span className="px-1.5 py-0.5 bg-gray-100 text-gray-500 text-xs font-medium rounded">
+        <span className="px-1.5 py-0.5 text-xs font-medium rounded" style={{ backgroundColor: 'var(--input-bg, #f5f5f5)', color: 'var(--text-muted, #777)' }}>
           {t('subscription.comingSoon')}
         </span>
       )}

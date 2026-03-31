@@ -451,7 +451,7 @@ export default function AuditDetailPage() {
       </div>
 
       {/* Progress Bar */}
-      <div className="bg-white rounded-lg shadow-sm p-5">
+      <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-sm p-5">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium text-gray-700">{t('audits.progress')}</span>
           <span className="text-sm font-bold" style={{ color: audit.status === 'completed' ? BRAND_COLORS.success : progressColor }}>
@@ -473,7 +473,7 @@ export default function AuditDetailPage() {
       <div className="grid gap-4 md:grid-cols-4">
         <button
           onClick={() => setStatusFilter('all')}
-          className={`bg-white rounded-lg p-4 text-left transition-shadow hover:shadow-md ${
+          className={`bg-[var(--card-bg,#edeff2)] rounded-lg p-4 text-left transition-shadow hover:shadow-md ${
             statusFilter === 'all' ? 'ring-2 ring-gray-400' : ''
           }`}
           style={{ borderLeft: `4px solid ${BRAND_COLORS.gray}`, borderBottom: `4px solid ${BRAND_COLORS.gray}` }}
@@ -489,7 +489,7 @@ export default function AuditDetailPage() {
 
         <button
           onClick={() => setStatusFilter('verified')}
-          className={`bg-white rounded-lg p-4 text-left transition-shadow hover:shadow-md ${
+          className={`bg-[var(--card-bg,#edeff2)] rounded-lg p-4 text-left transition-shadow hover:shadow-md ${
             statusFilter === 'verified' ? 'ring-2 ring-green-400' : ''
           }`}
           style={{ borderLeft: `4px solid ${BRAND_COLORS.success}`, borderBottom: `4px solid ${BRAND_COLORS.success}` }}
@@ -500,7 +500,7 @@ export default function AuditDetailPage() {
 
         <button
           onClick={() => setStatusFilter('pending')}
-          className={`bg-white rounded-lg p-4 text-left transition-shadow hover:shadow-md ${
+          className={`bg-[var(--card-bg,#edeff2)] rounded-lg p-4 text-left transition-shadow hover:shadow-md ${
             statusFilter === 'pending' ? 'ring-2 ring-orange-400' : ''
           }`}
           style={{ borderLeft: `4px solid ${BRAND_COLORS.warning}`, borderBottom: `4px solid ${BRAND_COLORS.warning}` }}
@@ -511,7 +511,7 @@ export default function AuditDetailPage() {
 
         <button
           onClick={() => setStatusFilter('missing')}
-          className={`bg-white rounded-lg p-4 text-left transition-shadow hover:shadow-md ${
+          className={`bg-[var(--card-bg,#edeff2)] rounded-lg p-4 text-left transition-shadow hover:shadow-md ${
             statusFilter === 'missing' ? 'ring-2 ring-red-400' : ''
           }`}
           style={{ borderLeft: `4px solid ${BRAND_COLORS.danger}`, borderBottom: `4px solid ${BRAND_COLORS.danger}` }}
@@ -523,7 +523,7 @@ export default function AuditDetailPage() {
 
       {/* Not Started State */}
       {audit.status === 'planned' && (
-        <div className="bg-white rounded-lg shadow-sm p-12 text-center">
+        <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-sm p-12 text-center">
           <Clock className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900">{t('audits.auditNotStarted')}</h3>
           <p className="text-gray-500 mt-1">{t('audits.auditNotStartedDesc')}</p>
@@ -540,7 +540,7 @@ export default function AuditDetailPage() {
       {/* Search & Filter */}
       {audit.status !== 'planned' && (
         <>
-          <div className="bg-white rounded-lg shadow-sm p-4">
+          <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-sm p-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
@@ -555,12 +555,12 @@ export default function AuditDetailPage() {
 
           {/* Items List */}
           {filteredItems.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-sm p-12 text-center">
+            <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-sm p-12 text-center">
               <Package className="w-12 h-12 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900">{t('audits.noAssetsFound')}</h3>
             </div>
           ) : (
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-sm overflow-hidden">
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
@@ -678,7 +678,7 @@ export default function AuditDetailPage() {
 
       {/* Excluded Assets Section */}
       {excludedItems.length > 0 && (statusFilter === 'all' || statusFilter === 'excluded') && (
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b bg-gray-50">
             <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
               <Ban className="w-4 h-4 text-gray-400" />
@@ -707,7 +707,7 @@ export default function AuditDetailPage() {
       {/* Complete Modal */}
       {showCompleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+          <div className="bg-[var(--card-bg,#edeff2)] rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-gray-900">{t('audits.confirmComplete')}</h2>
               <button

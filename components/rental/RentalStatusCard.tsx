@@ -60,7 +60,7 @@ export default function RentalStatusCard({
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-md border-l-4 border-b-4 border-gray-300 p-6 mb-6 animate-pulse">
+      <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md border-l-4 border-b-4 border-gray-300 p-6 mb-6 animate-pulse">
         <div className="h-5 bg-gray-200 rounded w-1/3 mb-3" />
         <div className="h-4 bg-gray-200 rounded w-1/2" />
       </div>
@@ -70,7 +70,7 @@ export default function RentalStatusCard({
   // No active rental -- available
   if (!rental) {
     return (
-      <div className="bg-white rounded-lg shadow-md border-l-4 border-b-4 border-green-500 p-6 mb-6">
+      <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md border-l-4 border-b-4 border-green-500 p-6 mb-6">
         <div className="flex items-center gap-3 mb-3">
           <Handshake className="w-6 h-6 text-green-600" />
           <h3 className="font-bold text-[#00252b] text-lg">
@@ -105,7 +105,7 @@ export default function RentalStatusCard({
     : 0
 
   const borderColor = isOverdue ? 'border-red-500' : 'border-blue-500'
-  const bgColor = isOverdue ? 'bg-red-50' : 'bg-white'
+  const bgColor = isOverdue ? 'bg-red-50' : 'bg-[var(--card-bg,#edeff2)]'
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString(

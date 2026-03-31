@@ -159,7 +159,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: 'var(--accent, #e8600a)' }}></div>
       </div>
     )
   }
@@ -194,14 +194,14 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">{orgName}</h1>
-          <p className="text-slate-600 mt-1 text-sm">
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--text-primary,#1a1a1a)]">{orgName}</h1>
+          <p className="text-[var(--text-secondary,#444)] mt-1 text-sm">
             {t('dashboard.title')}
           </p>
         </div>
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200"
+          className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:text-[var(--text-primary,#1a1a1a)] hover:bg-slate-100 rounded-lg transition-colors border border-slate-200"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -236,28 +236,28 @@ export default function DashboardPage() {
 
       {/* Key Metrics */}
       <div className="grid gap-3 md:grid-cols-3">
-        <div className="bg-white border border-slate-200 rounded-lg p-5">
-          <p className="text-xs text-slate-600 uppercase tracking-wide">{t('dashboard.equipmentLoss')}</p>
+        <div className="rounded-lg p-5" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
+          <p className="text-xs text-[var(--text-secondary,#444)] uppercase tracking-wide">{t('dashboard.equipmentLoss')}</p>
           <p className="text-3xl font-bold text-green-600 mt-1">0.8%</p>
-          <p className="text-xs text-slate-600 mt-2">{t('dashboard.vsIndustry')} 2-5%</p>
+          <p className="text-xs text-[var(--text-secondary,#444)] mt-2">{t('dashboard.vsIndustry')} 2-5%</p>
           <p className="text-xs font-semibold text-green-600 mt-1">
             €{Math.round(savingsFromLossPrevention).toLocaleString()} {t('dashboard.savedThisYear')}
           </p>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg p-5">
-          <p className="text-xs text-slate-600 uppercase tracking-wide">{t('dashboard.vgpCompliance')}</p>
-          <p className="text-3xl font-bold text-blue-600 mt-1">{vgpComplianceRate}%</p>
-          <p className="text-xs text-slate-600 mt-2">
+        <div className="rounded-lg p-5" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
+          <p className="text-xs text-[var(--text-secondary,#444)] uppercase tracking-wide">{t('dashboard.vgpCompliance')}</p>
+          <p className="text-3xl font-bold text-[var(--status-conforme,#059669)] mt-1">{vgpComplianceRate}%</p>
+          <p className="text-xs text-[var(--text-secondary,#444)] mt-2">
             {vgpOverdue} {vgpOverdue !== 1 ? t('dashboard.overduePlural') : t('dashboard.overdue')}, {vgpUpcoming} {t('dashboard.upcoming')}
           </p>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg p-5">
-          <p className="text-xs text-slate-600 uppercase tracking-wide">{t('dashboard.utilizationRate')}</p>
+        <div className="rounded-lg p-5" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
+          <p className="text-xs text-[var(--text-secondary,#444)] uppercase tracking-wide">{t('dashboard.utilizationRate')}</p>
           <p className="text-3xl font-bold text-green-600 mt-1">{utilizationRate}%</p>
-          <p className="text-xs text-slate-600 mt-2">{t('dashboard.vsTarget')} 65%</p>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-[var(--text-secondary,#444)] mt-2">{t('dashboard.vsTarget')} 65%</p>
+          <p className="text-xs text-[var(--text-muted,#777)] mt-1">
             €{Math.round(assetsValue * (utilizationRate / 100)).toLocaleString()} {t('dashboard.inRental')}
           </p>
         </div>
@@ -265,84 +265,84 @@ export default function DashboardPage() {
 
       {/* Stats Grid */}
       <div className="grid gap-3 md:grid-cols-4">
-        <div className="bg-white border border-slate-200 rounded-lg p-4">
+        <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-slate-600">{t('dashboard.totalEquipment')}</p>
-            <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <p className="text-sm font-medium text-[var(--text-secondary,#444)]">{t('dashboard.totalEquipment')}</p>
+            <svg className="h-4 w-4 text-[var(--text-hint,#888)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
           </div>
-          <p className="text-2xl font-bold text-slate-900 mt-2">{totalAssets}</p>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-2xl font-bold text-[var(--text-primary,#1a1a1a)] mt-2">{totalAssets}</p>
+          <p className="text-xs text-[var(--text-muted,#777)] mt-1">
             {t('dashboard.value')}: €{(assetsValue / 1000000).toFixed(1)}M
           </p>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg p-4">
+        <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-slate-600">{t('dashboard.vgpCompliance')}</p>
-            <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <p className="text-sm font-medium text-[var(--text-secondary,#444)]">{t('dashboard.vgpCompliance')}</p>
+            <svg className="h-4 w-4 text-[var(--text-hint,#888)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <p className="text-2xl font-bold text-slate-900 mt-2">{vgpComplianceRate}%</p>
-          <div className="w-full bg-slate-200 rounded-full h-2 mt-2">
-            <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${vgpComplianceRate}%` }}></div>
+          <p className="text-2xl font-bold text-[var(--text-primary,#1a1a1a)] mt-2">{vgpComplianceRate}%</p>
+          <div className="w-full bg-[var(--input-bg,#e3e5e9)] rounded-full h-2 mt-2">
+            <div className="bg-[var(--accent,#e8600a)] h-2 rounded-full" style={{ width: `${vgpComplianceRate}%` }}></div>
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg p-4">
+        <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-slate-600">{t('dashboard.scans7Days')}</p>
-            <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <p className="text-sm font-medium text-[var(--text-secondary,#444)]">{t('dashboard.scans7Days')}</p>
+            <svg className="h-4 w-4 text-[var(--text-hint,#888)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
             </svg>
           </div>
-          <p className="text-2xl font-bold text-slate-900 mt-2">{recentScans}</p>
-          <p className="text-xs text-slate-500 mt-1">{t('dashboard.tracingActivity')}</p>
+          <p className="text-2xl font-bold text-[var(--text-primary,#1a1a1a)] mt-2">{recentScans}</p>
+          <p className="text-xs text-[var(--text-muted,#777)] mt-1">{t('dashboard.tracingActivity')}</p>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg p-4">
+        <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-slate-600">{t('dashboard.utilization')}</p>
-            <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <p className="text-sm font-medium text-[var(--text-secondary,#444)]">{t('dashboard.utilization')}</p>
+            <svg className="h-4 w-4 text-[var(--text-hint,#888)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
             </svg>
           </div>
-          <p className="text-2xl font-bold text-slate-900 mt-2">{utilizationRate}%</p>
-          <div className="w-full bg-slate-200 rounded-full h-2 mt-2">
+          <p className="text-2xl font-bold text-[var(--text-primary,#1a1a1a)] mt-2">{utilizationRate}%</p>
+          <div className="w-full bg-[var(--input-bg,#e3e5e9)] rounded-full h-2 mt-2">
             <div className="bg-green-600 h-2 rounded-full" style={{ width: `${utilizationRate}%` }}></div>
           </div>
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white border border-slate-200 rounded-lg p-5">
-        <h2 className="text-base font-semibold text-slate-900">{t('dashboard.quickActions')}</h2>
-        <p className="text-xs text-slate-600 mt-0.5">{t('dashboard.quickActionsSubtitle')}</p>
+      <div className="rounded-lg p-5" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
+        <h2 className="text-base font-semibold text-[var(--text-primary,#1a1a1a)]">{t('dashboard.quickActions')}</h2>
+        <p className="text-xs text-[var(--text-secondary,#444)] mt-0.5">{t('dashboard.quickActionsSubtitle')}</p>
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4 mt-4">
-          <Link href="/assets" className="flex items-center gap-2 px-3 py-2.5 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+          <Link href="/assets" className="flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-black/[0.03] transition-colors" style={{ border: '0.5px solid #b8b8b8' }}>
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
             <span className="text-sm font-medium">{t('dashboard.addEquipment')}</span>
           </Link>
           
-          <Link href="/qr-codes" className="flex items-center gap-2 px-3 py-2.5 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+          <Link href="/qr-codes" className="flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-black/[0.03] transition-colors" style={{ border: '0.5px solid #b8b8b8' }}>
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
             </svg>
             <span className="text-sm font-medium">{t('dashboard.generateQRCodes')}</span>
           </Link>
 
-          <Link href="/vgp/schedules" className="flex items-center gap-2 px-3 py-2.5 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+          <Link href="/vgp/schedules" className="flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-black/[0.03] transition-colors" style={{ border: '0.5px solid #b8b8b8' }}>
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             <span className="text-sm font-medium">{t('dashboard.recordVGP')}</span>
           </Link>
 
-          <Link href="/audits/new" className="flex items-center gap-2 px-3 py-2.5 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+          <Link href="/audits/new" className="flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-black/[0.03] transition-colors" style={{ border: '0.5px solid #b8b8b8' }}>
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -352,14 +352,14 @@ export default function DashboardPage() {
       </div>
 
       {/* VGP Compliance Details */}
-      <div className="bg-white border border-slate-200 rounded-lg p-5">
-        <h2 className="text-base font-semibold text-slate-900">{t('dashboard.vgpComplianceRegulatory')}</h2>
-        <p className="text-xs text-slate-600 mt-0.5">
+      <div className="rounded-lg p-5" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
+        <h2 className="text-base font-semibold text-[var(--text-primary,#1a1a1a)]">{t('dashboard.vgpComplianceRegulatory')}</h2>
+        <p className="text-xs text-[var(--text-secondary,#444)] mt-0.5">
           {t('dashboard.vgpComplianceSubtitle')}
         </p>
         
         <div className="space-y-3 mt-4">
-          <div className="flex items-center justify-between py-2 border-b border-slate-100">
+          <div className="flex items-center justify-between py-2 border-b border-[#dcdee3]">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
                 <svg className="h-4 w-4 text-red-500" viewBox="0 0 20 20" fill="currentColor">
@@ -367,21 +367,21 @@ export default function DashboardPage() {
                 </svg>
               </div>
               <div>
-                <p className="font-medium text-sm text-slate-900">{t('dashboard.vgpOverdueLabel')}</p>
-                <p className="text-xs text-slate-600">{t('dashboard.vgpOverdueDesc')}</p>
+                <p className="font-medium text-sm text-[var(--text-primary,#1a1a1a)]">{t('dashboard.vgpOverdueLabel')}</p>
+                <p className="text-xs text-[var(--text-secondary,#444)]">{t('dashboard.vgpOverdueDesc')}</p>
               </div>
             </div>
             <div className="text-right">
               <p className="text-xl font-bold text-red-600">{vgpOverdue}</p>
               {vgpOverdue > 0 && (
-                <Link href="/vgp/schedules?filter=overdue" className="text-xs text-blue-600 hover:underline">
+                <Link href="/vgp/schedules?filter=overdue" className="text-xs text-[var(--accent,#e8600a)] hover:underline">
                   {t('dashboard.handleNow')}
                 </Link>
               )}
             </div>
           </div>
 
-          <div className="flex items-center justify-between py-2 border-b border-slate-100">
+          <div className="flex items-center justify-between py-2 border-b border-[#dcdee3]">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
                 <svg className="h-4 w-4 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -389,14 +389,14 @@ export default function DashboardPage() {
                 </svg>
               </div>
               <div>
-                <p className="font-medium text-sm text-slate-900">{t('dashboard.vgpUpcomingLabel')}</p>
-                <p className="text-xs text-slate-600">{t('dashboard.vgpUpcomingDesc')}</p>
+                <p className="font-medium text-sm text-[var(--text-primary,#1a1a1a)]">{t('dashboard.vgpUpcomingLabel')}</p>
+                <p className="text-xs text-[var(--text-secondary,#444)]">{t('dashboard.vgpUpcomingDesc')}</p>
               </div>
             </div>
             <div className="text-right">
               <p className="text-xl font-bold text-yellow-600">{vgpUpcoming}</p>
               {vgpUpcoming > 0 && (
-                <Link href="/vgp/schedules?filter=upcoming" className="text-xs text-blue-600 hover:underline">
+                <Link href="/vgp/schedules?filter=upcoming" className="text-xs text-[var(--accent,#e8600a)] hover:underline">
                   {t('dashboard.schedule')}
                 </Link>
               )}
@@ -411,8 +411,8 @@ export default function DashboardPage() {
                 </svg>
               </div>
               <div>
-                <p className="font-medium text-sm text-slate-900">{t('dashboard.compliant')}</p>
-                <p className="text-xs text-slate-600">{t('dashboard.inspectionsUpToDate')}</p>
+                <p className="font-medium text-sm text-[var(--text-primary,#1a1a1a)]">{t('dashboard.compliant')}</p>
+                <p className="text-xs text-[var(--text-secondary,#444)]">{t('dashboard.inspectionsUpToDate')}</p>
               </div>
             </div>
             <div className="text-right">
@@ -437,31 +437,31 @@ export default function DashboardPage() {
           <svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <h2 className="text-base font-semibold text-slate-900">{t('dashboard.roiImpact')}</h2>
+          <h2 className="text-base font-semibold text-[var(--text-primary,#1a1a1a)]">{t('dashboard.roiImpact')}</h2>
         </div>
         
         <div className="grid gap-3 md:grid-cols-3">
           <div>
-            <p className="text-xs text-slate-600">{t('dashboard.lossesAvoided')}</p>
+            <p className="text-xs text-[var(--text-secondary,#444)]">{t('dashboard.lossesAvoided')}</p>
             <p className="text-2xl font-bold text-green-600">
               €{Math.round(savingsFromLossPrevention).toLocaleString()}
             </p>
-            <p className="text-xs text-slate-500 mt-0.5">{t('dashboard.thisYear')}</p>
+            <p className="text-xs text-[var(--text-muted,#777)] mt-0.5">{t('dashboard.thisYear')}</p>
           </div>
           <div>
-            <p className="text-xs text-slate-600">{t('dashboard.auditGain')}</p>
+            <p className="text-xs text-[var(--text-secondary,#444)]">{t('dashboard.auditGain')}</p>
             <p className="text-2xl font-bold text-blue-600">32 {t('dashboard.hours')}</p>
-            <p className="text-xs text-slate-500 mt-0.5">{t('dashboard.perQuarter')}</p>
+            <p className="text-xs text-[var(--text-muted,#777)] mt-0.5">{t('dashboard.perQuarter')}</p>
           </div>
           <div>
-            <p className="text-xs text-slate-600">{t('dashboard.vgpSanctionsAvoided')}</p>
+            <p className="text-xs text-[var(--text-secondary,#444)]">{t('dashboard.vgpSanctionsAvoided')}</p>
             <p className="text-2xl font-bold text-green-600">€0</p>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-[var(--text-muted,#777)] mt-0.5">
               {vgpComplianceRate === 100 ? t('dashboard.compliance100') : `${vgpComplianceRate}% ${t('dashboard.compliancePercent')}`}
             </p>
           </div>
         </div>
-        <p className="text-xs text-slate-600 mt-3">
+        <p className="text-xs text-[var(--text-secondary,#444)] mt-3">
           <strong>{t('dashboard.traviXOCost')}:</strong> €750/mois (Growth Pack) • 
           <strong className="text-green-700 ml-2">
             {t('dashboard.roi')}: {Math.round(savingsFromLossPrevention / (750 * 12))}x

@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l /d/Dev/projects/travixo-app/app/\\\\\\(dashboard\\\\\\)/assets/page.tsx)",
+      "Bash(timeout 12 npx next dev --turbopack)",
+      "Bash(xargs wc:*)",
+      "Bash(__NEW_LINE_7f02ee285e3b6c29__ echo:*)",
+      "Bash(__NEW_LINE_9711d3015cd905c1__ grep:*)",
+      "Bash(__NEW_LINE_c8967af24e48fc3c__ echo:*)",
+      "Bash(wc -l echo echo '2. Colored category badges \\(category.color in assets\\):' grep -rn asset_categories.color --include=*.tsx components/)",
+      "Bash(wc -l echo echo '3. DIRECCTE in UI-facing files \\(excl DESIGN_SPEC.md, docs/\\):' grep -rn DIRECCTE --include=*.tsx --include=*.ts app/ components/ lib/ types/)",
+      "Bash(wc -l echo echo '7. Modal bg-white remaining:' grep -rn bg-white --include=*.tsx components/assets/Add*.tsx components/assets/Edit*.tsx components/assets/Delete*.tsx components/assets/View*.tsx components/assets/Import*.tsx components/vgp/Add*.tsx components/vgp/Edit*.tsx)",
+      "Bash(head -4 echo __NEW_LINE_5952b97bb49d1b76__ echo '7. DIRECCTE not in UI text:' grep -rn DIRECCTE --include=*.tsx --include=*.ts app/ components/ lib/ types/)"
+    ]
+  }
+}

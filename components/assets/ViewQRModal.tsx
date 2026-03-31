@@ -59,7 +59,7 @@ export default function ViewQRModal({ isOpen, onClose, asset }: ViewQRModalProps
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black bg-opacity-25" />
+          <div className="fixed inset-0 bg-black/50" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
@@ -73,32 +73,32 @@ export default function ViewQRModal({ isOpen, onClose, asset }: ViewQRModalProps
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-xl p-6 transition-all" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
                 <div className="flex justify-between items-center mb-4">
-                  <Dialog.Title className="text-xl font-bold text-gray-900">
+                  <Dialog.Title className="text-lg font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                     {t('assets.qrCodeTitle')}
                   </Dialog.Title>
-                  <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
+                  <button onClick={onClose} className="transition-colors" style={{ color: 'var(--text-muted, #777)' }} onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary, #1a1a1a)' }} onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted, #777)' }}>
                     <XMarkIcon className="h-6 w-6" />
                   </button>
                 </div>
 
                 <div className="text-center">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  <h3 className="text-sm font-medium mb-4" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                     {asset.name}
                   </h3>
-                  
+
                   <div className="flex justify-center mb-4">
-                    <canvas ref={canvasRef} className="border-4 border-gray-200 rounded-lg" />
+                    <canvas ref={canvasRef} className="border-4 rounded-lg" style={{ borderColor: '#dcdee3' }} />
                   </div>
 
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p className="text-[13px] mb-4" style={{ color: 'var(--text-muted, #777)' }}>
                     {t('assets.qrScanInstruction')}
                   </p>
 
                   <button
                     onClick={downloadQR}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+                    className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-white hover:opacity-90" style={{ backgroundColor: 'var(--accent, #e8600a)' }}
                   >
                     <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
                     {t('assets.qrDownload')}

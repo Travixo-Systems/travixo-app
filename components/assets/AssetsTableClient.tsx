@@ -43,6 +43,26 @@ export default function AssetsTableClient({ assets }: { assets: Asset[] }) {
     const [deleteAsset, setDeleteAsset] = useState<Asset | null>(null)
     const [vgpAsset, setVgpAsset] = useState<Asset | null>(null)
 
+    const getCategoryCode = (name: string): string => {
+        const KNOWN_CODES: Record<string, string> = {
+            'nacelle': 'NAC',
+            'engin de chantier': 'ENG',
+            'chariot elevateur': 'CHA',
+            'chariot élévateur': 'CHA',
+            'echafaudage': 'ECH',
+            'échafaudage': 'ECH',
+            'groupe electrogene': 'GE',
+            'groupe électrogène': 'GE',
+            'compresseur': 'COMP',
+            'equipement de levage': 'LEV',
+            'équipement de levage': 'LEV',
+        }
+        const lower = name.toLowerCase().trim()
+        if (KNOWN_CODES[lower]) return KNOWN_CODES[lower]
+        // Fallback: first 3 uppercase letters
+        return name.replace(/[^a-zA-Z]/g, '').slice(0, 3).toUpperCase()
+    }
+
     const getStatusLabel = (status: string) => {
         switch (status) {
             case 'available': return t('assets.statusAvailable')
@@ -55,81 +75,81 @@ export default function AssetsTableClient({ assets }: { assets: Asset[] }) {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'available': return 'bg-green-100 text-green-800'
-            case 'in_use': return 'bg-blue-100 text-blue-800'
-            case 'maintenance': return 'bg-yellow-100 text-yellow-800'
-            case 'retired': return 'bg-gray-100 text-gray-800'
-            default: return 'bg-gray-100 text-gray-800'
+            case 'available': return 'text-[#059669]'
+            case 'in_use': return 'text-[#444444]'
+            case 'maintenance': return 'text-[#d97706]'
+            case 'retired': return 'text-[#dc2626]'
+            default: return 'text-[#444444]'
         }
     }
 
     return (
         <>
-            <div className="bg-white shadow rounded-lg overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+            <div className="rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--card-bg, #edeff2)', padding: '16px 20px' }}>
+                <table className="min-w-full">
+                    <thead>
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
                                 {t('assets.tableHeaderName')}
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
                                 {t('assets.tableHeaderSerial')}
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
                                 {t('assets.tableHeaderCategory')}
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
                                 {t('assets.tableHeaderStatus')}
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium uppercase" style={{ color: '#00252b' }}>
+                            <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
                                 VGP
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
                                 {t('assets.tableHeaderLocation')}
                             </th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                            <th className="px-6 py-3 text-right text-[11px] font-medium uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
                                 {t('assets.tableHeaderActions')}
                             </th>
                         </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="divide-y" style={{ borderColor: '#dcdee3' }}>
                         {assets.map((asset) => (
-                            <tr key={asset.id} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            <tr key={asset.id} className="hover:bg-black/[0.02]" style={{ borderColor: '#dcdee3' }}>
+                                <td className="px-6 py-4 whitespace-nowrap text-[13px] font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                                     {asset.name}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <td className="px-6 py-4 whitespace-nowrap text-[13px]" style={{ color: 'var(--text-secondary, #444444)' }}>
                                     {asset.serial_number || '-'}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
+                                <td className="px-6 py-4 whitespace-nowrap text-[13px]" style={{ color: 'var(--text-secondary, #444444)' }}>
                                     {asset.asset_categories?.name ? (
-                                        <span 
-                                            className="px-3 py-1 text-xs font-medium rounded-full text-white"
-                                            style={{ backgroundColor: asset.asset_categories.color || '#6B7280' }}
-                                            title={asset.asset_categories.name}
-                                        >
-                                            {asset.asset_categories.name}
-                                        </span>
+                                        <>
+                                            <span className="font-mono text-xs" style={{ color: 'var(--text-hint, #888888)' }}>{getCategoryCode(asset.asset_categories.name)}</span>
+                                            {' '}{asset.asset_categories.name}
+                                        </>
                                     ) : (
-                                        <span className="text-sm text-gray-400">-</span>
+                                        <span style={{ color: 'var(--text-hint, #888888)' }}>-</span>
                                     )}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(asset.status)}`}>
+                                    <span className={`text-[13px] font-medium ${getStatusColor(asset.status)}`}>
                                         {getStatusLabel(asset.status)}
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <VGPStatusBadge status={asset.vgp_status ?? 'unknown'} />
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <td className="px-6 py-4 whitespace-nowrap text-[13px]" style={{ color: 'var(--text-secondary, #444444)' }}>
                                     {asset.current_location || '-'}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div className="flex justify-end items-center gap-1">
                                         <button
                                             onClick={() => setVgpAsset(asset)}
-                                            className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 text-[#00252b] hover:bg-[#00252b]/10 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
+                                            className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
+                                            style={{ color: 'var(--text-muted, #777)', backgroundColor: 'transparent' }}
+                                            onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-secondary, #444)' }}
+                                            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted, #777)' }}
                                             title={t('assets.tooltipAddVgp')}
                                             aria-label={t('assets.tooltipAddVgp')}
                                         >
@@ -137,7 +157,10 @@ export default function AssetsTableClient({ assets }: { assets: Asset[] }) {
                                         </button>
                                         <button
                                             onClick={() => setQrAsset(asset)}
-                                            className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
+                                            className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
+                                            style={{ color: 'var(--text-muted, #777)', backgroundColor: 'transparent' }}
+                                            onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-secondary, #444)' }}
+                                            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted, #777)' }}
                                             title={t('assets.tooltipViewQr')}
                                             aria-label={t('assets.tooltipViewQr')}
                                         >
@@ -145,7 +168,10 @@ export default function AssetsTableClient({ assets }: { assets: Asset[] }) {
                                         </button>
                                         <button
                                             onClick={() => setEditAsset(asset)}
-                                            className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
+                                            className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
+                                            style={{ color: 'var(--text-muted, #777)', backgroundColor: 'transparent' }}
+                                            onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-secondary, #444)' }}
+                                            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted, #777)' }}
                                             title={t('assets.tooltipEdit')}
                                             aria-label={t('assets.tooltipEdit')}
                                         >
@@ -153,7 +179,7 @@ export default function AssetsTableClient({ assets }: { assets: Asset[] }) {
                                         </button>
                                         <button
                                             onClick={() => setDeleteAsset(asset)}
-                                            className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-400"
+                                            className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 text-[#dc2626] hover:bg-red-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-400"
                                             title={t('assets.tooltipDelete')}
                                             aria-label={t('assets.tooltipDelete')}
                                         >

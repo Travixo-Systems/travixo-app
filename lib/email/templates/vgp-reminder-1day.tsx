@@ -1,7 +1,7 @@
 // =============================================================================
 // VGP Reminder - 1 Day Before Due Date (CRITICAL)
 // "CRITICAL: Inspection due TOMORROW"
-// Includes DIRECCTE fine warning
+// Includes DREETS fine warning
 // =============================================================================
 
 import {
@@ -86,13 +86,13 @@ export function VGPReminder1Day({
               alertType="reminder_1day"
             />
 
-            {/* DIRECCTE Fine Warning */}
+            {/* DREETS Fine Warning */}
             <Section style={fineWarningStyle}>
               <Text style={fineWarningTitleStyle}>
-                Risque d'amende DIRECCTE
+                Risque d'amende DREETS
               </Text>
               <Text style={fineWarningTextStyle}>
-                Rappel : Les amendes DIRECCTE pour non-conformite VGP vont de
+                Rappel : Les amendes DREETS pour non-conformite VGP vont de
                 3 000 EUR a 10 000 EUR par infraction. A compter de demain,
                 chaque equipement non inspecte sera en infraction.
               </Text>
@@ -115,7 +115,7 @@ export function VGPReminder1Day({
                 CRITICAL: {count} VGP inspection{count > 1 ? 's' : ''} for{' '}
                 {organizationName} {count > 1 ? 'are' : 'is'} due TOMORROW.
                 Contact your inspection body immediately if not yet scheduled.
-                DIRECCTE fines for VGP non-compliance range from EUR 3,000 to
+                DREETS fines for VGP non-compliance range from EUR 3,000 to
                 EUR 10,000 per violation.
               </Text>
             </Section>
