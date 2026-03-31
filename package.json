@@ -11,6 +11,7 @@
   "dependencies": {
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.2.0",
+    "@hookform/resolvers": "^5.2.2",
     "@react-email/components": "^1.0.7",
     "@react-email/render": "^2.0.4",
     "@sentry/browser": "^9",

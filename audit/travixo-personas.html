@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TraviXO — Personas Terrain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #00252b;
+    --orange: #f26f00;
+    --bg: #060f10;
+    --surface: rgba(255,255,255,0.03);
+    --border: rgba(255,255,255,0.08);
+    --text: #fff;
+    --muted: rgba(255,255,255,0.45);
+    --dim: rgba(255,255,255,0.25);
+    --green: rgba(100,255,180,0.8);
+    --red: rgba(255,120,120,0.8);
+    --mono: 'Space Mono', monospace;
+    --serif: 'DM Serif Display', serif;
+    --sans: 'DM Sans', sans-serif;
+  }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-thumb { background: rgba(242,111,0,0.3); border-radius: 2px; }
+
+  /* HEADER */
+  .header {
+    background: var(--navy);
+    border-bottom: 1px solid rgba(242,111,0,0.2);
+    padding: 40px 48px 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 320px; height: 320px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(242,111,0,0.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--orange);
+    letter-spacing: 4px;
+    margin-bottom: 16px;
+  }
+  .title-row { display: flex; align-items: baseline; gap: 20px; flex-wrap: wrap; }
+  h1 { font-family: var(--serif); font-size: 42px; font-weight: 400; line-height: 1; }
+  .subtitle { font-family: var(--serif); font-size: 22px; color: rgba(255,255,255,0.3); font-style: italic; }
+  .header-desc { margin-top: 16px; font-size: 14px; color: var(--muted); max-width: 560px; line-height: 1.65; }
+  .tabs { display: flex; gap: 2px; margin-top: 36px; }
+  .tab {
+    background: none; border: none; border-bottom: 2px solid transparent;
+    padding: 10px 22px; font-family: var(--mono); font-size: 10px;
+    letter-spacing: 2px; color: rgba(255,255,255,0.35); cursor: pointer;
+    transition: color 0.2s, border-color 0.2s; margin-bottom: -1px;
+  }
+  .tab:hover { color: var(--orange); }
+  .tab.active { color: var(--orange); border-bottom-color: var(--orange); }
+
+  /* CONTENT */
+  .content { padding: 36px 48px 80px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .section-title { font-family: var(--serif); font-size: 28px; font-weight: 400; margin-bottom: 6px; }
+  .section-desc { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 28px; }
+
+  /* SCENARIO GRID */
+  .scenario-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+  .scenario-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 20px; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .scenario-card:hover, .scenario-card.open { background: rgba(242,111,0,0.07); border-color: var(--orange); }
+  .scenario-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .scenario-id { font-family: var(--mono); font-size: 11px; color: var(--orange); letter-spacing: 2px; font-weight: 700; }
+  .heat-bar { display: flex; gap: 3px; align-items: center; }
+  .heat-pip { width: 14px; height: 6px; border-radius: 2px; background: rgba(255,255,255,0.1); transition: background 0.3s; }
+  .heat-pip.on { background: var(--orange); }
+  .scenario-name { font-family: var(--serif); font-size: 18px; margin-bottom: 4px; line-height: 1.3; }
+  .scenario-sub { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-bottom: 0; }
+  .scenario-body { display: none; margin-top: 14px; }
+  .scenario-card.open .scenario-body { display: block; }
+  .scenario-desc { font-size: 13px; color: rgba(255,255,255,0.65); line-height: 1.65; margin-bottom: 14px; }
+  .signal-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; background: rgba(242,111,0,0.15); border-radius: 4px;
+    font-family: var(--mono); font-size: 10px; color: var(--orange); letter-spacing: 1px;
+  }
+
+  /* ENTRY POINT CARDS */
+  .ep-list { display: flex; flex-direction: column; gap: 12px; }
+  .ep-card {
+    background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px; padding: 22px; cursor: pointer; transition: all 0.25s;
+  }
+  .ep-card:hover, .ep-card.open { background: rgba(242,111,0,0.06); border-color: var(--orange); }
+  .ep-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .ep-code { font-family: var(--mono); font-size: 10px; color: #888; letter-spacing: 1.5px; }
+  .ep-badge {
+    font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px;
+    padding: 3px 8px; border-radius: 3px;
+  }
+  .ep-role { font-family: var(--serif); font-size: 22px; font-weight: 400; }
+  .ep-body { display: none; margin-top: 20px; }
+  .ep-card.open .ep-body { display: flex; flex-direction: column; gap: 18px; }
+  .field-label { font-family: var(--mono); font-size: 9px; color: var(--orange); letter-spacing: 2px; margin-bottom: 6px; }
+  .field-text { font-size: 13px; color: rgba(255,255,255,0.65); line-height: 1.6; }
+  .signal-list { display: flex; flex-direction: column; gap: 5px; }
+  .signal-item {
+    font-size: 12px; color: rgba(255,255,255,0.7); padding: 7px 12px;
+    background: rgba(255,255,255,0.04); border-left: 2px solid rgba(242,111,0,0.4);
+    border-radius: 0 4px 4px 0; font-style: italic;
+  }
+  .angle-box {
+    background: rgba(242,111,0,0.1); border: 1px solid rgba(242,111,0,0.2);
+    border-radius: 6px; padding: 10px 14px;
+  }
+  .angle-text { font-size: 13px; color: #fff; line-height: 1.5; }
+  .tier-row { display: flex; align-items: center; gap: 10px; }
+  .tier-label-sm { font-family: var(--mono); font-size: 9px; color: #888; letter-spacing: 1.5px; }
+  .tier-tag { padding: 3px 10px; border-radius: 4px; font-family: var(--mono); font-size: 10px; letter-spacing: 1px; }
+
+  /* DECISION MAKER CARDS */
+  .dm-list { display: flex; flex-direction: column; gap: 12px; }
+  .dm-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 22px; cursor: pointer; transition: all 0.25s;
+  }
+  .dm-card:hover, .dm-card.open { background: rgba(242,111,0,0.06); border-color: var(--orange); }
+  .dm-card.locked { opacity: 0.45; cursor: default; }
+  .dm-card.locked:hover { background: var(--surface); border-color: var(--border); }
+  .dm-head { display: flex; align-items: center; justify-content: space-between; }
+  .dm-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .dm-title-wrap { display: flex; align-items: center; gap: 14px; }
+  .dm-name { font-family: var(--serif); font-size: 20px; font-weight: 400; }
+  .dm-sub { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 3px; }
+  .dm-body { display: none; margin-top: 20px; }
+  .dm-card.open .dm-body { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .dm-full { grid-column: 1 / -1; }
+  .objection-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .obj-box { border-radius: 4px; padding: 8px 12px; font-size: 12px; line-height: 1.5; font-style: italic; }
+  .obj-blocker { background: rgba(255,100,100,0.06); color: rgba(255,120,120,0.8); }
+  .obj-response { background: rgba(100,255,180,0.05); color: rgba(100,255,180,0.8); font-style: normal; }
+  .dm-stats-row { display: flex; gap: 20px; align-items: center; }
+  .dm-stat .dm-stat-val { font-family: var(--serif); font-size: 18px; }
+  .dm-stat .dm-stat-label { font-family: var(--mono); font-size: 9px; color: #888; letter-spacing: 1.5px; margin-bottom: 3px; }
+  .divider-v { width: 1px; height: 36px; background: rgba(255,255,255,0.1); }
+
+  /* ROUTING TABLE */
+  .routing-table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { border-bottom: 1px solid rgba(255,255,255,0.1); }
+  th {
+    padding: 8px 16px; text-align: left;
+    font-family: var(--mono); font-size: 9px; color: var(--orange);
+    letter-spacing: 2px; font-weight: 700; white-space: nowrap;
+  }
+  tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.15s; }
+  tbody tr:hover { background: rgba(242,111,0,0.04); }
+  td { padding: 14px 16px; vertical-align: middle; }
+  .td-persona { font-size: 13px; white-space: nowrap; }
+  .td-center { text-align: center; }
+  .indicator {
+    width: 22px; height: 22px; border-radius: 50%; display: inline-flex;
+    align-items: center; justify-content: center; font-family: var(--mono); font-size: 10px;
+  }
+  .ind-yes { background: rgba(100,255,180,0.12); border: 1.5px solid rgba(100,255,180,0.45); color: rgba(100,255,180,0.9); }
+  .ind-no { background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.2); }
+  .td-buyer { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+  .stay-badge {
+    display: inline-flex; padding: 3px 10px; border-radius: 3px;
+    font-family: var(--mono); font-size: 9px; letter-spacing: 1px;
+  }
+  .stay-yes { background: rgba(100,255,180,0.08); color: rgba(100,255,180,0.8); border: 1px solid rgba(100,255,180,0.2); }
+  .stay-no { background: rgba(255,100,100,0.08); color: rgba(255,120,120,0.7); border: 1px solid rgba(255,100,100,0.2); }
+  .td-angle { font-size: 12px; color: rgba(255,255,255,0.5); max-width: 200px; }
+  .locked-tag { font-family: var(--mono); font-size: 9px; color: #555; letter-spacing: 1px; }
+
+  /* NOTICE BOXES */
+  .notice {
+    margin-top: 28px; padding: 18px 22px; border-radius: 8px;
+    font-size: 13px; line-height: 1.65;
+  }
+  .notice-orange { background: rgba(242,111,0,0.06); border: 1px solid rgba(242,111,0,0.15); color: var(--muted); }
+  .notice-dim { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); color: var(--muted); }
+  .notice-red { background: rgba(255,100,100,0.05); border: 1px solid rgba(255,100,100,0.15); color: var(--muted); }
+  .notice-label { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; margin-bottom: 8px; }
+  .nl-orange { color: var(--orange); }
+  .nl-dim { color: #888; }
+  .nl-red { color: rgba(255,120,120,0.8); }
+
+  /* STAT STRIP */
+  .stat-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 32px; }
+  .stat-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 18px 20px; }
+  .stat-box-label { font-family: var(--mono); font-size: 9px; color: var(--orange); letter-spacing: 2px; margin-bottom: 10px; }
+  .stat-box-val { font-family: var(--serif); font-size: 26px; font-weight: 400; margin-bottom: 4px; }
+  .stat-box-note { font-family: var(--sans); font-size: 11px; color: rgba(255,255,255,0.3); }
+
+  @media (max-width: 700px) {
+    .header { padding: 28px 20px 0; }
+    .content { padding: 24px 20px 60px; }
+    h1 { font-size: 30px; }
+    .tabs { overflow-x: auto; }
+    .dm-body { grid-template-columns: 1fr !important; }
+    .stat-strip { grid-template-columns: 1fr; }
+    .objection-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="eyebrow">TRAVIXO SYSTEMS / INTELLIGENCE COMMERCIALE</div>
+  <div class="title-row">
+    <h1>Personas Terrain</h1>
+    <span class="subtitle">Field Intelligence Brief</span>
+  </div>
+  <p class="header-desc">
+    Qui decroche. Qui decide. Comment router. Tout ce dont Femi et toi avez besoin pour ne jamais vous retrouver dans la mauvaise conversation.
+  </p>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab(0)">SCENARIOS</button>
+    <button class="tab" onclick="switchTab(1)">ENTRY POINTS</button>
+    <button class="tab" onclick="switchTab(2)">DECISION MAKERS</button>
+    <button class="tab" onclick="switchTab(3)">ROUTING</button>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- PANEL 0: SCENARIOS -->
+  <div class="panel active" id="panel-0">
+    <div class="section-title">Trigger Scenarios</div>
+    <p class="section-desc">Les situations qui creent la receptivite. Pas des personas — des evenements declencheurs. Cliquez pour details.</p>
+    <div class="scenario-grid">
+
+      <div class="scenario-card" onclick="toggleCard(this)">
+        <div class="scenario-head">
+          <span class="scenario-id">SCENARIO A</span>
+          <div class="heat-bar">
+            <div class="heat-pip on"></div><div class="heat-pip on"></div><div class="heat-pip on"></div><div class="heat-pip on"></div><div class="heat-pip"></div>
+          </div>
+        </div>
+        <div class="scenario-name">Controle Approchant</div>
+        <div class="scenario-sub">30 to 60 days out</div>
+        <div class="scenario-body">
+          <p class="scenario-desc">Une inspection VGP est programmee. Le responsable doit reconstituer 2-3 ans d'historique machine par machine. Ca vit dans un classeur, un Excel, ou nulle part. Pas encore une crise, mais le poids de la preparation est deja visible a l'horizon.</p>
+          <div class="signal-tag">SIGNAL: Preparation burden visible</div>
+        </div>
+      </div>
+
+      <div class="scenario-card" onclick="toggleCard(this)">
+        <div class="scenario-head">
+          <span class="scenario-id">SCENARIO B</span>
+          <div class="heat-bar">
+            <div class="heat-pip on"></div><div class="heat-pip on"></div><div class="heat-pip on"></div><div class="heat-pip on"></div><div class="heat-pip on"></div>
+          </div>
+        </div>
+        <div class="scenario-name">Le Jour J</div>
+        <div class="scenario-sub">Reconstruction on the spot</div>
+        <div class="scenario-body">
+          <p class="scenario-desc">Un inspecteur arrive (programme, pas impromptu). Il demande l'historique complet d'une machine precise. Ca se reconstruit en direct. Ils s'en sortent, mais ca coute des heures et de la dignite. Cette experience devient un declencheur d'achat au prochain appel.</p>
+          <div class="signal-tag">SIGNAL: Post-incident receptivity MAX</div>
+        </div>
+      </div>
+
+      <div class="scenario-card" onclick="toggleCard(this)">
+        <div class="scenario-head">
+          <span class="scenario-id">SCENARIO C</span>
+          <div class="heat-bar">
+            <div class="heat-pip on"></div><div class="heat-pip on"></div><div class="heat-pip on"></div><div class="heat-pip"></div><div class="heat-pip"></div>
+          </div>
+        </div>
+        <div class="scenario-name">Logiciel Maison</div>
+        <div class="scenario-sub">Homemade system breaks under pressure</div>
+        <div class="scenario-body">
+          <p class="scenario-desc">Une macro Excel, une base Access, ou un SharePoint "qui marche" jusqu'a ce que quelqu'un demande un export structure, des alertes automatiques, ou une vue multi-sites. L'utilisateur le sait, mais n'a pas eu de raison de changer. Le bon angle bypass la fierte sans attaquer le systeme.</p>
+          <div class="signal-tag">SIGNAL: Pride before the gap</div>
+        </div>
+      </div>
+
+      <div class="scenario-card" onclick="toggleCard(this)">
+        <div class="scenario-head">
+          <span class="scenario-id">SCENARIO D</span>
+          <div class="heat-bar">
+            <div class="heat-pip on"></div><div class="heat-pip on"></div><div class="heat-pip on"></div><div class="heat-pip on"></div><div class="heat-pip"></div>
+          </div>
+        </div>
+        <div class="scenario-name">Dispersion Multi-Sites</div>
+        <div class="scenario-sub">No consolidated group view</div>
+        <div class="scenario-body">
+          <p class="scenario-desc">3+ depots, chacun gerant son suivi independamment. Le siege n'a aucune vue consolidee. Quand la conformite est verifiee au niveau groupe, personne ne peut repondre avec certitude. La douleur est organisationnelle, pas seulement operationnelle.</p>
+          <div class="signal-tag">SIGNAL: Structural blind spot</div>
+        </div>
+      </div>
+
+      <div class="scenario-card" onclick="toggleCard(this)">
+        <div class="scenario-head">
+          <span class="scenario-id">SCENARIO E</span>
+          <div class="heat-bar">
+            <div class="heat-pip on"></div><div class="heat-pip on"></div><div class="heat-pip on"></div><div class="heat-pip on"></div><div class="heat-pip on"></div>
+          </div>
+        </div>
+        <div class="scenario-name">Le Nouveau Chef</div>
+        <div class="scenario-sub">Inherited system, next controle incoming</div>
+        <div class="scenario-body">
+          <p class="scenario-desc">Quelqu'un vient de prendre la responsabilite du parc. Le systeme herite est maintenant son probleme a defendre en face du management. Il cherche activement des outils avant que le prochain cycle de controle ne le fasse mal paraitre. Receptivite maximale de tous les scenarios.</p>
+          <div class="signal-tag">SIGNAL: Maximum receptivity</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="notice notice-orange">
+      <div class="notice-label nl-orange">HEAT SCALE</div>
+      Scenario E (Nouveau Chef) et Scenario B (Jour J) ont la receptivite maximale. Ce sont les personnes qui <em style="color:rgba(255,255,255,0.8)">appellent</em> avant que vous ne les appeliez. Scenario C (Logiciel Maison) est le plus frequent mais demande le bon angle pour bypasser la fierte sans declencher une fermeture defensive.
+    </div>
+  </div>
+
+  <!-- PANEL 1: ENTRY POINTS -->
+  <div class="panel" id="panel-1">
+    <div class="section-title">Points d'Entree</div>
+    <p class="section-desc">Les personnes qui decrochent. Chaque persona a une decision de routing. Cliquez pour deployer le dossier complet.</p>
+    <div class="ep-list">
+
+      <div class="ep-card" onclick="toggleCard(this)">
+        <div class="ep-card-head">
+          <span class="ep-code">EP-1</span>
+          <span class="ep-badge" style="background:rgba(242,111,0,0.15);color:#f26f00;border:1px solid rgba(242,111,0,0.3)">PRIMARY TARGET</span>
+        </div>
+        <div class="ep-role">Chef de Parc</div>
+        <div class="ep-body">
+          <div>
+            <div class="field-label">PROFILE</div>
+            <p class="field-text">Gere les operations quotidiennes du parc a un seul depot ou petite entreprise. Connait chaque machine personnellement. 35-55 ans, pas un gros utilisateur tech, respecte les outils pratiques.</p>
+          </div>
+          <div>
+            <div class="field-label">SIGNAUX DE DOULEUR</div>
+            <div class="signal-list">
+              <div class="signal-item">"On gere avec Excel, ca marche"</div>
+              <div class="signal-item">"Je sais pas exactement, je verifie"</div>
+              <div class="signal-item">"C'est moi qui surveille les dates"</div>
+            </div>
+          </div>
+          <div>
+            <div class="field-label">ROUTING</div>
+            <p class="field-text">Cible principale. Si la personne dit "c'est le gerant qui decide" — traiter comme champion interne, pas comme impasse. Champion convaincu vaut mieux que gerant contacte a froid.</p>
+          </div>
+          <div class="angle-box">
+            <div class="field-label">ANGLE</div>
+            <p class="angle-text">Le temps de preparation pour le prochain controle. Pas un logiciel. Le travail qu'ils n'auront plus a faire.</p>
+          </div>
+          <div class="tier-row">
+            <span class="tier-label-sm">PLAN CIBLE</span>
+            <span class="tier-tag" style="background:rgba(242,111,0,0.15);color:#f26f00;border:1px solid rgba(242,111,0,0.3)">Demarrage</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="ep-card" onclick="toggleCard(this)">
+        <div class="ep-card-head">
+          <span class="ep-code">EP-2</span>
+          <span class="ep-badge" style="background:rgba(26,107,87,0.2);color:#34d399;border:1px solid rgba(26,107,87,0.4)">DIRECT BUYER</span>
+        </div>
+        <div class="ep-role">Gerant / Patron</div>
+        <div class="ep-body">
+          <div>
+            <div class="field-label">PROFILE</div>
+            <p class="field-text">Owner-operator d'une petite boite de location. 1-3 depots, 30-200 machines. Cumule les casquettes. Autorite de signature pour tout achat.</p>
+          </div>
+          <div>
+            <div class="field-label">SIGNAUX DE DOULEUR</div>
+            <div class="signal-list">
+              <div class="signal-item">"On a pas vraiment de systeme"</div>
+              <div class="signal-item">"C'est moi qui m'en occupe"</div>
+              <div class="signal-item">"On a eu un probleme avec le controleur l'annee derniere"</div>
+            </div>
+          </div>
+          <div>
+            <div class="field-label">ROUTING</div>
+            <p class="field-text">Vous etes deja chez l'acheteur. Aller vite vers la confirmation de la douleur, puis directement au booking de demo. Ne pas etirer la conversation.</p>
+          </div>
+          <div class="angle-box">
+            <div class="field-label">ANGLE</div>
+            <p class="angle-text">Temps personnel libere de l'admin conformite. Amendes evitees. Zero dependance a la memoire ou au papier.</p>
+          </div>
+          <div class="tier-row">
+            <span class="tier-label-sm">PLAN CIBLE</span>
+            <span class="tier-tag" style="background:rgba(242,111,0,0.15);color:#f26f00;border:1px solid rgba(242,111,0,0.3)">Demarrage</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="ep-card" onclick="toggleCard(this)">
+        <div class="ep-card-head">
+          <span class="ep-code">EP-3</span>
+          <span class="ep-badge" style="background:rgba(255,255,255,0.06);color:#888;border:1px solid rgba(255,255,255,0.1)">ROUTE THROUGH</span>
+        </div>
+        <div class="ep-role">Commercial / Responsable Commercial</div>
+        <div class="ep-body">
+          <div>
+            <div class="field-label">PROFILE</div>
+            <p class="field-text">Commercial ou account manager dans une agence plus large. Pas la cible operationnelle. Souvent le premier a decrocher car forme pour gerer les appels entrants.</p>
+          </div>
+          <div>
+            <div class="field-label">SIGNAUX</div>
+            <div class="signal-list">
+              <div class="signal-item">"Je vais vous transmettre le message"</div>
+              <div class="signal-item">"C'est pas vraiment mon domaine"</div>
+            </div>
+          </div>
+          <div>
+            <div class="field-label">ROUTING</div>
+            <p class="field-text" style="color:rgba(255,120,120,0.8)">Ne pas pitcher. Demander directement: "La gestion du parc et les VGP, c'est qui qui s'en charge operationnellement ?" Obtenir le nom. Appeler cette personne.</p>
+          </div>
+          <div class="angle-box" style="background:rgba(255,255,255,0.03);border-color:rgba(255,255,255,0.08)">
+            <div class="field-label" style="color:#888">DECISION</div>
+            <p class="angle-text" style="color:var(--muted)">Cette personne est une etape de routing, pas une conversation. Ne pas s'attarder.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="ep-card" onclick="toggleCard(this)">
+        <div class="ep-card-head">
+          <span class="ep-code">EP-4</span>
+          <span class="ep-badge" style="background:rgba(0,37,43,0.5);color:#5eead4;border:1px solid rgba(94,234,212,0.25)">DISCOVERY ASSET</span>
+        </div>
+        <div class="ep-role">Chef de Depot</div>
+        <div class="ep-body">
+          <div>
+            <div class="field-label">PROFILE</div>
+            <p class="field-text">Manager de site dans une entreprise multi-sites. Responsable des assets de son depot, souvent deconnecte des autres depots.</p>
+          </div>
+          <div>
+            <div class="field-label">SIGNAUX DE DOULEUR</div>
+            <div class="signal-list">
+              <div class="signal-item">"Chaque depot gere de son cote"</div>
+              <div class="signal-item">"On n'a pas vraiment de vue centralisee"</div>
+              <div class="signal-item">"Je sais ce qui est ici, mais les autres sites..."</div>
+            </div>
+          </div>
+          <div>
+            <div class="field-label">ROUTING</div>
+            <p class="field-text">Extraire la douleur clairement. Puis demander: "C'est qui qui prendrait ce type de decision au niveau groupe ?" Construire le dossier avant d'aller chez le vrai decideur.</p>
+          </div>
+          <div class="angle-box">
+            <div class="field-label">ANGLE</div>
+            <p class="angle-text">Visibilite multi-sites. Ils voient leur depot. L'entreprise ne voit jamais l'ensemble.</p>
+          </div>
+          <div class="tier-row">
+            <span class="tier-label-sm">PLAN CIBLE</span>
+            <span class="tier-tag" style="background:rgba(26,107,87,0.15);color:#34d399;border:1px solid rgba(26,107,87,0.3)">Professionnel</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="ep-card" onclick="toggleCard(this)">
+        <div class="ep-card-head">
+          <span class="ep-code">EP-5</span>
+          <span class="ep-badge" style="background:rgba(124,58,237,0.15);color:#a78bfa;border:1px solid rgba(124,58,237,0.3)">SOMETIMES THE BUYER</span>
+        </div>
+        <div class="ep-role">Comptabilite / Assistante de Direction</div>
+        <div class="ep-body">
+          <div>
+            <div class="field-label">PROFILE</div>
+            <p class="field-text">Gere les appels administratifs. Repond souvent quand le gerant ou chef de parc est indisponible. Peut gerer les certificats VGP comme tache admin.</p>
+          </div>
+          <div>
+            <div class="field-label">SIGNAUX DE DOULEUR</div>
+            <div class="signal-list">
+              <div class="signal-item">"C'est la compta qui gere"</div>
+              <div class="signal-item">"Je classe les certifs moi-meme"</div>
+              <div class="signal-item">"On attend le document du controleur"</div>
+            </div>
+          </div>
+          <div>
+            <div class="field-label">ROUTING</div>
+            <p class="field-text">"C'est la compta qui gere" est un signal de routing, pas un rejet. Demander directement: "C'est vous qui vous occupez des dossiers VGP ?" Si oui, rester sur l'appel. Si non, obtenir le nom.</p>
+          </div>
+          <div class="angle-box">
+            <div class="field-label">ANGLE</div>
+            <p class="angle-text">La charge admin de chasser les certificats, imprimer, classer. TraviXO le rend automatique.</p>
+          </div>
+          <div class="tier-row">
+            <span class="tier-label-sm">PLAN CIBLE</span>
+            <span class="tier-tag" style="background:rgba(242,111,0,0.15);color:#f26f00;border:1px solid rgba(242,111,0,0.3)">Demarrage</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="notice notice-dim">
+      <div class="notice-label nl-dim">REGLE FONDAMENTALE</div>
+      EP-1 et EP-2 sont les seules conversations ou vous restez. Tout autre point d'entree est un exercice de routing. Exception unique: EP-5 si elle est visiblement proprietaire de la douleur VGP.
+    </div>
+  </div>
+
+  <!-- PANEL 2: DECISION MAKERS -->
+  <div class="panel" id="panel-2">
+    <div class="section-title">Vrais Decideurs</div>
+    <p class="section-desc">Les acheteurs reels. Identifies par les appels d'entree, pas toujours joignables directement. Cliquez pour deployer.</p>
+    <div class="dm-list">
+
+      <div class="dm-card" onclick="toggleCard(this)">
+        <div class="dm-head">
+          <div class="dm-title-wrap">
+            <div class="dm-avatar" style="background:rgba(242,111,0,0.15);border:2px solid #f26f00;color:#f26f00">ST-1</div>
+            <div>
+              <div class="dm-name">Operateur Independant</div>
+              <div class="dm-sub">Gerant = Chef de Parc = Buyer</div>
+            </div>
+          </div>
+          <span class="tier-tag" style="background:rgba(242,111,0,0.15);color:#f26f00;border:1px solid rgba(242,111,0,0.3)">Demarrage</span>
+        </div>
+        <div class="dm-body">
+          <div class="dm-full">
+            <div class="field-label">PROFILE</div>
+            <p class="field-text">1 depot, 30-150 machines, Excel + papier, 1-5 employes.</p>
+          </div>
+          <div>
+            <div class="field-label">TRIGGER</div>
+            <p class="field-text">Douleur personnelle, pas organisationnelle. Quelque chose a deja mal tourne ou est sur le point de le faire.</p>
+          </div>
+          <div>
+            <div class="field-label">TIMELINE DECISION</div>
+            <p class="field-text">Court. Si convaincu, peut signer dans la semaine.</p>
+          </div>
+          <div class="dm-full" style="background:rgba(255,255,255,0.03);border-radius:6px;padding:12px 16px">
+            <div class="field-label">OBJECTION vs REPONSE</div>
+            <div class="objection-grid">
+              <div class="obj-box obj-blocker">"J'ai pas le temps de changer de systeme."</div>
+              <div class="obj-box obj-response">Setup en 4 heures. On le fait ensemble. Pas un manuel a debrouiller seul.</div>
+            </div>
+          </div>
+          <div class="dm-full">
+            <div class="dm-stats-row">
+              <div class="dm-stat">
+                <div class="dm-stat-label">PLAN CIBLE</div>
+                <div class="dm-stat-val">Demarrage</div>
+              </div>
+              <div class="divider-v"></div>
+              <div class="dm-stat">
+                <div class="dm-stat-label">PRIX</div>
+                <div class="dm-stat-val" style="color:#f26f00">490 EUR/mo</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dm-card" onclick="toggleCard(this)">
+        <div class="dm-head">
+          <div class="dm-title-wrap">
+            <div class="dm-avatar" style="background:rgba(26,107,87,0.2);border:2px solid #1a6b57;color:#34d399">ST-2</div>
+            <div>
+              <div class="dm-name">Operateur Regional</div>
+              <div class="dm-sub">Chef de Parc avec autorite budgetaire</div>
+            </div>
+          </div>
+          <span class="tier-tag" style="background:rgba(26,107,87,0.15);color:#34d399;border:1px solid rgba(26,107,87,0.3)">Professionnel</span>
+        </div>
+        <div class="dm-body">
+          <div class="dm-full">
+            <div class="field-label">PROFILE</div>
+            <p class="field-text">3-8 depots, 200-800 machines, ERP basique ou Excel-par-depot.</p>
+          </div>
+          <div>
+            <div class="field-label">TRIGGER</div>
+            <p class="field-text">Visibilite conformite multi-sites. Un VGP rate sur un seul depot au niveau groupe, c'est leur cauchemar.</p>
+          </div>
+          <div>
+            <div class="field-label">TIMELINE DECISION</div>
+            <p class="field-text">Moyen. Necessite un alignement interne, peut necessiter validation du gerant.</p>
+          </div>
+          <div class="dm-full" style="background:rgba(255,255,255,0.03);border-radius:6px;padding:12px 16px">
+            <div class="field-label">OBJECTION vs REPONSE</div>
+            <div class="objection-grid">
+              <div class="obj-box obj-blocker">"On a deja quelque chose."</div>
+              <div class="obj-box obj-response">Ca envoie des alertes automatiques avant echeance? Ca consolide tous les sites en un seul tableau de bord?</div>
+            </div>
+          </div>
+          <div class="dm-full">
+            <div class="dm-stats-row">
+              <div class="dm-stat">
+                <div class="dm-stat-label">PLAN CIBLE</div>
+                <div class="dm-stat-val">Professionnel</div>
+              </div>
+              <div class="divider-v"></div>
+              <div class="dm-stat">
+                <div class="dm-stat-label">PRIX</div>
+                <div class="dm-stat-val" style="color:#34d399">1 200 EUR/mo</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dm-card" onclick="toggleCard(this)">
+        <div class="dm-head">
+          <div class="dm-title-wrap">
+            <div class="dm-avatar" style="background:rgba(0,37,43,0.5);border:2px solid #00252b;color:#5eead4">ST-3</div>
+            <div>
+              <div class="dm-name">Directeur d'Agence</div>
+              <div class="dm-sub">Loxam / Kiloutou niveau agence</div>
+            </div>
+          </div>
+          <span class="tier-tag" style="background:rgba(30,64,175,0.15);color:#93c5fd;border:1px solid rgba(30,64,175,0.3)">Pro / Business</span>
+        </div>
+        <div class="dm-body">
+          <div class="dm-full">
+            <div class="field-label">PROFILE</div>
+            <p class="field-text">Agence unique au sein d'un reseau national. Autonomie operationnelle locale, independance d'achat limitee.</p>
+          </div>
+          <div>
+            <div class="field-label">TRIGGER</div>
+            <p class="field-text">Vitesse au niveau agence. Les systemes HQ sont lents ou ne couvrent pas les besoins operationnels quotidiens.</p>
+          </div>
+          <div>
+            <div class="field-label">TIMELINE DECISION</div>
+            <p class="field-text">Plus long. Peut necessiter une autorisation regionale ou nationale.</p>
+          </div>
+          <div class="dm-full" style="background:rgba(255,255,255,0.03);border-radius:6px;padding:12px 16px">
+            <div class="field-label">OBJECTION vs REPONSE</div>
+            <div class="objection-grid">
+              <div class="obj-box obj-blocker">"C'est le siege qui decide."</div>
+              <div class="obj-box obj-response">Le directeur d'agence a-t-il un budget outil local? Beaucoup en ont un pour les outils operationnels en dessous d'un certain seuil.</div>
+            </div>
+          </div>
+          <div class="dm-full">
+            <div class="dm-stats-row">
+              <div class="dm-stat">
+                <div class="dm-stat-label">PLAN CIBLE</div>
+                <div class="dm-stat-val">Pro / Business</div>
+              </div>
+              <div class="divider-v"></div>
+              <div class="dm-stat">
+                <div class="dm-stat-label">PRIX</div>
+                <div class="dm-stat-val" style="color:#93c5fd">1 200-2 400 EUR/mo</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dm-card locked">
+        <div class="dm-head">
+          <div class="dm-title-wrap">
+            <div class="dm-avatar" style="background:rgba(255,255,255,0.03);border:2px solid #333;color:#555">ST-4</div>
+            <div>
+              <div class="dm-name" style="color:#555">Acheteur National / Enterprise</div>
+              <div class="dm-sub">HQ-level — cible future uniquement</div>
+            </div>
+          </div>
+          <span class="locked-tag">LOCKED</span>
+        </div>
+      </div>
+
+    </div>
+    <div class="notice notice-red">
+      <div class="notice-label nl-red">AVERTISSEMENT ST-4</div>
+      Ne pas approcher le segment Enterprise avant d'avoir 5 clients payants comme preuve. Le cycle de vente (6-12 mois) epuisera les ressources sans resultats. Focus exclusif sur ST-1 et ST-2.
+    </div>
+  </div>
+
+  <!-- PANEL 3: ROUTING -->
+  <div class="panel" id="panel-3">
+    <div class="section-title">Table de Routing</div>
+    <p class="section-desc">Vue consolidee. Chaque persona, decision instantanee, angle, plan cible.</p>
+    <div class="routing-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>PERSONA</th>
+            <th style="text-align:center">DECROCHE</th>
+            <th>ACHETEUR</th>
+            <th>DECISION</th>
+            <th>ANGLE</th>
+            <th>PLAN</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-persona">Chef de Parc (petite co.)</td>
+            <td class="td-center"><div class="indicator ind-yes">Y</div></td>
+            <td class="td-buyer">Souvent</td>
+            <td><span class="stay-badge stay-yes">RESTER</span></td>
+            <td class="td-angle">Temps prep controle</td>
+            <td><span class="tier-tag" style="background:rgba(242,111,0,0.15);color:#f26f00;border:1px solid rgba(242,111,0,0.3)">Demarrage</span></td>
+          </tr>
+          <tr>
+            <td class="td-persona">Gerant / Patron</td>
+            <td class="td-center"><div class="indicator ind-yes">Y</div></td>
+            <td class="td-buyer">Toujours</td>
+            <td><span class="stay-badge stay-yes">RESTER</span></td>
+            <td class="td-angle">Temps + amendes</td>
+            <td><span class="tier-tag" style="background:rgba(242,111,0,0.15);color:#f26f00;border:1px solid rgba(242,111,0,0.3)">Demarrage</span></td>
+          </tr>
+          <tr>
+            <td class="td-persona">Commercial / Contact</td>
+            <td class="td-center"><div class="indicator ind-yes">Y</div></td>
+            <td class="td-buyer">Jamais</td>
+            <td><span class="stay-badge stay-no">ROUTER</span></td>
+            <td class="td-angle">Routing uniquement</td>
+            <td><span style="color:rgba(255,255,255,0.15);font-family:var(--mono);font-size:9px">--</span></td>
+          </tr>
+          <tr>
+            <td class="td-persona">Chef de Depot</td>
+            <td class="td-center"><div class="indicator ind-yes">Y</div></td>
+            <td class="td-buyer">Rarement</td>
+            <td><span class="stay-badge stay-yes">RESTER</span></td>
+            <td class="td-angle">Discovery + escalation</td>
+            <td><span class="tier-tag" style="background:rgba(26,107,87,0.15);color:#34d399;border:1px solid rgba(26,107,87,0.3)">Professionnel</span></td>
+          </tr>
+          <tr>
+            <td class="td-persona">Comptabilite</td>
+            <td class="td-center"><div class="indicator ind-yes">Y</div></td>
+            <td class="td-buyer">Parfois</td>
+            <td><span class="stay-badge stay-yes">RESTER</span></td>
+            <td class="td-angle">Admin VGP pain</td>
+            <td><span class="tier-tag" style="background:rgba(242,111,0,0.15);color:#f26f00;border:1px solid rgba(242,111,0,0.3)">Demarrage</span></td>
+          </tr>
+          <tr>
+            <td class="td-persona">Chef de Parc regional</td>
+            <td class="td-center"><div class="indicator ind-no">N</div></td>
+            <td class="td-buyer">Oui</td>
+            <td><span class="stay-badge stay-yes">RESTER</span></td>
+            <td class="td-angle">Multi-site visibilite</td>
+            <td><span class="tier-tag" style="background:rgba(26,107,87,0.15);color:#34d399;border:1px solid rgba(26,107,87,0.3)">Professionnel</span></td>
+          </tr>
+          <tr>
+            <td class="td-persona">Directeur d'Agence</td>
+            <td class="td-center"><div class="indicator ind-no">N</div></td>
+            <td class="td-buyer">Partiel</td>
+            <td><span class="stay-badge stay-yes">RESTER</span></td>
+            <td class="td-angle">Outil vitesse local</td>
+            <td><span class="tier-tag" style="background:rgba(30,64,175,0.15);color:#93c5fd;border:1px solid rgba(30,64,175,0.3)">Pro / Business</span></td>
+          </tr>
+          <tr>
+            <td class="td-persona" style="color:#555">HQ National</td>
+            <td class="td-center"><div class="indicator ind-no">N</div></td>
+            <td class="td-buyer" style="color:#444">Oui</td>
+            <td><span class="stay-badge stay-no">ROUTER</span></td>
+            <td class="td-angle" style="color:#444">Conformite enterprise</td>
+            <td><span class="tier-tag" style="background:rgba(107,33,168,0.1);color:#666;border:1px solid rgba(107,33,168,0.2)">Enterprise</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="stat-strip">
+      <div class="stat-box">
+        <div class="stat-box-label">CIBLES PRIORITAIRES</div>
+        <div class="stat-box-val">ST-1 + ST-2</div>
+        <div class="stat-box-note">100% du focus actuel</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-label">MIN. MACHINES QUALIFIANT</div>
+        <div class="stat-box-val">30+</div>
+        <div class="stat-box-note">Sortir poliment en dessous</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-label">CLIENTS AVANT ENTERPRISE</div>
+        <div class="stat-box-val">5 payants</div>
+        <div class="stat-box-note">Avant d'approcher ST-4</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function switchTab(index) {
+    document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === index));
+    document.querySelectorAll('.panel').forEach((p, i) => p.classList.toggle('active', i === index));
+  }
+  function toggleCard(el) {
+    if (el.classList.contains('locked')) return;
+    el.classList.toggle('open');
+  }
+</script>
+</body>
+</html>

@@ -12,6 +12,13 @@
   --color-warning: #eab308;
   --color-danger: #b91c1c;
 
+  /* Named brand aliases */
+  --color-navy: #00252b;
+  --color-navy-hover: #003a45;
+  --color-orange: #f26f00;
+  --color-orange-hover: #d96200;
+  --color-brand-orange: #f26f00;
+
   /* RGB versions for opacity support */
   --color-primary-rgb: 0, 37, 43;
   --color-secondary-rgb: 0, 61, 69;
@@ -24,6 +31,10 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-navy: #00252b;
+  --color-navy-hover: #003a45;
+  --color-orange: #f26f00;
+  --color-orange-hover: #d96200;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -80,4 +91,21 @@ input, select, textarea {
 
 .animate-slide-up {
   animation: slideUp 0.3s ease-out;
+}
+
+/* Brand utility classes */
+.btn-primary {
+  @apply bg-navy text-white font-medium px-4 py-2 rounded-md
+         hover:bg-navy-hover transition-colors focus:outline-none
+         focus:ring-2 focus:ring-navy focus:ring-offset-2;
+}
+.btn-accent {
+  @apply bg-orange text-white font-medium px-4 py-2 rounded-md
+         hover:bg-orange-hover transition-colors focus:outline-none
+         focus:ring-2 focus:ring-orange focus:ring-offset-2;
+}
+.form-field {
+  @apply w-full rounded-md border border-gray-300 px-3 py-2 text-sm
+         focus:outline-none focus:ring-2 focus:ring-navy focus:border-navy
+         placeholder:text-gray-400;
 }
