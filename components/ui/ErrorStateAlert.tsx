@@ -12,11 +12,6 @@ interface ErrorStateProps {
 
 /**
  * Full-page error state — use when the whole page fails to load.
- *
- * Usage:
- *   const [error, setError] = useState<string | null>(null);
- *   catch (e: any) { setError(e.message || 'Erreur de chargement'); }
- *   if (error) return <ErrorStatePage message={error} onRetry={refetch} />;
  */
 export function ErrorStatePage({ message, onRetry, title = 'Impossible de charger les données' }: ErrorStateProps) {
   return (
