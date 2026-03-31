@@ -126,7 +126,7 @@ export default function CheckoutOverlay({
       notes: notes.trim(),
     })
     if (!parsed.success) {
-      setError(parsed.error.errors[0].message)
+      setError(parsed.error.issues[0].message)
       return
     }
 
@@ -176,7 +176,7 @@ export default function CheckoutOverlay({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           asset_id: assetId,
-          client_name: name.trim(),
+          client_name: clientName.trim(),
           client_contact: clientContact.trim() || null,
           expected_return_date: expectedReturn || null,
           notes: notes.trim() || null,

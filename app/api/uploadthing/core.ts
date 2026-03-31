@@ -34,11 +34,11 @@ export const ourFileRouter = {
   // VGP Certificate uploads (PDF or image)
   vgpCertificate: f({
     pdf: {
-      maxFileSize: "10MB",
+      maxFileSize: "8MB",
       maxFileCount: 1,
     },
     image: {
-      maxFileSize: "10MB",
+      maxFileSize: "8MB",
       maxFileCount: 1,
     },
   })
