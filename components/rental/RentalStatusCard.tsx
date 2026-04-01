@@ -129,16 +129,16 @@ export default function RentalStatusCard({
 
       <div className="space-y-2 mb-4">
         <div className="flex justify-between items-center">
-          <span className="text-[15px] text-gray-600 font-medium">{t('rental.client')}:</span>
+          <span className="text-[15px] text-gray-600 font-semibold">{t('rental.client')}:</span>
           <span className="text-[15px] font-bold text-[#00252b]">{rental.client_name}</span>
         </div>
         <div className="flex justify-between items-center">
-          <span className="text-[15px] text-gray-600 font-medium">{t('rental.since')}:</span>
+          <span className="text-[15px] text-gray-600 font-semibold">{t('rental.since')}:</span>
           <span className="text-[15px] font-bold text-[#00252b]">{formatDate(rental.checkout_date)}</span>
         </div>
         {rental.expected_return_date ? (
           <div className="flex justify-between items-center">
-            <span className="text-[15px] text-gray-600 font-medium">
+            <span className="text-[15px] text-gray-600 font-semibold">
               {isOverdue ? t('rental.overdueBy') : t('rental.expectedBy')}:
             </span>
             <span className={`text-[15px] font-bold ${isOverdue ? 'text-red-700' : 'text-[#00252b]'}`}>
@@ -150,12 +150,12 @@ export default function RentalStatusCard({
           </div>
         ) : (
           <div className="flex justify-between items-center">
-            <span className="text-[15px] text-gray-600 font-medium">{t('rental.expectedBy')}:</span>
+            <span className="text-[15px] text-gray-600 font-semibold">{t('rental.expectedBy')}:</span>
             <span className="text-[15px] font-medium text-gray-500">{t('rental.openEnded')}</span>
           </div>
         )}
         <div className="flex justify-between items-center">
-          <span className="text-[15px] text-gray-600 font-medium">{t('rental.duration')}:</span>
+          <span className="text-[15px] text-gray-600 font-semibold">{t('rental.duration')}:</span>
           <span className="text-[15px] font-bold text-[#00252b]">
             {daysSince} {t('rental.days')}
           </span>

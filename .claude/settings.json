@@ -49,7 +49,8 @@
       "Bash(find /d/Dev/projects/travixo-app/app -type f -name *.tsx -o -name *.ts)",
       "Bash(find /d/Dev/projects/travixo-app/components/ui -type f -name *.tsx)",
       "Bash(ls -la d:/Dev/projects/travixo-app/app/\\\\\\(dashboard\\\\\\)/)",
-      "Bash(grep -E \"\\\\.tsx$|\\\\.ts$\")"
+      "Bash(grep -E \"\\\\.tsx$|\\\\.ts$\")",
+      "Bash(npx tsc:*)"
     ]
   }
 }

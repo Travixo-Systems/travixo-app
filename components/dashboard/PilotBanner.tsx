@@ -17,14 +17,14 @@ export default function PilotBanner() {
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <ShieldOff className="w-5 h-5 text-red-400 flex-shrink-0" />
-            <p className="text-sm text-white">
+            <p className="text-[15px] text-white">
               <span className="font-semibold">Votre accès a été désactivé.</span>
               {' '}Votre période d'essai est terminée. Souscrivez pour retrouver l'accès à vos données.
             </p>
           </div>
           <Link
             href="/settings/subscription"
-            className="inline-flex items-center gap-1 px-4 py-1.5 bg-orange-500 text-white text-sm font-medium rounded-lg hover:bg-orange-600 transition-colors flex-shrink-0"
+            className="inline-flex items-center gap-1 px-4 py-1.5 bg-orange-500 text-white text-[15px] font-medium rounded-lg hover:bg-orange-600 transition-colors flex-shrink-0"
           >
             Souscrire maintenant
             <ArrowUpRight className="w-3.5 h-3.5" />
@@ -41,7 +41,7 @@ export default function PilotBanner() {
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
-            <p className="text-sm text-amber-800">
+            <p className="text-[15px] text-amber-800">
               <span className="font-semibold">Votre pilote expire dans {daysRemaining} jour{daysRemaining !== 1 ? 's' : ''}.</span>
               {' '}Passez au Professionnel pour conserver la conformité VGP.
             </p>
@@ -49,7 +49,7 @@ export default function PilotBanner() {
           <div className="flex items-center gap-2 flex-shrink-0">
             <Link
               href="/settings/subscription"
-              className="inline-flex items-center gap-1 px-4 py-1.5 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors"
+              className="inline-flex items-center gap-1 px-4 py-1.5 bg-amber-600 text-white text-[15px] font-medium rounded-lg hover:bg-amber-700 transition-colors"
             >
               Passer au Professionnel
               <ArrowUpRight className="w-3.5 h-3.5" />
@@ -67,7 +67,7 @@ export default function PilotBanner() {
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Clock className="w-4 h-4 flex-shrink-0" style={{ color: '#00252b' }} />
-            <p className="text-sm" style={{ color: '#00252b' }}>
+            <p className="text-[15px]" style={{ color: '#00252b' }}>
               <span className="font-semibold">Pilote : {daysRemaining} jour{daysRemaining !== 1 ? 's' : ''} restant{daysRemaining !== 1 ? 's' : ''}</span>
               {' '}&bull; 50 équipements max &bull; Conformité VGP active
               {usage.assets > 0 && (
@@ -87,14 +87,14 @@ export default function PilotBanner() {
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <XCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-            <p className="text-sm text-red-800">
+            <p className="text-[15px] text-red-800">
               <span className="font-semibold">Votre pilote a expiré.</span>
               {' '}La conformité VGP est en lecture seule. Votre accès sera désactivé sous peu.
             </p>
           </div>
           <Link
             href="/settings/subscription"
-            className="inline-flex items-center gap-1 px-4 py-1.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors flex-shrink-0"
+            className="inline-flex items-center gap-1 px-4 py-1.5 bg-red-600 text-white text-[15px] font-medium rounded-lg hover:bg-red-700 transition-colors flex-shrink-0"
           >
             Passer au Professionnel
             <ArrowUpRight className="w-3.5 h-3.5" />

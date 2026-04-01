@@ -193,7 +193,7 @@ export default function InspectionRecorderPage({
   if (error && !schedule) {
     return (
       <FeatureGate feature="vgp_compliance">
-        <div className="p-8">
+        <div className="p-3 md:p-6">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-red-800">{error}</p>
           </div>
@@ -205,7 +205,7 @@ export default function InspectionRecorderPage({
   if (isReadOnly) {
     return (
       <FeatureGate feature="vgp_compliance">
-        <div className="p-8 max-w-4xl mx-auto">
+        <div className="p-3 md:p-6 max-w-4xl mx-auto">
           <VGPReadOnlyBanner />
           <div className="mt-4">
             <h1 className="text-2xl font-bold text-[var(--text-primary,#1a1a1a)] mb-2">Enregistrer une Inspection VGP</h1>
@@ -215,7 +215,7 @@ export default function InspectionRecorderPage({
             </p>
             <button
               onClick={() => router.push('/vgp')}
-              className="mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
+              className="mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-[15px]"
             >
               Retour au tableau VGP
             </button>
@@ -227,7 +227,7 @@ export default function InspectionRecorderPage({
 
   return (
     <FeatureGate feature="vgp_compliance">
-      <div className="p-8 max-w-4xl mx-auto">
+      <div className="p-3 md:p-6 max-w-4xl mx-auto">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-[var(--text-primary,#1a1a1a)]">Enregistrer une Inspection VGP</h1>
           <p className="text-[var(--text-muted,#777)] mt-2">
@@ -236,31 +236,31 @@ export default function InspectionRecorderPage({
         </div>
 
         <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Informations sur l'Équipement</h2>
+          <h2 className="text-[22px] font-semibold mb-4">Informations sur l'Équipement</h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-[var(--text-muted,#777)]">Équipement</p>
+              <p className="text-[15px] text-[var(--text-muted,#777)]">Équipement</p>
               <p className="font-semibold">{schedule?.assets?.name}</p>
             </div>
             <div>
-              <p className="text-sm text-[var(--text-muted,#777)]">Numéro de Série</p>
+              <p className="text-[15px] text-[var(--text-muted,#777)]">Numéro de Série</p>
               <p className="font-semibold">{schedule?.assets?.serial_number || 'N/A'}</p>
             </div>
             <div>
-              <p className="text-sm text-[var(--text-muted,#777)]">Catégorie</p>
+              <p className="text-[15px] text-[var(--text-muted,#777)]">Catégorie</p>
               <p className="font-semibold">
                 {schedule?.assets?.asset_categories?.name || 'Non catégorisé'}
               </p>
             </div>
             <div>
-              <p className="text-sm text-[var(--text-muted,#777)]">Localisation</p>
+              <p className="text-[15px] text-[var(--text-muted,#777)]">Localisation</p>
               <p className="font-semibold">{schedule?.assets?.current_location || 'N/A'}</p>
             </div>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-6">Détails de l'Inspection</h2>
+          <h2 className="text-[22px] font-semibold mb-6">Détails de l'Inspection</h2>
 
           {error && (
             <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
@@ -271,7 +271,7 @@ export default function InspectionRecorderPage({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-2">
+              <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-2">
                 Date d'Inspection <span className="text-red-500">*</span>
               </label>
               <input
@@ -284,7 +284,7 @@ export default function InspectionRecorderPage({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-2">
+              <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-2">
                 Nom de l'Inspecteur <span className="text-red-500">*</span>
               </label>
               <input
@@ -298,7 +298,7 @@ export default function InspectionRecorderPage({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-2">
+              <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-2">
                 Organisme de Contrôle <span className="text-red-500">*</span>
               </label>
               <input
@@ -312,7 +312,7 @@ export default function InspectionRecorderPage({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-2">
+              <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-2">
                 Numéro de Certificat
               </label>
               <input
@@ -328,7 +328,7 @@ export default function InspectionRecorderPage({
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-2">
+            <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-2">
               Résultat de l'Inspection <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -343,7 +343,7 @@ export default function InspectionRecorderPage({
               >
                 <div className="text-center">
                   <p className="font-semibold">✓ Conforme</p>
-                  <p className="text-sm mt-1">Prochaine inspection : selon l'intervalle</p>
+                  <p className="text-[15px] mt-1">Prochaine inspection : selon l'intervalle</p>
                 </div>
               </button>
 
@@ -358,7 +358,7 @@ export default function InspectionRecorderPage({
               >
                 <div className="text-center">
                   <p className="font-semibold">⚠ Conditionnel</p>
-                  <p className="text-sm mt-1">Prochaine inspection : 6 mois</p>
+                  <p className="text-[15px] mt-1">Prochaine inspection : 6 mois</p>
                 </div>
               </button>
 
@@ -373,14 +373,14 @@ export default function InspectionRecorderPage({
               >
                 <div className="text-center">
                   <p className="font-semibold">✗ Non Conforme</p>
-                  <p className="text-sm mt-1">Équipement hors service - Réinspection : 30 jours</p>
+                  <p className="text-[15px] mt-1">Équipement hors service - Réinspection : 30 jours</p>
                 </div>
               </button>
             </div>
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-2">
+            <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-2">
               Constatations / Remarques
             </label>
             <textarea
@@ -393,7 +393,7 @@ export default function InspectionRecorderPage({
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-2">
+            <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-2">
               Certificat VGP (PDF) <span className="text-red-500">*</span>
             </label>
 
@@ -403,7 +403,7 @@ export default function InspectionRecorderPage({
                   <FileText className="w-8 h-8 text-green-600" />
                   <div className="flex-1">
                     <p className="font-semibold text-green-900">{selectedFile.name}</p>
-                    <p className="text-sm text-green-700">
+                    <p className="text-[15px] text-green-700">
                       {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                     </p>
                   </div>
@@ -434,15 +434,15 @@ export default function InspectionRecorderPage({
                     disabled={submitting}
                   />
                 </label>
-                <p className="text-sm text-[var(--text-hint,#888)] mt-2">PDF uniquement, maximum 4 MB</p>
+                <p className="text-[15px] text-[var(--text-hint,#888)] mt-2">PDF uniquement, maximum 4 MB</p>
               </div>
             )}
 
             {uploadProgress > 0 && uploadProgress < 100 && (
               <div className="mt-3">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm text-[var(--text-muted,#777)]">Téléchargement...</span>
-                  <span className="text-sm font-medium text-blue-600">{uploadProgress}%</span>
+                  <span className="text-[15px] text-[var(--text-muted,#777)]">Téléchargement...</span>
+                  <span className="text-[15px] font-medium text-blue-600">{uploadProgress}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
@@ -453,7 +453,7 @@ export default function InspectionRecorderPage({
               </div>
             )}
 
-            <p className="text-sm text-[var(--text-muted,#777)] mt-2">
+            <p className="text-[15px] text-[var(--text-muted,#777)] mt-2">
               <strong className="text-red-600">Obligatoire:</strong> Le certificat VGP est exigé
               par DREETS. Sans certificat officiel de l'organisme de contrôle, l'inspection
               n'est pas conforme et votre équipement reste exposé aux amendes (€3K–€15K par

@@ -158,16 +158,16 @@ export default function ClientsPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+            <h1 className="text-[22px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
               {t('clients.pageTitle')}
             </h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-muted, #777)' }}>
+            <p className="text-[15px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>
               {t('clients.pageSubtitle')}
             </p>
           </div>
           <button
             onClick={openAdd}
-            className="flex items-center gap-2 px-4 py-2.5 text-white rounded-md font-medium hover:opacity-90 transition-colors text-sm"
+            className="flex items-center gap-2 px-4 py-2.5 text-white rounded-md font-medium hover:opacity-90 transition-colors text-[15px]"
             style={{ backgroundColor: 'var(--accent, #e8600a)' }}
           >
             <Plus className="w-4 h-4" />
@@ -204,7 +204,7 @@ export default function ClientsPage() {
             <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
               {t('clients.noClients')}
             </h3>
-            <p className="text-sm max-w-md mx-auto" style={{ color: 'var(--text-muted, #777)' }}>
+            <p className="text-[15px] max-w-md mx-auto" style={{ color: 'var(--text-muted, #777)' }}>
               {t('clients.noClientsDescription')}
             </p>
           </div>
@@ -225,7 +225,7 @@ export default function ClientsPage() {
                       {client.name}
                     </h3>
                     {client.company && (
-                      <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--text-muted, #777)' }}>{client.company}</p>
+                      <p className="text-[13px] mt-0.5 truncate" style={{ color: 'var(--text-muted, #777)' }}>{client.company}</p>
                     )}
                   </div>
                   <button
@@ -238,21 +238,21 @@ export default function ClientsPage() {
 
                 <div className="space-y-1.5 mb-3">
                   {client.email && (
-                    <p className="text-xs truncate" style={{ color: 'var(--text-secondary, #444)' }}>{client.email}</p>
+                    <p className="text-[13px] truncate" style={{ color: 'var(--text-secondary, #444)' }}>{client.email}</p>
                   )}
                   {client.phone && (
-                    <p className="text-xs" style={{ color: 'var(--text-secondary, #444)' }}>{client.phone}</p>
+                    <p className="text-[13px]" style={{ color: 'var(--text-secondary, #444)' }}>{client.phone}</p>
                   )}
                 </div>
 
                 {client.notes && (
-                  <p className="text-xs line-clamp-2 mb-3" style={{ color: 'var(--text-hint, #888)' }}>{client.notes}</p>
+                  <p className="text-[13px] line-clamp-2 mb-3" style={{ color: 'var(--text-hint, #888)' }}>{client.notes}</p>
                 )}
 
                 <div className="flex items-center gap-3 pt-3 border-t" style={{ borderColor: '#dcdee3' }}>
                   <div className="flex items-center gap-1.5">
                     <Package className="w-3.5 h-3.5" style={{ color: 'var(--text-hint, #888)' }} />
-                    <span className="text-xs" style={{ color: 'var(--text-muted, #777)' }}>
+                    <span className="text-[13px]" style={{ color: 'var(--text-muted, #777)' }}>
                       {new Date(client.created_at).toLocaleDateString(
                         language === 'fr' ? 'fr-FR' : 'en-US',
                         { day: 'numeric', month: 'short', year: 'numeric' }
@@ -287,12 +287,12 @@ export default function ClientsPage() {
               <form onSubmit={handleFormSubmit} className="px-6 pb-6 space-y-4">
                 {formError && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                    <p className="text-red-700 text-sm font-medium">{formError}</p>
+                    <p className="text-red-700 text-[15px] font-medium">{formError}</p>
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-[13px] font-medium mb-1.5" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                  <label className="block text-[14px] font-semibold mb-1.5" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                     {t('clients.name')} *
                   </label>
                   <input
@@ -308,7 +308,7 @@ export default function ClientsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[13px] font-medium mb-1.5" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                  <label className="block text-[14px] font-semibold mb-1.5" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                     {t('clients.email')}
                   </label>
                   <input
@@ -324,7 +324,7 @@ export default function ClientsPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[13px] font-medium mb-1.5" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                    <label className="block text-[14px] font-semibold mb-1.5" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                       {t('clients.phone')}
                     </label>
                     <input
@@ -338,7 +338,7 @@ export default function ClientsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-[13px] font-medium mb-1.5" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                    <label className="block text-[14px] font-semibold mb-1.5" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                       {t('clients.company')}
                     </label>
                     <input
@@ -354,7 +354,7 @@ export default function ClientsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[13px] font-medium mb-1.5" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                  <label className="block text-[14px] font-semibold mb-1.5" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                     {t('clients.notes')}
                   </label>
                   <textarea

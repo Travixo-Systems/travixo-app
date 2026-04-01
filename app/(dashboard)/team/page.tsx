@@ -457,7 +457,7 @@ export default function TeamPage() {
           }}
         >
           <div className="flex items-center justify-between">
-            <p className="text-[15px] font-medium" style={{ color: 'var(--text-secondary, #444)' }}>{t('team.totalMembers')}</p>
+            <p className="text-[15px] font-semibold" style={{ color: 'var(--text-secondary, #444)' }}>{t('team.totalMembers')}</p>
             <Users className="w-5 h-5" style={{ color: 'var(--text-hint, #888)' }} />
           </div>
           <p className="text-3xl font-bold mt-2" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{stats.total}</p>
@@ -476,7 +476,7 @@ export default function TeamPage() {
           }}
         >
           <div className="flex items-center justify-between">
-            <p className="text-[15px] font-medium" style={{ color: 'var(--text-secondary, #444)' }}>{t('team.administrators')}</p>
+            <p className="text-[15px] font-semibold" style={{ color: 'var(--text-secondary, #444)' }}>{t('team.administrators')}</p>
             <Shield className="w-5 h-5" style={{ color: BRAND_COLORS.success }} />
           </div>
           <p className="text-3xl font-bold mt-2" style={{ color: BRAND_COLORS.success }}>{stats.admins}</p>
@@ -495,7 +495,7 @@ export default function TeamPage() {
           }}
         >
           <div className="flex items-center justify-between">
-            <p className="text-[15px] font-medium" style={{ color: 'var(--text-secondary, #444)' }}>{t('team.teamMembers')}</p>
+            <p className="text-[15px] font-semibold" style={{ color: 'var(--text-secondary, #444)' }}>{t('team.teamMembers')}</p>
             <Users className="w-5 h-5" style={{ color: BRAND_COLORS.warning }} />
           </div>
           <p className="text-3xl font-bold mt-2" style={{ color: BRAND_COLORS.warning }}>{stats.members + stats.viewers}</p>
@@ -514,7 +514,7 @@ export default function TeamPage() {
           }}
         >
           <div className="flex items-center justify-between">
-            <p className="text-[15px] font-medium" style={{ color: 'var(--text-secondary, #444)' }}>{t('team.pendingInvites')}</p>
+            <p className="text-[15px] font-semibold" style={{ color: 'var(--text-secondary, #444)' }}>{t('team.pendingInvites')}</p>
             <Mail className="w-5 h-5" style={{ color: BRAND_COLORS.primary }} />
           </div>
           <p className="text-3xl font-bold mt-2" style={{ color: BRAND_COLORS.primary }}>{stats.pendingInvites}</p>
@@ -731,7 +731,7 @@ export default function TeamPage() {
                 <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase" style={{ color: 'var(--text-muted, #777)' }}>
                   Status
                 </th>
-                <th className="px-6 py-3 text-right text-[13px] font-medium uppercase" style={{ color: 'var(--text-muted, #777)' }}>
+                <th className="px-6 py-3 text-right text-[13px] font-semibold uppercase" style={{ color: 'var(--text-muted, #777)' }}>
                   {t('team.actions')}
                 </th>
               </tr>
@@ -932,7 +932,7 @@ export default function TeamPage() {
             </div>
             <div className="p-4 space-y-4">
               <div>
-                <label className="block text-[15px] font-medium mb-1" style={{ color: 'var(--text-secondary, #444)' }}>
+                <label className="block text-[15px] font-semibold mb-1" style={{ color: 'var(--text-secondary, #444)' }}>
                   {t('team.emailAddress')}
                 </label>
                 <input
@@ -945,7 +945,7 @@ export default function TeamPage() {
                 />
               </div>
               <div>
-                <label className="block text-[15px] font-medium mb-2" style={{ color: 'var(--text-secondary, #444)' }}>
+                <label className="block text-[15px] font-semibold mb-2" style={{ color: 'var(--text-secondary, #444)' }}>
                   {t('team.selectRole')}
                 </label>
                 <div className="space-y-2">

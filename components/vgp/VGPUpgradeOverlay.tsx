@@ -12,7 +12,7 @@ export default function VGPUpgradeOverlay({ action = 'cette action' }: VGPUpgrad
     <div className="inline-flex items-center gap-2">
       <Link
         href="/settings/subscription"
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-100 text-orange-700 text-xs font-medium rounded-lg hover:bg-orange-200 transition-colors border border-orange-200"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-100 text-orange-700 text-[14px] font-medium rounded-lg hover:bg-orange-200 transition-colors border border-orange-200"
       >
         <LockClosedIcon className="w-3.5 h-3.5" />
         Passer au Professionnel
@@ -27,15 +27,15 @@ export function VGPReadOnlyBanner() {
       <div className="flex items-start gap-3">
         <LockClosedIcon className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
         <div className="flex-1">
-          <p className="text-sm font-semibold text-amber-800">
+          <p className="text-[15px] font-semibold text-amber-800">
             Mode lecture seule — Pilote expiré
           </p>
-          <p className="text-sm text-amber-700 mt-1">
+          <p className="text-[15px] text-amber-700 mt-1">
             Vos données VGP sont conservées. Passez au plan Professionnel pour créer des inspections, modifier des plannings et télécharger des certificats.
           </p>
           <Link
             href="/settings/subscription"
-            className="inline-flex items-center gap-1.5 mt-3 px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 transition-colors"
+            className="inline-flex items-center gap-1.5 mt-3 px-4 py-2 bg-orange-600 text-white text-[15px] font-medium rounded-lg hover:bg-orange-700 transition-colors"
           >
             <ArrowUpIcon className="w-4 h-4" />
             Passer au Professionnel

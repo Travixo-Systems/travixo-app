@@ -670,7 +670,7 @@ export default function AuditsPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('audits.newAudit')}</h2>
+              <h2 className="text-[22px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('audits.newAudit')}</h2>
               <button
                 onClick={() => setShowCreateModal(false)}
                 className="p-2 hover:bg-black/[0.05] rounded-lg transition-colors"

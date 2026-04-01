@@ -266,7 +266,7 @@ export default function CheckoutOverlay({
               <button
                 type="button"
                 onClick={switchToSelect}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-bold text-sm border-2 transition-all ${
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-bold text-[15px] border-2 transition-all ${
                   mode === 'select'
                     ? 'bg-[#00252b] text-white border-[#00252b]'
                     : 'bg-[var(--card-bg,#edeff2)] text-[#00252b] border-gray-300 hover:border-[#00252b]'
@@ -278,7 +278,7 @@ export default function CheckoutOverlay({
               <button
                 type="button"
                 onClick={switchToNew}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-bold text-sm border-2 transition-all ${
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-bold text-[15px] border-2 transition-all ${
                   mode === 'new'
                     ? 'bg-[#00252b] text-white border-[#00252b]'
                     : 'bg-[var(--card-bg,#edeff2)] text-[#00252b] border-gray-300 hover:border-[#00252b]'
@@ -292,7 +292,7 @@ export default function CheckoutOverlay({
             {/* Client Selection Mode */}
             {mode === 'select' && (
               <div>
-                <label className="block text-sm font-bold text-[#00252b] mb-2">
+                <label className="block text-[15px] font-bold text-[#00252b] mb-2">
                   {t('rental.clientName')} *
                 </label>
                 <input
@@ -318,12 +318,12 @@ export default function CheckoutOverlay({
                         onClick={() => selectClient(client)}
                         className="w-full text-left px-4 py-2.5 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
                       >
-                        <span className="font-bold text-sm text-[#00252b]">{client.name}</span>
+                        <span className="font-bold text-[15px] text-[#00252b]">{client.name}</span>
                         {client.company && (
-                          <span className="text-xs text-gray-500 ml-2">{client.company}</span>
+                          <span className="text-[13px] text-gray-500 ml-2">{client.company}</span>
                         )}
                         {(client.phone || client.email) && (
-                          <span className="block text-xs text-gray-400 mt-0.5">
+                          <span className="block text-[13px] text-gray-400 mt-0.5">
                             {client.phone || client.email}
                           </span>
                         )}
@@ -334,7 +334,7 @@ export default function CheckoutOverlay({
                 {selectedClientId && (
                   <div className="mt-2 flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
                     <Users className="w-4 h-4 text-green-600" />
-                    <span className="text-green-800 text-sm font-medium">{clientName}</span>
+                    <span className="text-green-800 text-[15px] font-medium">{clientName}</span>
                   </div>
                 )}
               </div>
@@ -344,7 +344,7 @@ export default function CheckoutOverlay({
             {mode === 'new' && (
               <>
                 <div>
-                  <label className="block text-sm font-bold text-[#00252b] mb-2">
+                  <label className="block text-[15px] font-bold text-[#00252b] mb-2">
                     {t('rental.clientName')} *
                   </label>
                   <input
@@ -357,13 +357,13 @@ export default function CheckoutOverlay({
                     maxLength={255}
                   />
                   {fieldErrors.clientName && (
-                    <p className="text-xs text-red-600 mt-1">{fieldErrors.clientName}</p>
+                    <p className="text-[13px] text-red-600 mt-1">{fieldErrors.clientName}</p>
                   )}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-bold text-[#00252b] mb-2">
-                      {t('rental.clientEmail')} <span className="text-gray-400 font-normal text-xs">({language === 'fr' ? 'opt.' : 'opt.'})</span>
+                    <label className="block text-[15px] font-bold text-[#00252b] mb-2">
+                      {t('rental.clientEmail')} <span className="text-gray-400 font-normal text-[13px]">({language === 'fr' ? 'opt.' : 'opt.'})</span>
                     </label>
                     <input
                       type="email"
@@ -375,12 +375,12 @@ export default function CheckoutOverlay({
                       maxLength={255}
                     />
                     {fieldErrors.clientEmail && (
-                      <p className="text-xs text-red-600 mt-1">{fieldErrors.clientEmail}</p>
+                      <p className="text-[13px] text-red-600 mt-1">{fieldErrors.clientEmail}</p>
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-[#00252b] mb-2">
-                      {t('rental.clientPhone')} <span className="text-gray-400 font-normal text-xs">({language === 'fr' ? 'opt.' : 'opt.'})</span>
+                    <label className="block text-[15px] font-bold text-[#00252b] mb-2">
+                      {t('rental.clientPhone')} <span className="text-gray-400 font-normal text-[13px]">({language === 'fr' ? 'opt.' : 'opt.'})</span>
                     </label>
                     <input
                       type="tel"
@@ -399,7 +399,7 @@ export default function CheckoutOverlay({
             {/* Client Contact (both modes) */}
             {mode === 'select' && (
               <div>
-                <label className="block text-sm font-bold text-[#00252b] mb-2">
+                <label className="block text-[15px] font-bold text-[#00252b] mb-2">
                   {t('rental.clientContact')} <span className="text-gray-400 font-normal">({language === 'fr' ? 'optionnel' : 'optional'})</span>
                 </label>
                 <input
@@ -416,7 +416,7 @@ export default function CheckoutOverlay({
 
             {/* Expected Return */}
             <div>
-              <label className="block text-sm font-bold text-[#00252b] mb-2">
+              <label className="block text-[15px] font-bold text-[#00252b] mb-2">
                 {t('rental.expectedReturn')} <span className="text-gray-400 font-normal">({language === 'fr' ? 'optionnel' : 'optional'})</span>
               </label>
               <input
@@ -428,13 +428,13 @@ export default function CheckoutOverlay({
                 style={{ fontSize: '16px' }}
               />
               {fieldErrors.expectedReturn && (
-                <p className="text-xs text-red-600 mt-1">{fieldErrors.expectedReturn}</p>
+                <p className="text-[13px] text-red-600 mt-1">{fieldErrors.expectedReturn}</p>
               )}
             </div>
 
             {/* Notes */}
             <div>
-              <label className="block text-sm font-bold text-[#00252b] mb-2">
+              <label className="block text-[15px] font-bold text-[#00252b] mb-2">
                 Notes <span className="text-gray-400 font-normal">({language === 'fr' ? 'optionnel' : 'optional'})</span>
               </label>
               <textarea
@@ -447,7 +447,7 @@ export default function CheckoutOverlay({
                 maxLength={500}
               />
               {fieldErrors.notes && (
-                <p className="text-xs text-red-600 mt-1">{fieldErrors.notes}</p>
+                <p className="text-[13px] text-red-600 mt-1">{fieldErrors.notes}</p>
               )}
             </div>
 

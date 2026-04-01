@@ -164,6 +164,13 @@ export async function POST(request: Request) {
     nextDue.setHours(12, 0, 0, 0);
     nextDue.setMonth(nextDue.getMonth() + months);
 
+    // Archive any existing active schedules for this asset
+    await supabase
+      .from("vgp_schedules")
+      .update({ archived_at: new Date().toISOString() })
+      .eq("asset_id", asset_id)
+      .is("archived_at", null);
+
     const { data: schedule, error: insertError } = await supabase
       .from("vgp_schedules")
       .insert({

@@ -1013,6 +1013,22 @@ export const translations = {
       en: "Configure periodic inspections for this equipment",
       fr: "Configurer les vérifications périodiques pour cet équipement",
     },
+    titleUpdate: {
+      en: "Update VGP Monitoring",
+      fr: "Modifier Surveillance VGP",
+    },
+    subtitleUpdate: {
+      en: "Update the inspection schedule for this equipment",
+      fr: "Mettre à jour le calendrier de vérification pour cet équipement",
+    },
+    daysOverdue: {
+      en: "days overdue",
+      fr: "jours de retard",
+    },
+    nextInspectionOverdue: {
+      en: "Inspection Overdue:",
+      fr: "Inspection En Retard:",
+    },
     serialNumber: {
       en: "Serial No.",
       fr: "N° Série",

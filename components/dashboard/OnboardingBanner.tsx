@@ -49,36 +49,36 @@ export default function OnboardingBanner({
         </h3>
       </div>
 
-      <p className="text-sm text-slate-600 mb-4">
+      <p className="text-[15px] text-slate-600 mb-4">
         Nous avons ajoute 10 equipements de demonstration pour vous montrer comment
         la plateforme fonctionne. Voici vos prochaines etapes :
       </p>
 
       <div className="space-y-2 mb-4">
-        <div className="flex items-center gap-2 text-sm text-slate-700">
+        <div className="flex items-center gap-2 text-[15px] text-slate-700">
           <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
-            <span className="text-xs font-bold text-red-600">!</span>
+            <span className="text-[13px] font-bold text-red-600">!</span>
           </div>
           <span>Explorez le tableau de bord — vous avez une inspection VGP en retard</span>
         </div>
-        <div className="flex items-center gap-2 text-sm text-slate-700">
+        <div className="flex items-center gap-2 text-[15px] text-slate-700">
           <Upload className="w-4 h-4 text-slate-400 flex-shrink-0 ml-0.5" />
           <span>Importez vos propres equipements via Excel (.xlsx, .csv)</span>
         </div>
-        <div className="flex items-center gap-2 text-sm text-slate-700">
+        <div className="flex items-center gap-2 text-[15px] text-slate-700">
           <BarChart3 className="w-4 h-4 text-slate-400 flex-shrink-0 ml-0.5" />
           <span>Generez des QR codes pour votre parc materiel</span>
         </div>
       </div>
 
-      <p className="text-xs text-slate-500 mb-4">
+      <p className="text-[13px] text-slate-500 mb-4">
         Consultez votre boîte mail pour un fichier Excel de démonstration que vous pouvez importer immédiatement.
       </p>
 
       <div className="flex items-center gap-3">
         <Link
           href="/assets"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-[15px] font-semibold text-white transition-colors"
           style={{ backgroundColor: BRAND.orange }}
         >
           <Upload className="w-4 h-4" />
@@ -86,13 +86,13 @@ export default function OnboardingBanner({
         </Link>
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-[15px] font-medium border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors"
         >
           Explorer le tableau de bord
         </Link>
         <button
           onClick={handleDismiss}
-          className="text-sm text-slate-500 hover:text-slate-700 ml-auto"
+          className="text-[15px] text-slate-500 hover:text-slate-700 ml-auto"
         >
           Fermer
         </button>

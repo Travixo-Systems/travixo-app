@@ -35,19 +35,19 @@ export default function AccountLockedOverlay({ children }: { children: React.Rea
             Votre période d'essai de 15 jours est terminée et la période de grâce de lecture seule a expiré.
             Vos données sont conservées mais l'accès à la plateforme est suspendu.
           </p>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-[15px] text-gray-500">
             Souscrivez à un abonnement pour retrouver l'accès complet à vos équipements, inspections VGP et audits.
           </p>
         </div>
         <Link
           href="/settings/subscription"
-          className="inline-flex items-center gap-2 px-8 py-3 rounded-lg text-sm font-semibold text-white transition-colors"
+          className="inline-flex items-center gap-2 px-8 py-3 rounded-lg text-[15px] font-semibold text-white transition-colors"
           style={{ backgroundColor: '#f26f00' }}
         >
           Voir les abonnements
           <ArrowUpRight className="w-4 h-4" />
         </Link>
-        <p className="text-xs text-gray-400">
+        <p className="text-[13px] text-gray-400">
           Besoin d'aide ? Contactez-nous a contact@travixosystems.com
         </p>
       </div>

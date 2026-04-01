@@ -72,17 +72,6 @@ export default function AssetsPageClient() {
 
             if (!userData?.organization_id) return
 
-            // ===== DEBUG STEP 2: test vgp_schedules access directly =====
-            const { data: testSchedules, error: testError } = await supabase
-                .from('vgp_schedules')
-                .select('id, asset_id, next_due_date')
-                .limit(5)
-            console.log('[DEBUG STEP 2] Direct vgp_schedules query:', {
-                count: testSchedules?.length,
-                error: testError,
-                data: testSchedules
-            })
-
             const { data, error } = await supabase
                 .from('assets')
                 .select(`
@@ -103,43 +92,6 @@ export default function AssetsPageClient() {
 
             if (error) {
                 console.error('Failed to load assets with VGP schedules:', error)
-            }
-
-            // ===== DEBUG STEP 3: log first 3 assets with their schedules =====
-            console.log('[DEBUG STEP 3] First 3 assets with schedules:',
-                data?.slice(0, 3).map((a: any) => ({
-                    id: a.id,
-                    name: a.name,
-                    schedules: a.vgp_schedules
-                }))
-            )
-
-            // ===== DEBUG STEP 4: find the two working assets =====
-            const haulotte = data?.find((a: any) => a.name?.toLowerCase().includes('haulotte'))
-            const toyota = data?.find((a: any) => a.name?.toLowerCase().includes('toyota'))
-            console.log('[DEBUG STEP 4] Haulotte asset:', haulotte ? {
-                id: haulotte.id,
-                name: haulotte.name,
-                schedules: haulotte.vgp_schedules
-            } : 'NOT FOUND')
-            console.log('[DEBUG STEP 4] Toyota asset:', toyota ? {
-                id: toyota.id,
-                name: toyota.name,
-                schedules: toyota.vgp_schedules
-            } : 'NOT FOUND')
-
-            // ===== DEBUG: count assets with vs without schedules =====
-            const withSchedules = data?.filter((a: any) => a.vgp_schedules && a.vgp_schedules.length > 0) || []
-            const withoutSchedules = data?.filter((a: any) => !a.vgp_schedules || a.vgp_schedules.length === 0) || []
-            console.log('[DEBUG SUMMARY] Assets with schedules:', withSchedules.length,
-                '| without:', withoutSchedules.length,
-                '| total:', data?.length)
-            if (withSchedules.length > 0) {
-                console.log('[DEBUG SUMMARY] Sample asset WITH schedules:', {
-                    id: withSchedules[0].id,
-                    name: withSchedules[0].name,
-                    schedules: withSchedules[0].vgp_schedules
-                })
             }
 
             // Compute vgp_status from the most urgent active schedule

@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { X, AlertCircle, CheckCircle } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { createTranslator } from '@/lib/i18n';
+import { createClient } from '@/lib/supabase/client';
 
 interface Asset {
   id: string;
@@ -24,6 +25,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
   const t = createTranslator(language);
 
   const [equipmentTypes, setEquipmentTypes] = useState<any[]>([]);
+  const [existingSchedule, setExistingSchedule] = useState<any>(null);
   const [formData, setFormData] = useState({
     interval_months: 12,
     last_inspection_date: new Date().toISOString().split('T')[0],
@@ -36,7 +38,35 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
 
   useEffect(() => {
     fetchEquipmentTypes();
+    fetchExistingSchedule();
   }, []);
+
+  const fetchExistingSchedule = async () => {
+    try {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('vgp_schedules')
+        .select('id, interval_months, last_inspection_date, next_due_date, notes, created_by')
+        .eq('asset_id', asset.id)
+        .is('archived_at', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (data) {
+        setExistingSchedule(data);
+        setFormData(prev => ({
+          ...prev,
+          interval_months: data.interval_months || prev.interval_months,
+          last_inspection_date: data.last_inspection_date || prev.last_inspection_date,
+          created_by: data.created_by || prev.created_by,
+          notes: data.notes || prev.notes,
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to fetch existing schedule:', err);
+    }
+  };
 
   const fetchEquipmentTypes = async () => {
     try {
@@ -158,9 +188,11 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
         {/* Header */}
         <div className="flex items-center justify-between p-6" style={{ borderBottom: '0.5px solid #dcdee3' }}>
           <div>
-            <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpScheduleModal.title')}</h2>
+            <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+              {existingSchedule ? t('vgpScheduleModal.titleUpdate') : t('vgpScheduleModal.title')}
+            </h2>
             <p className="text-[14px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>
-              {t('vgpScheduleModal.subtitle')}
+              {existingSchedule ? t('vgpScheduleModal.subtitleUpdate') : t('vgpScheduleModal.subtitle')}
             </p>
           </div>
           <button

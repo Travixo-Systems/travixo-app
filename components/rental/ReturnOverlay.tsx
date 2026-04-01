@@ -166,7 +166,7 @@ export default function ReturnOverlay({
           {/* Header */}
           <div className="flex justify-between items-center mb-4">
             <div>
-              <h2 className="text-xl font-bold text-[#00252b]">
+              <h2 className="text-[22px] font-bold text-[#00252b]">
                 {language === 'fr' ? 'Retour' : 'Return'}: {assetName}
               </h2>
             </div>
@@ -182,30 +182,30 @@ export default function ReturnOverlay({
           <div className="bg-gray-50 rounded-lg p-4 mb-6">
             <div className="space-y-1.5">
               <div className="flex justify-between">
-                <span className="text-xs text-gray-500 font-medium">{t('rental.client')}:</span>
-                <span className="text-xs font-bold text-[#00252b]">{rental.client_name}</span>
+                <span className="text-[13px] text-gray-500 font-semibold">{t('rental.client')}:</span>
+                <span className="text-[13px] font-bold text-[#00252b]">{rental.client_name}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-xs text-gray-500 font-medium">{t('rental.since')}:</span>
-                <span className="text-xs font-bold text-[#00252b]">{formatDate(rental.checkout_date)}</span>
+                <span className="text-[13px] text-gray-500 font-semibold">{t('rental.since')}:</span>
+                <span className="text-[13px] font-bold text-[#00252b]">{formatDate(rental.checkout_date)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-xs text-gray-500 font-medium">{t('rental.duration')}:</span>
-                <span className="text-xs font-bold text-[#00252b]">{daysSince} {t('rental.days')}</span>
+                <span className="text-[13px] text-gray-500 font-semibold">{t('rental.duration')}:</span>
+                <span className="text-[13px] font-bold text-[#00252b]">{daysSince} {t('rental.days')}</span>
               </div>
             </div>
           </div>
 
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-              <p className="text-red-700 text-sm font-medium">{error}</p>
+              <p className="text-red-700 text-[15px] font-medium">{error}</p>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Condition */}
             <div>
-              <label className="block text-sm font-bold text-[#00252b] mb-2">
+              <label className="block text-[15px] font-bold text-[#00252b] mb-2">
                 {t('rental.returnCondition')}
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -214,7 +214,7 @@ export default function ReturnOverlay({
                     key={btn.value}
                     type="button"
                     onClick={() => setCondition(btn.value)}
-                    className={`py-3 rounded-lg font-bold text-sm border-2 transition-all min-h-[48px] ${
+                    className={`py-3 rounded-lg font-bold text-[15px] border-2 transition-all min-h-[48px] ${
                       condition === btn.value ? btn.selectedColor : `bg-[var(--card-bg,#edeff2)] ${btn.color}`
                     }`}
                   >
@@ -226,7 +226,7 @@ export default function ReturnOverlay({
 
             {/* Return Location */}
             <div>
-              <label className="block text-sm font-bold text-[#00252b] mb-2">
+              <label className="block text-[15px] font-bold text-[#00252b] mb-2">
                 {language === 'fr' ? 'Emplacement de retour' : 'Return Location'} <span className="text-gray-400 font-normal">({language === 'fr' ? 'optionnel' : 'optional'})</span>
               </label>
               <div className="flex gap-2">
@@ -240,7 +240,7 @@ export default function ReturnOverlay({
                   maxLength={255}
                 />
                 {fieldErrors.location && (
-                  <p className="text-xs text-red-600 mt-1">{fieldErrors.location}</p>
+                  <p className="text-[13px] text-red-600 mt-1">{fieldErrors.location}</p>
                 )}
                 <button
                   type="button"
@@ -256,7 +256,7 @@ export default function ReturnOverlay({
 
             {/* Notes */}
             <div>
-              <label className="block text-sm font-bold text-[#00252b] mb-2">
+              <label className="block text-[15px] font-bold text-[#00252b] mb-2">
                 Notes <span className="text-gray-400 font-normal">({language === 'fr' ? 'optionnel' : 'optional'})</span>
               </label>
               <textarea
@@ -269,7 +269,7 @@ export default function ReturnOverlay({
                 maxLength={500}
               />
               {fieldErrors.notes && (
-                <p className="text-xs text-red-600 mt-1">{fieldErrors.notes}</p>
+                <p className="text-[13px] text-red-600 mt-1">{fieldErrors.notes}</p>
               )}
             </div>
 
