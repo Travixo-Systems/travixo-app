@@ -4,7 +4,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   HomeIcon,
   CubeIcon,
@@ -48,6 +49,8 @@ export default function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [vgpOpen, setVgpOpen] = useState(isVgpRoute);
   const [vgpFlyout, setVgpFlyout] = useState(false);
+  const [flyoutPos, setFlyoutPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const vgpButtonRef = useRef<HTMLButtonElement>(null);
   const [user, setUser] = useState<{ firstName: string; lastName: string; email: string } | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -182,14 +185,28 @@ export default function Sidebar() {
   };
 
   // ── VGP section renderer ──
+  const openFlyout = () => {
+    const rect = vgpButtonRef.current?.getBoundingClientRect();
+    console.log('FLYOUT OPEN', {
+      refExists: !!vgpButtonRef.current,
+      rect: rect ? { top: rect.top, left: rect.left, right: rect.right, width: rect.width } : null,
+      vgpFlyout, collapsed, isMobile,
+    });
+    if (rect) {
+      setFlyoutPos({ top: rect.top, left: rect.right });
+    }
+    setVgpFlyout(true);
+  };
+
   const renderVgpSection = (showLabel: boolean) => (
-    <div className="relative" style={{ overflow: 'visible' }}>
+    <div>
       <button
+        ref={!showLabel ? vgpButtonRef : undefined}
         onClick={() => {
           if (showLabel) {
             setVgpOpen(!vgpOpen);
           } else {
-            setVgpFlyout(!vgpFlyout);
+            if (vgpFlyout) { setVgpFlyout(false); } else { openFlyout(); }
           }
         }}
         className={cn(
@@ -217,7 +234,7 @@ export default function Sidebar() {
               <Link
                 key={item.name}
                 href={item.href}
-                onClick={() => isMobile && setMobileOpen(false)}
+                onClick={() => { if (isMobile) setMobileOpen(false); }}
                 className={cn(
                   'flex items-center px-4 min-h-[44px] text-sm rounded-lg transition-colors',
                   isActive ? 'text-white font-medium border-l-2 border-[#e8600a]' : 'text-gray-400 hover:text-white',
@@ -232,13 +249,20 @@ export default function Sidebar() {
         </div>
       )}
 
-      {/* Collapsed flyout */}
-      {vgpFlyout && !showLabel && (
+      {/* Collapsed flyout — rendered via portal to document.body */}
+      {vgpFlyout && !showLabel && typeof document !== 'undefined' && (console.log('PORTAL RENDER', { flyoutPos, vgpFlyout, showLabel }), true) && createPortal(
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setVgpFlyout(false)} />
+          <div className="fixed inset-0" style={{ zIndex: 9998 }} onClick={() => setVgpFlyout(false)} />
           <div
-            className="absolute left-full top-0 z-50 py-2"
-            style={{ width: 180, backgroundColor: SIDEBAR_BG, borderRadius: '0 8px 8px 0' }}
+            className="fixed py-2"
+            style={{
+              zIndex: 9999,
+              top: flyoutPos.top,
+              left: flyoutPos.left,
+              width: 180,
+              backgroundColor: SIDEBAR_BG,
+              borderRadius: '0 8px 8px 0',
+            }}
           >
             {vgpNavigation.map((item) => {
               const Icon = item.icon;
@@ -261,7 +285,8 @@ export default function Sidebar() {
               );
             })}
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );
@@ -322,7 +347,7 @@ export default function Sidebar() {
   // ── Full sidebar content (used for both desktop expanded + mobile overlay) ──
   const renderSidebarContent = (showLabel: boolean) => (
     <>
-      <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto" style={{ overflowX: 'visible' }}>
+      <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto" style={{ overflowX: 'hidden' }}>
         {navigation.slice(0, 2).map((item) => <NavItem key={item.href} item={item} showLabel={showLabel} />)}
         {renderVgpSection(showLabel)}
         {navigation.slice(2).map((item) => <NavItem key={item.href} item={item} showLabel={showLabel} />)}
@@ -340,7 +365,7 @@ export default function Sidebar() {
         {/* Icon rail — always visible */}
         <div
           className="flex flex-col h-screen w-16 flex-shrink-0 border-r border-gray-800"
-          style={{ backgroundColor: SIDEBAR_BG, overflow: 'visible' }}
+          style={{ backgroundColor: SIDEBAR_BG }}
         >
           {/* Hamburger header */}
           <div className="flex items-center justify-center h-16 border-b border-gray-800 flex-shrink-0">
@@ -397,7 +422,7 @@ export default function Sidebar() {
   return (
     <div
       className={cn('flex flex-col h-screen border-r border-gray-800 transition-all duration-300', collapsed ? 'w-16' : 'w-64')}
-      style={{ backgroundColor: SIDEBAR_BG, overflow: 'visible' }}
+      style={{ backgroundColor: SIDEBAR_BG }}
     >
       {/* Header */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-gray-800 flex-shrink-0" style={{ backgroundColor: SIDEBAR_BG }}>
