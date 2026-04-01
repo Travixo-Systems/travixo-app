@@ -143,6 +143,8 @@ export async function POST(request: Request) {
     const months = parseIntSafe(body?.interval_months);
     const last_inspection_date =
       (body?.last_inspection_date as string | undefined) || undefined;
+    const notes = (body?.notes as string | undefined) || null;
+    const created_by = (body?.created_by as string | undefined) || null;
 
     if (!asset_id || !months || months < 1)
       return json(
@@ -180,6 +182,8 @@ export async function POST(request: Request) {
         last_inspection_date: last_inspection_date ?? null,
         next_due_date: isoDateOnly(nextDue),
         status: "active",
+        notes,
+        created_by,
       })
       .select(
         `

@@ -577,6 +577,10 @@ export const translations = {
       en: "Assigned Inspector",
       fr: "Inspecteur attitré",
     },
+    createdBy: {
+      en: "Configured by",
+      fr: "Configuré par",
+    },
     notes: {
       en: "Notes",
       fr: "Notes",

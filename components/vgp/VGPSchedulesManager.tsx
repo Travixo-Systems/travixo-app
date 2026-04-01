@@ -47,6 +47,7 @@ interface Schedule {
   last_inspection_date: string | null;
   next_due_date: string;
   inspector_name: string | null;
+  created_by: string | null;
   status: string;
   notes: string | null;
   created_at: string;
@@ -662,6 +663,9 @@ function DetailsModal({ schedule, onClose, t }: { schedule: Schedule; onClose: (
               )}
               {schedule.inspector_name && (
                 <InfoField label={t('vgpSchedules.detailsModal.assignedInspector')} value={schedule.inspector_name} />
+              )}
+              {schedule.created_by && (
+                <InfoField label={t('vgpSchedules.detailsModal.createdBy')} value={schedule.created_by} />
               )}
             </div>
           </div>

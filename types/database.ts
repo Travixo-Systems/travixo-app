@@ -347,6 +347,7 @@ export type Database = {
           next_due_date: string
           status: string
           notes: string | null
+          created_by: string | null
           inspector_name: string | null
           inspector_company: string | null
           archived_at: string | null
@@ -362,6 +363,7 @@ export type Database = {
           next_due_date: string
           status?: string
           notes?: string | null
+          created_by?: string | null
           inspector_name?: string | null
           inspector_company?: string | null
           archived_at?: string | null
@@ -372,6 +374,7 @@ export type Database = {
           next_due_date?: string
           status?: string
           notes?: string | null
+          created_by?: string | null
           inspector_name?: string | null
           inspector_company?: string | null
           archived_at?: string | null
