@@ -234,7 +234,8 @@ function VGPInspectionsContent() {
 
       {/* Table */}
       <div className="bg-[var(--card-bg,#edeff2)] rounded-lg border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop table */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -337,6 +338,59 @@ function VGPInspectionsContent() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile card grid */}
+        <div className="lg:hidden p-3">
+          {paginatedInspections.length === 0 ? (
+            <p className="px-4 py-12 text-center text-[var(--text-hint,#888)]">
+              {t('vgpInspections.noResults')}
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {paginatedInspections.map((inspection) => (
+                <div
+                  key={inspection.id}
+                  className="rounded-lg p-3"
+                  style={{ backgroundColor: 'var(--page-bg, #cbcdd4)' }}
+                >
+                  <div className="flex items-center justify-between min-h-[44px]">
+                    <span className="text-[14px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                      {format(new Date(inspection.inspection_date), 'dd/MM/yyyy')}
+                    </span>
+                    <span
+                      className="text-[14px] font-semibold"
+                      style={{
+                        color: inspection.result === 'passed' ? '#059669'
+                          : inspection.result === 'conditional' ? '#d97706'
+                          : '#dc2626',
+                      }}
+                    >
+                      {RESULT_CONFIG[inspection.result].label}
+                    </span>
+                  </div>
+                  <p className="text-[12px]" style={{ color: 'var(--text-secondary, #444)' }}>
+                    {inspection.inspector_name}{inspection.inspector_company ? ` — ${inspection.inspector_company}` : ''}
+                  </p>
+                  <div className="mt-1">
+                    {inspection.certificate_url ? (
+                      <a
+                        href={inspection.certificate_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center min-h-[44px] text-[12px] font-medium hover:underline"
+                        style={{ color: 'var(--accent, #e8600a)' }}
+                      >
+                        PDF ↓
+                      </a>
+                    ) : (
+                      <span className="text-[12px]" style={{ color: 'var(--text-hint, #888)' }}>—</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Pagination */}

@@ -421,11 +421,11 @@ export default function AuditsPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 lg:space-y-6 p-3 md:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-[22px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('audits.pageTitle')}</h1>
+          <h1 className="text-[18px] lg:text-[22px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('audits.pageTitle')}</h1>
           <p className="mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('audits.pageSubtitle')}</p>
         </div>
         <button
@@ -439,7 +439,7 @@ export default function AuditsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         {/* Total */}
         <button
           onClick={() => setStatusFilter('all')}
@@ -547,118 +547,178 @@ export default function AuditsPage() {
           </button>
         </div>
       ) : (
-        <div className="rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
-          <table className="w-full">
-            <thead style={{ backgroundColor: 'var(--input-bg, #e3e5e9)' }}>
-              <tr>
-                <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
-                  {t('audits.auditName')}
-                </th>
-                <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
-                  {t('audits.status')}
-                </th>
-                <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
-                  {t('audits.progress')}
-                </th>
-                <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
-                  {t('audits.scheduledDate')}
-                </th>
-                <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
-                  {t('audits.createdBy')}
-                </th>
-                <th className="px-6 py-3 text-right text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
-                  {t('audits.actions')}
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y" style={{ borderColor: '#dcdee3' }}>
-              {filteredAudits.map((audit) => {
-                const config = STATUS_CONFIG[audit.status];
-                const StatusIcon = config.icon;
-                const progress = audit.total_assets > 0
-                  ? Math.round(((audit.verified_assets + audit.missing_assets) / audit.total_assets) * 100)
-                  : 0;
+        <>
+          {/* Desktop table */}
+          <div className="hidden lg:block rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
+            <table className="w-full">
+              <thead style={{ backgroundColor: 'var(--input-bg, #e3e5e9)' }}>
+                <tr>
+                  <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
+                    {t('audits.auditName')}
+                  </th>
+                  <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
+                    {t('audits.status')}
+                  </th>
+                  <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
+                    {t('audits.progress')}
+                  </th>
+                  <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
+                    {t('audits.scheduledDate')}
+                  </th>
+                  <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
+                    {t('audits.createdBy')}
+                  </th>
+                  <th className="px-6 py-3 text-right text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
+                    {t('audits.actions')}
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y" style={{ borderColor: '#dcdee3' }}>
+                {filteredAudits.map((audit) => {
+                  const config = STATUS_CONFIG[audit.status];
+                  const StatusIcon = config.icon;
+                  const progress = audit.total_assets > 0
+                    ? Math.round(((audit.verified_assets + audit.missing_assets) / audit.total_assets) * 100)
+                    : 0;
 
-                return (
-                  <tr key={audit.id} className="hover:bg-black/[0.02]">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="w-10 h-10 rounded-lg flex items-center justify-center"
-                          style={{ backgroundColor: `${config.color}15` }}
-                        >
-                          <ClipboardCheck className="w-5 h-5" style={{ color: config.color }} />
-                        </div>
-                        <span className="font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{audit.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[13px] font-medium rounded-full ${config.bgColor}`}
-                        style={{ color: config.color }}
-                      >
-                        <StatusIcon className="w-3.5 h-3.5" />
-                        {t(config.labelKey)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-24 rounded-full h-2" style={{ backgroundColor: '#dcdee3' }}>
+                  return (
+                    <tr key={audit.id} className="hover:bg-black/[0.02]">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
                           <div
-                            className="h-2 rounded-full transition-all"
-                            style={{
-                              width: `${progress}%`,
-                              backgroundColor: audit.status === 'completed' ? BRAND_COLORS.success : BRAND_COLORS.primary,
-                            }}
-                          />
+                            className="w-10 h-10 rounded-lg flex items-center justify-center"
+                            style={{ backgroundColor: `${config.color}15` }}
+                          >
+                            <ClipboardCheck className="w-5 h-5" style={{ color: config.color }} />
+                          </div>
+                          <span className="font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{audit.name}</span>
                         </div>
-                        <span className="text-[15px]" style={{ color: 'var(--text-secondary, #444)' }}>{progress}%</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[13px] font-medium rounded-full ${config.bgColor}`}
+                          style={{ color: config.color }}
+                        >
+                          <StatusIcon className="w-3.5 h-3.5" />
+                          {t(config.labelKey)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-24 rounded-full h-2" style={{ backgroundColor: '#dcdee3' }}>
+                            <div
+                              className="h-2 rounded-full transition-all"
+                              style={{
+                                width: `${progress}%`,
+                                backgroundColor: audit.status === 'completed' ? BRAND_COLORS.success : BRAND_COLORS.primary,
+                              }}
+                            />
+                          </div>
+                          <span className="text-[15px]" style={{ color: 'var(--text-secondary, #444)' }}>{progress}%</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-[15px]" style={{ color: 'var(--text-secondary, #444)' }}>
+                        {formatDateFR(audit.scheduled_date)}
+                      </td>
+                      <td className="px-6 py-4 text-[15px]" style={{ color: 'var(--text-secondary, #444)' }}>
+                        {audit.users?.full_name || audit.users?.email || '-'}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        {audit.status === 'planned' && (
+                          <button
+                            onClick={() => router.push(`/audits/${audit.id}`)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-white rounded-lg"
+                            style={{ backgroundColor: BRAND_COLORS.primary }}
+                          >
+                            <Play className="w-3.5 h-3.5" />
+                            {t('audits.start')}
+                          </button>
+                        )}
+                        {audit.status === 'in_progress' && (
+                          <button
+                            onClick={() => router.push(`/audits/${audit.id}`)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-white rounded-lg"
+                            style={{ backgroundColor: BRAND_COLORS.warning }}
+                          >
+                            <Play className="w-3.5 h-3.5" />
+                            {t('audits.continue')}
+                          </button>
+                        )}
+                        {audit.status === 'completed' && (
+                          <button
+                            onClick={() => router.push(`/audits/${audit.id}`)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-white rounded-lg"
+                            style={{ backgroundColor: BRAND_COLORS.success }}
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            {t('audits.viewReport')}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile/Tablet card grid */}
+          <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {filteredAudits.map((audit) => {
+              const config = STATUS_CONFIG[audit.status];
+              const StatusIcon = config.icon;
+              const progress = audit.total_assets > 0
+                ? Math.round(((audit.verified_assets + audit.missing_assets) / audit.total_assets) * 100)
+                : 0;
+
+              return (
+                <div
+                  key={audit.id}
+                  className="rounded-lg p-3 cursor-pointer active:opacity-80 transition-opacity"
+                  style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}
+                  onClick={() => router.push(`/audits/${audit.id}`)}
+                >
+                  {/* Line 1: Audit name + Status badge */}
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[14px] font-semibold truncate" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                      {audit.name}
+                    </p>
+                    <span
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 text-[12px] font-medium rounded-full flex-shrink-0 ${config.bgColor}`}
+                      style={{ color: config.color }}
+                    >
+                      <StatusIcon className="w-3 h-3" />
+                      {t(config.labelKey)}
+                    </span>
+                  </div>
+
+                  {/* Line 2: Date + Scope info */}
+                  <p className="text-[12px] mt-1" style={{ color: 'var(--text-secondary, #444)' }}>
+                    {formatDateFR(audit.scheduled_date)}
+                    {' \u00b7 '}
+                    {audit.verified_assets + audit.missing_assets}/{audit.total_assets} {language === 'fr' ? 'actifs' : 'assets'}
+                  </p>
+
+                  {/* Line 3: Progress bar */}
+                  {audit.total_assets > 0 && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <div className="flex-1 rounded-full h-2" style={{ backgroundColor: '#dcdee3' }}>
+                        <div
+                          className="h-2 rounded-full transition-all"
+                          style={{
+                            width: `${progress}%`,
+                            backgroundColor: audit.status === 'completed' ? BRAND_COLORS.success : BRAND_COLORS.primary,
+                          }}
+                        />
                       </div>
-                    </td>
-                    <td className="px-6 py-4 text-[15px]" style={{ color: 'var(--text-secondary, #444)' }}>
-                      {formatDateFR(audit.scheduled_date)}
-                    </td>
-                    <td className="px-6 py-4 text-[15px]" style={{ color: 'var(--text-secondary, #444)' }}>
-                      {audit.users?.full_name || audit.users?.email || '-'}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      {audit.status === 'planned' && (
-                        <button
-                          onClick={() => router.push(`/audits/${audit.id}`)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-white rounded-lg"
-                          style={{ backgroundColor: BRAND_COLORS.primary }}
-                        >
-                          <Play className="w-3.5 h-3.5" />
-                          {t('audits.start')}
-                        </button>
-                      )}
-                      {audit.status === 'in_progress' && (
-                        <button
-                          onClick={() => router.push(`/audits/${audit.id}`)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-white rounded-lg"
-                          style={{ backgroundColor: BRAND_COLORS.warning }}
-                        >
-                          <Play className="w-3.5 h-3.5" />
-                          {t('audits.continue')}
-                        </button>
-                      )}
-                      {audit.status === 'completed' && (
-                        <button
-                          onClick={() => router.push(`/audits/${audit.id}`)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-white rounded-lg"
-                          style={{ backgroundColor: BRAND_COLORS.success }}
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          {t('audits.viewReport')}
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      <span className="text-[12px] font-medium" style={{ color: 'var(--text-secondary, #444)' }}>{progress}%</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {/* Create Modal */}

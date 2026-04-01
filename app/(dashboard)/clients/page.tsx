@@ -5,6 +5,7 @@ import { Plus, Search, Users, Package, AlertTriangle, Edit3, X, Loader2 } from '
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
 import FeatureGate from '@/components/subscription/FeatureGate'
+import toast from 'react-hot-toast'
 
 interface Client {
   id: string
@@ -143,6 +144,11 @@ export default function ClientsPage() {
         return
       }
 
+      if (!editingClient) {
+        toast.success(language === 'fr'
+          ? 'Client ajouté avec succès'
+          : 'Client added successfully')
+      }
       closeForm()
       fetchClients()
     } catch {
@@ -154,11 +160,11 @@ export default function ClientsPage() {
 
   return (
     <FeatureGate feature="rental_management">
-      <div className="p-6 max-w-6xl mx-auto">
+      <div className="p-3 md:p-6 max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-[22px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+            <h1 className="text-[18px] lg:text-[22px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
               {t('clients.pageTitle')}
             </h1>
             <p className="text-[15px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>

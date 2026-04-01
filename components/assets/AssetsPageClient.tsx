@@ -8,7 +8,7 @@ import AddAssetButton from '@/components/assets/AddAssetButton'
 import ImportAssetsButton from '@/components/assets/ImportAssetsButton'
 import AssetsTableClient from '@/components/assets/AssetsTableClient'
 import Link from 'next/link'
-import { MagnifyingGlassIcon, FunnelIcon } from '@heroicons/react/24/outline'
+import { MagnifyingGlassIcon, FunnelIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
 
@@ -25,6 +25,8 @@ interface Asset {
     qr_code: string
     category_id: string | null
     vgp_status?: 'overdue' | 'upcoming' | 'compliant' | 'unknown' | null
+    archived_at?: string | null
+    archive_reason?: string | null
     asset_categories?: {
         id: string
         name: string
@@ -49,6 +51,7 @@ export default function AssetsPageClient() {
     const [searchQuery, setSearchQuery] = useState('')
     const [statusFilter, setStatusFilter] = useState<string>('all')
     const [categoryFilter, setCategoryFilter] = useState<string>('all')
+    const [showArchived, setShowArchived] = useState(false)
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 50
 
@@ -130,6 +133,11 @@ export default function AssetsPageClient() {
     const filteredAssets = useMemo(() => {
         let filtered = assets
 
+        // Archived filter: hide archived unless toggle is on
+        if (!showArchived) {
+            filtered = filtered.filter(asset => !asset.archived_at)
+        }
+
         // Status filter
         if (statusFilter !== 'all') {
             filtered = filtered.filter(asset => asset.status === statusFilter)
@@ -152,7 +160,7 @@ export default function AssetsPageClient() {
         }
 
         return filtered
-    }, [assets, searchQuery, statusFilter, categoryFilter])
+    }, [assets, searchQuery, statusFilter, categoryFilter, showArchived])
 
     // Pagination
     const totalPages = Math.ceil(filteredAssets.length / itemsPerPage)
@@ -167,14 +175,15 @@ export default function AssetsPageClient() {
     }, [searchQuery, statusFilter, categoryFilter])
 
     const statusCounts = useMemo(() => {
+        const activeAssets = assets.filter(a => !a.archived_at)
         const counts: Record<string, number> = {
-            all: assets.length,
+            all: activeAssets.length,
             available: 0,
             in_use: 0,
             maintenance: 0,
             retired: 0
         }
-        assets.forEach(asset => {
+        activeAssets.forEach(asset => {
             if (counts[asset.status] !== undefined) {
                 counts[asset.status]++
             }
@@ -211,19 +220,19 @@ export default function AssetsPageClient() {
 
     return (
         <div className="p-3 md:p-6">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
                 <div>
-                    <h1 className="text-[22px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('assets.pageTitle')}</h1>
-                    <p className="mt-1" style={{ color: 'var(--text-muted, #777777)' }}>
+                    <h1 className="text-[18px] lg:text-[22px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('assets.pageTitle')}</h1>
+                    <p className="mt-1 text-[14px]" style={{ color: 'var(--text-muted, #777777)' }}>
                         {t('assets.pageSubtitle')}
                     </p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex gap-2 sm:gap-3 flex-wrap">
                     <ImportAssetsButton onSuccess={loadAssets} />
                     <AddAssetButton onSuccess={loadAssets} />
                     <Link
                         href="/qr-codes"
-                        className="flex items-center gap-2 px-4 py-2 text-white rounded-lg font-semibold transition-colors hover:opacity-90"
+                        className="hidden sm:flex items-center gap-2 px-4 py-2 text-white rounded-lg font-semibold transition-colors hover:opacity-90"
                         style={{ backgroundColor: 'var(--accent, #e8600a)' }}
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -245,28 +254,28 @@ export default function AssetsPageClient() {
             ) : (
                 <>
                     {/* Search and Filter Bar */}
-                    <div className="rounded-lg mb-4 p-4" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
-                        <div className="flex flex-col md:flex-row gap-4">
-                            {/* Search */}
-                            <div className="flex-1 relative">
-                                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5" style={{ color: 'var(--text-hint, #888888)' }} />
-                                <input
-                                    type="text"
-                                    placeholder={t('assets.searchPlaceholder')}
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 rounded-md text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
-                                    style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
-                                />
-                            </div>
+                    <div className="rounded-lg mb-4 p-3 lg:p-4" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
+                        {/* Search — always full width */}
+                        <div className="relative mb-3 lg:mb-0">
+                            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5" style={{ color: 'var(--text-hint, #888888)' }} />
+                            <input
+                                type="text"
+                                placeholder={t('assets.searchPlaceholder')}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2 rounded-md text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a] min-h-[44px]"
+                                style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
+                            />
+                        </div>
 
-                            {/* Status Filter */}
-                            <div className="flex items-center gap-2">
-                                <FunnelIcon className="h-5 w-5" style={{ color: 'var(--text-hint, #888888)' }} />
+                        {/* Filters — stack on mobile, row on desktop */}
+                        <div className="flex flex-col sm:flex-row gap-2 lg:mt-3">
+                            <div className="flex items-center gap-2 flex-1">
+                                <FunnelIcon className="h-5 w-5 flex-shrink-0 hidden sm:block" style={{ color: 'var(--text-hint, #888888)' }} />
                                 <select
                                     value={statusFilter}
                                     onChange={(e) => setStatusFilter(e.target.value)}
-                                    className="px-4 py-2 rounded-md text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
+                                    className="w-full sm:w-auto px-4 py-2 rounded-md text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a] min-h-[44px]"
                                     style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-secondary, #444444)' }}
                                 >
                                     <option value="all">{t('assets.allStatus')} ({statusCounts.all})</option>
@@ -277,11 +286,10 @@ export default function AssetsPageClient() {
                                 </select>
                             </div>
 
-                            {/* Category Filter */}
                             <select
                                 value={categoryFilter}
                                 onChange={(e) => setCategoryFilter(e.target.value)}
-                                className="px-4 py-2 rounded-md text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
+                                className="w-full sm:w-auto px-4 py-2 rounded-md text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a] min-h-[44px]"
                                 style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-secondary, #444444)' }}
                             >
                                 <option value="all">{t('assets.allCategories')} ({assets.length})</option>
@@ -292,6 +300,24 @@ export default function AssetsPageClient() {
                                 ))}
                             </select>
                         </div>
+                    </div>
+
+                    {/* Archived toggle */}
+                    <div className="flex items-center justify-end mb-2">
+                        <button
+                            onClick={() => setShowArchived(!showArchived)}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors"
+                            style={{
+                                color: showArchived ? 'var(--accent, #e8600a)' : 'var(--text-muted, #777)',
+                                backgroundColor: showArchived ? 'rgba(232, 96, 10, 0.08)' : 'transparent',
+                            }}
+                        >
+                            {showArchived
+                                ? <EyeSlashIcon className="h-4 w-4" />
+                                : <EyeIcon className="h-4 w-4" />
+                            }
+                            {language === 'fr' ? 'Afficher les retirés' : 'Show retired'}
+                        </button>
                     </div>
 
                     {/* Assets Table */}

@@ -140,11 +140,12 @@ export async function checkAssetLimit(): Promise<{
       return { current: 0, max: 100, limitReached: false };
     }
 
-    // Get current asset count
+    // Get current asset count (exclude archived/retired assets)
     const { count: assetCount } = await supabase
       .from('assets')
       .select('*', { count: 'exact', head: true })
-      .eq('organization_id', userData.organization_id);
+      .eq('organization_id', userData.organization_id)
+      .is('archived_at', null);
 
     // Get subscription limit
     const { data: subscription } = await supabase

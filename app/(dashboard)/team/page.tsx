@@ -193,6 +193,9 @@ export default function TeamPage() {
   // Invitations
   const [invitations, setInvitations] = useState<TeamInvitation[]>([]);
 
+  // Mobile expanded member (for action buttons)
+  const [expandedMemberId, setExpandedMemberId] = useState<string | null>(null);
+
   // ============================================================================
   // DATA FETCHING
   // ============================================================================
@@ -424,11 +427,11 @@ export default function TeamPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 lg:space-y-6 p-3 md:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-[22px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('team.pageTitle')}</h1>
+          <h1 className="text-[18px] lg:text-[22px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('team.pageTitle')}</h1>
           <p className="mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('team.pageSubtitle')}</p>
         </div>
         {canManageTeam && (
@@ -444,7 +447,7 @@ export default function TeamPage() {
       </div>
 
       {/* Stats - Clickable Filter Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         {/* Total Members */}
         <button
           onClick={() => setActiveFilter('all')}
@@ -601,110 +604,186 @@ export default function TeamPage() {
           )}
         </div>
       ) : (
-        <div className="rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
-          <table className="w-full">
-            <thead>
-              <tr>
-                <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
-                  {t('team.member')}
-                </th>
-                <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
-                  {t('team.role')}
-                </th>
-                <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
-                  {t('team.joined')}
-                </th>
-                <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
-                  {t('team.lastActive')}
-                </th>
-                {canManageTeam && (
-                  <th className="px-6 py-3 text-right text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
-                    {t('team.actions')}
+        <>
+          {/* Desktop table */}
+          <div className="hidden lg:block rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
+            <table className="w-full">
+              <thead>
+                <tr>
+                  <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
+                    {t('team.member')}
                   </th>
-                )}
-              </tr>
-            </thead>
-            <tbody className="divide-y" style={{ borderColor: '#dcdee3' }}>
-              {filteredMembers.map((member) => {
-                const roleConfig = ROLE_CONFIG[member.role];
-                const RoleIcon = roleConfig.icon;
-                const isCurrentUser = member.id === currentUserId;
+                  <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
+                    {t('team.role')}
+                  </th>
+                  <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
+                    {t('team.joined')}
+                  </th>
+                  <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
+                    {t('team.lastActive')}
+                  </th>
+                  {canManageTeam && (
+                    <th className="px-6 py-3 text-right text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
+                      {t('team.actions')}
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody className="divide-y" style={{ borderColor: '#dcdee3' }}>
+                {filteredMembers.map((member) => {
+                  const roleConfig = ROLE_CONFIG[member.role];
+                  const RoleIcon = roleConfig.icon;
+                  const isCurrentUser = member.id === currentUserId;
 
-                return (
-                  <tr key={member.id} className="hover:bg-black/[0.02]">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium text-[15px]"
-                          style={{ backgroundColor: BRAND_COLORS.primary }}
-                        >
-                          {getInitials(member)}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="text-[15px] font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
-                              {getDisplayName(member)}
-                            </p>
-                            {isCurrentUser && (
-                              <span className="text-[13px] px-2 py-0.5 rounded" style={{ color: 'var(--text-muted, #777)', backgroundColor: 'var(--input-bg, #e3e5e9)' }}>
-                                {language === 'fr' ? 'Vous' : 'You'}
-                              </span>
-                            )}
+                  return (
+                    <tr key={member.id} className="hover:bg-black/[0.02]">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium text-[15px]"
+                            style={{ backgroundColor: BRAND_COLORS.primary }}
+                          >
+                            {getInitials(member)}
                           </div>
-                          <p className="text-[15px]" style={{ color: 'var(--text-muted, #777)' }}>{member.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className="inline-flex items-center gap-1.5 text-[13px] font-medium"
-                        style={{ color: 'var(--text-secondary, #444)' }}
-                      >
-                        <RoleIcon className="w-3.5 h-3.5" />
-                        {t(`team.role${member.role.charAt(0).toUpperCase() + member.role.slice(1)}`)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-[15px]" style={{ color: 'var(--text-muted, #777)' }}>
-                      {formatDateFR(member.created_at)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-[15px]" style={{ color: 'var(--text-muted, #777)' }}>
-                      {getRelativeTime(member.updated_at || member.created_at, language)}
-                    </td>
-                    {canManageTeam && (
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        {canEditMember(member) ? (
-                          <div className="relative inline-block text-left">
-                            <MemberActions
-                              member={member}
-                              onEditRole={() => {
-                                setSelectedMember(member);
-                                setNewRole(member.role);
-                                setShowRoleModal(true);
-                              }}
-                              onRemove={() => {
-                                setSelectedMember(member);
-                                setShowRemoveModal(true);
-                              }}
-                              language={language}
-                            />
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="text-[15px] font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                                {getDisplayName(member)}
+                              </p>
+                              {isCurrentUser && (
+                                <span className="text-[13px] px-2 py-0.5 rounded" style={{ color: 'var(--text-muted, #777)', backgroundColor: 'var(--input-bg, #e3e5e9)' }}>
+                                  {language === 'fr' ? 'Vous' : 'You'}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[15px]" style={{ color: 'var(--text-muted, #777)' }}>{member.email}</p>
                           </div>
-                        ) : (
-                          <span style={{ color: 'var(--text-hint, #888)' }}>-</span>
-                        )}
+                        </div>
                       </td>
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className="inline-flex items-center gap-1.5 text-[13px] font-medium"
+                          style={{ color: 'var(--text-secondary, #444)' }}
+                        >
+                          <RoleIcon className="w-3.5 h-3.5" />
+                          {t(`team.role${member.role.charAt(0).toUpperCase() + member.role.slice(1)}`)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-[15px]" style={{ color: 'var(--text-muted, #777)' }}>
+                        {formatDateFR(member.created_at)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-[15px]" style={{ color: 'var(--text-muted, #777)' }}>
+                        {getRelativeTime(member.updated_at || member.created_at, language)}
+                      </td>
+                      {canManageTeam && (
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          {canEditMember(member) ? (
+                            <div className="relative inline-block text-left">
+                              <MemberActions
+                                member={member}
+                                onEditRole={() => {
+                                  setSelectedMember(member);
+                                  setNewRole(member.role);
+                                  setShowRoleModal(true);
+                                }}
+                                onRemove={() => {
+                                  setSelectedMember(member);
+                                  setShowRemoveModal(true);
+                                }}
+                                language={language}
+                              />
+                            </div>
+                          ) : (
+                            <span style={{ color: 'var(--text-hint, #888)' }}>-</span>
+                          )}
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile/Tablet card grid */}
+          <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {filteredMembers.map((member) => {
+              const roleConfig = ROLE_CONFIG[member.role];
+              const RoleIcon = roleConfig.icon;
+              const isExpanded = expandedMemberId === member.id;
+
+              return (
+                <div
+                  key={member.id}
+                  className="rounded-lg p-3"
+                  style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}
+                  onClick={() => {
+                    if (canManageTeam && canEditMember(member)) {
+                      setExpandedMemberId(isExpanded ? null : member.id);
+                    }
+                  }}
+                >
+                  {/* Line 1: Name + Role badge */}
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[14px] font-semibold truncate" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                      {getDisplayName(member)}
+                    </p>
+                    <span
+                      className="inline-flex items-center gap-1 text-[12px] font-medium flex-shrink-0"
+                      style={{ color: 'var(--text-secondary, #444)' }}
+                    >
+                      <RoleIcon className="w-3 h-3" />
+                      {t(`team.role${member.role.charAt(0).toUpperCase() + member.role.slice(1)}`)}
+                    </span>
+                  </div>
+
+                  {/* Line 2: Email */}
+                  <p className="text-[12px] mt-1 truncate" style={{ color: 'var(--text-muted, #777)' }}>
+                    {member.email}
+                  </p>
+
+                  {/* Expanded action buttons */}
+                  {isExpanded && canManageTeam && canEditMember(member) && (
+                    <div className="flex items-center gap-2 mt-2 pt-2 border-t" style={{ borderColor: '#dcdee3' }}>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedMember(member);
+                          setNewRole(member.role);
+                          setShowRoleModal(true);
+                        }}
+                        className="flex-1 flex items-center justify-center gap-1.5 min-h-[44px] px-3 py-2 text-[13px] font-medium rounded-lg hover:bg-black/[0.04] transition-colors"
+                        style={{ color: 'var(--text-secondary, #444)', border: '1px solid #dcdee3' }}
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                        {language === 'fr' ? 'Modifier le r\u00f4le' : 'Edit Role'}
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedMember(member);
+                          setShowRemoveModal(true);
+                        }}
+                        className="flex-1 flex items-center justify-center gap-1.5 min-h-[44px] px-3 py-2 text-[13px] font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                        style={{ border: '1px solid #dcdee3' }}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        {language === 'fr' ? 'Retirer' : 'Remove'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {/* Pending Invitations Section */}
       {canManageTeam && invitations.length > 0 && (activeFilter === 'all' || activeFilter === 'pending') && (
-        <div className="rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
-          <div className="px-6 py-4 border-b" style={{ borderColor: '#dcdee3' }}>
+        <>
+          {/* Invitations heading (shared) */}
+          <div className="rounded-t-lg px-6 py-4 border-b" style={{ backgroundColor: 'var(--card-bg, #edeff2)', borderColor: '#dcdee3' }}>
             <h3 className="text-[15px] font-semibold flex items-center gap-2" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
               <Mail className="w-4 h-4" style={{ color: BRAND_COLORS.primary }} />
               {language === 'fr' ? 'Invitations en attente' : 'Pending Invitations'}
@@ -716,91 +795,157 @@ export default function TeamPage() {
               </span>
             </h3>
           </div>
-          <table className="w-full">
-            <thead>
-              <tr>
-                <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase" style={{ color: 'var(--text-muted, #777)' }}>
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase" style={{ color: 'var(--text-muted, #777)' }}>
-                  {t('team.role')}
-                </th>
-                <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase" style={{ color: 'var(--text-muted, #777)' }}>
-                  {language === 'fr' ? 'Envoyee le' : 'Sent'}
-                </th>
-                <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase" style={{ color: 'var(--text-muted, #777)' }}>
-                  Status
-                </th>
-                <th className="px-6 py-3 text-right text-[13px] font-semibold uppercase" style={{ color: 'var(--text-muted, #777)' }}>
-                  {t('team.actions')}
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y" style={{ borderColor: '#dcdee3' }}>
-              {invitations.map((invitation) => {
-                const isExpired = new Date(invitation.expires_at) < new Date() && invitation.status === 'pending';
-                return (
-                  <tr key={invitation.id} className="hover:bg-black/[0.02]">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)' }}>
-                          <Mail className="w-4 h-4" style={{ color: 'var(--text-hint, #888)' }} />
+
+          {/* Desktop invitations table */}
+          <div className="hidden lg:block rounded-b-lg overflow-hidden" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
+            <table className="w-full">
+              <thead>
+                <tr>
+                  <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase" style={{ color: 'var(--text-muted, #777)' }}>
+                    Email
+                  </th>
+                  <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase" style={{ color: 'var(--text-muted, #777)' }}>
+                    {t('team.role')}
+                  </th>
+                  <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase" style={{ color: 'var(--text-muted, #777)' }}>
+                    {language === 'fr' ? 'Envoyee le' : 'Sent'}
+                  </th>
+                  <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase" style={{ color: 'var(--text-muted, #777)' }}>
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-right text-[13px] font-semibold uppercase" style={{ color: 'var(--text-muted, #777)' }}>
+                    {t('team.actions')}
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y" style={{ borderColor: '#dcdee3' }}>
+                {invitations.map((invitation) => {
+                  const isExpired = new Date(invitation.expires_at) < new Date() && invitation.status === 'pending';
+                  return (
+                    <tr key={invitation.id} className="hover:bg-black/[0.02]">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)' }}>
+                            <Mail className="w-4 h-4" style={{ color: 'var(--text-hint, #888)' }} />
+                          </div>
+                          <p className="text-[15px] font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{invitation.email}</p>
                         </div>
-                        <p className="text-[15px] font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{invitation.email}</p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center text-[13px] font-medium" style={{ color: 'var(--text-secondary, #444)' }}>
-                        {invitation.role === 'admin'
-                          ? (language === 'fr' ? 'Administrateur' : 'Admin')
-                          : invitation.role === 'viewer'
-                            ? (language === 'fr' ? 'Lecteur' : 'Viewer')
-                            : (language === 'fr' ? 'Membre' : 'Member')
-                        }
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-flex items-center text-[13px] font-medium" style={{ color: 'var(--text-secondary, #444)' }}>
+                          {invitation.role === 'admin'
+                            ? (language === 'fr' ? 'Administrateur' : 'Admin')
+                            : invitation.role === 'viewer'
+                              ? (language === 'fr' ? 'Lecteur' : 'Viewer')
+                              : (language === 'fr' ? 'Membre' : 'Member')
+                          }
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-[15px]" style={{ color: 'var(--text-muted, #777)' }}>
+                        {formatDateFR(invitation.created_at)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {isExpired ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[13px] font-medium bg-red-50 text-red-700">
+                            <Clock className="w-3 h-3" />
+                            {language === 'fr' ? 'Expiree' : 'Expired'}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[13px] font-medium bg-amber-50 text-amber-700">
+                            <Clock className="w-3 h-3" />
+                            {language === 'fr' ? 'En attente' : 'Pending'}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleInvitationAction(invitation.id, 'resend')}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-[13px] font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                            title={language === 'fr' ? 'Renvoyer' : 'Resend'}
+                          >
+                            <RefreshCw className="w-3 h-3" />
+                            {language === 'fr' ? 'Renvoyer' : 'Resend'}
+                          </button>
+                          <button
+                            onClick={() => handleInvitationAction(invitation.id, 'revoke')}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-[13px] font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                            title={language === 'fr' ? 'Revoquer' : 'Revoke'}
+                          >
+                            <X className="w-3 h-3" />
+                            {language === 'fr' ? 'Revoquer' : 'Revoke'}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile/Tablet invitations card grid */}
+          <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {invitations.map((invitation) => {
+              const isExpired = new Date(invitation.expires_at) < new Date() && invitation.status === 'pending';
+              return (
+                <div
+                  key={invitation.id}
+                  className="rounded-lg p-3"
+                  style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}
+                >
+                  {/* Line 1: Email + Status badge */}
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[14px] font-semibold truncate" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                      {invitation.email}
+                    </p>
+                    {isExpired ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] font-medium bg-red-50 text-red-700 flex-shrink-0">
+                        <Clock className="w-3 h-3" />
+                        {language === 'fr' ? 'Expiree' : 'Expired'}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-[15px]" style={{ color: 'var(--text-muted, #777)' }}>
-                      {formatDateFR(invitation.created_at)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {isExpired ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[13px] font-medium bg-red-50 text-red-700">
-                          <Clock className="w-3 h-3" />
-                          {language === 'fr' ? 'Expiree' : 'Expired'}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[13px] font-medium bg-amber-50 text-amber-700">
-                          <Clock className="w-3 h-3" />
-                          {language === 'fr' ? 'En attente' : 'Pending'}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleInvitationAction(invitation.id, 'resend')}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 text-[13px] font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                          title={language === 'fr' ? 'Renvoyer' : 'Resend'}
-                        >
-                          <RefreshCw className="w-3 h-3" />
-                          {language === 'fr' ? 'Renvoyer' : 'Resend'}
-                        </button>
-                        <button
-                          onClick={() => handleInvitationAction(invitation.id, 'revoke')}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 text-[13px] font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
-                          title={language === 'fr' ? 'Revoquer' : 'Revoke'}
-                        >
-                          <X className="w-3 h-3" />
-                          {language === 'fr' ? 'Revoquer' : 'Revoke'}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] font-medium bg-amber-50 text-amber-700 flex-shrink-0">
+                        <Clock className="w-3 h-3" />
+                        {language === 'fr' ? 'En attente' : 'Pending'}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Line 2: Role + Date */}
+                  <p className="text-[12px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>
+                    {invitation.role === 'admin'
+                      ? (language === 'fr' ? 'Administrateur' : 'Admin')
+                      : invitation.role === 'viewer'
+                        ? (language === 'fr' ? 'Lecteur' : 'Viewer')
+                        : (language === 'fr' ? 'Membre' : 'Member')
+                    }
+                    {' \u00b7 '}
+                    {formatDateFR(invitation.created_at)}
+                  </p>
+
+                  {/* Action buttons */}
+                  <div className="flex items-center gap-2 mt-2 pt-2 border-t" style={{ borderColor: '#dcdee3' }}>
+                    <button
+                      onClick={() => handleInvitationAction(invitation.id, 'resend')}
+                      className="flex-1 inline-flex items-center justify-center gap-1 min-h-[44px] px-3 py-2 text-[13px] font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                      {language === 'fr' ? 'Renvoyer' : 'Resend'}
+                    </button>
+                    <button
+                      onClick={() => handleInvitationAction(invitation.id, 'revoke')}
+                      className="flex-1 inline-flex items-center justify-center gap-1 min-h-[44px] px-3 py-2 text-[13px] font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                      {language === 'fr' ? 'Revoquer' : 'Revoke'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {/* Change Role Modal */}

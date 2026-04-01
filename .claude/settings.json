@@ -50,7 +50,26 @@
       "Bash(find /d/Dev/projects/travixo-app/components/ui -type f -name *.tsx)",
       "Bash(ls -la d:/Dev/projects/travixo-app/app/\\\\\\(dashboard\\\\\\)/)",
       "Bash(grep -E \"\\\\.tsx$|\\\\.ts$\")",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(grep -o \"t\\(''''assets\\\\.[a-zA-Z0-9]*''''\\)\" /d/Dev/projects/travixo-app/components/assets/*.tsx)",
+      "Bash(ls -la /d/Dev/projects/travixo-app/app/\\\\\\(dashboard\\\\\\)/clients/)",
+      "Bash(grep -r DeleteAssetDialog d:/Dev/projects/travixo-app --include=*.tsx --include=*.ts)",
+      "Bash(grep -r \"count.*asset\\\\|asset.*count\" d:/Dev/projects/travixo-app --include=*.ts --include=*.tsx)",
+      "Bash(node -e \"const m = require\\(''@heroicons/react/24/outline''\\); console.log\\(''ArchiveBoxXMarkIcon:'', !!m.ArchiveBoxXMarkIcon\\)\")",
+      "Bash(node -e \"const m = require\\(''@heroicons/react/24/outline''\\); console.log\\(typeof m.ArchiveBoxXMarkIcon\\)\")",
+      "Bash(node -e \"const m = require\\(''@heroicons/react/24/outline''\\); console.log\\(typeof m.EyeIcon, typeof m.EyeSlashIcon\\)\")",
+      "Bash(find d:/Dev/projects/travixo-app/app -name page.tsx -path */[*]/*)",
+      "Bash(grep -r status.*active /d/Dev/projects/travixo-app/app/api/rentals --include=*.ts)",
+      "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
+      "Bash(npx next:*)",
+      "Bash(node -e \"const sharp = require\\(''sharp''\\); sharp\\(''public/travixo-logo.png''\\).metadata\\(\\).then\\(m => console.log\\(JSON.stringify\\({width:m.width,height:m.height,format:m.format}\\)\\)\\)\")",
+      "Bash(node -e \":*)",
+      "Bash(npx --yes jimp --version)",
+      "Bash(npm install:*)",
+      "Bash(node -e \"const sharp = require\\(''sharp''\\); sharp\\(''public/travixo-logo.png''\\).metadata\\(\\).then\\(m => console.log\\(m.width, m.height\\)\\)\")"
+    ],
+    "additionalDirectories": [
+      "d:\\Dev\\projects\\travixo-app\\app\\(dashboard)\\assets"
     ]
   }
 }

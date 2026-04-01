@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
+import { assetSchema } from '@/lib/validations/schemas'
 
 interface Asset {
   id: string
@@ -33,6 +34,7 @@ export default function EditAssetModal({ isOpen, onClose, asset }: EditAssetModa
   const { language } = useLanguage()
   const t = createTranslator(language)
   const [isLoading, setIsLoading] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   const [formData, setFormData] = useState({
     name: '',
@@ -63,6 +65,20 @@ export default function EditAssetModal({ isOpen, onClose, asset }: EditAssetModa
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Zod validation
+    setFieldErrors({})
+    const parsed = assetSchema.safeParse(formData)
+    if (!parsed.success) {
+      const errors: Record<string, string> = {}
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0]?.toString()
+        if (key && !errors[key]) errors[key] = issue.message
+      }
+      setFieldErrors(errors)
+      return
+    }
+
     setIsLoading(true)
 
     try {
@@ -142,6 +158,9 @@ export default function EditAssetModal({ isOpen, onClose, asset }: EditAssetModa
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         className="w-full px-3 py-2 rounded-lg text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
                       />
+                      {fieldErrors.name && (
+                        <p className="text-xs text-red-600 mt-1">{fieldErrors.name}</p>
+                      )}
                     </div>
 
                     <div>

@@ -171,6 +171,8 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
   const [showDetails, setShowDetails] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
   const [showEdit, setShowEdit] = useState(false);
+  const [archivingSchedule, setArchivingSchedule] = useState<Schedule | null>(null);
+  const [expandedCard, setExpandedCard] = useState<string | null>(null);
 
   const fetchCtrl = useRef<AbortController | null>(null);
 
@@ -277,9 +279,13 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
   };
 
   // Archive schedule
-  const handleArchive = async (scheduleId: string) => {
-    const reason = prompt(t('vgpSchedules.archiveReason'));
-    if (!reason?.trim()) return;
+  const handleArchive = (schedule: Schedule) => {
+    setArchivingSchedule(schedule);
+  };
+
+  const handleArchiveConfirm = async (reason: string) => {
+    if (!archivingSchedule) return;
+    const scheduleId = archivingSchedule.id;
 
     try {
       const res = await fetch(`/api/vgp/schedules/${scheduleId}`, {
@@ -293,11 +299,13 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
         throw new Error(json?.error || t('vgpSchedules.error.archiveFailed'));
       }
 
+      setArchivingSchedule(null);
       setSchedules(prev => prev.filter(s => s.id !== scheduleId));
       setToast({ message: t('vgpSchedules.success.archived'), type: 'success' });
     } catch (e: any) {
       console.error('Archive error:', e);
       setToast({ message: e?.message || t('vgpSchedules.error.archiveError'), type: 'error' });
+      throw e; // re-throw so ArchiveModal can reset loading state
     }
   };
 
@@ -325,19 +333,19 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
   };
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-3 md:p-6 lg:p-8 space-y-4 lg:space-y-6">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       {/* Header */}
       <div>
-        <h1 className="text-[22px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpSchedules.pageTitle')}</h1>
+        <h1 className="text-[18px] lg:text-[22px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpSchedules.pageTitle')}</h1>
         <p className="mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('vgpSchedules.pageSubtitle')}</p>
       </div>
 
       {isReadOnly && <VGPReadOnlyBanner />}
 
       {/* 4 Cards - White with colored borders */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={<AlertCircle className="w-5 h-5" />}
           title={t('vgpSchedules.overdue')}
@@ -439,7 +447,9 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Desktop table */}
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr>
@@ -514,7 +524,7 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
                           </button>
                           {!isReadOnly && (
                             <button
-                              onClick={() => handleArchive(schedule.id)}
+                              onClick={() => handleArchive(schedule)}
                               className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 text-[#f26f00] hover:bg-[#f26f00]/10 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
                               title={t('vgpSchedules.archive')}
                               aria-label={t('vgpSchedules.archive')}
@@ -530,6 +540,135 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
               </tbody>
             </table>
           </div>
+
+          {/* Mobile/Tablet card layout */}
+          <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {filteredSchedules.map((schedule) => {
+              const days = daysUntilDue(schedule.next_due_date);
+              const status = deriveStatus(schedule.next_due_date);
+              const isExpanded = expandedCard === schedule.id;
+              const statusColorMap: Record<string, string> = {
+                overdue: BRAND_COLORS.danger,
+                upcoming: BRAND_COLORS.warning,
+                soon: BRAND_COLORS.warning,
+                compliant: BRAND_COLORS.success,
+              };
+              const borderColor = statusColorMap[status] || BRAND_COLORS.success;
+
+              return (
+                <div
+                  key={schedule.id}
+                  onClick={() => setExpandedCard(isExpanded ? null : schedule.id)}
+                  className="cursor-pointer"
+                  style={{
+                    backgroundColor: 'var(--card-bg, #edeff2)',
+                    borderRadius: 8,
+                    borderLeft: `3px solid ${borderColor}`,
+                    padding: 12,
+                  }}
+                >
+                  {/* Line 1: Name + status badge */}
+                  <div className="flex items-center justify-between gap-2">
+                    <span
+                      className="text-[14px] font-semibold truncate"
+                      style={{ color: 'var(--text-primary, #1a1a1a)' }}
+                    >
+                      {schedule.assets?.name || 'N/A'}
+                    </span>
+                    <StatusBadge status={status} t={t} />
+                  </div>
+
+                  {/* Line 2: Serial number */}
+                  <p
+                    className="text-[12px] font-mono mt-0.5"
+                    style={{ color: 'var(--text-hint, #888)' }}
+                  >
+                    {schedule.assets?.serial_number || 'N/A'}
+                  </p>
+
+                  {/* Line 3: Divider + category/location & date */}
+                  <div className="mt-2 pt-2" style={{ borderTop: '0.5px solid #dcdee3' }}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span
+                        className="text-[12px] truncate"
+                        style={{ color: 'var(--text-secondary, #555)' }}
+                      >
+                        {schedule.assets?.asset_categories?.name || t('vgpSchedules.uncategorized')}
+                        {' \u00B7 '}
+                        {schedule.assets?.current_location || t('vgpSchedules.notSpecified')}
+                      </span>
+                      <span
+                        className="text-[12px] whitespace-nowrap"
+                        style={{ color: 'var(--text-secondary, #555)' }}
+                      >
+                        {formatDateFR(schedule.next_due_date)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Expanded: action buttons */}
+                  {isExpanded && (
+                    <div
+                      className="flex gap-2 mt-3"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        onClick={() => router.push(`/vgp/inspection/${schedule.id}`)}
+                        className="flex-1 text-center min-h-[44px] text-[12px] font-medium text-white rounded"
+                        style={{
+                          backgroundColor: 'var(--sidebar-bg, #0a2730)',
+                          borderRadius: 4,
+                        }}
+                      >
+                        Inspection
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedSchedule(schedule);
+                          setShowDetails(true);
+                        }}
+                        className="flex-1 text-center min-h-[44px] text-[12px] font-medium rounded"
+                        style={{
+                          backgroundColor: 'var(--input-bg, #e3e5e9)',
+                          color: 'var(--text-secondary, #555)',
+                          borderRadius: 4,
+                        }}
+                      >
+                        Voir
+                      </button>
+                      {!isReadOnly && (
+                        <button
+                          onClick={() => handleEdit(schedule)}
+                          className="flex-1 text-center min-h-[44px] text-[12px] font-medium rounded"
+                          style={{
+                            backgroundColor: 'var(--input-bg, #e3e5e9)',
+                            color: 'var(--text-secondary, #555)',
+                            borderRadius: 4,
+                          }}
+                        >
+                          Modifier
+                        </button>
+                      )}
+                      {!isReadOnly && (
+                        <button
+                          onClick={() => handleArchive(schedule)}
+                          className="flex-1 text-center min-h-[44px] text-[12px] font-medium rounded"
+                          style={{
+                            backgroundColor: 'var(--input-bg, #e3e5e9)',
+                            color: 'var(--text-secondary, #555)',
+                            borderRadius: 4,
+                          }}
+                        >
+                          Archiver
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          </>
         )}
       </div>
 
@@ -553,6 +692,15 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
             setShowDetails(false);
             setSelectedSchedule(null);
           }}
+          t={t}
+        />
+      )}
+
+      {archivingSchedule && (
+        <ArchiveModal
+          schedule={archivingSchedule}
+          onClose={() => setArchivingSchedule(null)}
+          onConfirm={handleArchiveConfirm}
           t={t}
         />
       )}
@@ -701,6 +849,102 @@ function InfoField({ label, value }: { label: string; value?: string | number | 
     <div>
       <p className="text-[15px] text-gray-600 mb-1">{label}</p>
       <p className="font-semibold text-gray-900">{value || 'N/A'}</p>
+    </div>
+  );
+}
+
+function ArchiveModal({
+  schedule,
+  onClose,
+  onConfirm,
+  t,
+}: {
+  schedule: Schedule;
+  onClose: () => void;
+  onConfirm: (reason: string) => Promise<void>;
+  t: (key: string) => string;
+}) {
+  const [reason, setReason] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reason.trim()) return;
+    setIsLoading(true);
+    try {
+      await onConfirm(reason);
+    } catch {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div
+        className="rounded-xl max-w-[560px] w-full p-6"
+        style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}
+      >
+        <div className="flex items-center gap-4 mb-4">
+          <div className="flex-shrink-0">
+            <Archive className="w-10 h-10" style={{ color: '#dc2626' }} />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+              {t('vgpSchedules.archive')}
+            </h2>
+            <p className="text-[13px] mt-0.5" style={{ color: 'var(--text-muted, #777)' }}>
+              {schedule.assets?.name || 'N/A'}
+              {' — '}
+              {schedule.interval_months} {t('vgpSchedules.detailsModal.months')},
+              {' '}{t('vgpSchedules.nextInspection')}: {formatDateFR(schedule.next_due_date)}
+            </p>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label
+              className="block text-[14px] font-semibold mb-1.5"
+              style={{ color: 'var(--text-primary, #1a1a1a)' }}
+            >
+              Raison de l&apos;archivage *
+            </label>
+            <textarea
+              required
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 rounded-lg text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
+              style={{
+                backgroundColor: 'var(--input-bg, #e3e5e9)',
+                color: 'var(--text-primary, #1a1a1a)',
+              }}
+              placeholder={t('vgpSchedules.archiveReason')}
+              autoFocus
+            />
+          </div>
+
+          <div className="flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isLoading}
+              className="px-4 py-2 text-[15px] font-medium rounded-md transition-colors disabled:opacity-50"
+              style={{ color: 'var(--text-muted, #777)' }}
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading || !reason.trim()}
+              className="px-4 py-2 text-[15px] font-medium text-white rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ backgroundColor: '#dc2626' }}
+            >
+              {isLoading ? 'Archivage...' : 'Archiver'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

@@ -182,6 +182,14 @@ export async function POST(request: Request) {
       );
     }
 
+    // Certificate is mandatory for DREETS compliance
+    if (!certificate_url) {
+      return NextResponse.json(
+        { error: 'Le rapport de vérification est obligatoire pour la conformité DREETS' },
+        { status: 400 }
+      );
+    }
+
     // Validate result value
     const validResults = ['passed', 'conditional', 'failed'];
     if (!validResults.includes(result)) {

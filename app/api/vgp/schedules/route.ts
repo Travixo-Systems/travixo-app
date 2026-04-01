@@ -146,6 +146,7 @@ export async function POST(request: Request) {
     const notes = (body?.notes as string | undefined) || null;
     const created_by = (body?.created_by as string | undefined) || null;
     const rapport_url = (body?.rapport_url as string | undefined) || null;
+    const inspection_location = (body?.inspection_location as string | undefined) || 'depot';
 
     if (!asset_id || !months || months < 1)
       return json(
@@ -186,6 +187,7 @@ export async function POST(request: Request) {
         notes,
         created_by,
         rapport_url,
+        inspection_location,
       })
       .select(
         `

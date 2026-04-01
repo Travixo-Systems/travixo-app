@@ -77,11 +77,12 @@ export async function GET() {
       console.error('Organization lookup error:', orgError);
     }
 
-    // Check current asset count
+    // Check current asset count (exclude archived/retired assets)
     const { count: assetCount, error: countError } = await supabase
       .from('assets')
       .select('*', { count: 'exact', head: true })
-      .eq('organization_id', organizationId);
+      .eq('organization_id', organizationId)
+      .is('archived_at', null);
 
     if (countError) {
       console.error('Error counting assets:', countError);

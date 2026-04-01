@@ -2,7 +2,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, AlertCircle, CheckCircle, Upload, FileText, Trash2 } from 'lucide-react';
+import { X, AlertCircle, CheckCircle, Upload, FileText, Trash2, AlertTriangle, ClipboardList, Phone, MapPin } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useLanguage } from '@/lib/LanguageContext';
 import { createTranslator } from '@/lib/i18n';
 import { createClient } from '@/lib/supabase/client';
@@ -23,6 +24,16 @@ interface AddVGPScheduleModalProps {
 
 type Step = 'form' | 'summary';
 
+interface ActiveRental {
+  id: string;
+  client_name: string;
+  client_id: string | null;
+  expected_return_date: string | null;
+  checkout_date: string;
+  organization_id?: string;
+  asset_id?: string;
+}
+
 export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVGPScheduleModalProps) {
   const { language } = useLanguage();
   const t = createTranslator(language);
@@ -42,6 +53,12 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
 
+  // Rental context state
+  const [activeRental, setActiveRental] = useState<ActiveRental | null>(null);
+  const [inspectionLocation, setInspectionLocation] = useState<'depot' | 'client_site'>('depot');
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [recallSending, setRecallSending] = useState(false);
+
   const { startUpload, isUploading } = useUploadThing('vgpCertificate', {
     onUploadError: (error: Error) => {
       setError(language === 'fr'
@@ -54,6 +71,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
   useEffect(() => {
     fetchEquipmentTypes();
     fetchExistingSchedule();
+    fetchActiveRental();
   }, []);
 
   const fetchExistingSchedule = async () => {
@@ -95,6 +113,60 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
       }
     } catch (error) {
       console.error('Failed to fetch equipment types:', error);
+    }
+  };
+
+  const fetchActiveRental = async () => {
+    try {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('rentals')
+        .select('id, client_name, client_id, expected_return_date, checkout_date, organization_id, asset_id')
+        .eq('asset_id', asset.id)
+        .eq('status', 'active')
+        .order('checkout_date', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data) setActiveRental(data as ActiveRental);
+    } catch (err) {
+      // Silently fall back to standard flow (scenario C)
+      console.error('Failed to fetch active rental:', err);
+    }
+  };
+
+  const handleRecall = async () => {
+    if (!activeRental || !nextDueDate) return;
+    setRecallSending(true);
+    try {
+      const supabase = createClient();
+
+      // Get org id from current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      const { data: userData } = await supabase
+        .from('users')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+      if (!userData?.organization_id) throw new Error('No organization');
+
+      const { error: insertErr } = await supabase
+        .from('client_recall_alerts')
+        .insert({
+          organization_id: userData.organization_id,
+          rental_id: activeRental.id,
+          client_id: activeRental.client_id,
+          asset_id: asset.id,
+          alert_type: 'manual_recall',
+          next_due_date: nextDueDate.toISOString().split('T')[0],
+        });
+      if (insertErr) throw insertErr;
+      toast.success(`${t('vgpRentalContext.recallSent')} ${activeRental.client_name}`);
+    } catch (err) {
+      console.error('Recall insert error:', err);
+      toast.error(t('vgpRentalContext.recallFailed'));
+    } finally {
+      setRecallSending(false);
     }
   };
 
@@ -163,6 +235,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
           asset_id: asset.id,
           ...formData,
           rapport_url: rapportUrl,
+          inspection_location: showLocationPicker ? inspectionLocation : 'depot',
         })
       });
 
@@ -276,6 +349,90 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
             {asset.category && <span>{t('vgpScheduleModal.category')}: {asset.category}</span>}
           </div>
         </div>
+
+        {/* Rental Context Callout */}
+        {activeRental && nextDueDate && (() => {
+          const returnDate = activeRental.expected_return_date ? new Date(activeRental.expected_return_date) : null;
+          const vgpDueBeforeReturn = returnDate ? nextDueDate <= returnDate : true;
+          const formatRentalDate = (iso: string) => new Date(iso).toLocaleDateString(
+            language === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' }
+          );
+
+          if (vgpDueBeforeReturn) {
+            // Scenario A: VGP due BEFORE return — red warning
+            return (
+              <div
+                className="mx-6 mt-4 p-4 rounded-lg"
+                style={{ backgroundColor: 'rgba(220,38,38,0.06)', borderLeft: '3px solid var(--status-retard, #dc2626)' }}
+              >
+                <div className="flex items-start gap-2 mb-2">
+                  <AlertTriangle className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#dc2626' }} />
+                  <p className="text-[14px] font-semibold" style={{ color: '#dc2626' }}>
+                    {t('vgpRentalContext.currentlyRented')}
+                  </p>
+                </div>
+                <div className="ml-7 space-y-1 mb-3">
+                  <p className="text-[13px]" style={{ color: 'var(--text-secondary, #444)' }}>
+                    {t('vgpRentalContext.client')}: <strong>{activeRental.client_name}</strong>
+                  </p>
+                  {activeRental.expected_return_date && (
+                    <p className="text-[13px]" style={{ color: 'var(--text-secondary, #444)' }}>
+                      {t('vgpRentalContext.expectedReturn')}: {formatRentalDate(activeRental.expected_return_date)}
+                      {' '}<span style={{ color: '#dc2626' }}>— {t('vgpRentalContext.afterVgpDue')}</span>
+                    </p>
+                  )}
+                </div>
+                <div className="ml-7 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={handleRecall}
+                    disabled={recallSending}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-white rounded-md hover:opacity-90 disabled:opacity-50 transition-colors"
+                    style={{ backgroundColor: 'var(--accent, #e8600a)' }}
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                    {recallSending
+                      ? (language === 'fr' ? 'Envoi...' : 'Sending...')
+                      : t('vgpRentalContext.recallEquipment')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowLocationPicker(true); setInspectionLocation('client_site'); }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium rounded-md transition-colors"
+                    style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-secondary, #444)' }}
+                  >
+                    <MapPin className="w-3.5 h-3.5" />
+                    {t('vgpRentalContext.onSiteInspection')}
+                  </button>
+                </div>
+              </div>
+            );
+          } else {
+            // Scenario B: VGP due AFTER return — amber info
+            return (
+              <div
+                className="mx-6 mt-4 p-4 rounded-lg"
+                style={{ backgroundColor: 'rgba(217,119,6,0.06)', borderLeft: '3px solid var(--status-bientot, #d97706)' }}
+              >
+                <div className="flex items-start gap-2">
+                  <ClipboardList className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#d97706' }} />
+                  <div>
+                    <p className="text-[14px] font-semibold" style={{ color: '#92400e' }}>
+                      {t('vgpRentalContext.rentedAt')} {activeRental.client_name}
+                    </p>
+                    {activeRental.expected_return_date && (
+                      <p className="text-[13px] mt-1" style={{ color: '#92400e' }}>
+                        {t('vgpRentalContext.expectedReturn')}: {formatRentalDate(activeRental.expected_return_date)}
+                        {' — '}{t('vgpRentalContext.beforeVgpDue')}.
+                        {' '}{t('vgpRentalContext.noActionRequired')}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          }
+        })()}
 
         {/* Errors */}
         {validationErrors.length > 0 && (
@@ -470,6 +627,39 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
               />
             </div>
 
+            {/* Inspection Location (shown when on-site inspection selected) */}
+            {showLocationPicker && (
+              <div>
+                <label className="block text-[14px] font-semibold mb-2" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                  {t('vgpRentalContext.inspectionLocation')}
+                </label>
+                <div className="flex gap-2">
+                  {(['depot', 'client_site'] as const).map((loc) => (
+                    <button
+                      key={loc}
+                      type="button"
+                      onClick={() => setInspectionLocation(loc)}
+                      className="flex-1 px-4 py-2 rounded-full text-[13px] font-medium transition-colors"
+                      style={inspectionLocation === loc ? {
+                        backgroundColor: 'var(--accent, #e8600a)',
+                        color: '#fff',
+                      } : {
+                        backgroundColor: 'var(--input-bg, #e3e5e9)',
+                        color: 'var(--text-secondary, #444)',
+                      }}
+                    >
+                      {loc === 'depot' ? t('vgpRentalContext.depot') : t('vgpRentalContext.clientSite')}
+                    </button>
+                  ))}
+                </div>
+                {inspectionLocation === 'client_site' && activeRental && (
+                  <p className="text-[12px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>
+                    {t('vgpRentalContext.rentedAt')} {activeRental.client_name}
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Actions */}
             <div className="flex gap-3 pt-4" style={{ borderTop: '0.5px solid #dcdee3' }}>
               <button
@@ -556,6 +746,12 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
                 <SummaryRow
                   label={t('vgpScheduleModal.notes')}
                   value={formData.notes}
+                />
+              )}
+              {showLocationPicker && (
+                <SummaryRow
+                  label={t('vgpRentalContext.inspectionLocation')}
+                  value={inspectionLocation === 'depot' ? t('vgpRentalContext.depot') : t('vgpRentalContext.clientSite')}
                 />
               )}
             </div>

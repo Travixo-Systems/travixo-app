@@ -7,6 +7,8 @@ import { useUploadThing } from '@/lib/uploadthing';
 import FeatureGate from '@/components/subscription/FeatureGate';
 import { VGPReadOnlyBanner } from '@/components/vgp/VGPUpgradeOverlay';
 import { useVGPAccess } from '@/hooks/useSubscription';
+import { useLanguage } from '@/lib/LanguageContext';
+import { createTranslator } from '@/lib/i18n';
 
 interface Schedule {
   id: string;
@@ -35,6 +37,8 @@ export default function InspectionRecorderPage({
   const scheduleId = resolvedParams.id;
   const { access: vgpAccess } = useVGPAccess();
   const isReadOnly = vgpAccess === 'read_only';
+  const { language } = useLanguage();
+  const t = createTranslator(language);
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -47,7 +51,7 @@ export default function InspectionRecorderPage({
     onClientUploadComplete: (res) => console.log('Upload completed:', res),
     onUploadError: (error: Error) => {
       console.error('Upload error:', error);
-      setError(`Erreur de téléchargement: ${error.message}`);
+      setError(`${t('vgpInspection.errorUpload')} ${error.message}`);
     },
     onUploadProgress: (progress) => setUploadProgress(progress),
   });
@@ -68,7 +72,7 @@ export default function InspectionRecorderPage({
   const fetchSchedule = async () => {
     try {
       const res = await fetch(`/api/vgp/schedules/${scheduleId}`);
-      if (!res.ok) throw new Error('Échec du chargement du calendrier');
+      if (!res.ok) throw new Error(t('vgpInspection.errorLoadSchedule'));
       const data = await res.json();
       setSchedule(data.schedule);
     } catch (err: any) {
@@ -82,12 +86,12 @@ export default function InspectionRecorderPage({
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.type !== 'application/pdf') {
-      setError('Seuls les fichiers PDF sont acceptés');
+      setError(t('vgpInspection.errorPdfOnly'));
       return;
     }
     const maxSize = 4 * 1024 * 1024;
     if (file.size > maxSize) {
-      setError('Le fichier est trop volumineux (max 4 MB)');
+      setError(t('vgpInspection.errorFileTooLarge'));
       return;
     }
     setSelectedFile(file);
@@ -111,15 +115,11 @@ export default function InspectionRecorderPage({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.inspector_name || !formData.inspector_company) {
-      setError('Veuillez remplir tous les champs obligatoires');
+      setError(t('vgpInspection.errorRequiredFields'));
       return;
     }
     if (!selectedFile) {
-      setError(
-        "Le certificat VGP est obligatoire pour la conformité DREETS.\n\n" +
-          "Sans certificat officiel, l'inspection n'est pas conforme à la réglementation " +
-          "française (Article R4323-23) et votre équipement reste exposé aux amendes."
-      );
+      setError(t('vgpInspection.errorCertRequired'));
       return;
     }
 
@@ -133,7 +133,7 @@ export default function InspectionRecorderPage({
       if (selectedFile) {
         const uploadResult = await startUpload([selectedFile]);
         if (!uploadResult || uploadResult.length === 0) {
-          throw new Error('Échec du téléchargement du certificat');
+          throw new Error(t('vgpInspection.errorUploadFailed'));
         }
         certificateUrl = uploadResult[0].ufsUrl;
         certificateFileName = uploadResult[0].name;
@@ -166,7 +166,7 @@ export default function InspectionRecorderPage({
       });
 
       const responseData = await res.json();
-      if (!res.ok) throw new Error(responseData.error || "Échec de l'enregistrement");
+      if (!res.ok) throw new Error(responseData.error || t('vgpInspection.errorSubmitFailed'));
       router.push('/vgp');
     } catch (err: any) {
       console.error('Inspection submission error:', err);
@@ -183,7 +183,7 @@ export default function InspectionRecorderPage({
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-[var(--text-muted,#777)]">Chargement...</p>
+            <p className="mt-4 text-[var(--text-muted,#777)]">{t('vgpInspection.loading')}</p>
           </div>
         </div>
       </FeatureGate>
@@ -208,16 +208,15 @@ export default function InspectionRecorderPage({
         <div className="p-3 md:p-6 max-w-4xl mx-auto">
           <VGPReadOnlyBanner />
           <div className="mt-4">
-            <h1 className="text-2xl font-bold text-[var(--text-primary,#1a1a1a)] mb-2">Enregistrer une Inspection VGP</h1>
+            <h1 className="text-2xl font-bold text-[var(--text-primary,#1a1a1a)] mb-2">{t('vgpInspection.readOnlyTitle')}</h1>
             <p className="text-[var(--text-muted,#777)]">
-              L'enregistrement d'inspections n'est pas disponible en mode lecture seule.
-              Passez au plan Professionnel pour enregistrer de nouvelles inspections.
+              {t('vgpInspection.readOnlyMessage')}
             </p>
             <button
               onClick={() => router.push('/vgp')}
               className="mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-[15px]"
             >
-              Retour au tableau VGP
+              {t('vgpInspection.backToVgp')}
             </button>
           </div>
         </div>
@@ -229,50 +228,50 @@ export default function InspectionRecorderPage({
     <FeatureGate feature="vgp_compliance">
       <div className="p-3 md:p-6 max-w-4xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-[var(--text-primary,#1a1a1a)]">Enregistrer une Inspection VGP</h1>
+          <h1 className="text-3xl font-bold text-[var(--text-primary,#1a1a1a)]">{t('vgpInspection.pageTitle')}</h1>
           <p className="text-[var(--text-muted,#777)] mt-2">
-            Enregistrement de l'inspection pour {schedule?.assets?.name}
+            {t('vgpInspection.pageSubtitle')} {schedule?.assets?.name}
           </p>
         </div>
 
         <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-[22px] font-semibold mb-4">Informations sur l'Équipement</h2>
+          <h2 className="text-[22px] font-semibold mb-4">{t('vgpInspection.equipmentInfo')}</h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-[15px] text-[var(--text-muted,#777)]">Équipement</p>
+              <p className="text-[15px] text-[var(--text-muted,#777)]">{t('vgpInspection.equipment')}</p>
               <p className="font-semibold">{schedule?.assets?.name}</p>
             </div>
             <div>
-              <p className="text-[15px] text-[var(--text-muted,#777)]">Numéro de Série</p>
-              <p className="font-semibold">{schedule?.assets?.serial_number || 'N/A'}</p>
+              <p className="text-[15px] text-[var(--text-muted,#777)]">{t('vgpInspection.serialNumber')}</p>
+              <p className="font-semibold">{schedule?.assets?.serial_number || t('vgpInspection.notAvailable')}</p>
             </div>
             <div>
-              <p className="text-[15px] text-[var(--text-muted,#777)]">Catégorie</p>
+              <p className="text-[15px] text-[var(--text-muted,#777)]">{t('vgpInspection.category')}</p>
               <p className="font-semibold">
-                {schedule?.assets?.asset_categories?.name || 'Non catégorisé'}
+                {schedule?.assets?.asset_categories?.name || t('vgpInspection.uncategorized')}
               </p>
             </div>
             <div>
-              <p className="text-[15px] text-[var(--text-muted,#777)]">Localisation</p>
-              <p className="font-semibold">{schedule?.assets?.current_location || 'N/A'}</p>
+              <p className="text-[15px] text-[var(--text-muted,#777)]">{t('vgpInspection.location')}</p>
+              <p className="font-semibold">{schedule?.assets?.current_location || t('vgpInspection.notAvailable')}</p>
             </div>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md p-6">
-          <h2 className="text-[22px] font-semibold mb-6">Détails de l'Inspection</h2>
+          <h2 className="text-[22px] font-semibold mb-6">{t('vgpInspection.inspectionDetails')}</h2>
 
           {error && (
             <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-              <p className="text-red-800">{error}</p>
+              <p className="text-red-800 whitespace-pre-line">{error}</p>
             </div>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-2">
-                Date d'Inspection <span className="text-red-500">*</span>
+                {t('vgpInspection.inspectionDate')} <span className="text-red-500">*</span>
               </label>
               <input
                 type="date"
@@ -285,35 +284,35 @@ export default function InspectionRecorderPage({
 
             <div>
               <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-2">
-                Nom de l'Inspecteur <span className="text-red-500">*</span>
+                {t('vgpInspection.inspectorName')} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={formData.inspector_name}
                 onChange={(e) => setFormData({ ...formData, inspector_name: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Jean Dupont"
+                placeholder={t('vgpInspection.inspectorNamePlaceholder')}
                 required
               />
             </div>
 
             <div>
               <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-2">
-                Organisme de Contrôle <span className="text-red-500">*</span>
+                {t('vgpInspection.inspectionBody')} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={formData.inspector_company}
                 onChange={(e) => setFormData({ ...formData, inspector_company: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Bureau Veritas, DEKRA, Apave..."
+                placeholder={t('vgpInspection.inspectionBodyPlaceholder')}
                 required
               />
             </div>
 
             <div>
               <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-2">
-                Numéro de Certificat
+                {t('vgpInspection.certNumber')}
               </label>
               <input
                 type="text"
@@ -322,14 +321,14 @@ export default function InspectionRecorderPage({
                   setFormData({ ...formData, certification_number: e.target.value })
                 }
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="VGP-2025-12345"
+                placeholder={t('vgpInspection.certNumberPlaceholder')}
               />
             </div>
           </div>
 
           <div className="mb-6">
             <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-2">
-              Résultat de l'Inspection <span className="text-red-500">*</span>
+              {t('vgpInspection.result')} <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <button
@@ -342,8 +341,11 @@ export default function InspectionRecorderPage({
                 }`}
               >
                 <div className="text-center">
-                  <p className="font-semibold">✓ Conforme</p>
-                  <p className="text-[15px] mt-1">Prochaine inspection : selon l'intervalle</p>
+                  <p className="font-semibold">
+                    <CheckCircle className="w-4 h-4 inline mr-1" />
+                    {t('vgpInspection.resultPassed')}
+                  </p>
+                  <p className="text-[15px] mt-1">{t('vgpInspection.resultPassedDesc')}</p>
                 </div>
               </button>
 
@@ -357,8 +359,11 @@ export default function InspectionRecorderPage({
                 }`}
               >
                 <div className="text-center">
-                  <p className="font-semibold">⚠ Conditionnel</p>
-                  <p className="text-[15px] mt-1">Prochaine inspection : 6 mois</p>
+                  <p className="font-semibold">
+                    <AlertCircle className="w-4 h-4 inline mr-1" />
+                    {t('vgpInspection.resultConditional')}
+                  </p>
+                  <p className="text-[15px] mt-1">{t('vgpInspection.resultConditionalDesc')}</p>
                 </div>
               </button>
 
@@ -372,8 +377,11 @@ export default function InspectionRecorderPage({
                 }`}
               >
                 <div className="text-center">
-                  <p className="font-semibold">✗ Non Conforme</p>
-                  <p className="text-[15px] mt-1">Équipement hors service - Réinspection : 30 jours</p>
+                  <p className="font-semibold">
+                    <X className="w-4 h-4 inline mr-1" />
+                    {t('vgpInspection.resultFailed')}
+                  </p>
+                  <p className="text-[15px] mt-1">{t('vgpInspection.resultFailedDesc')}</p>
                 </div>
               </button>
             </div>
@@ -381,20 +389,20 @@ export default function InspectionRecorderPage({
 
           <div className="mb-6">
             <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-2">
-              Constatations / Remarques
+              {t('vgpInspection.findings')}
             </label>
             <textarea
               value={formData.findings}
               onChange={(e) => setFormData({ ...formData, findings: e.target.value })}
               rows={4}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Observations, anomalies détectées, recommandations..."
+              placeholder={t('vgpInspection.findingsPlaceholder')}
             />
           </div>
 
           <div className="mb-6">
             <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-2">
-              Certificat VGP (PDF) <span className="text-red-500">*</span>
+              {t('vgpInspection.certificateLabel')} <span className="text-red-500">*</span>
             </label>
 
             {selectedFile ? (
@@ -422,9 +430,9 @@ export default function InspectionRecorderPage({
                 <Upload className="w-12 h-12 mx-auto text-[var(--text-hint,#888)] mb-3" />
                 <label htmlFor="certificate-upload" className="cursor-pointer">
                   <span className="text-blue-600 hover:text-blue-700 font-medium">
-                    Choisir un fichier
+                    {t('vgpInspection.chooseFile')}
                   </span>
-                  <span className="text-[var(--text-muted,#777)]"> ou glissez-déposez</span>
+                  <span className="text-[var(--text-muted,#777)]"> {t('vgpInspection.orDragDrop')}</span>
                   <input
                     id="certificate-upload"
                     type="file"
@@ -434,14 +442,14 @@ export default function InspectionRecorderPage({
                     disabled={submitting}
                   />
                 </label>
-                <p className="text-[15px] text-[var(--text-hint,#888)] mt-2">PDF uniquement, maximum 4 MB</p>
+                <p className="text-[15px] text-[var(--text-hint,#888)] mt-2">{t('vgpInspection.pdfOnly')}</p>
               </div>
             )}
 
             {uploadProgress > 0 && uploadProgress < 100 && (
               <div className="mt-3">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[15px] text-[var(--text-muted,#777)]">Téléchargement...</span>
+                  <span className="text-[15px] text-[var(--text-muted,#777)]">{t('vgpInspection.uploading')}</span>
                   <span className="text-[15px] font-medium text-blue-600">{uploadProgress}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
@@ -454,10 +462,7 @@ export default function InspectionRecorderPage({
             )}
 
             <p className="text-[15px] text-[var(--text-muted,#777)] mt-2">
-              <strong className="text-red-600">Obligatoire:</strong> Le certificat VGP est exigé
-              par DREETS. Sans certificat officiel de l'organisme de contrôle, l'inspection
-              n'est pas conforme et votre équipement reste exposé aux amendes (€3K–€15K par
-              violation).
+              {t('vgpInspection.certificateRequired')}
             </p>
           </div>
 
@@ -468,7 +473,7 @@ export default function InspectionRecorderPage({
               disabled={submitting}
               className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Annuler
+              {t('vgpInspection.cancel')}
             </button>
             <button
               type="submit"
@@ -479,13 +484,13 @@ export default function InspectionRecorderPage({
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                   {uploadProgress > 0 && uploadProgress < 100
-                    ? `Téléchargement... ${uploadProgress}%`
-                    : 'Enregistrement...'}
+                    ? `${t('vgpInspection.uploadingProgress')} ${uploadProgress}%`
+                    : t('vgpInspection.submitting')}
                 </>
               ) : (
                 <>
                   <Save className="w-5 h-5" />
-                  Enregistrer l'Inspection
+                  {t('vgpInspection.submit')}
                 </>
               )}
             </button>
