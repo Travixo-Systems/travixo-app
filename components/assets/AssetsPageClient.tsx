@@ -72,7 +72,7 @@ export default function AssetsPageClient() {
 
             if (!userData?.organization_id) return
 
-            const { data } = await supabase
+            const { data, error } = await supabase
                 .from('assets')
                 .select(`
                     *,
@@ -83,19 +83,25 @@ export default function AssetsPageClient() {
                     ),
                     vgp_schedules (
                         id,
-                        next_due_date
+                        next_due_date,
+                        archived_at
                     )
                 `)
                 .eq('organization_id', userData.organization_id)
                 .order('created_at', { ascending: false })
 
-            // Compute vgp_status from the most urgent schedule
+            if (error) {
+                console.error('Failed to load assets with VGP schedules:', error)
+            }
+
+            // Compute vgp_status from the most urgent active schedule
             const today = new Date()
             today.setHours(0, 0, 0, 0)
 
             const enriched = (data || []).map((asset: any) => {
-                const schedules = asset.vgp_schedules as { id: string; next_due_date: string }[] | null
-                if (!schedules || schedules.length === 0) {
+                const allSchedules = asset.vgp_schedules as { id: string; next_due_date: string; archived_at: string | null }[] | null
+                const schedules = allSchedules?.filter(s => !s.archived_at) ?? []
+                if (schedules.length === 0) {
                     return { ...asset, vgp_status: 'unknown' as const }
                 }
                 // Find the most urgent (nearest) schedule
