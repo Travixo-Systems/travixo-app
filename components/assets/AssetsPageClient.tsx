@@ -227,7 +227,7 @@ export default function AssetsPageClient() {
                         {t('assets.pageSubtitle')}
                     </p>
                 </div>
-                <div className="flex gap-2 sm:gap-3 flex-wrap">
+                <div className="flex gap-2 sm:gap-3 flex-wrap ml-auto sm:ml-0">
                     <div className="hidden min-[1026px]:block">
                         <ImportAssetsButton onSuccess={loadAssets} />
                     </div>
@@ -277,8 +277,18 @@ export default function AssetsPageClient() {
                                 <select
                                     value={statusFilter}
                                     onChange={(e) => setStatusFilter(e.target.value)}
-                                    className="w-full sm:w-auto px-4 py-2 rounded-md text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a] min-h-[44px]"
-                                    style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-secondary, #444444)' }}
+                                    className="w-full sm:w-auto text-[14px] min-h-[44px] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
+                                    style={{
+                                        appearance: 'none',
+                                        WebkitAppearance: 'none',
+                                        backgroundColor: 'var(--card-bg, #edeff2)',
+                                        color: 'var(--text-secondary, #444444)',
+                                        border: '0.5px solid #c0c0c0',
+                                        padding: '10px 36px 10px 14px',
+                                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                                        backgroundRepeat: 'no-repeat',
+                                        backgroundPosition: 'right 12px center',
+                                    }}
                                 >
                                     <option value="all">{t('assets.allStatus')} ({statusCounts.all})</option>
                                     <option value="available">{t('assets.statusAvailable')} ({statusCounts.available})</option>
@@ -291,8 +301,18 @@ export default function AssetsPageClient() {
                             <select
                                 value={categoryFilter}
                                 onChange={(e) => setCategoryFilter(e.target.value)}
-                                className="w-full sm:w-auto px-4 py-2 rounded-md text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a] min-h-[44px]"
-                                style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-secondary, #444444)' }}
+                                className="w-full sm:w-auto text-[14px] min-h-[44px] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
+                                style={{
+                                    appearance: 'none',
+                                    WebkitAppearance: 'none',
+                                    backgroundColor: 'var(--card-bg, #edeff2)',
+                                    color: 'var(--text-secondary, #444444)',
+                                    border: '0.5px solid #c0c0c0',
+                                    padding: '10px 36px 10px 14px',
+                                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                                    backgroundRepeat: 'no-repeat',
+                                    backgroundPosition: 'right 12px center',
+                                }}
                             >
                                 <option value="all">{t('assets.allCategories')} ({assets.length})</option>
                                 {categories.map(cat => (

@@ -342,7 +342,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
         </div>
 
         {/* Asset Info */}
-        <div className="p-4 mx-6 mt-6 rounded-lg" style={{ backgroundColor: 'var(--page-bg, #e3e5e9)' }}>
+        <div className="p-4 mx-6 mt-6 rounded-lg" style={{ backgroundColor: 'var(--page-bg, #f6f8fd)' }}>
           <h3 className="text-[15px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{asset.name}</h3>
           <div className="flex items-center gap-4 mt-1 text-[14px]" style={{ color: 'var(--text-muted, #777)' }}>
             {asset.serial_number && <span>{t('vgpScheduleModal.serialNumber')}: {asset.serial_number}</span>}
@@ -815,7 +815,7 @@ function SummaryRow({ label, value, valueColor, extra, extraColor, icon }: {
   icon?: React.ReactNode;
 }) {
   return (
-    <div className="flex justify-between items-start py-2 px-3 rounded-lg" style={{ backgroundColor: 'var(--page-bg, #e3e5e9)' }}>
+    <div className="flex justify-between items-start py-2 px-3 rounded-lg" style={{ backgroundColor: 'var(--page-bg, #f6f8fd)' }}>
       <span className="text-[13px] font-medium" style={{ color: 'var(--text-muted, #777)' }}>{label}</span>
       <div className="text-right">
         <span className="text-[14px] font-semibold" style={{ color: valueColor || 'var(--text-primary, #1a1a1a)' }}>

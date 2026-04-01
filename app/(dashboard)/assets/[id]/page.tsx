@@ -510,7 +510,7 @@ export default function AssetDetailPage() {
                   <div
                     key={insp.id}
                     className="rounded-lg p-3"
-                    style={{ backgroundColor: 'var(--page-bg, #e3e5e9)' }}
+                    style={{ backgroundColor: 'var(--page-bg, #f6f8fd)' }}
                   >
                     <div className="flex items-center justify-between min-h-[44px]">
                       <span className="text-[14px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
@@ -614,7 +614,7 @@ export default function AssetDetailPage() {
                       key={rental.id}
                       className="rounded-lg p-3"
                       style={{
-                        backgroundColor: isActive ? 'rgba(5, 150, 105, 0.06)' : 'var(--page-bg, #e3e5e9)',
+                        backgroundColor: isActive ? 'rgba(5, 150, 105, 0.06)' : 'var(--page-bg, #f6f8fd)',
                       }}
                     >
                       <div className="flex items-center justify-between min-h-[44px]">

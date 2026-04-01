@@ -352,7 +352,7 @@ function VGPInspectionsContent() {
                 <div
                   key={inspection.id}
                   className="rounded-lg p-3"
-                  style={{ backgroundColor: 'var(--page-bg, #e3e5e9)' }}
+                  style={{ backgroundColor: 'var(--page-bg, #f6f8fd)' }}
                 >
                   <div className="flex items-center justify-between min-h-[44px]">
                     <span className="text-[14px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>

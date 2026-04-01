@@ -36,7 +36,7 @@ html[data-theme="light"],
   --color-danger-rgb: 185, 28, 28;
 
   /* Design spec surface palette */
-  --page-bg: #e3e5e9;
+  --page-bg: #f6f8fd;
   --card-bg: #edeef1;
   --sidebar-bg: #0a2730;
   --accent: #e8600a;

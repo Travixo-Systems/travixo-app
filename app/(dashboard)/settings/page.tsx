@@ -93,7 +93,7 @@ export default function SettingsPage() {
                 style={{ borderColor: '#dcdee3' }}
               >
                 <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--page-bg, #e3e5e9)' }}>
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--page-bg, #f6f8fd)' }}>
                     <Icon className="w-5 h-5" style={{ color: 'var(--accent, #e8600a)' }} />
                   </div>
                   <div>

@@ -328,50 +328,54 @@ export default function AssetsTableClient({ assets, onRefresh }: { assets: Asset
                                                 {language === 'fr' ? 'Restaurer' : 'Restore'}
                                             </button>
                                         ) : (
-                                            <div className="flex justify-end items-center gap-1">
+                                            <div className="flex justify-end items-center gap-1 relative z-10">
                                                 <button
-                                                    onClick={() => setVgpAsset(asset)}
-                                                    className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
-                                                    style={{ color: 'var(--text-muted, #777)', backgroundColor: 'transparent' }}
+                                                    type="button"
+                                                    onClick={(e) => { e.stopPropagation(); setVgpAsset(asset) }}
+                                                    className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 rounded-lg transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
+                                                    style={{ color: 'var(--text-muted, #777)' }}
                                                     onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-secondary, #444)' }}
                                                     onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted, #777)' }}
                                                     title={t('assets.tooltipAddVgp')}
                                                     aria-label={t('assets.tooltipAddVgp')}
                                                 >
-                                                    <Shield className="h-5 w-5" aria-hidden="true" />
+                                                    <Shield className="h-5 w-5 pointer-events-none" aria-hidden="true" />
                                                 </button>
                                                 <button
-                                                    onClick={() => setQrAsset(asset)}
-                                                    className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
-                                                    style={{ color: 'var(--text-muted, #777)', backgroundColor: 'transparent' }}
+                                                    type="button"
+                                                    onClick={(e) => { e.stopPropagation(); setQrAsset(asset) }}
+                                                    className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 rounded-lg transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
+                                                    style={{ color: 'var(--text-muted, #777)' }}
                                                     onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-secondary, #444)' }}
                                                     onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted, #777)' }}
                                                     title={t('assets.tooltipViewQr')}
                                                     aria-label={t('assets.tooltipViewQr')}
                                                 >
-                                                    <QrCodeIcon className="h-5 w-5" aria-hidden="true" />
+                                                    <QrCodeIcon className="h-5 w-5 pointer-events-none" aria-hidden="true" />
                                                 </button>
                                                 <button
-                                                    onClick={() => setEditAsset(asset)}
-                                                    className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
-                                                    style={{ color: 'var(--text-muted, #777)', backgroundColor: 'transparent' }}
+                                                    type="button"
+                                                    onClick={(e) => { e.stopPropagation(); setEditAsset(asset) }}
+                                                    className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 rounded-lg transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
+                                                    style={{ color: 'var(--text-muted, #777)' }}
                                                     onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-secondary, #444)' }}
                                                     onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted, #777)' }}
                                                     title={t('assets.tooltipEdit')}
                                                     aria-label={t('assets.tooltipEdit')}
                                                 >
-                                                    <PencilIcon className="h-5 w-5" aria-hidden="true" />
+                                                    <PencilIcon className="h-5 w-5 pointer-events-none" aria-hidden="true" />
                                                 </button>
                                                 <button
-                                                    onClick={() => setRetireAsset(asset)}
-                                                    className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
-                                                    style={{ color: 'var(--text-muted, #777)', backgroundColor: 'transparent' }}
+                                                    type="button"
+                                                    onClick={(e) => { e.stopPropagation(); setRetireAsset(asset) }}
+                                                    className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 rounded-lg transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
+                                                    style={{ color: 'var(--text-muted, #777)' }}
                                                     onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-secondary, #444)' }}
                                                     onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted, #777)' }}
                                                     title={language === 'fr' ? 'Retirer' : 'Retire'}
                                                     aria-label={language === 'fr' ? 'Retirer' : 'Retire'}
                                                 >
-                                                    <ArchiveBoxXMarkIcon className="h-5 w-5" aria-hidden="true" />
+                                                    <ArchiveBoxXMarkIcon className="h-5 w-5 pointer-events-none" aria-hidden="true" />
                                                 </button>
                                             </div>
                                         )}
