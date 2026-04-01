@@ -1,47 +1,30 @@
 // components/vgp/VGPStatusBadge.tsx
 // Audit fix: ui-ux-audit.md §3.1, §3.2, §3.3 — VGP status not visible at a glance
+'use client';
+
+import { useLanguage } from '@/lib/LanguageContext';
 
 export type VGPStatus = 'overdue' | 'upcoming' | 'compliant' | 'unknown';
 
 interface StatusConfig {
-  bg: string;
-  text: string;
-  border: string;
-  dot: string;
   labelFr: string;
   labelEn: string;
 }
 
 const STATUS_CONFIG: Record<VGPStatus, StatusConfig> = {
   overdue: {
-    bg: '',
-    text: '',
-    border: '',
-    dot: '',
     labelFr: 'En retard',
     labelEn: 'Overdue',
   },
   upcoming: {
-    bg: '',
-    text: '',
-    border: '',
-    dot: '',
     labelFr: 'À venir',
     labelEn: 'Upcoming',
   },
   compliant: {
-    bg: '',
-    text: '',
-    border: '',
-    dot: '',
     labelFr: 'Conforme',
     labelEn: 'Compliant',
   },
   unknown: {
-    bg: '',
-    text: '',
-    border: '',
-    dot: '',
     labelFr: 'Non planifié',
     labelEn: 'Not scheduled',
   },
@@ -58,6 +41,7 @@ interface VGPStatusBadgeProps {
   status: VGPStatus;
   /** "sm" for table rows (default), "lg" for detail page hero badge */
   size?: 'sm' | 'lg';
+  /** Override language (defaults to context) */
   language?: 'fr' | 'en';
 }
 
@@ -66,7 +50,9 @@ interface VGPStatusBadgeProps {
  * Red = overdue, Amber = upcoming ≤30d, Green = compliant, Gray = not scheduled.
  * Chef de parc can scan a list and spot red instantly.
  */
-export function VGPStatusBadge({ status, size = 'sm', language = 'fr' }: VGPStatusBadgeProps) {
+export function VGPStatusBadge({ status, size = 'sm', language: languageProp }: VGPStatusBadgeProps) {
+  const { language: contextLanguage } = useLanguage();
+  const language = languageProp || contextLanguage;
   const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.unknown;
   const colors = STATUS_COLORS[status] ?? STATUS_COLORS.unknown;
   const label = language === 'fr' ? cfg.labelFr : cfg.labelEn;
@@ -77,7 +63,7 @@ export function VGPStatusBadge({ status, size = 'sm', language = 'fr' }: VGPStat
         className="inline-flex items-center gap-2 text-base font-bold tracking-wide"
         style={{ color: colors.text }}
         role="status"
-        aria-label={`Statut VGP : ${label}`}
+        aria-label={`VGP status: ${label}`}
       >
         <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: colors.dot }} aria-hidden="true" />
         {label}
@@ -90,7 +76,7 @@ export function VGPStatusBadge({ status, size = 'sm', language = 'fr' }: VGPStat
       className="inline-flex items-center gap-1.5 text-[14px] font-semibold"
       style={{ color: colors.text }}
       role="status"
-      aria-label={`Statut VGP : ${label}`}
+      aria-label={`VGP status: ${label}`}
     >
       <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: colors.dot }} aria-hidden="true" />
       {label}
@@ -103,7 +89,6 @@ export function VGPStatusBadge({ status, size = 'sm', language = 'fr' }: VGPStat
  * Red ≤7d, Amber ≤14d, Gray otherwise.
  */
 export function VGPCountdownPill({ daysUntil }: { daysUntil: number }) {
-  // Spec: 0 days = white on retard, 1-14 = #92400e on #fef3c7, 15-30 = muted on #e3e5e9
   const colorStyle =
     daysUntil <= 0
       ? { backgroundColor: 'var(--status-retard, #dc2626)', color: '#ffffff' }
@@ -115,7 +100,7 @@ export function VGPCountdownPill({ daysUntil }: { daysUntil: number }) {
     <span
       className="inline-flex items-center justify-center min-w-[52px] px-3 py-1.5 rounded-lg text-[15px] tabular-nums font-medium"
       style={colorStyle}
-      aria-label={`Dans ${daysUntil} jours`}
+      aria-label={`${daysUntil} days`}
     >
       {daysUntil}j
     </span>

@@ -348,6 +348,7 @@ export type Database = {
           status: string
           notes: string | null
           created_by: string | null
+          rapport_url: string | null
           inspector_name: string | null
           inspector_company: string | null
           archived_at: string | null
@@ -364,6 +365,7 @@ export type Database = {
           status?: string
           notes?: string | null
           created_by?: string | null
+          rapport_url?: string | null
           inspector_name?: string | null
           inspector_company?: string | null
           archived_at?: string | null
@@ -375,6 +377,7 @@ export type Database = {
           status?: string
           notes?: string | null
           created_by?: string | null
+          rapport_url?: string | null
           inspector_name?: string | null
           inspector_company?: string | null
           archived_at?: string | null

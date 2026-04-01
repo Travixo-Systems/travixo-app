@@ -145,6 +145,7 @@ export async function POST(request: Request) {
       (body?.last_inspection_date as string | undefined) || undefined;
     const notes = (body?.notes as string | undefined) || null;
     const created_by = (body?.created_by as string | undefined) || null;
+    const rapport_url = (body?.rapport_url as string | undefined) || null;
 
     if (!asset_id || !months || months < 1)
       return json(
@@ -184,6 +185,7 @@ export async function POST(request: Request) {
         status: "active",
         notes,
         created_by,
+        rapport_url,
       })
       .select(
         `

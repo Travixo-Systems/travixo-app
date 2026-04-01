@@ -112,7 +112,7 @@ export default function AssetsTableClient({ assets, onRefresh }: { assets: Asset
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <VGPStatusBadge status={asset.vgp_status ?? 'unknown'} />
+                                    <VGPStatusBadge status={asset.vgp_status ?? 'unknown'} language={language} />
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-[14px]" style={{ color: 'var(--text-secondary, #444444)' }}>
                                     {asset.current_location || '-'}
