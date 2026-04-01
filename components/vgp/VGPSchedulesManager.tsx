@@ -333,19 +333,19 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
   };
 
   return (
-    <div className="p-3 md:p-6 lg:p-8 space-y-4 lg:space-y-6">
+    <div className="p-3 md:p-6 min-[1026px]:p-8 space-y-4 min-[1026px]:space-y-6">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       {/* Header */}
       <div>
-        <h1 className="text-[18px] lg:text-[22px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpSchedules.pageTitle')}</h1>
+        <h1 className="text-[18px] min-[1026px]:text-[22px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpSchedules.pageTitle')}</h1>
         <p className="mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('vgpSchedules.pageSubtitle')}</p>
       </div>
 
       {isReadOnly && <VGPReadOnlyBanner />}
 
       {/* 4 Cards - White with colored borders */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 min-[1026px]:grid-cols-4 gap-4">
         <StatCard
           icon={<AlertCircle className="w-5 h-5" />}
           title={t('vgpSchedules.overdue')}
@@ -449,7 +449,7 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
         ) : (
           <>
           {/* Desktop table */}
-          <div className="hidden lg:block overflow-x-auto">
+          <div className="hidden min-[1026px]:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr>
@@ -542,7 +542,7 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
           </div>
 
           {/* Mobile/Tablet card layout */}
-          <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="min-[1026px]:hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
             {filteredSchedules.map((schedule) => {
               const days = daysUntilDue(schedule.next_due_date);
               const status = deriveStatus(schedule.next_due_date);

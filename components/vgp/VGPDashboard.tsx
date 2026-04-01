@@ -80,7 +80,7 @@ function VGPContent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[18px] lg:text-[22px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpDashboard.pageTitle')}</h1>
+          <h1 className="text-[18px] min-[1026px]:text-[22px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpDashboard.pageTitle')}</h1>
           <p className="mt-1" style={{ color: 'var(--text-muted, #777)' }}>
             {t('vgpDashboard.pageSubtitle')}
           </p>
@@ -98,7 +98,7 @@ function VGPContent() {
       </div>
 
       {/* 4 Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
+      <div className="grid grid-cols-2 min-[1026px]:grid-cols-4 gap-3 min-[1026px]:gap-6">
         {/* Compliance Rate - Green */}
         <div
           onClick={() => (window.location.href = '/vgp/schedules')}

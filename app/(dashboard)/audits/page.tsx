@@ -421,11 +421,11 @@ export default function AuditsPage() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-6 p-3 md:p-6">
+    <div className="space-y-4 min-[1026px]:space-y-6 p-3 md:p-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-[18px] lg:text-[22px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('audits.pageTitle')}</h1>
+          <h1 className="text-[18px] min-[1026px]:text-[22px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('audits.pageTitle')}</h1>
           <p className="mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('audits.pageSubtitle')}</p>
         </div>
         <button
@@ -439,7 +439,7 @@ export default function AuditsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 min-[1026px]:grid-cols-4">
         {/* Total */}
         <button
           onClick={() => setStatusFilter('all')}
@@ -549,7 +549,7 @@ export default function AuditsPage() {
       ) : (
         <>
           {/* Desktop table */}
-          <div className="hidden lg:block rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
+          <div className="hidden min-[1026px]:block rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
             <table className="w-full">
               <thead style={{ backgroundColor: 'var(--input-bg, #e3e5e9)' }}>
                 <tr>
@@ -663,7 +663,7 @@ export default function AuditsPage() {
           </div>
 
           {/* Mobile/Tablet card grid */}
-          <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="min-[1026px]:hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
             {filteredAudits.map((audit) => {
               const config = STATUS_CONFIG[audit.status];
               const StatusIcon = config.icon;

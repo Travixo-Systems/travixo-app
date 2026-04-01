@@ -222,13 +222,15 @@ export default function AssetsPageClient() {
         <div className="p-3 md:p-6">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
                 <div>
-                    <h1 className="text-[18px] lg:text-[22px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('assets.pageTitle')}</h1>
+                    <h1 className="text-[18px] min-[1026px]:text-[22px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('assets.pageTitle')}</h1>
                     <p className="mt-1 text-[14px]" style={{ color: 'var(--text-muted, #777777)' }}>
                         {t('assets.pageSubtitle')}
                     </p>
                 </div>
                 <div className="flex gap-2 sm:gap-3 flex-wrap">
-                    <ImportAssetsButton onSuccess={loadAssets} />
+                    <div className="hidden min-[1026px]:block">
+                        <ImportAssetsButton onSuccess={loadAssets} />
+                    </div>
                     <AddAssetButton onSuccess={loadAssets} />
                     <Link
                         href="/qr-codes"
@@ -254,9 +256,9 @@ export default function AssetsPageClient() {
             ) : (
                 <>
                     {/* Search and Filter Bar */}
-                    <div className="rounded-lg mb-4 p-3 lg:p-4" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
+                    <div className="rounded-lg mb-4 p-3 min-[1026px]:p-4" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
                         {/* Search — always full width */}
-                        <div className="relative mb-3 lg:mb-0">
+                        <div className="relative mb-3 min-[1026px]:mb-0">
                             <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5" style={{ color: 'var(--text-hint, #888888)' }} />
                             <input
                                 type="text"
@@ -269,7 +271,7 @@ export default function AssetsPageClient() {
                         </div>
 
                         {/* Filters — stack on mobile, row on desktop */}
-                        <div className="flex flex-col sm:flex-row gap-2 lg:mt-3">
+                        <div className="flex flex-col sm:flex-row gap-2 min-[1026px]:mt-3">
                             <div className="flex items-center gap-2 flex-1">
                                 <FunnelIcon className="h-5 w-5 flex-shrink-0 hidden sm:block" style={{ color: 'var(--text-hint, #888888)' }} />
                                 <select

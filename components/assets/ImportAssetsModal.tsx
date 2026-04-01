@@ -302,7 +302,7 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
                   <>
                     <div className="mb-6">
                       <div className="grid grid-cols-3 gap-4 mb-4">
-                        <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--page-bg, #cbcdd4)', borderLeft: '3px solid var(--status-conforme, #059669)' }}>
+                        <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--page-bg, #e3e5e9)', borderLeft: '3px solid var(--status-conforme, #059669)' }}>
                           <div className="flex items-center gap-2">
                             <CheckCircleIcon className="h-6 w-6" style={{ color: 'var(--status-conforme, #059669)' }} />
                             <div>
@@ -313,7 +313,7 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
                         </div>
 
                         {preview.invalid.length > 0 && (
-                          <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--page-bg, #cbcdd4)', borderLeft: '3px solid var(--status-retard, #dc2626)' }}>
+                          <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--page-bg, #e3e5e9)', borderLeft: '3px solid var(--status-retard, #dc2626)' }}>
                             <div className="flex items-center gap-2">
                               <ExclamationCircleIcon className="h-6 w-6" style={{ color: 'var(--status-retard, #dc2626)' }} />
                               <div>
@@ -324,7 +324,7 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
                           </div>
                         )}
 
-                        <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--page-bg, #cbcdd4)', borderLeft: '3px solid var(--status-neutral, #6b7280)' }}>
+                        <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--page-bg, #e3e5e9)', borderLeft: '3px solid var(--status-neutral, #6b7280)' }}>
                           <div>
                             <p className="text-2xl font-medium" style={{ color: 'var(--status-neutral, #6b7280)' }}>{preview.total}</p>
                             <p className="text-xs font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('assets.importTotalRows')}</p>
@@ -332,7 +332,7 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
                         </div>
                       </div>
 
-                      <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--page-bg, #cbcdd4)' }}>
+                      <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--page-bg, #e3e5e9)' }}>
                         <h4 className="font-medium text-[13px] mb-2" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('assets.importDetectedColumns')}</h4>
                         <div className="flex flex-wrap gap-2">
                           {Object.entries(preview.detectedColumns).map(([key, value]) => (
@@ -344,9 +344,9 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
                       </div>
                     </div>
 
-                    <div className="max-h-96 overflow-y-auto rounded-lg" style={{ backgroundColor: 'var(--page-bg, #cbcdd4)' }}>
+                    <div className="max-h-96 overflow-y-auto rounded-lg" style={{ backgroundColor: 'var(--page-bg, #e3e5e9)' }}>
                       <table className="min-w-full">
-                        <thead className="sticky top-0" style={{ backgroundColor: 'var(--page-bg, #cbcdd4)' }}>
+                        <thead className="sticky top-0" style={{ backgroundColor: 'var(--page-bg, #e3e5e9)' }}>
                           <tr>
                             <th className="px-4 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888)' }}>{t('assets.tableHeaderName')}</th>
                             <th className="px-4 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888)' }}>{t('assets.tableHeaderSerial')}</th>

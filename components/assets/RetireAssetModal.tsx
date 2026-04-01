@@ -128,7 +128,7 @@ export default function RetireAssetModal({ isOpen, onClose, asset }: RetireAsset
                 {/* Equipment identity block */}
                 <div
                   className="rounded-lg px-4 py-3 mb-4"
-                  style={{ backgroundColor: 'var(--page-bg, #cbcdd4)' }}
+                  style={{ backgroundColor: 'var(--page-bg, #e3e5e9)' }}
                 >
                   <p className="text-[14px] font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                     {asset.name}

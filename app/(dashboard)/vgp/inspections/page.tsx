@@ -235,7 +235,7 @@ function VGPInspectionsContent() {
       {/* Table */}
       <div className="bg-[var(--card-bg,#edeff2)] rounded-lg border border-gray-200 overflow-hidden">
         {/* Desktop table */}
-        <div className="hidden lg:block overflow-x-auto">
+        <div className="hidden min-[1026px]:block overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -341,7 +341,7 @@ function VGPInspectionsContent() {
         </div>
 
         {/* Mobile card grid */}
-        <div className="lg:hidden p-3">
+        <div className="min-[1026px]:hidden p-3">
           {paginatedInspections.length === 0 ? (
             <p className="px-4 py-12 text-center text-[var(--text-hint,#888)]">
               {t('vgpInspections.noResults')}
@@ -352,7 +352,7 @@ function VGPInspectionsContent() {
                 <div
                   key={inspection.id}
                   className="rounded-lg p-3"
-                  style={{ backgroundColor: 'var(--page-bg, #cbcdd4)' }}
+                  style={{ backgroundColor: 'var(--page-bg, #e3e5e9)' }}
                 >
                   <div className="flex items-center justify-between min-h-[44px]">
                     <span className="text-[14px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>

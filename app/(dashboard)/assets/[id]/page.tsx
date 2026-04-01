@@ -281,7 +281,7 @@ export default function AssetDetailPage() {
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
         <div className="flex-1 min-w-0">
           <h1
-            className="text-[18px] lg:text-[22px] font-semibold truncate"
+            className="text-[18px] min-[1026px]:text-[22px] font-semibold truncate"
             style={{ color: 'var(--text-primary, #1a1a1a)' }}
           >
             {asset.name}
@@ -454,7 +454,7 @@ export default function AssetDetailPage() {
           ) : (
             <>
               {/* Desktop table */}
-              <div className="hidden lg:block overflow-x-auto">
+              <div className="hidden min-[1026px]:block overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr>
@@ -505,12 +505,12 @@ export default function AssetDetailPage() {
               </div>
 
               {/* Mobile card grid */}
-              <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="min-[1026px]:hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {inspections.map((insp) => (
                   <div
                     key={insp.id}
                     className="rounded-lg p-3"
-                    style={{ backgroundColor: 'var(--page-bg, #cbcdd4)' }}
+                    style={{ backgroundColor: 'var(--page-bg, #e3e5e9)' }}
                   >
                     <div className="flex items-center justify-between min-h-[44px]">
                       <span className="text-[14px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
@@ -567,7 +567,7 @@ export default function AssetDetailPage() {
           ) : (
             <>
               {/* Desktop table */}
-              <div className="hidden lg:block overflow-x-auto mt-4">
+              <div className="hidden min-[1026px]:block overflow-x-auto mt-4">
                 <table className="w-full">
                   <thead>
                     <tr>
@@ -606,7 +606,7 @@ export default function AssetDetailPage() {
               </div>
 
               {/* Mobile card grid */}
-              <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">
+              <div className="min-[1026px]:hidden grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">
                 {rentals.map((rental) => {
                   const isActive = rental.status === 'active'
                   return (
@@ -614,7 +614,7 @@ export default function AssetDetailPage() {
                       key={rental.id}
                       className="rounded-lg p-3"
                       style={{
-                        backgroundColor: isActive ? 'rgba(5, 150, 105, 0.06)' : 'var(--page-bg, #cbcdd4)',
+                        backgroundColor: isActive ? 'rgba(5, 150, 105, 0.06)' : 'var(--page-bg, #e3e5e9)',
                       }}
                     >
                       <div className="flex items-center justify-between min-h-[44px]">

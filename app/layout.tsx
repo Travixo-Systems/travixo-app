@@ -36,7 +36,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="light">
+      <head>
+        <meta name="color-scheme" content="light" />
+      </head>
       <body className={`${inter.variable} ${robotoMono.variable}`}>
         <Providers>
           {children}

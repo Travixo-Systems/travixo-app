@@ -674,8 +674,8 @@ export const translations = {
   // ============================================================================
   vgpReport: {
     pageTitle: {
-      en: "VGP DREETS Report",
-      fr: "Rapport VGP DREETS",
+      en: "Compliance Summary",
+      fr: "Bilan de Conformité",
     },
     pageSubtitle: {
       en: "Verify data before official report generation",
@@ -2547,8 +2547,8 @@ export const translations = {
       fr: "Suivi",
     },
     vgpReport: {
-      en: "Report",
-      fr: "Rapport",
+      en: "Summary",
+      fr: "Bilan",
     },
     vgpInspections: {
       en: "History",

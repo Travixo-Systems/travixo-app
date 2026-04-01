@@ -179,7 +179,7 @@ function VGPReportContent() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `rapport-vgp-dreets-${formData.start_date}-${formData.end_date}.pdf`;
+      a.download = `bilan-conformite-vgp-${formData.start_date}-${formData.end_date}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -422,33 +422,33 @@ function VGPReportContent() {
 
       {/* Summary Stats */}
       {summary && (
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
-          <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md p-6 border-l-[3px]" style={{ borderLeftColor: 'var(--status-neutral, #6b7280)' }}>
+        <div className="grid grid-cols-2 sm:grid-cols-3 min-[1026px]:grid-cols-6 gap-4 mb-6">
+          <div className="bg-[var(--card-bg,#edeff2)] rounded-lg p-6 border-l-[3px]" style={{ borderLeftColor: 'var(--status-neutral, #6b7280)' }}>
             <p className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">{t('vgpReport.total')}</p>
             <p className="text-3xl font-bold" style={{ color: 'var(--status-neutral, #6b7280)' }}>{summary.total_inspections}</p>
           </div>
 
-          <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md p-6 border-l-[3px]" style={{ borderLeftColor: 'var(--status-conforme, #059669)' }}>
+          <div className="bg-[var(--card-bg,#edeff2)] rounded-lg p-6 border-l-[3px]" style={{ borderLeftColor: 'var(--status-conforme, #059669)' }}>
             <p className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">{t('vgpReport.compliant')}</p>
             <p className="text-3xl font-bold" style={{ color: 'var(--status-conforme, #059669)' }}>{summary.passed}</p>
           </div>
 
-          <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md p-6 border-l-[3px]" style={{ borderLeftColor: 'var(--status-bientot, #d97706)' }}>
+          <div className="bg-[var(--card-bg,#edeff2)] rounded-lg p-6 border-l-[3px]" style={{ borderLeftColor: 'var(--status-bientot, #d97706)' }}>
             <p className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">{t('vgpReport.conditional')}</p>
             <p className="text-3xl font-bold" style={{ color: 'var(--status-bientot, #d97706)' }}>{summary.conditional}</p>
           </div>
 
-          <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md p-6 border-l-[3px]" style={{ borderLeftColor: 'var(--status-retard, #dc2626)' }}>
+          <div className="bg-[var(--card-bg,#edeff2)] rounded-lg p-6 border-l-[3px]" style={{ borderLeftColor: 'var(--status-retard, #dc2626)' }}>
             <p className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">{t('vgpReport.nonCompliant')}</p>
             <p className="text-3xl font-bold" style={{ color: 'var(--status-retard, #dc2626)' }}>{summary.failed}</p>
           </div>
 
-          <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md p-6 border-l-[3px]" style={{ borderLeftColor: 'var(--status-neutral, #6b7280)' }}>
+          <div className="bg-[var(--card-bg,#edeff2)] rounded-lg p-6 border-l-[3px]" style={{ borderLeftColor: 'var(--status-neutral, #6b7280)' }}>
             <p className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">{t('vgpReport.noCertificate')}</p>
             <p className="text-3xl font-bold" style={{ color: 'var(--status-neutral, #6b7280)' }}>{summary.without_certificate}</p>
           </div>
 
-          <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md p-6 border-l-[3px]" style={{ borderLeftColor: summary.compliance_rate >= 80 ? 'var(--status-conforme, #059669)' : 'var(--status-retard, #dc2626)' }}>
+          <div className="bg-[var(--card-bg,#edeff2)] rounded-lg p-6 border-l-[3px]" style={{ borderLeftColor: summary.compliance_rate >= 80 ? 'var(--status-conforme, #059669)' : 'var(--status-retard, #dc2626)' }}>
             <p className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">{t('vgpReport.compliance')}</p>
             <p className="text-3xl font-bold" style={{ color: summary.compliance_rate >= 80 ? 'var(--status-conforme, #059669)' : 'var(--status-retard, #dc2626)' }}>{summary.compliance_rate}%</p>
           </div>

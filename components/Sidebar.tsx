@@ -36,6 +36,7 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [user, setUser] = useState<{ firstName: string; lastName: string; email: string } | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [vgpFlyout, setVgpFlyout] = useState(false);
 
   const supabase = createClient();
 
@@ -54,6 +55,7 @@ export default function Sidebar() {
     } else {
       setVgpOpen(true);
     }
+    setVgpFlyout(false);
   }, [pathname]);
 
   // Fetch current user
@@ -243,13 +245,11 @@ export default function Sidebar() {
         })}
 
         {/* VGP Dropdown Section */}
-        <div>
+        <div className="relative">
           <button
             onClick={() => {
               if (collapsed) {
-                setCollapsed(false);
-                localStorage.setItem('sidebar-collapsed', JSON.stringify(false));
-                setVgpOpen(true);
+                setVgpFlyout(!vgpFlyout);
               } else {
                 setVgpOpen(!vgpOpen);
               }
@@ -277,13 +277,13 @@ export default function Sidebar() {
             )}
           </button>
 
-          {/* VGP Sub-menu */}
+          {/* VGP Sub-menu — expanded sidebar */}
           {vgpOpen && !collapsed && (
             <div className="mt-1 ml-4 space-y-1">
               {vgpNavigation.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href;
-                
+
                 return (
                   <Link
                     key={item.name}
@@ -302,6 +302,43 @@ export default function Sidebar() {
                 );
               })}
             </div>
+          )}
+
+          {/* VGP Flyout — collapsed sidebar */}
+          {vgpFlyout && collapsed && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setVgpFlyout(false)} />
+              <div
+                className="absolute left-full top-0 z-50 py-2"
+                style={{
+                  width: 180,
+                  backgroundColor: '#0a2730',
+                  borderRadius: '0 8px 8px 0',
+                }}
+              >
+                {vgpNavigation.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = pathname === item.href;
+
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      onClick={() => setVgpFlyout(false)}
+                      className="flex items-center px-4 text-[13px] text-white"
+                      style={{
+                        minHeight: 44,
+                        backgroundColor: isActive ? 'rgba(232,96,10,0.15)' : undefined,
+                        borderLeft: isActive ? '2px solid #e8600a' : '2px solid transparent',
+                      }}
+                    >
+                      <Icon className="w-4 h-4 mr-3 flex-shrink-0" />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
 

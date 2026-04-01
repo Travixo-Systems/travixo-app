@@ -427,11 +427,11 @@ export default function TeamPage() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-6 p-3 md:p-6">
+    <div className="space-y-4 min-[1026px]:space-y-6 p-3 md:p-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-[18px] lg:text-[22px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('team.pageTitle')}</h1>
+          <h1 className="text-[18px] min-[1026px]:text-[22px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('team.pageTitle')}</h1>
           <p className="mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('team.pageSubtitle')}</p>
         </div>
         {canManageTeam && (
@@ -447,7 +447,7 @@ export default function TeamPage() {
       </div>
 
       {/* Stats - Clickable Filter Cards */}
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 min-[1026px]:grid-cols-4">
         {/* Total Members */}
         <button
           onClick={() => setActiveFilter('all')}
@@ -606,7 +606,7 @@ export default function TeamPage() {
       ) : (
         <>
           {/* Desktop table */}
-          <div className="hidden lg:block rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
+          <div className="hidden min-[1026px]:block rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
             <table className="w-full">
               <thead>
                 <tr>
@@ -706,7 +706,7 @@ export default function TeamPage() {
           </div>
 
           {/* Mobile/Tablet card grid */}
-          <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="min-[1026px]:hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
             {filteredMembers.map((member) => {
               const roleConfig = ROLE_CONFIG[member.role];
               const RoleIcon = roleConfig.icon;
@@ -797,7 +797,7 @@ export default function TeamPage() {
           </div>
 
           {/* Desktop invitations table */}
-          <div className="hidden lg:block rounded-b-lg overflow-hidden" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
+          <div className="hidden min-[1026px]:block rounded-b-lg overflow-hidden" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
             <table className="w-full">
               <thead>
                 <tr>
@@ -885,7 +885,7 @@ export default function TeamPage() {
           </div>
 
           {/* Mobile/Tablet invitations card grid */}
-          <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="min-[1026px]:hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
             {invitations.map((invitation) => {
               const isExpired = new Date(invitation.expires_at) < new Date() && invitation.status === 'pending';
               return (

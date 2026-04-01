@@ -126,7 +126,7 @@ export default function AssetsTableClient({ assets, onRefresh }: { assets: Asset
     return (
         <>
             {/* ====== MOBILE/TABLET: Card Grid ====== */}
-            <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="min-[1026px]:hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {assets.map((asset) => {
                     const isArchived = !!asset.archived_at
                     const reasonLabel = asset.archive_reason
@@ -147,36 +147,45 @@ export default function AssetsTableClient({ assets, onRefresh }: { assets: Asset
                             onClick={() => setExpandedCard(isExpanded ? null : asset.id)}
                         >
                             {/* Line 1: Name + VGP badge */}
-                            <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-start justify-between gap-2">
                                 <Link
                                     href={`/assets/${asset.id}`}
-                                    className="text-[14px] font-semibold truncate min-w-0"
+                                    className="text-[13px] sm:text-[14px] font-semibold leading-snug min-w-0"
                                     style={{ color: 'var(--text-primary, #1a1a1a)' }}
                                     onClick={(e) => e.stopPropagation()}
                                 >
                                     {asset.name}
                                 </Link>
-                                <div className="flex-shrink-0">
-                                    <VGPStatusBadge status={asset.vgp_status ?? 'unknown'} language={language} />
+                                <div className="flex-shrink-0 mt-0.5">
+                                    <span className="text-[10px] sm:text-[11px]">
+                                        <VGPStatusBadge status={asset.vgp_status ?? 'unknown'} language={language} />
+                                    </span>
                                 </div>
                             </div>
 
                             {/* Line 2: Serial */}
-                            <p className="text-[12px] font-mono mt-0.5" style={{ color: 'var(--text-hint, #888)' }}>
+                            <p className="text-[11px] sm:text-[12px] font-mono mt-0.5" style={{ color: 'var(--text-hint, #888)' }}>
                                 {asset.serial_number || '—'}
                             </p>
 
-                            {/* Line 3: Category + Location | Status */}
+                            {/* Line 3: Category */}
+                            {asset.asset_categories?.name && (
+                                <p className="text-[11px] sm:text-[12px] mt-0.5" style={{ color: 'var(--text-muted, #777)' }}>
+                                    {asset.asset_categories.name}
+                                </p>
+                            )}
+
+                            {/* Line 4: Location | Status — below divider */}
                             <div className="flex items-center justify-between mt-2 pt-2" style={{ borderTop: '0.5px solid #dcdee3' }}>
-                                <span className="text-[12px] truncate" style={{ color: 'var(--text-secondary, #444)' }}>
-                                    {[asset.asset_categories?.name, asset.current_location].filter(Boolean).join(' · ') || '—'}
+                                <span className="text-[11px] sm:text-[12px]" style={{ color: 'var(--text-secondary, #444)' }}>
+                                    {asset.current_location || '—'}
                                 </span>
                                 {isArchived ? (
-                                    <span className="text-[12px] font-medium flex-shrink-0 ml-2" style={{ color: 'var(--text-hint, #888)' }}>
+                                    <span className="text-[11px] sm:text-[12px] font-medium flex-shrink-0 ml-2" style={{ color: 'var(--text-hint, #888)' }}>
                                         {language === 'fr' ? 'Retiré' : 'Retired'}{reasonLabel ? ` · ${reasonLabel}` : ''}
                                     </span>
                                 ) : (
-                                    <span className="text-[12px] font-medium flex-shrink-0 ml-2" style={{ color: getStatusColorHex(asset.status) }}>
+                                    <span className="text-[11px] sm:text-[12px] font-medium flex-shrink-0 ml-2" style={{ color: getStatusColorHex(asset.status) }}>
                                         {getStatusLabel(asset.status)}
                                     </span>
                                 )}
@@ -234,7 +243,7 @@ export default function AssetsTableClient({ assets, onRefresh }: { assets: Asset
             </div>
 
             {/* ====== DESKTOP: Table Layout ====== */}
-            <div className="hidden lg:block rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--card-bg, #edeff2)', padding: '16px 20px' }}>
+            <div className="hidden min-[1026px]:block rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--card-bg, #edeff2)', padding: '16px 20px' }}>
                 <table className="min-w-full">
                     <thead>
                         <tr>

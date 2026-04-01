@@ -33,7 +33,7 @@ This is a visual reskin, not a rewrite. Follow these constraints strictly:
 
 | Token | Hex | Usage |
 |-------|-----|-------|
-| `--page-bg` | `#cbcdd4` | Main content area background |
+| `--page-bg` | `#e3e5e9` | Main content area background |
 | `--card-bg` | `#edeff2` | Cards, tables, modals, panels |
 | `--sidebar-bg` | `#0a2730` | Sidebar / navigation background |
 | `--accent` | `#e8600a` | Brand accent: CTAs, links, active states, sidebar divider |
@@ -144,7 +144,7 @@ The dashboard layout wraps every page. Fixing this fixes 80% of the visual overh
 ```
 ┌──────────┬───┬──────────────────────────────────┐
 │ Sidebar  │ ▊ │  Content area                     │
-│ #0a2730  │ ▊ │  #cbcdd4                          │
+│ #0a2730  │ ▊ │  #e3e5e9                          │
 │          │ ▊ │                                    │
 │          │ ▊ │  ┌─────────────────────────────┐   │
 │          │ ▊ │  │ Card / Panel  #edeff2        │   │
@@ -156,7 +156,7 @@ The dashboard layout wraps every page. Fixing this fixes 80% of the visual overh
 ```
 
 Changes needed:
-- Content `<main>` background: `#cbcdd4` (was white)
+- Content `<main>` background: `#e3e5e9` (was white)
 - Add `<div className="w-[3px] bg-[#e8600a] flex-shrink-0" />` between sidebar and main
 - Sidebar company name color: `#e8600a`
 - Sidebar active item: `border-l-2 border-[#e8600a] bg-[rgba(226,128,38,0.15)]`
@@ -165,7 +165,7 @@ Changes needed:
 ### Mobile layout
 - Sidebar collapses to hamburger menu
 - Orange divider becomes `<div className="h-[3px] bg-[#e8600a] w-full" />` at top of content
-- Same content background `#cbcdd4` applies
+- Same content background `#e3e5e9` applies
 
 ---
 
@@ -275,7 +275,7 @@ All modals follow the same pattern. This includes: "Ajouter Surveillance VGP", "
 - Close button (X): `--text-muted`, hover `--text-primary`
 
 ### Equipment identity block (in VGP/inspection modals)
-- Background: `--page-bg` (`#cbcdd4`) — slightly darker than modal bg to create depth
+- Background: `--page-bg` (`#e3e5e9`) — slightly darker than modal bg to create depth
 - Border-radius: 8px
 - Padding: 12px 16px
 - Equipment name: 14px, font-weight 500, `--text-primary`
@@ -399,7 +399,7 @@ These presets must NOT affect:
 - The sidebar background (#0a2730)
 - The status colors (conforme/bientot/retard)
 
-The page background (#cbcdd4) and card background (#edeff2) should be the default "light" theme. The dark theme (existing) can use the darker palette from the personas doc (#060f10 page, #0a2730 cards) as the "dark" option.
+The page background (#e3e5e9) and card background (#edeff2) should be the default "light" theme. The dark theme (existing) can use the darker palette from the personas doc (#060f10 page, #0a2730 cards) as the "dark" option.
 
 ---
 
@@ -416,7 +416,7 @@ For category badges, search for colored badge components in the equipment list /
 
 For the accent divider, add to the main dashboard layout component a 3px div between sidebar and content with `background: #e8600a`.
 
-For all modals, replace white backgrounds with `--card-bg` (#edeff2) and equipment identity blocks with `--page-bg` (#cbcdd4).
+For all modals, replace white backgrounds with `--card-bg` (#edeff2) and equipment identity blocks with `--page-bg` (#e3e5e9).
 
 ---
 
@@ -440,7 +440,7 @@ Tasks:
 - Create CSS custom properties for the full color system in the global
   stylesheet (or tailwind config if used).
 - Update the dashboard layout component:
-  - Content area background to --page-bg (#cbcdd4)
+  - Content area background to --page-bg (#e3e5e9)
   - Add a 3px #e8600a vertical divider between sidebar and content
   - Sidebar company name color to #e8600a
   - Sidebar active nav item: border-left #e8600a + rgba(226,128,38,0.15) bg
@@ -484,7 +484,7 @@ data submission, or component structure.
 
 Tasks — apply to EVERY modal in the app:
 - Modal container background: --card-bg (#edeff2), NOT white.
-- Equipment identity block: --page-bg (#cbcdd4) background.
+- Equipment identity block: --page-bg (#e3e5e9) background.
 - Form inputs: --input-bg (#e3e5e9) background.
 - Success/info callouts: subtle tinted background with 3px left border
   (see spec section 7 for exact colors).
@@ -563,7 +563,7 @@ anything during this phase. Fix only what the checklist catches.
 
 Before shipping any TraviXO UI change:
 
-- [ ] Page background is #cbcdd4 (not white) on ALL pages
+- [ ] Page background is #e3e5e9 (not white) on ALL pages
 - [ ] Card/panel surfaces are #edeff2 (not white) on ALL pages
 - [ ] Modal backgrounds are #edeff2 (not white)
 - [ ] Orange divider line present between sidebar and content
