@@ -32,7 +32,12 @@ export default function Sidebar() {
   const { language, setLanguage } = useLanguage();
   const t = createTranslator(language);
   const { colors, logo, orgName } = useTheme();
-  const [vgpOpen, setVgpOpen] = useState(pathname.startsWith('/vgp'));
+
+  // Strip locale prefix for route matching
+  const normalizedPath = pathname.replace(/^\/(fr|en)(?=\/|$)/, '') || '/';
+  const isVgpRoute = normalizedPath.startsWith('/vgp');
+
+  const [vgpOpen, setVgpOpen] = useState(isVgpRoute);
   const [collapsed, setCollapsed] = useState(false);
   const [user, setUser] = useState<{ firstName: string; lastName: string; email: string } | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -50,13 +55,13 @@ export default function Sidebar() {
 
   // Auto-collapse VGP dropdown when navigating away from /vgp pages
   useEffect(() => {
-    if (!pathname.startsWith('/vgp')) {
+    if (!isVgpRoute) {
       setVgpOpen(false);
     } else {
       setVgpOpen(true);
     }
     setVgpFlyout(false);
-  }, [pathname]);
+  }, [isVgpRoute]);
 
   // Fetch current user
   useEffect(() => {
@@ -68,7 +73,7 @@ export default function Sidebar() {
           .select('first_name, last_name, email')
           .eq('id', authUser.id)
           .single();
-        
+
         if (data) {
           setUser({
             firstName: data.first_name || '',
@@ -120,6 +125,9 @@ export default function Sidebar() {
     return user?.email?.split('@')[0] || '';
   };
 
+  // Check if a nav href matches the current path (locale-aware)
+  const isActivePath = (href: string) => normalizedPath === href;
+
   // Main navigation with translations
   const navigation = [
     { name: t('navigation.dashboard'), href: '/dashboard', icon: HomeIcon },
@@ -142,10 +150,10 @@ export default function Sidebar() {
   return (
     <div
       className={cn(
-        "flex flex-col h-screen border-r border-gray-800 transition-all duration-300 overflow-hidden",
+        "flex flex-col h-screen border-r border-gray-800 transition-all duration-300",
         collapsed ? "w-16" : "w-64"
       )}
-      style={{ backgroundColor: '#0a2730' }}
+      style={{ backgroundColor: '#0a2730', overflow: 'visible' }}
     >
       {/* Logo & Toggle */}
       <div
@@ -163,7 +171,6 @@ export default function Sidebar() {
                 className="w-8 h-8 object-contain rounded flex-shrink-0"
               />
             ) : (
-              // Fallback: org initials pill in brand orange
               <span
                 className="inline-flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0 text-white text-xs font-bold tracking-wide"
                 style={{ backgroundColor: '#f26f00' }}
@@ -192,7 +199,6 @@ export default function Sidebar() {
                 className="w-8 h-8 object-contain rounded"
               />
             ) : (
-              // Fallback: initials pill when collapsed too
               <span
                 className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-white text-xs font-bold"
                 style={{ backgroundColor: '#f26f00' }}
@@ -218,12 +224,12 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-2 py-4 space-y-1 overflow-hidden">
+      <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto overflow-x-visible">
         {/* Dashboard and Assets */}
         {navigation.slice(0, 2).map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href;
-          
+          const isActive = isActivePath(item.href);
+
           return (
             <Link
               key={item.name}
@@ -245,7 +251,7 @@ export default function Sidebar() {
         })}
 
         {/* VGP Dropdown Section */}
-        <div className="relative">
+        <div className="relative" style={{ overflow: 'visible' }}>
           <button
             onClick={() => {
               if (collapsed) {
@@ -256,12 +262,12 @@ export default function Sidebar() {
             }}
             className={cn(
               "w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg",
-              pathname.startsWith('/vgp')
+              isVgpRoute
                 ? 'text-white border-l-2 border-[#e8600a]'
                 : 'text-white/70 hover:text-white',
               collapsed && "justify-center"
             )}
-            style={pathname.startsWith('/vgp') ? { backgroundColor: 'rgba(226,128,38,0.15)' } : undefined}
+            style={isVgpRoute ? { backgroundColor: 'rgba(226,128,38,0.15)' } : undefined}
             title={collapsed ? t('navigation.vgp') : undefined}
           >
             <div className={cn("flex items-center", collapsed && "justify-center w-full")}>
@@ -282,7 +288,7 @@ export default function Sidebar() {
             <div className="mt-1 ml-4 space-y-1">
               {vgpNavigation.map((item) => {
                 const Icon = item.icon;
-                const isActive = pathname === item.href;
+                const isActive = isActivePath(item.href);
 
                 return (
                   <Link
@@ -318,7 +324,7 @@ export default function Sidebar() {
               >
                 {vgpNavigation.map((item) => {
                   const Icon = item.icon;
-                  const isActive = pathname === item.href;
+                  const isActive = isActivePath(item.href);
 
                   return (
                     <Link
@@ -345,8 +351,8 @@ export default function Sidebar() {
         {/* Audits, Team, Settings, Subscription */}
         {navigation.slice(2).map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href || (item.href === '/settings/subscription' && pathname === '/settings/subscription');
-          
+          const isActive = isActivePath(item.href);
+
           return (
             <Link
               key={item.name}
@@ -374,13 +380,12 @@ export default function Sidebar() {
         {user && (
           <div className={cn("p-3", collapsed && "p-2")}>
             {!collapsed ? (
-              // Expanded: Avatar + Name with inline logout
               <div className="flex items-center gap-2">
-                <Link 
+                <Link
                   href="/settings/profile"
                   className="flex items-center gap-2 flex-1 min-w-0 hover:opacity-80 transition-opacity"
                 >
-                  <div 
+                  <div
                     className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-semibold"
                     style={{ backgroundColor: colors.secondary }}
                   >
@@ -400,9 +405,8 @@ export default function Sidebar() {
                 </button>
               </div>
             ) : (
-              // Collapsed: Just avatar with logout tooltip
               <div className="flex items-center justify-center gap-1">
-                <div 
+                <div
                   className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold cursor-pointer hover:opacity-80 transition-opacity"
                   style={{ backgroundColor: colors.secondary }}
                   title={getDisplayName()}
@@ -425,7 +429,6 @@ export default function Sidebar() {
         {/* Language Toggle — visible expanded and collapsed */}
         <div className={cn("pb-2", collapsed ? "px-1" : "px-2")}>
           {collapsed ? (
-            // Compact: single button showing current language, tapping toggles
             <button
               onClick={() => setLanguage(language === 'fr' ? 'en' : 'fr')}
               className="inline-flex items-center justify-center w-full min-h-[44px] py-2.5 rounded-lg text-xs font-bold text-gray-300 hover:text-white hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
