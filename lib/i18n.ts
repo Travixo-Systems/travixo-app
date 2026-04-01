@@ -2306,204 +2306,23 @@ export const translations = {
   // DASHBOARD (MAIN LANDING PAGE)
   // ============================================================================
   dashboard: {
-    title: {
-      en: "Real-time fleet overview",
-      fr: "Aperçu en temps réel de votre parc d'équipements",
-    },
-    logout: {
-      en: "Logout",
-      fr: "Déconnexion",
-    },
-    // Critical VGP Alert
-    vgpOverdueAlert: {
-      en: "VGP Equipment Overdue",
-      fr: "Équipement VGP en Retard",
-    },
-    vgpOverdueAlertPlural: {
-      en: "VGP Equipment Overdue",
-      fr: "Équipements VGP en Retard",
-    },
-    vgpRiskSanctions: {
-      en: "Risk of DREETS sanctions",
-      fr: "Risque de sanctions DREETS",
-    },
-    handleNow: {
-      en: "Handle now",
-      fr: "Traiter maintenant",
-    },
-    // Key Metrics
-    equipmentLoss: {
-      en: "Equipment Loss",
-      fr: "Perte d'Équipements",
-    },
-    vsIndustry: {
-      en: "vs industry",
-      fr: "vs industrie",
-    },
-    savedThisYear: {
-      en: "saved this year",
-      fr: "économisés cette année",
-    },
-    vgpCompliance: {
-      en: "VGP Compliance",
-      fr: "Conformité VGP",
-    },
-    overdue: {
-      en: "overdue",
-      fr: "retard",
-    },
-    overduePlural: {
-      en: "overdue",
-      fr: "retards",
-    },
-    upcoming: {
-      en: "upcoming",
-      fr: "à venir",
-    },
-    utilizationRate: {
-      en: "Utilization Rate",
-      fr: "Taux d'Utilisation",
-    },
-    vsTarget: {
-      en: "vs target",
-      fr: "vs objectif",
-    },
-    inRental: {
-      en: "in rental",
-      fr: "en location",
-    },
-    // Stats Cards
-    totalEquipment: {
-      en: "Total Equipment",
-      fr: "Total Équipements",
-    },
-    value: {
-      en: "Value",
-      fr: "Valeur",
-    },
-    scans7Days: {
-      en: "Scans (7d)",
-      fr: "Scans (7j)",
-    },
-    tracingActivity: {
-      en: "Tracing activity",
-      fr: "Activité de traçage",
-    },
-    utilization: {
-      en: "Utilization",
-      fr: "Utilisation",
-    },
-    // Quick Actions
-    quickActions: {
-      en: "Quick Actions",
-      fr: "Actions Rapides",
-    },
-    quickActionsSubtitle: {
-      en: "Common tasks to manage your fleet",
-      fr: "Tâches courantes pour gérer votre parc",
-    },
-    addEquipment: {
-      en: "Add Equipment",
-      fr: "Ajouter Équipement",
-    },
-    generateQRCodes: {
-      en: "Generate QR Codes",
-      fr: "Générer QR Codes",
-    },
-    recordVGP: {
-      en: "Record VGP",
-      fr: "Enregistrer VGP",
-    },
-    launchAudit: {
-      en: "Launch Audit",
-      fr: "Lancer Audit",
-    },
-    // VGP Compliance Section
-    vgpComplianceRegulatory: {
-      en: "VGP Compliance (Regulatory)",
-      fr: "Conformité VGP (Réglementaire)",
-    },
-    vgpComplianceSubtitle: {
-      en: "Tracking mandatory inspections to avoid DREETS sanctions",
-      fr: "Suivi des inspections obligatoires pour éviter les sanctions DREETS",
-    },
-    vgpOverdueLabel: {
-      en: "Overdue",
-      fr: "En Retard",
-    },
-    vgpOverdueDesc: {
-      en: "Immediate sanction risk",
-      fr: "Risque de sanction immédiat",
-    },
-    vgpUpcomingLabel: {
-      en: "Upcoming (30d)",
-      fr: "À venir (30j)",
-    },
-    vgpUpcomingDesc: {
-      en: "Schedule before deadline",
-      fr: "Planifier avant échéance",
-    },
-    schedule: {
-      en: "Schedule",
-      fr: "Planifier",
-    },
-    compliant: {
-      en: "Compliant",
-      fr: "Conformes",
-    },
-    inspectionsUpToDate: {
-      en: "Inspections up to date",
-      fr: "Inspections à jour",
-    },
-    accessVGPModule: {
-      en: "Access VGP Module",
-      fr: "Accéder au Module VGP",
-    },
-    // ROI Impact
-    roiImpact: {
-      en: "TraviXO ROI Impact",
-      fr: "Impact ROI TraviXO",
-    },
-    lossesAvoided: {
-      en: "Losses Avoided (vs 2%)",
-      fr: "Pertes Évitées (vs 2%)",
-    },
-    thisYear: {
-      en: "This year",
-      fr: "Cette année",
-    },
-    auditGain: {
-      en: "Audit Gain (75% faster)",
-      fr: "Gain Audit (75% plus rapide)",
-    },
-    perQuarter: {
-      en: "Per quarter",
-      fr: "Par trimestre",
-    },
-    vgpSanctionsAvoided: {
-      en: "VGP Sanctions Avoided",
-      fr: "Sanctions VGP Évitées",
-    },
-    compliance100: {
-      en: "100% compliance",
-      fr: "Conformité 100%",
-    },
-    compliancePercent: {
-      en: "compliance",
-      fr: "conformité",
-    },
-    traviXOCost: {
-      en: "TraviXO Cost",
-      fr: "Coût TraviXO",
-    },
-    roi: {
-      en: "ROI",
-      fr: "ROI",
-    },
-    hours: {
-      en: "hours",
-      fr: "heures",
-    },
+    greeting: { en: "Hello", fr: "Bonjour" },
+    handleNow: { en: "Handle now", fr: "Traiter" },
+    overdueEquipment: { en: "overdue equipment", fr: "équipement en retard" },
+    overdueEquipmentPlural: { en: "overdue equipment", fr: "équipements en retard" },
+    fineExposure: { en: "Fine exposure", fr: "Risque d'amende" },
+    vgpOverdueLabel: { en: "Overdue", fr: "En retard" },
+    vgpUpcomingLabel: { en: "Upcoming 30d", fr: "À venir 30j" },
+    compliant: { en: "Compliant", fr: "Conformes" },
+    inspectionsThisWeek: { en: "Upcoming inspections", fr: "Inspections cette semaine" },
+    noUpcomingInspections: { en: "No inspections due soon", fr: "Aucune inspection à venir" },
+    viewSchedules: { en: "View schedule", fr: "Voir le suivi" },
+    expectedReturns: { en: "Expected returns", fr: "Retours prévus" },
+    noUpcomingReturns: { en: "No active rentals", fr: "Aucune location active" },
+    viewRentals: { en: "View rentals", fr: "Voir les locations" },
+    totalEquipment: { en: "Total equipment", fr: "Total équipements" },
+    utilization: { en: "Utilization", fr: "Utilisation" },
+    scans7Days: { en: "Scans (7d)", fr: "Scans (7j)" },
   },
 
   // ============================================================================

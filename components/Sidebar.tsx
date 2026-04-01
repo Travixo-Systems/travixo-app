@@ -187,11 +187,6 @@ export default function Sidebar() {
   // ── VGP section renderer ──
   const openFlyout = () => {
     const rect = vgpButtonRef.current?.getBoundingClientRect();
-    console.log('FLYOUT OPEN', {
-      refExists: !!vgpButtonRef.current,
-      rect: rect ? { top: rect.top, left: rect.left, right: rect.right, width: rect.width } : null,
-      vgpFlyout, collapsed, isMobile,
-    });
     if (rect) {
       setFlyoutPos({ top: rect.top, left: rect.right });
     }
@@ -250,7 +245,7 @@ export default function Sidebar() {
       )}
 
       {/* Collapsed flyout — rendered via portal to document.body */}
-      {vgpFlyout && !showLabel && typeof document !== 'undefined' && (console.log('PORTAL RENDER', { flyoutPos, vgpFlyout, showLabel }), true) && createPortal(
+      {vgpFlyout && !showLabel && typeof document !== 'undefined' && createPortal(
         <>
           <div className="fixed inset-0" style={{ zIndex: 9998 }} onClick={() => setVgpFlyout(false)} />
           <div
