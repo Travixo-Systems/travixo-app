@@ -288,28 +288,41 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
           </div>
 
           {/* Calculate Next Due Date */}
-          {nextDueDate && (
-            <div className="p-4 rounded-lg" style={{ backgroundColor: 'rgba(5,150,105,0.08)', borderLeft: '3px solid var(--status-conforme, #059669)', borderRadius: '8px' }}>
-              <div className="flex items-start gap-2">
-                <CheckCircle className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: 'var(--status-conforme, #059669)' }} />
-                <div>
-                  <p className="text-[14px] font-semibold" style={{ color: 'var(--text-muted, #777)' }}>
-                    {t('vgpScheduleModal.nextInspectionDue')}
-                  </p>
-                  <p className="text-lg font-bold" style={{ color: 'var(--status-conforme, #059669)' }}>
-                    {nextDueDate.toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', { 
-                      day: 'numeric', 
-                      month: 'long', 
-                      year: 'numeric' 
-                    })}
-                  </p>
-                  <p className="text-[13px] mt-1" style={{ color: 'var(--status-conforme, #059669)' }}>
-                    {Math.ceil((nextDueDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} {t('vgpScheduleModal.daysFromToday')}
-                  </p>
+          {nextDueDate && (() => {
+            const daysUntil = Math.ceil((nextDueDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+            const isOverdue = daysUntil < 0;
+            const color = isOverdue ? '#dc2626' : 'var(--status-conforme, #059669)';
+            const bgColor = isOverdue ? 'rgba(220,38,38,0.08)' : 'rgba(5,150,105,0.08)';
+            return (
+              <div className="p-4 rounded-lg" style={{ backgroundColor: bgColor, borderLeft: `3px solid ${color}`, borderRadius: '8px' }}>
+                <div className="flex items-start gap-2">
+                  {isOverdue ? (
+                    <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color }} />
+                  ) : (
+                    <CheckCircle className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color }} />
+                  )}
+                  <div>
+                    <p className="text-[14px] font-semibold" style={{ color: 'var(--text-muted, #777)' }}>
+                      {isOverdue ? t('vgpScheduleModal.nextInspectionOverdue') : t('vgpScheduleModal.nextInspectionDue')}
+                    </p>
+                    <p className="text-lg font-bold" style={{ color }}>
+                      {nextDueDate.toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                      })}
+                    </p>
+                    <p className="text-[13px] mt-1" style={{ color }}>
+                      {isOverdue
+                        ? `${Math.abs(daysUntil)} ${t('vgpScheduleModal.daysOverdue')}`
+                        : `${daysUntil} ${t('vgpScheduleModal.daysFromToday')}`
+                      }
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Created By */}
           <div>
@@ -364,7 +377,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
               disabled={submitting || !isFormValid}
               className="flex-1 px-4 py-2 text-white rounded-md text-[14px] font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed" style={{ backgroundColor: 'var(--accent, #e8600a)' }}
             >
-              {submitting ? t('vgpScheduleModal.submitting') : t('vgpScheduleModal.submit')}
+              {submitting ? t('vgpScheduleModal.submitting') : (existingSchedule ? t('vgpScheduleModal.submitUpdate') : t('vgpScheduleModal.submit'))}
             </button>
           </div>
 

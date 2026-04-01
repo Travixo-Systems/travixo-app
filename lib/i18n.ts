@@ -1109,6 +1109,10 @@ export const translations = {
       en: "Activate VGP Monitoring",
       fr: "Activer Surveillance VGP",
     },
+    submitUpdate: {
+      en: "Update VGP Monitoring",
+      fr: "Mettre à jour Surveillance VGP",
+    },
     submitting: {
       en: "Saving...",
       fr: "Enregistrement...",
