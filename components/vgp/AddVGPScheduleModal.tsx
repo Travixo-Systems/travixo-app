@@ -28,7 +28,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
   const [existingSchedule, setExistingSchedule] = useState<any>(null);
   const [formData, setFormData] = useState({
     interval_months: 12,
-    last_inspection_date: new Date().toISOString().split('T')[0],
+    last_inspection_date: '',
     created_by: '',
     notes: ''
   });
@@ -166,8 +166,10 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
   };
 
   const calculateNextDueDate = () => {
+    if (!formData.last_inspection_date) return null;
     try {
       const lastDate = new Date(formData.last_inspection_date);
+      if (isNaN(lastDate.getTime())) return null;
       const nextDate = new Date(lastDate);
       nextDate.setMonth(nextDate.getMonth() + formData.interval_months);
       return nextDate;
