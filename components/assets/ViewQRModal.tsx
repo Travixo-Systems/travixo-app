@@ -84,7 +84,7 @@ export default function ViewQRModal({ isOpen, onClose, asset }: ViewQRModalProps
                 </div>
 
                 <div className="text-center">
-                  <h3 className="text-sm font-medium mb-4" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                  <h3 className="text-[15px] font-semibold mb-4" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                     {asset.name}
                   </h3>
 
@@ -92,13 +92,13 @@ export default function ViewQRModal({ isOpen, onClose, asset }: ViewQRModalProps
                     <canvas ref={canvasRef} className="border-4 rounded-lg" style={{ borderColor: '#dcdee3' }} />
                   </div>
 
-                  <p className="text-[13px] mb-4" style={{ color: 'var(--text-muted, #777)' }}>
+                  <p className="text-[14px] mb-4" style={{ color: 'var(--text-muted, #777)' }}>
                     {t('assets.qrScanInstruction')}
                   </p>
 
                   <button
                     onClick={downloadQR}
-                    className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-white hover:opacity-90" style={{ backgroundColor: 'var(--accent, #e8600a)' }}
+                    className="inline-flex items-center px-4 py-2 text-[15px] font-medium rounded-md text-white hover:opacity-90" style={{ backgroundColor: 'var(--accent, #e8600a)' }}
                   >
                     <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
                     {t('assets.qrDownload')}

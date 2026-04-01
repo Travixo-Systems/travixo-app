@@ -222,7 +222,7 @@ export default function CheckoutOverlay({
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h2 className="text-xl font-bold text-[#00252b]">
+              <h2 className="text-[22px] font-bold text-[#00252b]">
                 {language === 'fr' ? 'Sortie' : 'Checkout'}: {assetName}
               </h2>
             </div>
@@ -240,8 +240,8 @@ export default function CheckoutOverlay({
               <div className="flex items-center gap-3">
                 <ShieldAlert className="w-6 h-6 text-red-600 flex-shrink-0" />
                 <div>
-                  <p className="font-bold text-red-800 text-sm">{t('rental.vgpBlocked')}</p>
-                  <p className="text-red-700 text-xs mt-1">{t('rental.vgpBlockedMessage')}</p>
+                  <p className="font-bold text-red-800 text-[15px]">{t('rental.vgpBlocked')}</p>
+                  <p className="text-red-700 text-[13px] mt-1">{t('rental.vgpBlockedMessage')}</p>
                 </div>
               </div>
             </div>
@@ -250,13 +250,13 @@ export default function CheckoutOverlay({
           {!vgpBlocked && !vgpLoading && (
             <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2 mb-6">
               <ShieldCheck className="w-4 h-4 text-green-600" />
-              <span className="text-green-800 text-xs font-medium">{t('rental.vgpCompliant')}</span>
+              <span className="text-green-800 text-[13px] font-semibold">{t('rental.vgpCompliant')}</span>
             </div>
           )}
 
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-              <p className="text-red-700 text-sm font-medium">{error}</p>
+              <p className="text-red-700 text-[15px] font-medium">{error}</p>
             </div>
           )}
 

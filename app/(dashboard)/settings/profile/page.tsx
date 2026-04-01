@@ -175,7 +175,7 @@ export default function ProfileSettingsPage() {
         {/* Back Button */}
         <Link
           href="/settings"
-          className="flex items-center text-sm text-[var(--text-muted,#777)] hover:text-[var(--text-primary,#1a1a1a)] mb-6"
+          className="flex items-center text-[15px] text-[var(--text-muted,#777)] hover:text-[var(--text-primary,#1a1a1a)] mb-6"
         >
           <ArrowLeftIcon className="w-4 h-4 mr-2" />
           {labels.back[language]}
@@ -191,7 +191,7 @@ export default function ProfileSettingsPage() {
               <h1 className="text-2xl font-semibold text-[var(--text-primary,#1a1a1a)]">
                 {labels.pageTitle[language]}
               </h1>
-              <p className="text-sm text-[var(--text-muted,#777)]">
+              <p className="text-[15px] text-[var(--text-muted,#777)]">
                 {labels.pageSubtitle[language]}
               </p>
             </div>
@@ -200,7 +200,7 @@ export default function ProfileSettingsPage() {
           {!isEditing && (
             <button
               onClick={() => setIsEditing(true)}
-              className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-[var(--text-secondary,#444)] bg-[var(--card-bg,#edeff2)] border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="flex items-center space-x-2 px-4 py-2 text-[15px] font-medium text-[var(--text-secondary,#444)] bg-[var(--card-bg,#edeff2)] border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               <PencilIcon className="w-4 h-4" />
               <span>{labels.edit[language]}</span>
@@ -213,14 +213,14 @@ export default function ProfileSettingsPage() {
           <div className="space-y-6">
             {/* Personal Information */}
             <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-4">
+              <h3 className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-4">
                 {labels.personalInfo[language]}
               </h3>
 
               <div className="space-y-4">
                 {/* Avatar */}
                 <div className="flex items-center space-x-4 pb-4 border-b border-gray-200">
-                  <div className="text-sm font-medium text-[var(--text-secondary,#444)] w-32">
+                  <div className="text-[15px] font-semibold text-[var(--text-secondary,#444)] w-32">
                     {labels.avatar[language]}
                   </div>
                   <div>
@@ -242,45 +242,45 @@ export default function ProfileSettingsPage() {
 
                 {/* First Name */}
                 <div className="flex items-center py-3 border-b border-gray-200">
-                  <div className="text-sm font-medium text-[var(--text-secondary,#444)] w-32">
+                  <div className="text-[15px] font-semibold text-[var(--text-secondary,#444)] w-32">
                     {labels.firstName[language]}
                   </div>
-                  <div className="text-sm text-[var(--text-primary,#1a1a1a)]">
+                  <div className="text-[15px] text-[var(--text-primary,#1a1a1a)]">
                     {profileData.first_name || <span className="text-[var(--text-hint,#888)]">{labels.notSet[language]}</span>}
                   </div>
                 </div>
 
                 {/* Last Name */}
                 <div className="flex items-center py-3 border-b border-gray-200">
-                  <div className="text-sm font-medium text-[var(--text-secondary,#444)] w-32">
+                  <div className="text-[15px] font-semibold text-[var(--text-secondary,#444)] w-32">
                     {labels.lastName[language]}
                   </div>
-                  <div className="text-sm text-[var(--text-primary,#1a1a1a)]">
+                  <div className="text-[15px] text-[var(--text-primary,#1a1a1a)]">
                     {profileData.last_name || <span className="text-[var(--text-hint,#888)]">{labels.notSet[language]}</span>}
                   </div>
                 </div>
 
                 {/* Email */}
                 <div className="flex items-center py-3">
-                  <div className="text-sm font-medium text-[var(--text-secondary,#444)] w-32">
+                  <div className="text-[15px] font-semibold text-[var(--text-secondary,#444)] w-32">
                     {labels.email[language]}
                   </div>
-                  <div className="text-sm text-[var(--text-primary,#1a1a1a)]">{profileData.email}</div>
+                  <div className="text-[15px] text-[var(--text-primary,#1a1a1a)]">{profileData.email}</div>
                 </div>
               </div>
             </div>
 
             {/* Preferences */}
             <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-4">
+              <h3 className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-4">
                 {labels.preferences[language]}
               </h3>
 
               <div className="flex items-center py-3">
-                <div className="text-sm font-medium text-[var(--text-secondary,#444)] w-32">
+                <div className="text-[15px] font-semibold text-[var(--text-secondary,#444)] w-32">
                   {labels.languagePref[language]}
                 </div>
-                <div className="text-sm text-[var(--text-primary,#1a1a1a)]">
+                <div className="text-[15px] text-[var(--text-primary,#1a1a1a)]">
                   {profileData.language === 'fr' ? labels.french[language] : labels.english[language]}
                 </div>
               </div>
@@ -289,18 +289,18 @@ export default function ProfileSettingsPage() {
             {/* Security */}
             <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)]">
+                <h3 className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)]">
                   {labels.security[language]}
                 </h3>
                 <button
                   onClick={() => setIsChangingPassword(true)}
-                  className="flex items-center space-x-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+                  className="flex items-center space-x-2 text-[15px] font-medium text-blue-600 hover:text-blue-700"
                 >
                   <KeyIcon className="w-4 h-4" />
                   <span>{labels.changePassword[language]}</span>
                 </button>
               </div>
-              <p className="text-sm text-[var(--text-muted,#777)]">
+              <p className="text-[15px] text-[var(--text-muted,#777)]">
                 {labels.emailHelp[language]}
               </p>
             </div>
@@ -312,17 +312,17 @@ export default function ProfileSettingsPage() {
           <form onSubmit={handleProfileSubmit} className="space-y-6">
             {/* Personal Information */}
             <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-4">
+              <h3 className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-4">
                 {labels.personalInfo[language]}
               </h3>
 
               <div className="space-y-4">
                 {/* Avatar */}
                 <div>
-                  <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-1">
+                  <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-1">
                     {labels.avatar[language]}
                   </label>
-                  <p className="text-xs text-[var(--text-hint,#888)] mb-3">{labels.avatarHelp[language]}</p>
+                  <p className="text-[13px] text-[var(--text-hint,#888)] mb-3">{labels.avatarHelp[language]}</p>
                   
                   <div className="flex items-center space-x-4">
                     {profileData.avatar_url ? (
@@ -362,7 +362,7 @@ export default function ProfileSettingsPage() {
                         console.error('Upload error:', error);
                       }}
                       appearance={{
-                        button: "bg-gray-100 text-[var(--text-secondary,#444)] hover:bg-gray-200 text-sm font-medium px-4 py-2 rounded-lg",
+                        button: "bg-gray-100 text-[var(--text-secondary,#444)] hover:bg-gray-200 text-[15px] font-medium px-4 py-2 rounded-lg",
                         allowedContent: "hidden",
                       }}
                     />
@@ -371,7 +371,7 @@ export default function ProfileSettingsPage() {
 
                 {/* First Name */}
                 <div>
-                  <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-1">
+                  <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-1">
                     {labels.firstName[language]}
                   </label>
                   <input
@@ -384,7 +384,7 @@ export default function ProfileSettingsPage() {
 
                 {/* Last Name */}
                 <div>
-                  <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-1">
+                  <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-1">
                     {labels.lastName[language]}
                   </label>
                   <input
@@ -397,10 +397,10 @@ export default function ProfileSettingsPage() {
 
                 {/* Email */}
                 <div>
-                  <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-1">
+                  <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-1">
                     {labels.email[language]}
                   </label>
-                  <p className="text-xs text-[var(--text-hint,#888)] mb-2">{labels.emailHelp[language]}</p>
+                  <p className="text-[13px] text-[var(--text-hint,#888)] mb-2">{labels.emailHelp[language]}</p>
                   <input
                     type="email"
                     value={profileData.email}
@@ -413,15 +413,15 @@ export default function ProfileSettingsPage() {
 
             {/* Preferences */}
             <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-4">
+              <h3 className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-4">
                 {labels.preferences[language]}
               </h3>
 
               <div>
-                <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-1">
+                <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-1">
                   {labels.languagePref[language]}
                 </label>
-                <p className="text-xs text-[var(--text-hint,#888)] mb-2">{labels.languageHelp[language]}</p>
+                <p className="text-[13px] text-[var(--text-hint,#888)] mb-2">{labels.languageHelp[language]}</p>
                 <select
                   value={profileData.language}
                   onChange={(e) => handleProfileChange('language', e.target.value)}
@@ -438,14 +438,14 @@ export default function ProfileSettingsPage() {
               <button
                 type="button"
                 onClick={handleCancelEdit}
-                className="px-4 py-2 text-sm font-medium text-[var(--text-secondary,#444)] bg-[var(--card-bg,#edeff2)] border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 text-[15px] font-medium text-[var(--text-secondary,#444)] bg-[var(--card-bg,#edeff2)] border border-gray-300 rounded-lg hover:bg-gray-50"
               >
                 {labels.cancel[language]}
               </button>
               <button
                 type="submit"
                 disabled={savingProfile}
-                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                className="flex items-center space-x-2 px-4 py-2 text-[15px] font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
                 <CheckIcon className="w-4 h-4" />
                 <span>{savingProfile ? labels.saving[language] : labels.save[language]}</span>
@@ -476,7 +476,7 @@ export default function ProfileSettingsPage() {
               <form onSubmit={handlePasswordSubmit} className="space-y-4">
                 {/* Current Password */}
                 <div>
-                  <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-1">
+                  <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-1">
                     {labels.currentPassword[language]}
                   </label>
                   <input
@@ -490,10 +490,10 @@ export default function ProfileSettingsPage() {
 
                 {/* New Password */}
                 <div>
-                  <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-1">
+                  <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-1">
                     {labels.newPassword[language]}
                   </label>
-                  <p className="text-xs text-[var(--text-hint,#888)] mb-2">{labels.passwordHelp[language]}</p>
+                  <p className="text-[13px] text-[var(--text-hint,#888)] mb-2">{labels.passwordHelp[language]}</p>
                   <input
                     type="password"
                     value={passwordData.new_password}
@@ -506,7 +506,7 @@ export default function ProfileSettingsPage() {
 
                 {/* Confirm Password */}
                 <div>
-                  <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-1">
+                  <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-1">
                     {labels.confirmPassword[language]}
                   </label>
                   <input
@@ -526,14 +526,14 @@ export default function ProfileSettingsPage() {
                       setIsChangingPassword(false);
                       setPasswordData({ current_password: '', new_password: '', confirm_password: '' });
                     }}
-                    className="px-4 py-2 text-sm font-medium text-[var(--text-secondary,#444)] bg-[var(--card-bg,#edeff2)] border border-gray-300 rounded-lg hover:bg-gray-50"
+                    className="px-4 py-2 text-[15px] font-medium text-[var(--text-secondary,#444)] bg-[var(--card-bg,#edeff2)] border border-gray-300 rounded-lg hover:bg-gray-50"
                   >
                     {labels.cancel[language]}
                   </button>
                   <button
                     type="submit"
                     disabled={savingPassword}
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                    className="px-4 py-2 text-[15px] font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
                   >
                     {savingPassword ? labels.updatingPassword[language] : labels.updatePassword[language]}
                   </button>

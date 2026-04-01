@@ -82,13 +82,13 @@ export default function DeleteAssetDialog({ isOpen, onClose, asset }: DeleteAsse
                     <Dialog.Title className="text-lg font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                       {t('assets.deleteTitle')}
                     </Dialog.Title>
-                    <p className="text-[13px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>
+                    <p className="text-[14px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>
                       {t('assets.deleteWarning')}
                     </p>
                   </div>
                 </div>
 
-                <p className="text-[13px] mb-6" style={{ color: 'var(--text-secondary, #444)' }}>
+                <p className="text-[14px] mb-6" style={{ color: 'var(--text-secondary, #444)' }}>
                   {t('assets.deleteConfirmation')} <strong>{asset.name}</strong>? {t('assets.deleteConsequence')}
                 </p>
 
@@ -97,7 +97,7 @@ export default function DeleteAssetDialog({ isOpen, onClose, asset }: DeleteAsse
                     type="button"
                     onClick={onClose}
                     disabled={isDeleting}
-                    className="px-4 py-2 text-sm font-medium rounded-md transition-colors disabled:opacity-50" style={{ color: 'var(--text-muted, #777)' }}
+                    className="px-4 py-2 text-[15px] font-medium rounded-md transition-colors disabled:opacity-50" style={{ color: 'var(--text-muted, #777)' }}
                   >
                     {t('assets.buttonCancel')}
                   </button>
@@ -105,7 +105,7 @@ export default function DeleteAssetDialog({ isOpen, onClose, asset }: DeleteAsse
                     type="button"
                     onClick={handleDelete}
                     disabled={isDeleting}
-                    className="px-4 py-2 text-sm font-medium text-white rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed" style={{ backgroundColor: 'var(--status-retard, #dc2626)' }}
+                    className="px-4 py-2 text-[15px] font-medium text-white rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed" style={{ backgroundColor: 'var(--status-retard, #dc2626)' }}
                   >
                     {isDeleting ? t('assets.buttonDeleting') : t('assets.buttonDelete')}
                   </button>

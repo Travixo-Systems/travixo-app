@@ -425,12 +425,12 @@ export default function AuditsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('audits.pageTitle')}</h1>
+          <h1 className="text-[22px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('audits.pageTitle')}</h1>
           <p className="mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('audits.pageSubtitle')}</p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 text-white rounded-lg transition-colors text-sm font-medium"
+          className="flex items-center gap-2 px-4 py-2.5 text-white rounded-lg transition-colors text-[15px] font-medium"
           style={{ backgroundColor: BRAND_COLORS.primary }}
         >
           <Plus className="w-4 h-4" />
@@ -452,11 +452,11 @@ export default function AuditsPage() {
           }}
         >
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium" style={{ color: 'var(--text-secondary, #444)' }}>{t('audits.totalAudits')}</p>
+            <p className="text-[15px] font-semibold" style={{ color: 'var(--text-secondary, #444)' }}>{t('audits.totalAudits')}</p>
             <ClipboardCheck className="w-5 h-5" style={{ color: 'var(--text-hint, #888)' }} />
           </div>
           <p className="text-3xl font-bold mt-2" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{stats.total}</p>
-          <p className="text-xs mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('audits.allTime')}</p>
+          <p className="text-[13px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('audits.allTime')}</p>
         </button>
 
         {/* Planned */}
@@ -471,11 +471,11 @@ export default function AuditsPage() {
           }}
         >
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium" style={{ color: 'var(--text-secondary, #444)' }}>{t('audits.planned')}</p>
+            <p className="text-[15px] font-semibold" style={{ color: 'var(--text-secondary, #444)' }}>{t('audits.planned')}</p>
             <Calendar className="w-5 h-5" style={{ color: BRAND_COLORS.primary }} />
           </div>
           <p className="text-3xl font-bold mt-2" style={{ color: BRAND_COLORS.primary }}>{stats.planned}</p>
-          <p className="text-xs mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('audits.scheduledAudits')}</p>
+          <p className="text-[13px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('audits.scheduledAudits')}</p>
         </button>
 
         {/* In Progress */}
@@ -490,11 +490,11 @@ export default function AuditsPage() {
           }}
         >
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium" style={{ color: 'var(--text-secondary, #444)' }}>{t('audits.inProgress')}</p>
+            <p className="text-[15px] font-semibold" style={{ color: 'var(--text-secondary, #444)' }}>{t('audits.inProgress')}</p>
             <Clock className="w-5 h-5" style={{ color: BRAND_COLORS.warning }} />
           </div>
           <p className="text-3xl font-bold mt-2" style={{ color: BRAND_COLORS.warning }}>{stats.inProgress}</p>
-          <p className="text-xs mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('audits.activeAudits')}</p>
+          <p className="text-[13px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('audits.activeAudits')}</p>
         </button>
 
         {/* Completed */}
@@ -509,11 +509,11 @@ export default function AuditsPage() {
           }}
         >
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium" style={{ color: 'var(--text-secondary, #444)' }}>{t('audits.completed')}</p>
+            <p className="text-[15px] font-semibold" style={{ color: 'var(--text-secondary, #444)' }}>{t('audits.completed')}</p>
             <CheckCircle className="w-5 h-5" style={{ color: BRAND_COLORS.success }} />
           </div>
           <p className="text-3xl font-bold mt-2" style={{ color: BRAND_COLORS.success }}>{stats.completed}</p>
-          <p className="text-xs mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('audits.finishedAudits')}</p>
+          <p className="text-[13px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('audits.finishedAudits')}</p>
         </button>
       </div>
 
@@ -526,7 +526,7 @@ export default function AuditsPage() {
             placeholder={t('audits.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg focus:ring-2 focus:ring-[#e8600a] focus:border-transparent text-sm"
+            className="w-full pl-10 pr-4 py-2.5 rounded-lg focus:ring-2 focus:ring-[#e8600a] focus:border-transparent text-[15px]"
             style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
           />
         </div>
@@ -540,7 +540,7 @@ export default function AuditsPage() {
           <p className="mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('audits.noAuditsDesc')}</p>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="mt-4 px-4 py-2 text-white rounded-lg text-sm font-medium"
+            className="mt-4 px-4 py-2 text-white rounded-lg text-[15px] font-medium"
             style={{ backgroundColor: BRAND_COLORS.primary }}
           >
             {t('audits.createAudit')}
@@ -551,22 +551,22 @@ export default function AuditsPage() {
           <table className="w-full">
             <thead style={{ backgroundColor: 'var(--input-bg, #e3e5e9)' }}>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
+                <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
                   {t('audits.auditName')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
+                <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
                   {t('audits.status')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
+                <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
                   {t('audits.progress')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
+                <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
                   {t('audits.scheduledDate')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
+                <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
                   {t('audits.createdBy')}
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
+                <th className="px-6 py-3 text-right text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
                   {t('audits.actions')}
                 </th>
               </tr>
@@ -594,7 +594,7 @@ export default function AuditsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full ${config.bgColor}`}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[13px] font-medium rounded-full ${config.bgColor}`}
                         style={{ color: config.color }}
                       >
                         <StatusIcon className="w-3.5 h-3.5" />
@@ -612,20 +612,20 @@ export default function AuditsPage() {
                             }}
                           />
                         </div>
-                        <span className="text-sm" style={{ color: 'var(--text-secondary, #444)' }}>{progress}%</span>
+                        <span className="text-[15px]" style={{ color: 'var(--text-secondary, #444)' }}>{progress}%</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm" style={{ color: 'var(--text-secondary, #444)' }}>
+                    <td className="px-6 py-4 text-[15px]" style={{ color: 'var(--text-secondary, #444)' }}>
                       {formatDateFR(audit.scheduled_date)}
                     </td>
-                    <td className="px-6 py-4 text-sm" style={{ color: 'var(--text-secondary, #444)' }}>
+                    <td className="px-6 py-4 text-[15px]" style={{ color: 'var(--text-secondary, #444)' }}>
                       {audit.users?.full_name || audit.users?.email || '-'}
                     </td>
                     <td className="px-6 py-4 text-right">
                       {audit.status === 'planned' && (
                         <button
                           onClick={() => router.push(`/audits/${audit.id}`)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded-lg"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-white rounded-lg"
                           style={{ backgroundColor: BRAND_COLORS.primary }}
                         >
                           <Play className="w-3.5 h-3.5" />
@@ -635,7 +635,7 @@ export default function AuditsPage() {
                       {audit.status === 'in_progress' && (
                         <button
                           onClick={() => router.push(`/audits/${audit.id}`)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded-lg"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-white rounded-lg"
                           style={{ backgroundColor: BRAND_COLORS.warning }}
                         >
                           <Play className="w-3.5 h-3.5" />
@@ -645,7 +645,7 @@ export default function AuditsPage() {
                       {audit.status === 'completed' && (
                         <button
                           onClick={() => router.push(`/audits/${audit.id}`)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded-lg"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-white rounded-lg"
                           style={{ backgroundColor: BRAND_COLORS.success }}
                         >
                           <Eye className="w-3.5 h-3.5" />
@@ -682,7 +682,7 @@ export default function AuditsPage() {
             <div className="space-y-4">
               {/* Name */}
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary, #444)' }}>
+                <label className="block text-[15px] font-semibold mb-1" style={{ color: 'var(--text-secondary, #444)' }}>
                   {t('audits.auditNameLabel')}
                 </label>
                 <input
@@ -697,7 +697,7 @@ export default function AuditsPage() {
 
               {/* Date */}
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary, #444)' }}>
+                <label className="block text-[15px] font-semibold mb-1" style={{ color: 'var(--text-secondary, #444)' }}>
                   {t('audits.scheduledDateLabel')}
                 </label>
                 <input
@@ -711,13 +711,13 @@ export default function AuditsPage() {
 
               {/* Scope */}
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary, #444)' }}>
+                <label className="block text-[15px] font-semibold mb-2" style={{ color: 'var(--text-secondary, #444)' }}>
                   {t('audits.auditScope')}
                 </label>
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     onClick={() => setFormData({ ...formData, scope: 'all', selectedLocation: '', selectedCategory: '' })}
-                    className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
+                    className={`px-3 py-2 text-[15px] font-medium rounded-lg border transition-colors ${
                       formData.scope === 'all'
                         ? 'border-[#e8600a] bg-[#e8600a]/10 text-[#e8600a]'
                         : 'border-[#dcdee3] hover:bg-black/[0.02]'
@@ -727,7 +727,7 @@ export default function AuditsPage() {
                   </button>
                   <button
                     onClick={() => setFormData({ ...formData, scope: 'location', selectedCategory: '' })}
-                    className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
+                    className={`px-3 py-2 text-[15px] font-medium rounded-lg border transition-colors ${
                       formData.scope === 'location'
                         ? 'border-[#e8600a] bg-[#e8600a]/10 text-[#e8600a]'
                         : 'border-[#dcdee3] hover:bg-black/[0.02]'
@@ -737,7 +737,7 @@ export default function AuditsPage() {
                   </button>
                   <button
                     onClick={() => setFormData({ ...formData, scope: 'category', selectedLocation: '' })}
-                    className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
+                    className={`px-3 py-2 text-[15px] font-medium rounded-lg border transition-colors ${
                       formData.scope === 'category'
                         ? 'border-[#e8600a] bg-[#e8600a]/10 text-[#e8600a]'
                         : 'border-[#dcdee3] hover:bg-black/[0.02]'
@@ -751,7 +751,7 @@ export default function AuditsPage() {
               {/* Location selector */}
               {formData.scope === 'location' && (
                 <div>
-                  <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary, #444)' }}>
+                  <label className="block text-[15px] font-semibold mb-1" style={{ color: 'var(--text-secondary, #444)' }}>
                     {t('audits.selectLocation')}
                   </label>
                   <div className="relative">
@@ -774,7 +774,7 @@ export default function AuditsPage() {
               {/* Category selector */}
               {formData.scope === 'category' && (
                 <div>
-                  <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary, #444)' }}>
+                  <label className="block text-[15px] font-semibold mb-1" style={{ color: 'var(--text-secondary, #444)' }}>
                     {t('audits.selectCategory')}
                   </label>
                   <div className="relative">
@@ -800,10 +800,10 @@ export default function AuditsPage() {
                   <div className="flex items-center gap-2">
                     <Package className="w-5 h-5" style={{ color: 'var(--text-muted, #777)' }} />
                     <span className="text-lg font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{activeAssetCount}</span>
-                    <span className="text-sm" style={{ color: 'var(--text-secondary, #444)' }}>{t('audits.assetsFound')}</span>
+                    <span className="text-[15px]" style={{ color: 'var(--text-secondary, #444)' }}>{t('audits.assetsFound')}</span>
                   </div>
                   {excludedAssets.length > 0 && (
-                    <span className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded-full flex items-center gap-1">
+                    <span className="text-[13px] text-amber-700 bg-amber-50 px-2 py-1 rounded-full flex items-center gap-1">
                       <Ban className="w-3 h-3" />
                       {excludedAssets.length} excluded
                     </span>
@@ -826,17 +826,17 @@ export default function AuditsPage() {
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex-1 min-w-0">
-                              <span className={`text-sm font-medium ${isExcluded ? 'text-red-700 line-through' : ''}`} style={isExcluded ? undefined : { color: 'var(--text-primary, #1a1a1a)' }}>
+                              <span className={`text-[15px] font-medium ${isExcluded ? 'text-red-700 line-through' : ''}`} style={isExcluded ? undefined : { color: 'var(--text-primary, #1a1a1a)' }}>
                                 {asset.name}
                               </span>
                               {asset.serial_number && (
-                                <span className="text-xs ml-2" style={{ color: 'var(--text-muted, #777)' }}>#{asset.serial_number}</span>
+                                <span className="text-[13px] ml-2" style={{ color: 'var(--text-muted, #777)' }}>#{asset.serial_number}</span>
                               )}
                             </div>
                             {isExcluded ? (
                               <button
                                 onClick={() => handleRemoveExclusion(asset.id)}
-                                className="text-xs text-red-600 hover:text-red-800 font-medium ml-2 whitespace-nowrap"
+                                className="text-[13px] text-red-600 hover:text-red-800 font-medium ml-2 whitespace-nowrap"
                               >
                                 Restore
                               </button>
@@ -846,7 +846,7 @@ export default function AuditsPage() {
                                   setExcludingAssetId(isExcluding ? null : asset.id);
                                   setExclusionReason('');
                                 }}
-                                className="text-xs hover:text-amber-700 font-medium ml-2 whitespace-nowrap" style={{ color: 'var(--text-muted, #777)' }}
+                                className="text-[13px] hover:text-amber-700 font-medium ml-2 whitespace-nowrap" style={{ color: 'var(--text-muted, #777)' }}
                               >
                                 {isExcluding ? 'Cancel' : 'Exclude'}
                               </button>
@@ -854,7 +854,7 @@ export default function AuditsPage() {
                           </div>
 
                           {isExcluded && (
-                            <p className="text-xs text-red-600 mt-0.5 flex items-center gap-1">
+                            <p className="text-[13px] text-red-600 mt-0.5 flex items-center gap-1">
                               <Ban className="w-3 h-3" />
                               {excludedAssets.find(e => e.asset_id === asset.id)?.reason}
                             </p>
@@ -867,7 +867,7 @@ export default function AuditsPage() {
                                 placeholder="Reason for exclusion (required)"
                                 value={exclusionReason}
                                 onChange={(e) => setExclusionReason(e.target.value)}
-                                className="flex-1 px-2 py-1 text-xs rounded focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
+                                className="flex-1 px-2 py-1 text-[13px] rounded focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
                                 style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
                                 maxLength={200}
                                 onKeyDown={(e) => {
@@ -877,7 +877,7 @@ export default function AuditsPage() {
                               <button
                                 onClick={() => handleExcludeAsset(asset.id)}
                                 disabled={!exclusionReason.trim()}
-                                className="px-2 py-1 text-xs bg-amber-600 text-white rounded hover:bg-amber-700 disabled:opacity-50"
+                                className="px-2 py-1 text-[13px] bg-amber-600 text-white rounded hover:bg-amber-700 disabled:opacity-50"
                               >
                                 Confirm
                               </button>
@@ -891,7 +891,7 @@ export default function AuditsPage() {
 
                 {excludedAssets.length > 0 && (
                   <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
-                    <p className="text-xs text-amber-800 flex items-center gap-1">
+                    <p className="text-[13px] text-amber-800 flex items-center gap-1">
                       <AlertTriangle className="w-3 h-3" />
                       Excluded assets will be documented in the audit report with their exclusion reasons (DREETS compliant).
                     </p>

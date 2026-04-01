@@ -43,26 +43,6 @@ export default function AssetsTableClient({ assets, onRefresh }: { assets: Asset
     const [deleteAsset, setDeleteAsset] = useState<Asset | null>(null)
     const [vgpAsset, setVgpAsset] = useState<Asset | null>(null)
 
-    const getCategoryCode = (name: string): string => {
-        const KNOWN_CODES: Record<string, string> = {
-            'nacelle': 'NAC',
-            'engin de chantier': 'ENG',
-            'chariot elevateur': 'CHA',
-            'chariot élévateur': 'CHA',
-            'echafaudage': 'ECH',
-            'échafaudage': 'ECH',
-            'groupe electrogene': 'GE',
-            'groupe électrogène': 'GE',
-            'compresseur': 'COMP',
-            'equipement de levage': 'LEV',
-            'équipement de levage': 'LEV',
-        }
-        const lower = name.toLowerCase().trim()
-        if (KNOWN_CODES[lower]) return KNOWN_CODES[lower]
-        // Fallback: first 3 uppercase letters
-        return name.replace(/[^a-zA-Z]/g, '').slice(0, 3).toUpperCase()
-    }
-
     const getStatusLabel = (status: string) => {
         switch (status) {
             case 'available': return t('assets.statusAvailable')
@@ -89,25 +69,25 @@ export default function AssetsTableClient({ assets, onRefresh }: { assets: Asset
                 <table className="min-w-full">
                     <thead>
                         <tr>
-                            <th className="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
+                            <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
                                 {t('assets.tableHeaderName')}
                             </th>
-                            <th className="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
+                            <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
                                 {t('assets.tableHeaderSerial')}
                             </th>
-                            <th className="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
+                            <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
                                 {t('assets.tableHeaderCategory')}
                             </th>
-                            <th className="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
+                            <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
                                 {t('assets.tableHeaderStatus')}
                             </th>
-                            <th className="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
+                            <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
                                 VGP
                             </th>
-                            <th className="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
+                            <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
                                 {t('assets.tableHeaderLocation')}
                             </th>
-                            <th className="px-6 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
+                            <th className="px-6 py-3 text-right text-[12px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888888)' }}>
                                 {t('assets.tableHeaderActions')}
                             </th>
                         </tr>
@@ -115,31 +95,26 @@ export default function AssetsTableClient({ assets, onRefresh }: { assets: Asset
                     <tbody className="divide-y" style={{ borderColor: '#dcdee3' }}>
                         {assets.map((asset) => (
                             <tr key={asset.id} className="hover:bg-black/[0.02]" style={{ borderColor: '#dcdee3' }}>
-                                <td className="px-6 py-4 whitespace-nowrap text-[13px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                                <td className="px-6 py-4 whitespace-nowrap text-[14px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                                     {asset.name}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-[13px]" style={{ color: 'var(--text-secondary, #444444)' }}>
+                                <td className="px-6 py-4 whitespace-nowrap text-[14px]" style={{ color: 'var(--text-secondary, #444444)' }}>
                                     {asset.serial_number || '-'}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-[13px]" style={{ color: 'var(--text-secondary, #444444)' }}>
-                                    {asset.asset_categories?.name ? (
-                                        <>
-                                            <span className="font-mono text-xs" style={{ color: 'var(--text-hint, #888888)' }}>{getCategoryCode(asset.asset_categories.name)}</span>
-                                            {' '}{asset.asset_categories.name}
-                                        </>
-                                    ) : (
+                                <td className="px-6 py-4 whitespace-nowrap text-[14px]" style={{ color: 'var(--text-secondary, #444444)' }}>
+                                    {asset.asset_categories?.name || (
                                         <span style={{ color: 'var(--text-hint, #888888)' }}>-</span>
                                     )}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`text-[13px] font-medium ${getStatusColor(asset.status)}`}>
+                                    <span className={`text-[14px] font-medium ${getStatusColor(asset.status)}`}>
                                         {getStatusLabel(asset.status)}
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <VGPStatusBadge status={asset.vgp_status ?? 'unknown'} />
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-[13px]" style={{ color: 'var(--text-secondary, #444444)' }}>
+                                <td className="px-6 py-4 whitespace-nowrap text-[14px]" style={{ color: 'var(--text-secondary, #444444)' }}>
                                     {asset.current_location || '-'}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

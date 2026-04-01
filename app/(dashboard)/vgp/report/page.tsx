@@ -317,7 +317,7 @@ function VGPReportContent() {
     const badge = badges[result as keyof typeof badges] || badges.passed;
 
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${badge.class}`}>
+      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[13px] font-medium border ${badge.class}`}>
         {badge.icon}
         {badge.text}
       </span>
@@ -343,7 +343,7 @@ function VGPReportContent() {
   }
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className="p-3 md:p-6 max-w-7xl mx-auto">
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <FileText className="w-8 h-8 text-blue-600" />
@@ -356,38 +356,38 @@ function VGPReportContent() {
 
       {/* Date Selection */}
       <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">{t('vgpReport.reportPeriod')}</h2>
+        <h2 className="text-[22px] font-semibold mb-4">{t('vgpReport.reportPeriod')}</h2>
         
         <div className="mb-4">
-          <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-3">
+          <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-3">
             {t('vgpReport.quickPeriods')}
           </label>
           <div className="grid grid-cols-4 gap-3">
             <button
               type="button"
               onClick={() => handleQuickPeriod('month')}
-              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-[15px]"
             >
               {t('vgpReport.lastMonth')}
             </button>
             <button
               type="button"
               onClick={() => handleQuickPeriod('quarter')}
-              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-[15px]"
             >
               {t('vgpReport.lastQuarter')}
             </button>
             <button
               type="button"
               onClick={() => handleQuickPeriod('year')}
-              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-[15px]"
             >
               {t('vgpReport.lastYear')}
             </button>
             <button
               type="button"
               onClick={() => handleQuickPeriod('all')}
-              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-[15px]"
             >
               {t('vgpReport.allData')}
             </button>
@@ -396,7 +396,7 @@ function VGPReportContent() {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-2">
+            <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-2">
               {t('vgpReport.startDate')}
             </label>
             <input
@@ -407,7 +407,7 @@ function VGPReportContent() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-2">
+            <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-2">
               {t('vgpReport.endDate')}
             </label>
             <input
@@ -424,32 +424,32 @@ function VGPReportContent() {
       {summary && (
         <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
           <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md p-6 border-l-[3px]" style={{ borderLeftColor: 'var(--status-neutral, #6b7280)' }}>
-            <p className="text-sm font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">{t('vgpReport.total')}</p>
+            <p className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">{t('vgpReport.total')}</p>
             <p className="text-3xl font-bold" style={{ color: 'var(--status-neutral, #6b7280)' }}>{summary.total_inspections}</p>
           </div>
 
           <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md p-6 border-l-[3px]" style={{ borderLeftColor: 'var(--status-conforme, #059669)' }}>
-            <p className="text-sm font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">{t('vgpReport.compliant')}</p>
+            <p className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">{t('vgpReport.compliant')}</p>
             <p className="text-3xl font-bold" style={{ color: 'var(--status-conforme, #059669)' }}>{summary.passed}</p>
           </div>
 
           <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md p-6 border-l-[3px]" style={{ borderLeftColor: 'var(--status-bientot, #d97706)' }}>
-            <p className="text-sm font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">{t('vgpReport.conditional')}</p>
+            <p className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">{t('vgpReport.conditional')}</p>
             <p className="text-3xl font-bold" style={{ color: 'var(--status-bientot, #d97706)' }}>{summary.conditional}</p>
           </div>
 
           <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md p-6 border-l-[3px]" style={{ borderLeftColor: 'var(--status-retard, #dc2626)' }}>
-            <p className="text-sm font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">{t('vgpReport.nonCompliant')}</p>
+            <p className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">{t('vgpReport.nonCompliant')}</p>
             <p className="text-3xl font-bold" style={{ color: 'var(--status-retard, #dc2626)' }}>{summary.failed}</p>
           </div>
 
           <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md p-6 border-l-[3px]" style={{ borderLeftColor: 'var(--status-neutral, #6b7280)' }}>
-            <p className="text-sm font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">{t('vgpReport.noCertificate')}</p>
+            <p className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">{t('vgpReport.noCertificate')}</p>
             <p className="text-3xl font-bold" style={{ color: 'var(--status-neutral, #6b7280)' }}>{summary.without_certificate}</p>
           </div>
 
           <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md p-6 border-l-[3px]" style={{ borderLeftColor: summary.compliance_rate >= 80 ? 'var(--status-conforme, #059669)' : 'var(--status-retard, #dc2626)' }}>
-            <p className="text-sm font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">{t('vgpReport.compliance')}</p>
+            <p className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">{t('vgpReport.compliance')}</p>
             <p className="text-3xl font-bold" style={{ color: summary.compliance_rate >= 80 ? 'var(--status-conforme, #059669)' : 'var(--status-retard, #dc2626)' }}>{summary.compliance_rate}%</p>
           </div>
         </div>
@@ -461,12 +461,12 @@ function VGPReportContent() {
           <div className="flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm text-orange-900 font-semibold">
+              <p className="text-[15px] text-orange-900 font-semibold">
                 {language === 'fr' 
                   ? `Attention: ${summary.without_certificate} inspection(s) sans certificat`
                   : `Warning: ${summary.without_certificate} inspection(s) without certificate`}
               </p>
-              <p className="text-sm text-orange-800 mt-1">
+              <p className="text-[15px] text-orange-800 mt-1">
                 {language === 'fr'
                   ? "Ces inspections seront incluses dans le rapport PDF mais n'ont pas de certificat associé. Vérifiez les données avant envoi aux autorités."
                   : "These inspections will be included in the PDF report but have no associated certificate. Verify data before submitting to authorities."}
@@ -482,12 +482,12 @@ function VGPReportContent() {
           <h2 className="text-lg font-semibold text-[var(--text-primary,#1a1a1a)]">
             {t('vgpReport.previewData')}
             {loadingInspections && (
-              <span className="ml-2 text-sm font-normal text-[var(--text-muted,#777)]">
+              <span className="ml-2 text-[15px] font-normal text-[var(--text-muted,#777)]">
                 {t('vgpReport.loadingInspections')}
               </span>
             )}
             {!loadingInspections && inspections.length > 0 && (
-              <span className="ml-2 text-sm font-normal text-[var(--text-muted,#777)]">
+              <span className="ml-2 text-[15px] font-normal text-[var(--text-muted,#777)]">
                 ({inspections.length} {inspections.length > 1 ? t('vgpReport.inspections') : t('vgpReport.inspection')})
               </span>
             )}
@@ -497,7 +497,7 @@ function VGPReportContent() {
             <button
               onClick={handleExportCSV}
               disabled={exportingCSV}
-              className="flex items-center gap-2 px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 text-[15px] bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
             >
               <FileSpreadsheet className="w-4 h-4" />
               {exportingCSV ? t('vgpReport.downloading') : t('vgpReport.exportCSV')}
@@ -514,7 +514,7 @@ function VGPReportContent() {
           <div className="p-8 text-center">
             <Calendar className="w-16 h-16 text-[var(--text-hint,#888)] mx-auto mb-4" />
             <p className="text-[var(--text-muted,#777)]">{t('vgpReport.noInspections')}</p>
-            <p className="text-sm text-[var(--text-hint,#888)] mt-2">{t('vgpReport.modifyDates')}</p>
+            <p className="text-[15px] text-[var(--text-hint,#888)] mt-2">{t('vgpReport.modifyDates')}</p>
           </div>
         ) : (
           <>
@@ -522,25 +522,25 @@ function VGPReportContent() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-hint,#888)] uppercase">
+                    <th className="px-6 py-3 text-left text-[13px] font-semibold text-[var(--text-hint,#888)] uppercase">
                       {t('vgpReport.equipment')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-hint,#888)] uppercase">
+                    <th className="px-6 py-3 text-left text-[13px] font-semibold text-[var(--text-hint,#888)] uppercase">
                       {t('vgpInspections.category')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-hint,#888)] uppercase">
+                    <th className="px-6 py-3 text-left text-[13px] font-semibold text-[var(--text-hint,#888)] uppercase">
                       {t('vgpReport.date')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-hint,#888)] uppercase">
+                    <th className="px-6 py-3 text-left text-[13px] font-semibold text-[var(--text-hint,#888)] uppercase">
                       {t('vgpReport.inspector')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-hint,#888)] uppercase">
+                    <th className="px-6 py-3 text-left text-[13px] font-semibold text-[var(--text-hint,#888)] uppercase">
                       {t('vgpReport.certificate')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-hint,#888)] uppercase">
+                    <th className="px-6 py-3 text-left text-[13px] font-semibold text-[var(--text-hint,#888)] uppercase">
                       {t('vgpReport.result')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-hint,#888)] uppercase">
+                    <th className="px-6 py-3 text-left text-[13px] font-semibold text-[var(--text-hint,#888)] uppercase">
                       {t('vgpReport.nextInspection')}
                     </th>
                   </tr>
@@ -550,38 +550,38 @@ function VGPReportContent() {
                     <tr key={inspection.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
-                          <div className="text-sm font-medium text-[var(--text-primary,#1a1a1a)]">
+                          <div className="text-[15px] font-medium text-[var(--text-primary,#1a1a1a)]">
                             {inspection.assets?.name || 'N/A'}
                           </div>
-                          <div className="text-sm text-[var(--text-hint,#888)]">
+                          <div className="text-[15px] text-[var(--text-hint,#888)]">
                             {inspection.assets?.serial_number || (language === 'fr' ? 'Sans N/S' : 'No S/N')}
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-muted,#777)]">
+                      <td className="px-6 py-4 whitespace-nowrap text-[15px] text-[var(--text-muted,#777)]">
                         {inspection.assets?.asset_categories?.name || 'N/A'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-muted,#777)]">
+                      <td className="px-6 py-4 whitespace-nowrap text-[15px] text-[var(--text-muted,#777)]">
                         {new Date(inspection.inspection_date).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
-                          <div className="text-sm font-medium text-[var(--text-primary,#1a1a1a)]">
+                          <div className="text-[15px] font-medium text-[var(--text-primary,#1a1a1a)]">
                             {inspection.inspector_name}
                           </div>
-                          <div className="text-sm text-[var(--text-hint,#888)]">
+                          <div className="text-[15px] text-[var(--text-hint,#888)]">
                             {inspection.inspector_company}
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {inspection.certificate_url ? (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-[13px] font-medium bg-green-100 text-green-800 border border-green-200">
                             <CheckCircle className="w-3 h-3 mr-1" />
                             {t('vgpReport.yes')}
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 border border-orange-200">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-[13px] font-medium bg-orange-100 text-orange-800 border border-orange-200">
                             <XCircle className="w-3 h-3 mr-1" />
                             {t('vgpReport.no')}
                           </span>
@@ -590,7 +590,7 @@ function VGPReportContent() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         {getResultBadge(inspection.result)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-muted,#777)]">
+                      <td className="px-6 py-4 whitespace-nowrap text-[15px] text-[var(--text-muted,#777)]">
                         {new Date(inspection.next_inspection_date).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US')}
                       </td>
                     </tr>
@@ -602,7 +602,7 @@ function VGPReportContent() {
             {/* Pagination */}
             {totalPages > 1 && (
               <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
-                <p className="text-sm text-[var(--text-secondary,#444)]">
+                <p className="text-[15px] text-[var(--text-secondary,#444)]">
                   {language === 'fr'
                     ? `Affichage ${(currentPage - 1) * itemsPerPage + 1} à ${Math.min(currentPage * itemsPerPage, inspections.length)} sur ${inspections.length} inspections`
                     : `Showing ${(currentPage - 1) * itemsPerPage + 1} to ${Math.min(currentPage * itemsPerPage, inspections.length)} of ${inspections.length} inspections`}
@@ -611,14 +611,14 @@ function VGPReportContent() {
                   <button
                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
-                    className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 text-[15px] border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {t('vgpReport.previous')}
                   </button>
                   <button
                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
-                    className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 text-[15px] border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {t('vgpReport.next')}
                   </button>
@@ -678,7 +678,7 @@ function VGPReportContent() {
       {/* What's Included Section */}
       <div className="mt-6 bg-gray-50 rounded-lg p-6">
         <h3 className="text-lg font-semibold mb-4">{t('vgpReport.reportContents')}</h3>
-        <ul className="space-y-2 text-sm text-[var(--text-secondary,#444)]">
+        <ul className="space-y-2 text-[15px] text-[var(--text-secondary,#444)]">
           <li className="flex items-start gap-2">
             <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
             <span>{t('vgpReport.companyInfo')}</span>

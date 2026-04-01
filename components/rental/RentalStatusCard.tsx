@@ -80,7 +80,7 @@ export default function RentalStatusCard({
         {isAuthenticated && (
           <button
             onClick={onCheckout}
-            className="w-full py-3 bg-[#f26f00] text-white rounded-lg font-bold hover:bg-[#d96200] transition-colors text-sm"
+            className="w-full py-3 bg-[#f26f00] text-white rounded-lg font-bold hover:bg-[#d96200] transition-colors text-[15px]"
           >
             {t('rental.checkoutToClient')}
           </button>
@@ -129,19 +129,19 @@ export default function RentalStatusCard({
 
       <div className="space-y-2 mb-4">
         <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-600 font-medium">{t('rental.client')}:</span>
-          <span className="text-sm font-bold text-[#00252b]">{rental.client_name}</span>
+          <span className="text-[15px] text-gray-600 font-medium">{t('rental.client')}:</span>
+          <span className="text-[15px] font-bold text-[#00252b]">{rental.client_name}</span>
         </div>
         <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-600 font-medium">{t('rental.since')}:</span>
-          <span className="text-sm font-bold text-[#00252b]">{formatDate(rental.checkout_date)}</span>
+          <span className="text-[15px] text-gray-600 font-medium">{t('rental.since')}:</span>
+          <span className="text-[15px] font-bold text-[#00252b]">{formatDate(rental.checkout_date)}</span>
         </div>
         {rental.expected_return_date ? (
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600 font-medium">
+            <span className="text-[15px] text-gray-600 font-medium">
               {isOverdue ? t('rental.overdueBy') : t('rental.expectedBy')}:
             </span>
-            <span className={`text-sm font-bold ${isOverdue ? 'text-red-700' : 'text-[#00252b]'}`}>
+            <span className={`text-[15px] font-bold ${isOverdue ? 'text-red-700' : 'text-[#00252b]'}`}>
               {isOverdue
                 ? `${daysOverdue} ${t('rental.days')}`
                 : formatDate(rental.expected_return_date)
@@ -150,13 +150,13 @@ export default function RentalStatusCard({
           </div>
         ) : (
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600 font-medium">{t('rental.expectedBy')}:</span>
-            <span className="text-sm font-medium text-gray-500">{t('rental.openEnded')}</span>
+            <span className="text-[15px] text-gray-600 font-medium">{t('rental.expectedBy')}:</span>
+            <span className="text-[15px] font-medium text-gray-500">{t('rental.openEnded')}</span>
           </div>
         )}
         <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-600 font-medium">{t('rental.duration')}:</span>
-          <span className="text-sm font-bold text-[#00252b]">
+          <span className="text-[15px] text-gray-600 font-medium">{t('rental.duration')}:</span>
+          <span className="text-[15px] font-bold text-[#00252b]">
             {daysSince} {t('rental.days')}
           </span>
         </div>
@@ -165,7 +165,7 @@ export default function RentalStatusCard({
       {isAuthenticated && (
         <button
           onClick={() => onReturn(rental)}
-          className={`w-full py-3 rounded-lg font-bold transition-colors text-sm ${
+          className={`w-full py-3 rounded-lg font-bold transition-colors text-[15px] ${
             isOverdue
               ? 'bg-red-600 text-white hover:bg-red-700'
               : 'bg-[#f26f00] text-white hover:bg-[#d96200]'

@@ -428,7 +428,7 @@ export default function TeamPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('team.pageTitle')}</h1>
+          <h1 className="text-[22px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('team.pageTitle')}</h1>
           <p className="mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('team.pageSubtitle')}</p>
         </div>
         {canManageTeam && (
@@ -457,11 +457,11 @@ export default function TeamPage() {
           }}
         >
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium" style={{ color: 'var(--text-secondary, #444)' }}>{t('team.totalMembers')}</p>
+            <p className="text-[15px] font-medium" style={{ color: 'var(--text-secondary, #444)' }}>{t('team.totalMembers')}</p>
             <Users className="w-5 h-5" style={{ color: 'var(--text-hint, #888)' }} />
           </div>
           <p className="text-3xl font-bold mt-2" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{stats.total}</p>
-          <p className="text-xs mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('team.teamSize')}</p>
+          <p className="text-[13px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('team.teamSize')}</p>
         </button>
 
         {/* Administrators */}
@@ -476,11 +476,11 @@ export default function TeamPage() {
           }}
         >
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium" style={{ color: 'var(--text-secondary, #444)' }}>{t('team.administrators')}</p>
+            <p className="text-[15px] font-medium" style={{ color: 'var(--text-secondary, #444)' }}>{t('team.administrators')}</p>
             <Shield className="w-5 h-5" style={{ color: BRAND_COLORS.success }} />
           </div>
           <p className="text-3xl font-bold mt-2" style={{ color: BRAND_COLORS.success }}>{stats.admins}</p>
-          <p className="text-xs mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('team.fullAccess')}</p>
+          <p className="text-[13px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('team.fullAccess')}</p>
         </button>
 
         {/* Team Members */}
@@ -495,11 +495,11 @@ export default function TeamPage() {
           }}
         >
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium" style={{ color: 'var(--text-secondary, #444)' }}>{t('team.teamMembers')}</p>
+            <p className="text-[15px] font-medium" style={{ color: 'var(--text-secondary, #444)' }}>{t('team.teamMembers')}</p>
             <Users className="w-5 h-5" style={{ color: BRAND_COLORS.warning }} />
           </div>
           <p className="text-3xl font-bold mt-2" style={{ color: BRAND_COLORS.warning }}>{stats.members + stats.viewers}</p>
-          <p className="text-xs mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('team.standardAccess')}</p>
+          <p className="text-[13px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('team.standardAccess')}</p>
         </button>
 
         {/* Pending Invites */}
@@ -514,22 +514,22 @@ export default function TeamPage() {
           }}
         >
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium" style={{ color: 'var(--text-secondary, #444)' }}>{t('team.pendingInvites')}</p>
+            <p className="text-[15px] font-medium" style={{ color: 'var(--text-secondary, #444)' }}>{t('team.pendingInvites')}</p>
             <Mail className="w-5 h-5" style={{ color: BRAND_COLORS.primary }} />
           </div>
           <p className="text-3xl font-bold mt-2" style={{ color: BRAND_COLORS.primary }}>{stats.pendingInvites}</p>
-          <p className="text-xs mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('team.awaitingResponse')}</p>
+          <p className="text-[13px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('team.awaitingResponse')}</p>
         </button>
       </div>
 
       {/* Active Filter Indicator */}
       {activeFilter !== 'all' && (
         <div className="flex items-center gap-2">
-          <span className="text-sm" style={{ color: 'var(--text-secondary, #444)' }}>
+          <span className="text-[15px]" style={{ color: 'var(--text-secondary, #444)' }}>
             {language === 'fr' ? 'Filtré par:' : 'Filtered by:'}
           </span>
           <span 
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium text-white"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[15px] font-medium text-white"
             style={{ 
               backgroundColor: activeFilter === 'admins' ? BRAND_COLORS.success : 
                               activeFilter === 'members' ? BRAND_COLORS.warning : 
@@ -558,7 +558,7 @@ export default function TeamPage() {
             placeholder={t('team.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border-none rounded-lg focus:ring-2 focus:ring-[#e8600a] focus:border-transparent text-sm"
+            className="w-full pl-10 pr-4 py-2.5 border-none rounded-lg focus:ring-2 focus:ring-[#e8600a] focus:border-transparent text-[15px]"
             style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
           />
         </div>
@@ -585,7 +585,7 @@ export default function TeamPage() {
           {activeFilter !== 'all' && (
             <button
               onClick={() => setActiveFilter('all')}
-              className="mt-4 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+              className="mt-4 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg text-[15px] font-medium hover:bg-gray-200 transition-colors"
             >
               {language === 'fr' ? 'Voir tous les membres' : 'View all members'}
             </button>
@@ -593,7 +593,7 @@ export default function TeamPage() {
           {activeFilter === 'all' && canManageTeam && (
             <button
               onClick={() => setShowInviteModal(true)}
-              className="mt-4 px-4 py-2 text-white rounded-lg text-sm font-medium"
+              className="mt-4 px-4 py-2 text-white rounded-lg text-[15px] font-medium"
               style={{ backgroundColor: BRAND_COLORS.primary }}
             >
               {t('team.inviteMember')}
@@ -605,20 +605,20 @@ export default function TeamPage() {
           <table className="w-full">
             <thead>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
+                <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
                   {t('team.member')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
+                <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
                   {t('team.role')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
+                <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
                   {t('team.joined')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
+                <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
                   {t('team.lastActive')}
                 </th>
                 {canManageTeam && (
-                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
+                  <th className="px-6 py-3 text-right text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted, #777)' }}>
                     {t('team.actions')}
                   </th>
                 )}
@@ -635,39 +635,39 @@ export default function TeamPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
                         <div
-                          className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium text-sm"
+                          className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium text-[15px]"
                           style={{ backgroundColor: BRAND_COLORS.primary }}
                         >
                           {getInitials(member)}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <p className="text-sm font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                            <p className="text-[15px] font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                               {getDisplayName(member)}
                             </p>
                             {isCurrentUser && (
-                              <span className="text-xs px-2 py-0.5 rounded" style={{ color: 'var(--text-muted, #777)', backgroundColor: 'var(--input-bg, #e3e5e9)' }}>
+                              <span className="text-[13px] px-2 py-0.5 rounded" style={{ color: 'var(--text-muted, #777)', backgroundColor: 'var(--input-bg, #e3e5e9)' }}>
                                 {language === 'fr' ? 'Vous' : 'You'}
                               </span>
                             )}
                           </div>
-                          <p className="text-sm" style={{ color: 'var(--text-muted, #777)' }}>{member.email}</p>
+                          <p className="text-[15px]" style={{ color: 'var(--text-muted, #777)' }}>{member.email}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className="inline-flex items-center gap-1.5 text-xs font-medium"
+                        className="inline-flex items-center gap-1.5 text-[13px] font-medium"
                         style={{ color: 'var(--text-secondary, #444)' }}
                       >
                         <RoleIcon className="w-3.5 h-3.5" />
                         {t(`team.role${member.role.charAt(0).toUpperCase() + member.role.slice(1)}`)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm" style={{ color: 'var(--text-muted, #777)' }}>
+                    <td className="px-6 py-4 whitespace-nowrap text-[15px]" style={{ color: 'var(--text-muted, #777)' }}>
                       {formatDateFR(member.created_at)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm" style={{ color: 'var(--text-muted, #777)' }}>
+                    <td className="px-6 py-4 whitespace-nowrap text-[15px]" style={{ color: 'var(--text-muted, #777)' }}>
                       {getRelativeTime(member.updated_at || member.created_at, language)}
                     </td>
                     {canManageTeam && (
@@ -705,11 +705,11 @@ export default function TeamPage() {
       {canManageTeam && invitations.length > 0 && (activeFilter === 'all' || activeFilter === 'pending') && (
         <div className="rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
           <div className="px-6 py-4 border-b" style={{ borderColor: '#dcdee3' }}>
-            <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+            <h3 className="text-[15px] font-semibold flex items-center gap-2" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
               <Mail className="w-4 h-4" style={{ color: BRAND_COLORS.primary }} />
               {language === 'fr' ? 'Invitations en attente' : 'Pending Invitations'}
               <span
-                className="ml-1 px-2 py-0.5 rounded-full text-xs text-white"
+                className="ml-1 px-2 py-0.5 rounded-full text-[13px] text-white"
                 style={{ backgroundColor: BRAND_COLORS.primary }}
               >
                 {invitations.filter(i => i.status === 'pending').length}
@@ -719,19 +719,19 @@ export default function TeamPage() {
           <table className="w-full">
             <thead>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase" style={{ color: 'var(--text-muted, #777)' }}>
+                <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase" style={{ color: 'var(--text-muted, #777)' }}>
                   Email
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase" style={{ color: 'var(--text-muted, #777)' }}>
+                <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase" style={{ color: 'var(--text-muted, #777)' }}>
                   {t('team.role')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase" style={{ color: 'var(--text-muted, #777)' }}>
+                <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase" style={{ color: 'var(--text-muted, #777)' }}>
                   {language === 'fr' ? 'Envoyee le' : 'Sent'}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase" style={{ color: 'var(--text-muted, #777)' }}>
+                <th className="px-6 py-3 text-left text-[13px] font-semibold uppercase" style={{ color: 'var(--text-muted, #777)' }}>
                   Status
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium uppercase" style={{ color: 'var(--text-muted, #777)' }}>
+                <th className="px-6 py-3 text-right text-[13px] font-medium uppercase" style={{ color: 'var(--text-muted, #777)' }}>
                   {t('team.actions')}
                 </th>
               </tr>
@@ -746,11 +746,11 @@ export default function TeamPage() {
                         <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)' }}>
                           <Mail className="w-4 h-4" style={{ color: 'var(--text-hint, #888)' }} />
                         </div>
-                        <p className="text-sm font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{invitation.email}</p>
+                        <p className="text-[15px] font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{invitation.email}</p>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center text-xs font-medium" style={{ color: 'var(--text-secondary, #444)' }}>
+                      <span className="inline-flex items-center text-[13px] font-medium" style={{ color: 'var(--text-secondary, #444)' }}>
                         {invitation.role === 'admin'
                           ? (language === 'fr' ? 'Administrateur' : 'Admin')
                           : invitation.role === 'viewer'
@@ -759,17 +759,17 @@ export default function TeamPage() {
                         }
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm" style={{ color: 'var(--text-muted, #777)' }}>
+                    <td className="px-6 py-4 whitespace-nowrap text-[15px]" style={{ color: 'var(--text-muted, #777)' }}>
                       {formatDateFR(invitation.created_at)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {isExpired ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[13px] font-medium bg-red-50 text-red-700">
                           <Clock className="w-3 h-3" />
                           {language === 'fr' ? 'Expiree' : 'Expired'}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[13px] font-medium bg-amber-50 text-amber-700">
                           <Clock className="w-3 h-3" />
                           {language === 'fr' ? 'En attente' : 'Pending'}
                         </span>
@@ -779,7 +779,7 @@ export default function TeamPage() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleInvitationAction(invitation.id, 'resend')}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-[13px] font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                           title={language === 'fr' ? 'Renvoyer' : 'Resend'}
                         >
                           <RefreshCw className="w-3 h-3" />
@@ -787,7 +787,7 @@ export default function TeamPage() {
                         </button>
                         <button
                           onClick={() => handleInvitationAction(invitation.id, 'revoke')}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-[13px] font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
                           title={language === 'fr' ? 'Revoquer' : 'Revoke'}
                         >
                           <X className="w-3 h-3" />
@@ -814,7 +814,7 @@ export default function TeamPage() {
               </button>
             </div>
             <div className="p-4 space-y-4">
-              <p className="text-sm" style={{ color: 'var(--text-secondary, #444)' }}>
+              <p className="text-[15px]" style={{ color: 'var(--text-secondary, #444)' }}>
                 {t('team.changeRoleFor')} <strong>{getDisplayName(selectedMember)}</strong>
               </p>
               <div className="space-y-2">
@@ -843,7 +843,7 @@ export default function TeamPage() {
                         <p className="font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                           {t(`team.role${role.charAt(0).toUpperCase() + role.slice(1)}`)}
                         </p>
-                        <p className="text-xs" style={{ color: 'var(--text-muted, #777)' }}>
+                        <p className="text-[13px]" style={{ color: 'var(--text-muted, #777)' }}>
                           {t(`team.role${role.charAt(0).toUpperCase() + role.slice(1)}Desc`)}
                         </p>
                       </div>
@@ -858,7 +858,7 @@ export default function TeamPage() {
             <div className="flex justify-end gap-3 p-4 border-t" style={{ borderColor: '#dcdee3' }}>
               <button
                 onClick={() => setShowRoleModal(false)}
-                className="px-4 py-2 rounded-lg text-sm font-medium hover:bg-black/[0.02]"
+                className="px-4 py-2 rounded-lg text-[15px] font-medium hover:bg-black/[0.02]"
                 style={{ color: 'var(--text-secondary, #444)', border: '1px solid #dcdee3' }}
               >
                 {t('common.cancel')}
@@ -866,7 +866,7 @@ export default function TeamPage() {
               <button
                 onClick={handleChangeRole}
                 disabled={sending || newRole === selectedMember.role}
-                className="px-4 py-2 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+                className="px-4 py-2 text-white rounded-lg text-[15px] font-medium disabled:opacity-50"
                 style={{ backgroundColor: BRAND_COLORS.primary }}
               >
                 {sending ? t('common.loading') : t('team.updateRole')}
@@ -890,10 +890,10 @@ export default function TeamPage() {
               <div className="flex items-start gap-3 p-4 bg-red-50 rounded-lg">
                 <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm text-red-800">
+                  <p className="text-[15px] text-red-800">
                     {t('team.removeWarning')}
                   </p>
-                  <p className="text-sm text-red-700 mt-2 font-medium">
+                  <p className="text-[15px] text-red-700 mt-2 font-medium">
                     {getDisplayName(selectedMember)}
                   </p>
                 </div>
@@ -902,7 +902,7 @@ export default function TeamPage() {
             <div className="flex justify-end gap-3 p-4 border-t" style={{ borderColor: '#dcdee3' }}>
               <button
                 onClick={() => setShowRemoveModal(false)}
-                className="px-4 py-2 rounded-lg text-sm font-medium hover:bg-black/[0.02]"
+                className="px-4 py-2 rounded-lg text-[15px] font-medium hover:bg-black/[0.02]"
                 style={{ color: 'var(--text-secondary, #444)', border: '1px solid #dcdee3' }}
               >
                 {t('common.cancel')}
@@ -910,7 +910,7 @@ export default function TeamPage() {
               <button
                 onClick={handleRemoveMember}
                 disabled={sending}
-                className="px-4 py-2 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+                className="px-4 py-2 text-white rounded-lg text-[15px] font-medium disabled:opacity-50"
                 style={{ backgroundColor: BRAND_COLORS.danger }}
               >
                 {sending ? t('common.loading') : t('team.confirmRemove')}
@@ -932,7 +932,7 @@ export default function TeamPage() {
             </div>
             <div className="p-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary, #444)' }}>
+                <label className="block text-[15px] font-medium mb-1" style={{ color: 'var(--text-secondary, #444)' }}>
                   {t('team.emailAddress')}
                 </label>
                 <input
@@ -945,7 +945,7 @@ export default function TeamPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary, #444)' }}>
+                <label className="block text-[15px] font-medium mb-2" style={{ color: 'var(--text-secondary, #444)' }}>
                   {t('team.selectRole')}
                 </label>
                 <div className="space-y-2">
@@ -974,7 +974,7 @@ export default function TeamPage() {
                           <p className="font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                             {t(`team.role${role.charAt(0).toUpperCase() + role.slice(1)}`)}
                           </p>
-                          <p className="text-xs" style={{ color: 'var(--text-muted, #777)' }}>
+                          <p className="text-[13px]" style={{ color: 'var(--text-muted, #777)' }}>
                             {t(`team.role${role.charAt(0).toUpperCase() + role.slice(1)}Desc`)}
                           </p>
                         </div>
@@ -988,19 +988,19 @@ export default function TeamPage() {
               </div>
               {inviteError && (
                 <div className="p-3 bg-red-50 rounded-lg">
-                  <p className="text-sm text-red-800">{inviteError}</p>
+                  <p className="text-[15px] text-red-800">{inviteError}</p>
                 </div>
               )}
               {inviteSuccess && (
                 <div className="p-3 bg-green-50 rounded-lg">
-                  <p className="text-sm text-green-800">{inviteSuccess}</p>
+                  <p className="text-[15px] text-green-800">{inviteSuccess}</p>
                 </div>
               )}
             </div>
             <div className="flex justify-end gap-3 p-4 border-t" style={{ borderColor: '#dcdee3' }}>
               <button
                 onClick={() => { setShowInviteModal(false); setInviteError(''); setInviteSuccess(''); }}
-                className="px-4 py-2 rounded-lg text-sm font-medium hover:bg-black/[0.02]"
+                className="px-4 py-2 rounded-lg text-[15px] font-medium hover:bg-black/[0.02]"
                 style={{ color: 'var(--text-secondary, #444)', border: '1px solid #dcdee3' }}
               >
                 {t('common.cancel')}
@@ -1008,7 +1008,7 @@ export default function TeamPage() {
               <button
                 onClick={handleSendInvite}
                 disabled={sending || !inviteEmail.trim()}
-                className="flex items-center gap-2 px-4 py-2 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 text-white rounded-lg text-[15px] font-medium disabled:opacity-50"
                 style={{ backgroundColor: BRAND_COLORS.primary }}
               >
                 {sending && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -1060,7 +1060,7 @@ function MemberActions({
                 setOpen(false);
                 onEditRole();
               }}
-              className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-black/[0.02]"
+              className="w-full flex items-center gap-2 px-4 py-2 text-[15px] hover:bg-black/[0.02]"
               style={{ color: 'var(--text-secondary, #444)' }}
             >
               <Edit className="w-4 h-4" />
@@ -1071,7 +1071,7 @@ function MemberActions({
                 setOpen(false);
                 onRemove();
               }}
-              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+              className="w-full flex items-center gap-2 px-4 py-2 text-[15px] text-red-600 hover:bg-red-50"
             >
               <Trash2 className="w-4 h-4" />
               {language === 'fr' ? 'Retirer de l\'équipe' : 'Remove from team'}

@@ -165,7 +165,7 @@ export default function ThemeSettingsPage() {
         {/* Back Button */}
         <Link
           href="/settings"
-          className="flex items-center text-sm text-[var(--text-muted,#777)] hover:text-[var(--text-primary,#1a1a1a)] mb-6"
+          className="flex items-center text-[15px] text-[var(--text-muted,#777)] hover:text-[var(--text-primary,#1a1a1a)] mb-6"
         >
           <ArrowLeftIcon className="w-4 h-4 mr-2" />
           {labels.back[language]}
@@ -181,7 +181,7 @@ export default function ThemeSettingsPage() {
               <h1 className="text-2xl font-semibold text-[var(--text-primary,#1a1a1a)]">
                 {labels.pageTitle[language]}
               </h1>
-              <p className="text-sm text-[var(--text-muted,#777)]">
+              <p className="text-[15px] text-[var(--text-muted,#777)]">
                 {labels.pageSubtitle[language]}
               </p>
             </div>
@@ -190,7 +190,7 @@ export default function ThemeSettingsPage() {
           {!isEditing && (
             <button
               onClick={() => setIsEditing(true)}
-              className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-[var(--text-secondary,#444)] bg-[var(--card-bg,#edeff2)] border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="flex items-center space-x-2 px-4 py-2 text-[15px] font-medium text-[var(--text-secondary,#444)] bg-[var(--card-bg,#edeff2)] border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               <PencilIcon className="w-4 h-4" />
               <span>{labels.edit[language]}</span>
@@ -203,7 +203,7 @@ export default function ThemeSettingsPage() {
           <div className="space-y-6">
             {/* Current Colors */}
             <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-4">
+              <h3 className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-4">
                 {labels.colors[language]}
               </h3>
 
@@ -219,7 +219,7 @@ export default function ThemeSettingsPage() {
 
             {/* Preview */}
             <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-4">
+              <h3 className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-4">
                 {labels.preview[language]}
               </h3>
 
@@ -233,7 +233,7 @@ export default function ThemeSettingsPage() {
                 
                 <div
                   style={{ backgroundColor: `${colors.success}20`, borderColor: colors.success }}
-                  className="p-3 rounded-lg border-l-4 text-sm"
+                  className="p-3 rounded-lg border-l-4 text-[15px]"
                 >
                   <span style={{ color: colors.success }} className="font-medium">✓ </span>
                   {labels.sampleSuccess[language]}
@@ -241,7 +241,7 @@ export default function ThemeSettingsPage() {
 
                 <div
                   style={{ backgroundColor: `${colors.warning}20`, borderColor: colors.warning }}
-                  className="p-3 rounded-lg border-l-4 text-sm"
+                  className="p-3 rounded-lg border-l-4 text-[15px]"
                 >
                   <span style={{ color: colors.warning }} className="font-medium">⚠ </span>
                   {labels.sampleWarning[language]}
@@ -249,7 +249,7 @@ export default function ThemeSettingsPage() {
 
                 <div
                   style={{ backgroundColor: `${colors.danger}20`, borderColor: colors.danger }}
-                  className="p-3 rounded-lg border-l-4 text-sm"
+                  className="p-3 rounded-lg border-l-4 text-[15px]"
                 >
                   <span style={{ color: colors.danger }} className="font-medium">✕ </span>
                   {labels.sampleDanger[language]}
@@ -264,10 +264,10 @@ export default function ThemeSettingsPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Color Presets */}
             <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-2">
+              <h3 className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-2">
                 {labels.presets[language]}
               </h3>
-              <p className="text-xs text-[var(--text-hint,#888)] mb-4">{labels.presetsDesc[language]}</p>
+              <p className="text-[13px] text-[var(--text-hint,#888)] mb-4">{labels.presetsDesc[language]}</p>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {Object.entries(COLOR_PRESETS).map(([key, preset]) => (
@@ -291,7 +291,7 @@ export default function ThemeSettingsPage() {
                         style={{ backgroundColor: preset.colors.accent }}
                       />
                     </div>
-                    <div className="text-sm font-medium text-[var(--text-primary,#1a1a1a)]">
+                    <div className="text-[15px] font-medium text-[var(--text-primary,#1a1a1a)]">
                       {preset.name[language]}
                     </div>
                   </button>
@@ -301,10 +301,10 @@ export default function ThemeSettingsPage() {
 
             {/* Color Customization */}
             <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-2">
+              <h3 className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-2">
                 {labels.colors[language]}
               </h3>
-              <p className="text-xs text-[var(--text-hint,#888)] mb-4">{labels.colorsDesc[language]}</p>
+              <p className="text-[13px] text-[var(--text-hint,#888)] mb-4">{labels.colorsDesc[language]}</p>
 
               <div className="space-y-4">
                 <ColorPicker
@@ -353,7 +353,7 @@ export default function ThemeSettingsPage() {
 
             {/* Preview */}
             <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-4">
+              <h3 className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-4">
                 {labels.preview[language]}
               </h3>
 
@@ -368,7 +368,7 @@ export default function ThemeSettingsPage() {
                 
                 <div
                   style={{ backgroundColor: `${colors.success}20`, borderColor: colors.success }}
-                  className="p-3 rounded-lg border-l-4 text-sm"
+                  className="p-3 rounded-lg border-l-4 text-[15px]"
                 >
                   <span style={{ color: colors.success }} className="font-medium">✓ </span>
                   {labels.sampleSuccess[language]}
@@ -376,7 +376,7 @@ export default function ThemeSettingsPage() {
 
                 <div
                   style={{ backgroundColor: `${colors.warning}20`, borderColor: colors.warning }}
-                  className="p-3 rounded-lg border-l-4 text-sm"
+                  className="p-3 rounded-lg border-l-4 text-[15px]"
                 >
                   <span style={{ color: colors.warning }} className="font-medium">⚠ </span>
                   {labels.sampleWarning[language]}
@@ -384,7 +384,7 @@ export default function ThemeSettingsPage() {
 
                 <div
                   style={{ backgroundColor: `${colors.danger}20`, borderColor: colors.danger }}
-                  className="p-3 rounded-lg border-l-4 text-sm"
+                  className="p-3 rounded-lg border-l-4 text-[15px]"
                 >
                   <span style={{ color: colors.danger }} className="font-medium">✕ </span>
                   {labels.sampleDanger[language]}
@@ -397,14 +397,14 @@ export default function ThemeSettingsPage() {
               <button
                 type="button"
                 onClick={handleCancelEdit}
-                className="px-4 py-2 text-sm font-medium text-[var(--text-secondary,#444)] bg-[var(--card-bg,#edeff2)] border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 text-[15px] font-medium text-[var(--text-secondary,#444)] bg-[var(--card-bg,#edeff2)] border border-gray-300 rounded-lg hover:bg-gray-50"
               >
                 {labels.cancel[language]}
               </button>
               <button
                 type="submit"
                 disabled={saving}
-                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                className="flex items-center space-x-2 px-4 py-2 text-[15px] font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
                 <CheckIcon className="w-4 h-4" />
                 <span>{saving ? labels.saving[language] : labels.save[language]}</span>
@@ -421,9 +421,9 @@ export default function ThemeSettingsPage() {
 function ColorDisplay({ label, color }: { label: string; color: string }) {
   return (
     <div className="flex items-center justify-between py-3 border-b border-gray-200 last:border-0">
-      <span className="text-sm font-medium text-[var(--text-secondary,#444)]">{label}</span>
+      <span className="text-[15px] font-semibold text-[var(--text-secondary,#444)]">{label}</span>
       <div className="flex items-center space-x-3">
-        <span className="text-sm font-mono text-[var(--text-muted,#777)]">{color}</span>
+        <span className="text-[15px] font-mono text-[var(--text-muted,#777)]">{color}</span>
         <div
           className="w-8 h-8 rounded border border-gray-300"
           style={{ backgroundColor: color }}
@@ -446,10 +446,10 @@ function ColorPicker({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-1">
+      <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-1">
         {label}
       </label>
-      <p className="text-xs text-[var(--text-hint,#888)] mb-2">{description}</p>
+      <p className="text-[13px] text-[var(--text-hint,#888)] mb-2">{description}</p>
       <div className="flex items-center space-x-3">
         <input
           type="color"
@@ -462,7 +462,7 @@ function ColorPicker({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           pattern="^#[0-9A-Fa-f]{6}$"
-          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg font-mono text-[15px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />
       </div>
     </div>

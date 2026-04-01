@@ -19,7 +19,7 @@ export default function ImportAssetsButton({ onSuccess }: ImportAssetsButtonProp
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors hover:opacity-90"
+        className="inline-flex items-center px-4 py-2 text-[15px] font-medium rounded-md transition-colors hover:opacity-90"
         style={{ backgroundColor: 'var(--card-bg, #edeff2)', color: 'var(--text-primary, #1a1a1a)', border: '0.5px solid #b8b8b8' }}
       >
         <ArrowUpTrayIcon className="h-5 w-5 mr-2" />

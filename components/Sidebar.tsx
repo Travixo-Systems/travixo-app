@@ -230,7 +230,7 @@ export default function Sidebar() {
                 "flex items-center px-4 py-3 text-sm font-medium rounded-lg group relative",
                 isActive
                   ? 'text-white border-l-2 border-[#e8600a]'
-                  : 'text-white/50 hover:text-white',
+                  : 'text-white/70 hover:text-white',
                 collapsed && "justify-center"
               )}
               style={isActive ? { backgroundColor: 'rgba(226,128,38,0.15)' } : undefined}
@@ -258,7 +258,7 @@ export default function Sidebar() {
               "w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg",
               pathname.startsWith('/vgp')
                 ? 'text-white border-l-2 border-[#e8600a]'
-                : 'text-white/50 hover:text-white',
+                : 'text-white/70 hover:text-white',
               collapsed && "justify-center"
             )}
             style={pathname.startsWith('/vgp') ? { backgroundColor: 'rgba(226,128,38,0.15)' } : undefined}
@@ -318,7 +318,7 @@ export default function Sidebar() {
                 "flex items-center px-4 py-3 text-sm font-medium rounded-lg",
                 isActive
                   ? 'text-white border-l-2 border-[#e8600a]'
-                  : 'text-white/50 hover:text-white',
+                  : 'text-white/70 hover:text-white',
                 collapsed && "justify-center"
               )}
               style={isActive ? { backgroundColor: 'rgba(226,128,38,0.15)' } : undefined}

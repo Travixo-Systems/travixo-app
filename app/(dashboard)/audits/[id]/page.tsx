@@ -398,7 +398,7 @@ export default function AuditDetailPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{audit.name}</h1>
             {audit.status === 'completed' && audit.completed_at && (
-              <p className="text-sm text-gray-500">
+              <p className="text-[15px] text-gray-500">
                 {t('audits.completedOn')} {formatDateTimeFR(audit.completed_at)}
               </p>
             )}
@@ -453,8 +453,8 @@ export default function AuditDetailPage() {
       {/* Progress Bar */}
       <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-sm p-5">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-700">{t('audits.progress')}</span>
-          <span className="text-sm font-bold" style={{ color: audit.status === 'completed' ? BRAND_COLORS.success : progressColor }}>
+          <span className="text-[15px] font-medium text-gray-700">{t('audits.progress')}</span>
+          <span className="text-[15px] font-bold" style={{ color: audit.status === 'completed' ? BRAND_COLORS.success : progressColor }}>
             {stats.verified} / {stats.total} ({progress}%)
           </span>
         </div>
@@ -478,10 +478,10 @@ export default function AuditDetailPage() {
           }`}
           style={{ borderLeft: `4px solid ${BRAND_COLORS.gray}`, borderBottom: `4px solid ${BRAND_COLORS.gray}` }}
         >
-          <p className="text-sm text-gray-600">{t('audits.totalAssets')}</p>
+          <p className="text-[15px] text-gray-600">{t('audits.totalAssets')}</p>
           <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
           {stats.excluded > 0 && (
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-[13px] text-gray-500 mt-1">
               ({stats.excluded} {language === 'fr' ? 'exclu(s)' : 'excluded'})
             </p>
           )}
@@ -494,7 +494,7 @@ export default function AuditDetailPage() {
           }`}
           style={{ borderLeft: `4px solid ${BRAND_COLORS.success}`, borderBottom: `4px solid ${BRAND_COLORS.success}` }}
         >
-          <p className="text-sm text-gray-600">{t('audits.verified')}</p>
+          <p className="text-[15px] text-gray-600">{t('audits.verified')}</p>
           <p className="text-2xl font-bold" style={{ color: BRAND_COLORS.success }}>{stats.verified}</p>
         </button>
 
@@ -505,7 +505,7 @@ export default function AuditDetailPage() {
           }`}
           style={{ borderLeft: `4px solid ${BRAND_COLORS.warning}`, borderBottom: `4px solid ${BRAND_COLORS.warning}` }}
         >
-          <p className="text-sm text-gray-600">{t('audits.pending')}</p>
+          <p className="text-[15px] text-gray-600">{t('audits.pending')}</p>
           <p className="text-2xl font-bold" style={{ color: BRAND_COLORS.warning }}>{stats.pending}</p>
         </button>
 
@@ -516,7 +516,7 @@ export default function AuditDetailPage() {
           }`}
           style={{ borderLeft: `4px solid ${BRAND_COLORS.danger}`, borderBottom: `4px solid ${BRAND_COLORS.danger}` }}
         >
-          <p className="text-sm text-gray-600">{t('audits.missing')}</p>
+          <p className="text-[15px] text-gray-600">{t('audits.missing')}</p>
           <p className="text-2xl font-bold" style={{ color: BRAND_COLORS.danger }}>{stats.missing}</p>
         </button>
       </div>
@@ -548,7 +548,7 @@ export default function AuditDetailPage() {
                 placeholder={t('audits.searchAssets')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[15px]"
               />
             </div>
           </div>
@@ -564,23 +564,23 @@ export default function AuditDetailPage() {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-[13px] font-semibold text-gray-500 uppercase tracking-wider">
                       {t('audits.asset')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-[13px] font-semibold text-gray-500 uppercase tracking-wider">
                       {t('audits.category')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-[13px] font-semibold text-gray-500 uppercase tracking-wider">
                       {t('audits.serialNumber')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-[13px] font-semibold text-gray-500 uppercase tracking-wider">
                       {t('audits.location')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-[13px] font-semibold text-gray-500 uppercase tracking-wider">
                       {t('audits.status')}
                     </th>
                     {audit.status === 'in_progress' && (
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-right text-[13px] font-semibold text-gray-500 uppercase tracking-wider">
                         {t('audits.actions')}
                       </th>
                     )}
@@ -597,41 +597,41 @@ export default function AuditDetailPage() {
                           <span className="font-medium text-gray-900">{item.assets?.name || '-'}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
+                      <td className="px-6 py-4 text-[15px] text-gray-600">
                         {item.assets?.asset_categories?.name || '-'}
                       </td>
                       <td className="px-6 py-4">
-                        <span className="font-mono text-sm text-gray-600">
+                        <span className="font-mono text-[15px] text-gray-600">
                           {item.assets?.serial_number || '-'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                        <div className="flex items-center gap-1.5 text-[15px] text-gray-600">
                           <MapPin className="w-3.5 h-3.5" />
                           {item.assets?.current_location || '-'}
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         {item.status === 'pending' && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-orange-50" style={{ color: BRAND_COLORS.warning }}>
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[13px] font-medium rounded-full bg-orange-50" style={{ color: BRAND_COLORS.warning }}>
                             <Clock className="w-3.5 h-3.5" />
                             {t('audits.pending')}
                           </span>
                         )}
                         {item.status === 'verified' && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-green-50" style={{ color: BRAND_COLORS.success }}>
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[13px] font-medium rounded-full bg-green-50" style={{ color: BRAND_COLORS.success }}>
                             <CheckCircle className="w-3.5 h-3.5" />
                             {t('audits.verified')}
                           </span>
                         )}
                         {item.status === 'missing' && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-red-50" style={{ color: BRAND_COLORS.danger }}>
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[13px] font-medium rounded-full bg-red-50" style={{ color: BRAND_COLORS.danger }}>
                             <XCircle className="w-3.5 h-3.5" />
                             {t('audits.missing')}
                           </span>
                         )}
                         {item.status === 'excluded' && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-500">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[13px] font-medium rounded-full bg-gray-100 text-gray-500">
                             <Ban className="w-3.5 h-3.5" />
                             {language === 'fr' ? 'Exclu' : 'Excluded'}
                           </span>
@@ -643,14 +643,14 @@ export default function AuditDetailPage() {
                             <div className="flex items-center justify-end gap-2">
                               <button
                                 onClick={() => updateItemStatus(item.id, 'verified')}
-                                className="px-3 py-1.5 text-xs font-medium text-white rounded-lg"
+                                className="px-3 py-1.5 text-[13px] font-medium text-white rounded-lg"
                                 style={{ backgroundColor: BRAND_COLORS.success }}
                               >
                                 {t('audits.markVerified')}
                               </button>
                               <button
                                 onClick={() => updateItemStatus(item.id, 'missing')}
-                                className="px-3 py-1.5 text-xs font-medium text-white rounded-lg"
+                                className="px-3 py-1.5 text-[13px] font-medium text-white rounded-lg"
                                 style={{ backgroundColor: BRAND_COLORS.danger }}
                               >
                                 {t('audits.markMissing')}
@@ -660,7 +660,7 @@ export default function AuditDetailPage() {
                           {item.status !== 'pending' && (
                             <button
                               onClick={() => updateItemStatus(item.id, item.status === 'verified' ? 'missing' : 'verified')}
-                              className="text-xs text-blue-600 hover:underline"
+                              className="text-[13px] text-blue-600 hover:underline"
                             >
                               {item.status === 'verified' ? t('audits.markMissing') : t('audits.markVerified')}
                             </button>
@@ -680,22 +680,22 @@ export default function AuditDetailPage() {
       {excludedItems.length > 0 && (statusFilter === 'all' || statusFilter === 'excluded') && (
         <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b bg-gray-50">
-            <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <h3 className="text-[15px] font-semibold text-gray-700 flex items-center gap-2">
               <Ban className="w-4 h-4 text-gray-400" />
               {language === 'fr' ? 'Equipements exclus' : 'Excluded Assets'} ({excludedItems.length})
             </h3>
           </div>
           <div className="divide-y divide-gray-100">
             {excludedItems.map(item => (
-              <div key={item.id} className="px-6 py-3 flex items-center justify-between text-sm">
+              <div key={item.id} className="px-6 py-3 flex items-center justify-between text-[15px]">
                 <div className="flex items-center gap-3">
                   <Package className="w-4 h-4 text-gray-300" />
                   <span className="text-gray-500">{item.assets?.name || '-'}</span>
                   {item.assets?.serial_number && (
-                    <span className="text-xs font-mono text-gray-400">{item.assets.serial_number}</span>
+                    <span className="text-[13px] font-mono text-gray-400">{item.assets.serial_number}</span>
                   )}
                 </div>
-                <span className="text-xs text-gray-400 italic max-w-xs truncate">
+                <span className="text-[13px] text-gray-400 italic max-w-xs truncate">
                   {item.notes || '-'}
                 </span>
               </div>
@@ -709,7 +709,7 @@ export default function AuditDetailPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-[var(--card-bg,#edeff2)] rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">{t('audits.confirmComplete')}</h2>
+              <h2 className="text-[22px] font-semibold text-gray-900">{t('audits.confirmComplete')}</h2>
               <button
                 onClick={() => setShowCompleteModal(false)}
                 className="p-2 hover:bg-gray-100 rounded-lg"
@@ -720,7 +720,7 @@ export default function AuditDetailPage() {
 
             <div className="flex items-start gap-3 p-4 bg-yellow-50 rounded-lg mb-4">
               <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
-              <p className="text-sm text-yellow-800">{t('audits.confirmCompleteDesc')}</p>
+              <p className="text-[15px] text-yellow-800">{t('audits.confirmCompleteDesc')}</p>
             </div>
 
             <div className="space-y-2 mb-6">

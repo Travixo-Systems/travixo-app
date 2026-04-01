@@ -159,7 +159,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
         <div className="flex items-center justify-between p-6" style={{ borderBottom: '0.5px solid #dcdee3' }}>
           <div>
             <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpScheduleModal.title')}</h2>
-            <p className="text-[13px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>
+            <p className="text-[14px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>
               {t('vgpScheduleModal.subtitle')}
             </p>
           </div>
@@ -175,8 +175,8 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
 
         {/* Asset Info — equipment identity block */}
         <div className="p-4 mx-6 mt-6 rounded-lg" style={{ backgroundColor: 'var(--page-bg, #cbcdd4)' }}>
-          <h3 className="text-sm font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{asset.name}</h3>
-          <div className="flex items-center gap-4 mt-1 text-[13px]" style={{ color: 'var(--text-muted, #777)' }}>
+          <h3 className="text-[15px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{asset.name}</h3>
+          <div className="flex items-center gap-4 mt-1 text-[14px]" style={{ color: 'var(--text-muted, #777)' }}>
             {asset.serial_number && <span>{t('vgpScheduleModal.serialNumber')}: {asset.serial_number}</span>}
             {asset.category && <span>{t('vgpScheduleModal.category')}: {asset.category}</span>}
           </div>
@@ -191,7 +191,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
                 <h4 className="font-semibold text-red-900 mb-1">{t('vgpScheduleModal.validationErrors')}</h4>
                 <ul className="list-disc list-inside space-y-1">
                   {validationErrors.map((err, idx) => (
-                    <li key={idx} className="text-sm text-red-700">{err}</li>
+                    <li key={idx} className="text-[15px] text-red-700">{err}</li>
                   ))}
                 </ul>
               </div>
@@ -213,7 +213,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Interval Selection */}
           <div>
-            <label className="block text-[13px] font-medium mb-2" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+            <label className="block text-[14px] font-semibold mb-2" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
               {t('vgpScheduleModal.intervalLabel')} <span className="text-[#dc2626]">*</span>
             </label>
             <select
@@ -222,21 +222,21 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
                 setFormData({ ...formData, interval_months: parseInt(e.target.value) });
                 setValidationErrors([]);
               }}
-              className="w-full px-3 py-2 rounded-lg text-[13px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
+              className="w-full px-3 py-2 rounded-lg text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
               required
             >
               <option value={6}>{t('vgpScheduleModal.interval6Months')}</option>
               <option value={12}>{t('vgpScheduleModal.interval12Months')}</option>
               <option value={24}>{t('vgpScheduleModal.interval24Months')}</option>
             </select>
-            <p className="text-[11px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>
+            <p className="text-[12px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>
               {t('vgpScheduleModal.intervalHelp')}
             </p>
           </div>
 
           {/* Last Inspection Date */}
           <div>
-            <label className="block text-[13px] font-medium mb-2" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+            <label className="block text-[14px] font-semibold mb-2" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
               {t('vgpScheduleModal.lastInspectionDate')} <span className="text-[#dc2626]">*</span>
             </label>
             <input
@@ -247,10 +247,10 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
                 setFormData({ ...formData, last_inspection_date: e.target.value });
                 setValidationErrors([]);
               }}
-              className="w-full px-3 py-2 rounded-lg text-[13px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
+              className="w-full px-3 py-2 rounded-lg text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
               required
             />
-            <p className="text-[11px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>
+            <p className="text-[12px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>
               {t('vgpScheduleModal.lastInspectionHelp')}
             </p>
           </div>
@@ -261,7 +261,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
               <div className="flex items-start gap-2">
                 <CheckCircle className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: 'var(--status-conforme, #059669)' }} />
                 <div>
-                  <p className="text-[13px] font-medium" style={{ color: 'var(--text-muted, #777)' }}>
+                  <p className="text-[14px] font-semibold" style={{ color: 'var(--text-muted, #777)' }}>
                     {t('vgpScheduleModal.nextInspectionDue')}
                   </p>
                   <p className="text-lg font-bold" style={{ color: 'var(--status-conforme, #059669)' }}>
@@ -271,7 +271,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
                       year: 'numeric' 
                     })}
                   </p>
-                  <p className="text-xs mt-1" style={{ color: 'var(--status-conforme, #059669)' }}>
+                  <p className="text-[13px] mt-1" style={{ color: 'var(--status-conforme, #059669)' }}>
                     {Math.ceil((nextDueDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} {t('vgpScheduleModal.daysFromToday')}
                   </p>
                 </div>
@@ -281,7 +281,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
 
           {/* Created By */}
           <div>
-            <label className="block text-[13px] font-medium mb-2" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+            <label className="block text-[14px] font-semibold mb-2" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
               {t('vgpScheduleModal.createdBy')} <span className="text-[#dc2626]">*</span>
             </label>
             <input
@@ -291,28 +291,28 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
                 setFormData({ ...formData, created_by: e.target.value });
                 setValidationErrors([]);
               }}
-              className="w-full px-3 py-2 rounded-lg text-[13px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
+              className="w-full px-3 py-2 rounded-lg text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
               placeholder={t('vgpScheduleModal.createdByPlaceholder')}
               required
             />
-            <p className="text-[11px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>
+            <p className="text-[12px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>
               {t('vgpScheduleModal.createdByHelp')}
             </p>
           </div>
 
           {/* Notes */}
           <div>
-            <label className="block text-[13px] font-medium mb-2" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+            <label className="block text-[14px] font-semibold mb-2" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
               {t('vgpScheduleModal.notes')}
             </label>
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg text-[13px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
+              className="w-full px-3 py-2 rounded-lg text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
               rows={3}
               placeholder={t('vgpScheduleModal.notesPlaceholder')}
             />
-            <p className="text-[11px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>
+            <p className="text-[12px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>
               {t('vgpScheduleModal.notesHelp')}
             </p>
           </div>
@@ -322,7 +322,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 rounded-md font-medium transition-colors" style={{ color: 'var(--text-muted, #777)' }}
+              className="flex-1 px-4 py-2 rounded-md text-[14px] font-medium transition-colors" style={{ color: 'var(--text-muted, #777)' }}
               disabled={submitting}
             >
               {t('vgpScheduleModal.cancel')}
@@ -330,14 +330,14 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
             <button
               type="submit"
               disabled={submitting || !isFormValid}
-              className="flex-1 px-4 py-2 text-white rounded-md font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed" style={{ backgroundColor: 'var(--accent, #e8600a)' }}
+              className="flex-1 px-4 py-2 text-white rounded-md text-[14px] font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed" style={{ backgroundColor: 'var(--accent, #e8600a)' }}
             >
               {submitting ? t('vgpScheduleModal.submitting') : t('vgpScheduleModal.submit')}
             </button>
           </div>
 
           {/* Helper text */}
-          <p className="text-xs text-gray-500 text-center">
+          <p className="text-[13px] text-gray-500 text-center">
             <span className="text-[#dc2626]">*</span> {t('vgpScheduleModal.requiredFields')}
           </p>
         </form>

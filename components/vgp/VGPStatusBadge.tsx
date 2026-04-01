@@ -87,7 +87,7 @@ export function VGPStatusBadge({ status, size = 'sm', language = 'fr' }: VGPStat
 
   return (
     <span
-      className="inline-flex items-center gap-1.5 text-[13px] font-medium"
+      className="inline-flex items-center gap-1.5 text-[14px] font-semibold"
       style={{ color: colors.text }}
       role="status"
       aria-label={`Statut VGP : ${label}`}
@@ -113,7 +113,7 @@ export function VGPCountdownPill({ daysUntil }: { daysUntil: number }) {
 
   return (
     <span
-      className="inline-flex items-center justify-center min-w-[52px] px-3 py-1.5 rounded-lg text-sm tabular-nums font-medium"
+      className="inline-flex items-center justify-center min-w-[52px] px-3 py-1.5 rounded-lg text-[15px] tabular-nums font-medium"
       style={colorStyle}
       aria-label={`Dans ${daysUntil} jours`}
     >

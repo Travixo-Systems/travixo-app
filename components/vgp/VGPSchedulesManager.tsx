@@ -117,7 +117,7 @@ function StatusBadge({ status, t }: { status: StatusFilter; t: (key: string) => 
 
   const { key, bg, text } = config[status];
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${bg} ${text}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[13px] font-semibold ${bg} ${text}`}>
       {t(key)}
     </span>
   );
@@ -136,7 +136,7 @@ function Toast({ message, type, onClose }: { message: string; type: 'success' | 
       <div className={`${type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
         {type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
       </div>
-      <p className={`font-medium text-sm ${type === 'success' ? 'text-green-900' : 'text-red-900'}`}>{message}</p>
+      <p className={`font-medium text-[15px] ${type === 'success' ? 'text-green-900' : 'text-red-900'}`}>{message}</p>
       <button onClick={onClose} className="ml-2 text-gray-400 hover:text-gray-600">
         <X className="w-4 h-4" />
       </button>
@@ -329,7 +329,7 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
 
       {/* Header */}
       <div>
-        <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpSchedules.pageTitle')}</h1>
+        <h1 className="text-[22px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('vgpSchedules.pageTitle')}</h1>
         <p className="mt-1" style={{ color: 'var(--text-muted, #777)' }}>{t('vgpSchedules.pageSubtitle')}</p>
       </div>
 
@@ -380,7 +380,7 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
             placeholder={t('vgpSchedules.search')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-10 py-2.5 rounded-lg text-[13px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
+            className="w-full pl-10 pr-10 py-2.5 rounded-lg text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
             style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
           />
           {search && (
@@ -396,13 +396,13 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
 
       {/* Results */}
       <div className="flex items-center justify-between">
-        <span className="text-sm text-gray-600">
+        <span className="text-[15px] text-gray-600">
           {filteredSchedules.length} {filteredSchedules.length !== 1 ? t('vgpSchedules.resultsPlural') : t('vgpSchedules.results')}
         </span>
         {statusFilter !== 'all' && (
           <button
             onClick={() => handleFilterChange('all')}
-            className="text-sm text-blue-600 hover:underline"
+            className="text-[15px] text-blue-600 hover:underline"
           >
             {t('vgpSchedules.showAll')}
           </button>
@@ -459,18 +459,18 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
                     <tr key={schedule.id} className="hover:bg-black/[0.02] transition-colors">
                       <td className="px-3 py-2">
                         <div>
-                          <p className="font-semibold text-gray-900 text-sm">{schedule.assets?.name || 'N/A'}</p>
-                          <p className="text-xs text-gray-500">{t('vgpSchedules.serialNumber')}: {schedule.assets?.serial_number || 'N/A'}</p>
+                          <p className="font-semibold text-gray-900 text-[15px]">{schedule.assets?.name || 'N/A'}</p>
+                          <p className="text-[13px] text-gray-500">{t('vgpSchedules.serialNumber')}: {schedule.assets?.serial_number || 'N/A'}</p>
                         </div>
                       </td>
-                      <td className="px-3 py-2 text-sm text-gray-700">
+                      <td className="px-3 py-2 text-[15px] text-gray-700">
                         {schedule.assets?.asset_categories?.name || t('vgpSchedules.uncategorized')}
                       </td>
-                      <td className="px-3 py-2 text-sm text-gray-700">
+                      <td className="px-3 py-2 text-[15px] text-gray-700">
                         {schedule.assets?.current_location || t('vgpSchedules.notSpecified')}
                       </td>
                       <td className="px-3 py-2">
-                        <p className="font-semibold text-gray-900 text-sm">{formatDateFR(schedule.next_due_date)}</p>
+                        <p className="font-semibold text-gray-900 text-[15px]">{formatDateFR(schedule.next_due_date)}</p>
                       </td>
                       <td className="px-3 py-2">
                         <StatusBadge status={status} t={t} />
@@ -480,7 +480,7 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
                           {!isReadOnly && (
                             <button
                               onClick={() => window.location.href = `/vgp/inspection/${schedule.id}`}
-                              className="inline-flex items-center justify-center min-h-[44px] px-3 py-2.5 text-[11px] font-semibold text-white rounded transition-colors focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
+                              className="inline-flex items-center justify-center min-h-[44px] px-3 py-2.5 text-[14px] font-medium text-white rounded transition-colors focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
                               style={{ backgroundColor: 'var(--sidebar-bg, #0a2730)' }}
                               onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
                               onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
@@ -577,7 +577,7 @@ export default function VGPSchedulesManager() {
 
 function TableHeader({ children }: { children: React.ReactNode }) {
   return (
-    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-hint,#888)] uppercase tracking-wider">
+    <th className="px-4 py-3 text-left text-[13px] font-semibold text-[var(--text-hint,#888)] uppercase tracking-wider">
       {children}
     </th>
   );
@@ -610,8 +610,8 @@ function StatCard({
         ...(active ? { '--tw-ring-color': color } as any : {})
       }}
     >
-      <p className="text-[26px] font-medium" style={{ color }}>{value}</p>
-      <p className="text-xs font-semibold mt-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{title}</p>
+      <p className="text-[30px] font-semibold" style={{ color }}>{value}</p>
+      <p className="text-[13px] font-semibold mt-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{title}</p>
     </button>
   );
 }
@@ -638,7 +638,7 @@ function DetailsModal({ schedule, onClose, t }: { schedule: Schedule; onClose: (
         <div className="p-6 space-y-6">
           <div className="flex items-center gap-3">
             <StatusBadge status={status} t={t} />
-            <span className={`text-sm font-medium ${
+            <span className={`text-[15px] font-semibold ${
               days < 0 ? 'text-red-600' : days <= 30 ? 'text-orange-600' : 'text-gray-500'
             }`}>
               {days < 0 ? t('vgpSchedules.detailsModal.overdueBy').replace('{days}', Math.abs(days).toString()) : t('vgpSchedules.detailsModal.daysUntil').replace('{days}', days.toString())}
@@ -675,14 +675,14 @@ function DetailsModal({ schedule, onClose, t }: { schedule: Schedule; onClose: (
 
           <div className="pt-4 border-t border-gray-200">
             <h3 className="font-semibold text-gray-900 mb-2">{t('vgpSchedules.detailsModal.qrCode')}</h3>
-            <p className="font-mono text-sm bg-gray-100 p-3 rounded-lg">{schedule.assets?.qr_code}</p>
+            <p className="font-mono text-[15px] bg-gray-100 p-3 rounded-lg">{schedule.assets?.qr_code}</p>
           </div>
         </div>
 
         <div className="sticky bottom-0 bg-gray-50 px-6 py-4 flex justify-end border-t border-gray-200">
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-medium transition-colors"
+            className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 text-[14px] font-medium transition-colors"
           >
             {t('vgpSchedules.detailsModal.close')}
           </button>
@@ -695,7 +695,7 @@ function DetailsModal({ schedule, onClose, t }: { schedule: Schedule; onClose: (
 function InfoField({ label, value }: { label: string; value?: string | number | null }) {
   return (
     <div>
-      <p className="text-sm text-gray-600 mb-1">{label}</p>
+      <p className="text-[15px] text-gray-600 mb-1">{label}</p>
       <p className="font-semibold text-gray-900">{value || 'N/A'}</p>
     </div>
   );

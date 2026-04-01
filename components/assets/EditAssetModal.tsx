@@ -132,7 +132,7 @@ export default function EditAssetModal({ isOpen, onClose, asset }: EditAssetModa
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2">
-                      <label className="block text-[13px] font-medium mb-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                      <label className="block text-[14px] font-semibold mb-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                         {t('assets.labelAssetName')} *
                       </label>
                       <input
@@ -140,42 +140,42 @@ export default function EditAssetModal({ isOpen, onClose, asset }: EditAssetModa
                         required
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full px-3 py-2 rounded-lg text-[13px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
+                        className="w-full px-3 py-2 rounded-lg text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[13px] font-medium mb-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                      <label className="block text-[14px] font-semibold mb-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                         {t('assets.labelSerialNumber')}
                       </label>
                       <input
                         type="text"
                         value={formData.serial_number}
                         onChange={(e) => setFormData({ ...formData, serial_number: e.target.value })}
-                        className="w-full px-3 py-2 rounded-lg text-[13px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
+                        className="w-full px-3 py-2 rounded-lg text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[13px] font-medium mb-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                      <label className="block text-[14px] font-semibold mb-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                         {t('assets.labelCurrentLocation')}
                       </label>
                       <input
                         type="text"
                         value={formData.current_location}
                         onChange={(e) => setFormData({ ...formData, current_location: e.target.value })}
-                        className="w-full px-3 py-2 rounded-lg text-[13px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
+                        className="w-full px-3 py-2 rounded-lg text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[13px] font-medium mb-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                      <label className="block text-[14px] font-semibold mb-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                         {t('assets.labelStatus')}
                       </label>
                       <select
                         value={formData.status}
                         onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                        className="w-full px-3 py-2 rounded-lg text-[13px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
+                        className="w-full px-3 py-2 rounded-lg text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
                       >
                         <option value="available">{t('assets.statusAvailable')}</option>
                         <option value="in_use">{t('assets.statusInUse')}</option>
@@ -185,19 +185,19 @@ export default function EditAssetModal({ isOpen, onClose, asset }: EditAssetModa
                     </div>
 
                     <div>
-                      <label className="block text-[13px] font-medium mb-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                      <label className="block text-[14px] font-semibold mb-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                         {t('assets.labelPurchaseDate')}
                       </label>
                       <input
                         type="date"
                         value={formData.purchase_date}
                         onChange={(e) => setFormData({ ...formData, purchase_date: e.target.value })}
-                        className="w-full px-3 py-2 rounded-lg text-[13px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
+                        className="w-full px-3 py-2 rounded-lg text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[13px] font-medium mb-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                      <label className="block text-[14px] font-semibold mb-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                         {t('assets.labelPurchasePrice')} (EUR)
                       </label>
                       <input
@@ -205,12 +205,12 @@ export default function EditAssetModal({ isOpen, onClose, asset }: EditAssetModa
                         step="0.01"
                         value={formData.purchase_price}
                         onChange={(e) => setFormData({ ...formData, purchase_price: e.target.value })}
-                        className="w-full px-3 py-2 rounded-lg text-[13px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
+                        className="w-full px-3 py-2 rounded-lg text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[13px] font-medium mb-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                      <label className="block text-[14px] font-semibold mb-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                         {t('assets.labelCurrentValue')} (EUR)
                       </label>
                       <input
@@ -218,19 +218,19 @@ export default function EditAssetModal({ isOpen, onClose, asset }: EditAssetModa
                         step="0.01"
                         value={formData.current_value}
                         onChange={(e) => setFormData({ ...formData, current_value: e.target.value })}
-                        className="w-full px-3 py-2 rounded-lg text-[13px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
+                        className="w-full px-3 py-2 rounded-lg text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
                       />
                     </div>
 
                     <div className="col-span-2">
-                      <label className="block text-[13px] font-medium mb-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                      <label className="block text-[14px] font-semibold mb-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                         {t('assets.labelDescription')}
                       </label>
                       <textarea
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         rows={3}
-                        className="w-full px-3 py-2 rounded-lg text-[13px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
+                        className="w-full px-3 py-2 rounded-lg text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
                       />
                     </div>
                   </div>
@@ -239,14 +239,14 @@ export default function EditAssetModal({ isOpen, onClose, asset }: EditAssetModa
                     <button
                       type="button"
                       onClick={onClose}
-                      className="px-4 py-2 text-sm font-medium rounded-md transition-colors" style={{ color: 'var(--text-muted, #777)' }}
+                      className="px-4 py-2 text-[15px] font-medium rounded-md transition-colors" style={{ color: 'var(--text-muted, #777)' }}
                     >
                       {t('assets.buttonCancel')}
                     </button>
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="px-4 py-2 text-sm font-medium text-white rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed" style={{ backgroundColor: 'var(--accent, #e8600a)' }}
+                      className="px-4 py-2 text-[15px] font-medium text-white rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed" style={{ backgroundColor: 'var(--accent, #e8600a)' }}
                     >
                       {isLoading ? t('assets.buttonSaving') : t('assets.buttonSaveChanges')}
                     </button>

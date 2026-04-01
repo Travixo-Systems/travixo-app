@@ -72,6 +72,17 @@ export default function AssetsPageClient() {
 
             if (!userData?.organization_id) return
 
+            // ===== DEBUG STEP 2: test vgp_schedules access directly =====
+            const { data: testSchedules, error: testError } = await supabase
+                .from('vgp_schedules')
+                .select('id, asset_id, next_due_date')
+                .limit(5)
+            console.log('[DEBUG STEP 2] Direct vgp_schedules query:', {
+                count: testSchedules?.length,
+                error: testError,
+                data: testSchedules
+            })
+
             const { data, error } = await supabase
                 .from('assets')
                 .select(`
@@ -92,6 +103,43 @@ export default function AssetsPageClient() {
 
             if (error) {
                 console.error('Failed to load assets with VGP schedules:', error)
+            }
+
+            // ===== DEBUG STEP 3: log first 3 assets with their schedules =====
+            console.log('[DEBUG STEP 3] First 3 assets with schedules:',
+                data?.slice(0, 3).map((a: any) => ({
+                    id: a.id,
+                    name: a.name,
+                    schedules: a.vgp_schedules
+                }))
+            )
+
+            // ===== DEBUG STEP 4: find the two working assets =====
+            const haulotte = data?.find((a: any) => a.name?.toLowerCase().includes('haulotte'))
+            const toyota = data?.find((a: any) => a.name?.toLowerCase().includes('toyota'))
+            console.log('[DEBUG STEP 4] Haulotte asset:', haulotte ? {
+                id: haulotte.id,
+                name: haulotte.name,
+                schedules: haulotte.vgp_schedules
+            } : 'NOT FOUND')
+            console.log('[DEBUG STEP 4] Toyota asset:', toyota ? {
+                id: toyota.id,
+                name: toyota.name,
+                schedules: toyota.vgp_schedules
+            } : 'NOT FOUND')
+
+            // ===== DEBUG: count assets with vs without schedules =====
+            const withSchedules = data?.filter((a: any) => a.vgp_schedules && a.vgp_schedules.length > 0) || []
+            const withoutSchedules = data?.filter((a: any) => !a.vgp_schedules || a.vgp_schedules.length === 0) || []
+            console.log('[DEBUG SUMMARY] Assets with schedules:', withSchedules.length,
+                '| without:', withoutSchedules.length,
+                '| total:', data?.length)
+            if (withSchedules.length > 0) {
+                console.log('[DEBUG SUMMARY] Sample asset WITH schedules:', {
+                    id: withSchedules[0].id,
+                    name: withSchedules[0].name,
+                    schedules: withSchedules[0].vgp_schedules
+                })
             }
 
             // Compute vgp_status from the most urgent active schedule
@@ -203,17 +251,17 @@ export default function AssetsPageClient() {
 
     if (loading) {
         return (
-            <div className="p-8 flex justify-center items-center h-64">
+            <div className="p-3 md:p-6 flex justify-center items-center h-64">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#e8600a]"></div>
             </div>
         )
     }
 
     return (
-        <div className="p-8">
+        <div className="p-3 md:p-6">
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('assets.pageTitle')}</h1>
+                    <h1 className="text-[22px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('assets.pageTitle')}</h1>
                     <p className="mt-1" style={{ color: 'var(--text-muted, #777777)' }}>
                         {t('assets.pageSubtitle')}
                     </p>
@@ -239,8 +287,8 @@ export default function AssetsPageClient() {
 
             {assets.length === 0 ? (
                 <div className="text-center py-12 rounded-lg border-2 border-dashed" style={{ backgroundColor: 'var(--card-bg, #edeff2)', borderColor: '#b8b8b8' }}>
-                    <h3 className="mt-2 text-sm font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('assets.noAssets')}</h3>
-                    <p className="mt-1 text-sm" style={{ color: 'var(--text-muted, #777777)' }}>{t('assets.noAssetsDescription')}</p>
+                    <h3 className="mt-2 text-[15px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('assets.noAssets')}</h3>
+                    <p className="mt-1 text-[15px]" style={{ color: 'var(--text-muted, #777777)' }}>{t('assets.noAssetsDescription')}</p>
                 </div>
             ) : (
                 <>
@@ -255,7 +303,7 @@ export default function AssetsPageClient() {
                                     placeholder={t('assets.searchPlaceholder')}
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 rounded-md text-[13px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
+                                    className="w-full pl-10 pr-4 py-2 rounded-md text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
                                     style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
                                 />
                             </div>
@@ -266,7 +314,7 @@ export default function AssetsPageClient() {
                                 <select
                                     value={statusFilter}
                                     onChange={(e) => setStatusFilter(e.target.value)}
-                                    className="px-4 py-2 rounded-md text-[13px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
+                                    className="px-4 py-2 rounded-md text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
                                     style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-secondary, #444444)' }}
                                 >
                                     <option value="all">{t('assets.allStatus')} ({statusCounts.all})</option>
@@ -281,7 +329,7 @@ export default function AssetsPageClient() {
                             <select
                                 value={categoryFilter}
                                 onChange={(e) => setCategoryFilter(e.target.value)}
-                                className="px-4 py-2 rounded-md text-[13px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
+                                className="px-4 py-2 rounded-md text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a]"
                                 style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-secondary, #444444)' }}
                             >
                                 <option value="all">{t('assets.allCategories')} ({assets.length})</option>
@@ -297,8 +345,8 @@ export default function AssetsPageClient() {
                     {/* Assets Table */}
                     {filteredAssets.length === 0 ? (
                         <div className="text-center py-12 rounded-lg" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
-                            <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('assets.noAssetsFound')}</h3>
-                            <p className="mt-1 text-sm" style={{ color: 'var(--text-muted, #777777)' }}>{t('assets.adjustFilters')}</p>
+                            <h3 className="text-[15px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('assets.noAssetsFound')}</h3>
+                            <p className="mt-1 text-[15px]" style={{ color: 'var(--text-muted, #777777)' }}>{t('assets.adjustFilters')}</p>
                         </div>
                     ) : (
                         <>
@@ -307,7 +355,7 @@ export default function AssetsPageClient() {
                             {/* Pagination */}
                             {totalPages > 1 && (
                                 <div className="mt-4 flex items-center justify-between px-4 py-3 rounded-lg" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
-                                    <div className="text-sm" style={{ color: 'var(--text-secondary, #444444)' }}>
+                                    <div className="text-[15px]" style={{ color: 'var(--text-secondary, #444444)' }}>
                                         {t('assets.showing')} {((currentPage - 1) * itemsPerPage) + 1} {t('assets.to')} {Math.min(currentPage * itemsPerPage, filteredAssets.length)} {t('assets.of')} {filteredAssets.length} {t('assets.results')}
                                     </div>
                                     <div className="flex gap-2">

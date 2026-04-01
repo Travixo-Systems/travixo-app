@@ -138,7 +138,7 @@ export default function NotificationsSettingsPage() {
         {/* Back Button */}
         <Link
           href="/settings"
-          className="flex items-center text-sm text-[var(--text-muted,#777)] hover:text-[var(--text-primary,#1a1a1a)] mb-6"
+          className="flex items-center text-[15px] text-[var(--text-muted,#777)] hover:text-[var(--text-primary,#1a1a1a)] mb-6"
         >
           <ArrowLeftIcon className="w-4 h-4 mr-2" />
           {t('notifications.back')}
@@ -154,7 +154,7 @@ export default function NotificationsSettingsPage() {
               <h1 className="text-2xl font-semibold text-[var(--text-primary,#1a1a1a)]">
                 {t('notifications.pageTitle')}
               </h1>
-              <p className="text-sm text-[var(--text-muted,#777)]">
+              <p className="text-[15px] text-[var(--text-muted,#777)]">
                 {t('notifications.pageSubtitle')}
               </p>
             </div>
@@ -163,7 +163,7 @@ export default function NotificationsSettingsPage() {
           {!isEditing && (
             <button
               onClick={() => setIsEditing(true)}
-              className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-[var(--text-secondary,#444)] bg-[var(--card-bg,#edeff2)] border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="flex items-center space-x-2 px-4 py-2 text-[15px] font-medium text-[var(--text-secondary,#444)] bg-[var(--card-bg,#edeff2)] border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               <PencilIcon className="w-4 h-4" />
               <span>{t('notifications.edit')}</span>
@@ -176,7 +176,7 @@ export default function NotificationsSettingsPage() {
           <div className="space-y-6">
             {/* Email Notifications */}
             <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-4">
+              <h3 className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-4">
                 {t('notifications.emailNotifications')}
               </h3>
               <PreferenceDisplay
@@ -189,10 +189,10 @@ export default function NotificationsSettingsPage() {
 
             {/* VGP Alerts */}
             <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-1">
+              <h3 className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">
                 {t('notifications.vgpAlerts')}
               </h3>
-              <p className="text-xs text-[var(--text-hint,#888)] mb-4">{t('notifications.vgpAlertsDesc')}</p>
+              <p className="text-[13px] text-[var(--text-hint,#888)] mb-4">{t('notifications.vgpAlertsDesc')}</p>
 
               <div className="space-y-3">
                 <PreferenceDisplay
@@ -205,15 +205,15 @@ export default function NotificationsSettingsPage() {
                 {preferences.vgp_alerts.enabled && (
                   <>
                     <div className="flex items-center justify-between py-3 border-t border-gray-200">
-                      <span className="text-sm font-medium text-[var(--text-secondary,#444)]">{t('notifications.alertTiming')}</span>
-                      <span className="text-sm text-[var(--text-primary,#1a1a1a)]">
+                      <span className="text-[15px] font-semibold text-[var(--text-secondary,#444)]">{t('notifications.alertTiming')}</span>
+                      <span className="text-[15px] text-[var(--text-primary,#1a1a1a)]">
                         {preferences.vgp_alerts.timing.sort((a, b) => b - a).join(', ')} {t('notifications.daysInAdvance')}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between py-3 border-t border-gray-200">
-                      <span className="text-sm font-medium text-[var(--text-secondary,#444)]">{t('notifications.recipients')}</span>
-                      <span className="text-sm text-[var(--text-primary,#1a1a1a)]">
+                      <span className="text-[15px] font-semibold text-[var(--text-secondary,#444)]">{t('notifications.recipients')}</span>
+                      <span className="text-[15px] text-[var(--text-primary,#1a1a1a)]">
                         {preferences.vgp_alerts.recipients === 'owner' ? t('notifications.recipientsOwner') : t('notifications.recipientsAll')}
                       </span>
                     </div>
@@ -224,14 +224,14 @@ export default function NotificationsSettingsPage() {
 
             {/* Digest Mode */}
             <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-1">
+              <h3 className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">
                 {t('notifications.digestMode')}
               </h3>
-              <p className="text-xs text-[var(--text-hint,#888)] mb-4">{t('notifications.digestModeDesc')}</p>
+              <p className="text-[13px] text-[var(--text-hint,#888)] mb-4">{t('notifications.digestModeDesc')}</p>
 
               <div className="flex items-center justify-between py-3">
-                <span className="text-sm font-medium text-[var(--text-secondary,#444)]">{t('notifications.digestMode')}</span>
-                <span className="text-sm text-[var(--text-primary,#1a1a1a)]">
+                <span className="text-[15px] font-semibold text-[var(--text-secondary,#444)]">{t('notifications.digestMode')}</span>
+                <span className="text-[15px] text-[var(--text-primary,#1a1a1a)]">
                   {preferences.digest_mode === 'daily' && t('notifications.daily')}
                   {preferences.digest_mode === 'weekly' && t('notifications.weekly')}
                   {preferences.digest_mode === 'realtime' && t('notifications.realtime')}
@@ -241,7 +241,7 @@ export default function NotificationsSettingsPage() {
 
             {/* Other Alerts */}
             <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-4">
+              <h3 className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-4">
                 {t('notifications.otherAlerts')}
               </h3>
 
@@ -268,7 +268,7 @@ export default function NotificationsSettingsPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Notifications */}
             <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
-              <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-4">
+              <h3 className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-4">
                 {t('notifications.emailNotifications')}
               </h3>
               <ToggleSwitch
@@ -281,10 +281,10 @@ export default function NotificationsSettingsPage() {
             {/* VGP Alerts */}
             {preferences.email_enabled && (
               <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
-                <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-1">
+                <h3 className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">
                   {t('notifications.vgpAlerts')}
                 </h3>
-                <p className="text-xs text-[var(--text-hint,#888)] mb-4">{t('notifications.vgpAlertsDesc')}</p>
+                <p className="text-[13px] text-[var(--text-hint,#888)] mb-4">{t('notifications.vgpAlertsDesc')}</p>
 
                 <div className="space-y-4">
                   <ToggleSwitch
@@ -296,10 +296,10 @@ export default function NotificationsSettingsPage() {
                   {preferences.vgp_alerts.enabled && (
                     <>
                       <div>
-                        <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-2">
+                        <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-2">
                           {t('notifications.alertTiming')}
                         </label>
-                        <p className="text-xs text-[var(--text-hint,#888)] mb-3">{t('notifications.alertTimingDesc')}</p>
+                        <p className="text-[13px] text-[var(--text-hint,#888)] mb-3">{t('notifications.alertTimingDesc')}</p>
                         <div className="space-y-2">
                           {[30, 15, 7, 1].map(days => (
                             <CheckboxField
@@ -313,7 +313,7 @@ export default function NotificationsSettingsPage() {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-[var(--text-secondary,#444)] mb-2">
+                        <label className="block text-[15px] font-semibold text-[var(--text-secondary,#444)] mb-2">
                           {t('notifications.recipients')}
                         </label>
                         <select
@@ -334,10 +334,10 @@ export default function NotificationsSettingsPage() {
             {/* Digest Mode */}
             {preferences.email_enabled && (
               <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
-                <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-1">
+                <h3 className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">
                   {t('notifications.digestMode')}
                 </h3>
-                <p className="text-xs text-[var(--text-hint,#888)] mb-4">{t('notifications.digestModeDesc')}</p>
+                <p className="text-[13px] text-[var(--text-hint,#888)] mb-4">{t('notifications.digestModeDesc')}</p>
 
                 <div>
                   <select
@@ -356,7 +356,7 @@ export default function NotificationsSettingsPage() {
             {/* Other Alerts */}
             {preferences.email_enabled && (
               <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
-                <h3 className="text-sm font-medium text-[var(--text-primary,#1a1a1a)] mb-4">
+                <h3 className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-4">
                   {t('notifications.otherAlerts')}
                 </h3>
 
@@ -380,14 +380,14 @@ export default function NotificationsSettingsPage() {
               <button
                 type="button"
                 onClick={handleCancelEdit}
-                className="px-4 py-2 text-sm font-medium text-[var(--text-secondary,#444)] bg-[var(--card-bg,#edeff2)] border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 text-[15px] font-medium text-[var(--text-secondary,#444)] bg-[var(--card-bg,#edeff2)] border border-gray-300 rounded-lg hover:bg-gray-50"
               >
                 {t('notifications.cancel')}
               </button>
               <button
                 type="submit"
                 disabled={saving}
-                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                className="flex items-center space-x-2 px-4 py-2 text-[15px] font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
                 <CheckIcon className="w-4 h-4" />
                 <span>{saving ? t('notifications.saving') : t('notifications.save')}</span>
@@ -404,8 +404,8 @@ export default function NotificationsSettingsPage() {
 function PreferenceDisplay({ label, value, yesText, noText }: { label: string; value: boolean; yesText: string; noText: string }) {
   return (
     <div className="flex items-center justify-between py-3 border-b border-gray-200 last:border-0">
-      <span className="text-sm font-medium text-[var(--text-secondary,#444)]">{label}</span>
-      <span className={`text-sm font-medium ${value ? 'text-green-600' : 'text-[var(--text-hint,#888)]'}`}>
+      <span className="text-[15px] font-semibold text-[var(--text-secondary,#444)]">{label}</span>
+      <span className={`text-[15px] font-medium ${value ? 'text-green-600' : 'text-[var(--text-hint,#888)]'}`}>
         {value ? yesText : noText}
       </span>
     </div>
@@ -415,7 +415,7 @@ function PreferenceDisplay({ label, value, yesText, noText }: { label: string; v
 function ToggleSwitch({ label, checked, onChange }: { label: string; checked: boolean; onChange: () => void }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-sm font-medium text-[var(--text-secondary,#444)]">{label}</span>
+      <span className="text-[15px] font-semibold text-[var(--text-secondary,#444)]">{label}</span>
       <button
         type="button"
         onClick={onChange}
@@ -442,7 +442,7 @@ function CheckboxField({ label, checked, onChange }: { label: string; checked: b
         onChange={onChange}
         className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
       />
-      <span className="text-sm text-[var(--text-secondary,#444)]">{label}</span>
+      <span className="text-[15px] text-[var(--text-secondary,#444)]">{label}</span>
     </label>
   );
 }
