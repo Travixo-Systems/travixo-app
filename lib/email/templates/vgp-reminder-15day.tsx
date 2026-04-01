@@ -61,7 +61,7 @@ export function VGPReminder15Day({
               <strong>
                 {count} inspection{count > 1 ? 's' : ''} VGP
               </strong>{' '}
-              dont l'echeance arrive dans <strong>15 jours</strong>.
+              dont l'échéance arrive dans <strong>15 jours</strong>.
             </Text>
 
             {/* Action Banner */}
@@ -70,15 +70,15 @@ export function VGPReminder15Day({
                 Confirmez vos rendez-vous
               </Text>
               <Text style={actionBannerTextStyle}>
-                Si vous avez deja contacte un organisme de controle, assurez-vous
-                que les rendez-vous sont confirmes. Sinon, il est temps de
-                planifier ces inspections pour eviter tout retard.
+                Si vous avez déjà contacté un organisme de contrôle, assurez-vous
+                que les rendez-vous sont confirmés. Sinon, il est temps de
+                planifier ces inspections pour éviter tout retard.
               </Text>
             </Section>
 
             {/* Equipment Table */}
             <Text style={sectionTitleStyle}>
-              Equipements concernes
+              Équipements concernés
             </Text>
             <ScheduleTable
               schedules={schedules}
@@ -91,7 +91,7 @@ export function VGPReminder15Day({
                 href={`${appUrl}/vgp/schedules?status=upcoming`}
                 style={ctaButtonStyle}
               >
-                Voir les inspections a confirmer
+                Voir les inspections à confirmer
               </Button>
             </Section>
 

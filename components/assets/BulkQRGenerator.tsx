@@ -196,7 +196,7 @@ export default function BulkQRGenerator({ assets }: BulkQRGeneratorProps) {
       </div>
 
       {selectedAssets.size > 0 && (
-        <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-4">
+        <div className="border border-indigo-200 rounded-lg p-4 mb-4" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
           <div className="flex justify-between items-center flex-wrap gap-2">
             <p className="text-indigo-900 font-medium">
               {selectedAssets.size} {selectedAssets.size !== 1 ? t('assets.itemsSelected') : t('assets.itemSelected')}
@@ -270,7 +270,7 @@ export default function BulkQRGenerator({ assets }: BulkQRGeneratorProps) {
         </table>
       </div>
 
-      <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="mt-4 border border-blue-200 rounded-lg p-4" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
         <h4 className="font-semibold text-blue-900 mb-2">{t('assets.printInstructionsTitle')}</h4>
         <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
           <li>{t('assets.printStep1')}</li>

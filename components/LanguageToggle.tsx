@@ -7,13 +7,13 @@ export function LanguageToggle() {
   const { language, setLanguage } = useLanguage();
 
   return (
-    <div className="inline-flex items-center bg-[var(--card-bg,#edeff2)] rounded-lg border border-gray-200 p-1">
+    <div className="inline-flex items-center gap-1 px-1 py-1">
       <button
         onClick={() => setLanguage('en')}
-        className={`px-3 py-2.5 min-h-[44px] rounded text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00] ${
+        className={`px-2.5 py-1.5 min-h-[44px] rounded text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#f26f00] ${
           language === 'en'
-            ? 'bg-gray-900 text-white'
-            : 'text-gray-600 hover:text-gray-900'
+            ? 'bg-white/15 text-white'
+            : 'text-white/40 hover:text-white/70'
         }`}
         aria-pressed={language === 'en'}
       >
@@ -21,10 +21,10 @@ export function LanguageToggle() {
       </button>
       <button
         onClick={() => setLanguage('fr')}
-        className={`px-3 py-2.5 min-h-[44px] rounded text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00] ${
+        className={`px-2.5 py-1.5 min-h-[44px] rounded text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#f26f00] ${
           language === 'fr'
-            ? 'bg-gray-900 text-white'
-            : 'text-gray-600 hover:text-gray-900'
+            ? 'bg-white/15 text-white'
+            : 'text-white/40 hover:text-white/70'
         }`}
         aria-pressed={language === 'fr'}
       >

@@ -62,23 +62,23 @@ export function VGPReminder7Day({
               <strong>
                 {count} inspection{count > 1 ? 's' : ''} VGP
               </strong>{' '}
-              dont l'echeance arrive dans <strong>moins de 7 jours</strong>.
+              dont l'échéance arrive dans <strong>moins de 7 jours</strong>.
             </Text>
 
             {/* Warning Banner */}
             <Section style={warningBannerStyle}>
               <Text style={warningBannerTitleStyle}>
-                Action requise immediatement
+                Action requise immédiatement
               </Text>
               <Text style={warningBannerTextStyle}>
-                Contactez votre organisme de controle au plus vite pour
-                planifier ces inspections avant la date d'echeance.
+                Contactez votre organisme de contrôle au plus vite pour
+                planifier ces inspections avant la date d'échéance.
               </Text>
             </Section>
 
             {/* Equipment Table */}
             <Text style={sectionTitleStyle}>
-              Equipements concernes
+              Équipements concernés
             </Text>
             <ScheduleTable
               schedules={schedules}
@@ -91,8 +91,8 @@ export function VGPReminder7Day({
                 Risque d'amende DREETS
               </Text>
               <Text style={fineWarningTextStyle}>
-                Rappel : Les amendes DREETS pour non-conformite VGP vont de
-                3 000 EUR a 10 000 EUR par infraction. Chaque equipement en retard
+                Rappel : Les amendes DREETS pour non-conformité VGP vont de
+                3 000 EUR à 10 000 EUR par infraction. Chaque équipement en retard
                 constitue une infraction distincte.
               </Text>
             </Section>

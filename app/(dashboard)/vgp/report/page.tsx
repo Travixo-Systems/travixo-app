@@ -423,34 +423,34 @@ function VGPReportContent() {
       {/* Summary Stats */}
       {summary && (
         <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
-          <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md p-6">
-            <p className="text-sm text-[var(--text-muted,#777)] mb-1">{t('vgpReport.total')}</p>
-            <p className="text-3xl font-bold text-[var(--text-primary,#1a1a1a)]">{summary.total_inspections}</p>
+          <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md p-6 border-l-[3px]" style={{ borderLeftColor: 'var(--status-neutral, #6b7280)' }}>
+            <p className="text-sm font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">{t('vgpReport.total')}</p>
+            <p className="text-3xl font-bold" style={{ color: 'var(--status-neutral, #6b7280)' }}>{summary.total_inspections}</p>
           </div>
 
-          <div className="bg-green-50 rounded-lg shadow-md p-6 border border-green-200">
-            <p className="text-sm text-green-700 mb-1">{t('vgpReport.compliant')}</p>
-            <p className="text-3xl font-bold text-green-900">{summary.passed}</p>
+          <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md p-6 border-l-[3px]" style={{ borderLeftColor: 'var(--status-conforme, #059669)' }}>
+            <p className="text-sm font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">{t('vgpReport.compliant')}</p>
+            <p className="text-3xl font-bold" style={{ color: 'var(--status-conforme, #059669)' }}>{summary.passed}</p>
           </div>
 
-          <div className="bg-yellow-50 rounded-lg shadow-md p-6 border border-yellow-200">
-            <p className="text-sm text-yellow-700 mb-1">{t('vgpReport.conditional')}</p>
-            <p className="text-3xl font-bold text-yellow-900">{summary.conditional}</p>
+          <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md p-6 border-l-[3px]" style={{ borderLeftColor: 'var(--status-bientot, #d97706)' }}>
+            <p className="text-sm font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">{t('vgpReport.conditional')}</p>
+            <p className="text-3xl font-bold" style={{ color: 'var(--status-bientot, #d97706)' }}>{summary.conditional}</p>
           </div>
 
-          <div className="bg-red-50 rounded-lg shadow-md p-6 border border-red-200">
-            <p className="text-sm text-red-700 mb-1">{t('vgpReport.nonCompliant')}</p>
-            <p className="text-3xl font-bold text-red-900">{summary.failed}</p>
+          <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md p-6 border-l-[3px]" style={{ borderLeftColor: 'var(--status-retard, #dc2626)' }}>
+            <p className="text-sm font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">{t('vgpReport.nonCompliant')}</p>
+            <p className="text-3xl font-bold" style={{ color: 'var(--status-retard, #dc2626)' }}>{summary.failed}</p>
           </div>
 
-          <div className="bg-orange-50 rounded-lg shadow-md p-6 border border-orange-200">
-            <p className="text-sm text-orange-700 mb-1">{t('vgpReport.noCertificate')}</p>
-            <p className="text-3xl font-bold text-orange-900">{summary.without_certificate}</p>
+          <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md p-6 border-l-[3px]" style={{ borderLeftColor: 'var(--status-neutral, #6b7280)' }}>
+            <p className="text-sm font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">{t('vgpReport.noCertificate')}</p>
+            <p className="text-3xl font-bold" style={{ color: 'var(--status-neutral, #6b7280)' }}>{summary.without_certificate}</p>
           </div>
 
-          <div className="bg-blue-50 rounded-lg shadow-md p-6 border border-blue-200">
-            <p className="text-sm text-blue-700 mb-1">{t('vgpReport.compliance')}</p>
-            <p className="text-3xl font-bold text-blue-900">{summary.compliance_rate}%</p>
+          <div className="bg-[var(--card-bg,#edeff2)] rounded-lg shadow-md p-6 border-l-[3px]" style={{ borderLeftColor: summary.compliance_rate >= 80 ? 'var(--status-conforme, #059669)' : 'var(--status-retard, #dc2626)' }}>
+            <p className="text-sm font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">{t('vgpReport.compliance')}</p>
+            <p className="text-3xl font-bold" style={{ color: summary.compliance_rate >= 80 ? 'var(--status-conforme, #059669)' : 'var(--status-retard, #dc2626)' }}>{summary.compliance_rate}%</p>
           </div>
         </div>
       )}

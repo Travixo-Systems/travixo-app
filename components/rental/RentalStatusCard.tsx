@@ -105,7 +105,7 @@ export default function RentalStatusCard({
     : 0
 
   const borderColor = isOverdue ? 'border-red-500' : 'border-blue-500'
-  const bgColor = isOverdue ? 'bg-red-50' : 'bg-[var(--card-bg,#edeff2)]'
+  const bgColor = 'bg-[var(--card-bg,#edeff2)]'
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString(

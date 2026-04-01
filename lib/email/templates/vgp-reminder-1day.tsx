@@ -61,25 +61,25 @@ export function VGPReminder1Day({
                 {count} inspection{count > 1 ? 's' : ''} VGP
               </strong>{' '}
               pour <strong>{organizationName}</strong>{' '}
-              {count > 1 ? 'arrivent' : 'arrive'} a echeance{' '}
+              {count > 1 ? 'arrivent' : 'arrive'} à échéance{' '}
               <strong>demain</strong>.
             </Text>
 
             {/* Critical Banner */}
             <Section style={criticalBannerStyle}>
               <Text style={criticalBannerTitleStyle}>
-                Dernier delai pour agir
+                Dernier délai pour agir
               </Text>
               <Text style={criticalBannerTextStyle}>
-                Si une inspection n'a pas encore ete planifiee, vous risquez de
-                depasser la date d'echeance reglementaire. Contactez votre
-                organisme de controle immediatement.
+                Si une inspection n'a pas encore été planifiée, vous risquez de
+                dépasser la date d'échéance réglementaire. Contactez votre
+                organisme de contrôle immédiatement.
               </Text>
             </Section>
 
             {/* Equipment Table */}
             <Text style={sectionTitleStyle}>
-              Equipements concernes
+              Équipements concernés
             </Text>
             <ScheduleTable
               schedules={schedules}
@@ -92,9 +92,9 @@ export function VGPReminder1Day({
                 Risque d'amende DREETS
               </Text>
               <Text style={fineWarningTextStyle}>
-                Rappel : Les amendes DREETS pour non-conformite VGP vont de
-                3 000 EUR a 10 000 EUR par infraction. A compter de demain,
-                chaque equipement non inspecte sera en infraction.
+                Rappel : Les amendes DREETS pour non-conformité VGP vont de
+                3 000 EUR à 10 000 EUR par infraction. À compter de demain,
+                chaque équipement non inspecté sera en infraction.
               </Text>
             </Section>
 

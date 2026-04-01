@@ -179,7 +179,7 @@ export default function AcceptInvitePage() {
                 style={{ backgroundColor: BRAND.orange }}
               >
                 <UserPlus className="w-5 h-5" />
-                Creer mon compte
+                Créer mon compte
               </button>
               <button
                 onClick={() => router.push(`/login?redirect=/accept-invite/${token}`)}
@@ -213,11 +213,11 @@ export default function AcceptInvitePage() {
             <p className="text-gray-500 text-sm mb-5">You're logged in with a different account</p>
 
             <div className="text-left space-y-3 mb-6">
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <div className="border-l-4 border-red-500 rounded-lg p-3" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
                 <p className="text-xs text-red-600 font-semibold mb-1">Connecte en tant que / Logged in as</p>
                 <p className="text-sm font-bold text-red-800">{currentEmail}</p>
               </div>
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+              <div className="border-l-4 border-green-500 rounded-lg p-3" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
                 <p className="text-xs text-green-600 font-semibold mb-1">Invitation envoyee a / Invitation sent to</p>
                 <p className="text-sm font-bold text-green-800">{invitedEmail}</p>
               </div>

@@ -57,7 +57,7 @@ export function AuditMissingAssetsEmail({
     <Html>
       <Head />
       <Preview>
-        {`Audit termine: ${missingAssets.length} equipement(s) manquant(s) - ${auditName}`}
+        {`Audit terminé: ${missingAssets.length} équipement(s) manquant(s) - ${auditName}`}
       </Preview>
       <Body style={bodyStyle}>
         <Container style={containerStyle}>
@@ -67,7 +67,7 @@ export function AuditMissingAssetsEmail({
             {/* Alert banner */}
             <Section style={alertBannerStyle}>
               <Text style={alertTextStyle}>
-                EQUIPEMENTS MANQUANTS
+                ÉQUIPEMENTS MANQUANTS
               </Text>
             </Section>
 
@@ -77,7 +77,7 @@ export function AuditMissingAssetsEmail({
 
             <Text style={summaryStyle}>
               L'audit <strong>"{auditName}"</strong> pour <strong>{organizationName}</strong> a
-              ete termine le {completedDate}.
+              été terminé le {completedDate}.
             </Text>
 
             {/* Stats */}
@@ -91,7 +91,7 @@ export function AuditMissingAssetsEmail({
                     </td>
                     <td style={statCellStyle}>
                       <Text style={{ ...statValueStyle, color: '#047857' }}>{verifiedAssets}</Text>
-                      <Text style={statLabelStyle}>Verifies</Text>
+                      <Text style={statLabelStyle}>Vérifiés</Text>
                     </td>
                     <td style={statCellStyle}>
                       <Text style={{ ...statValueStyle, color: BRAND.danger }}>{missingAssets.length}</Text>
@@ -104,15 +104,15 @@ export function AuditMissingAssetsEmail({
 
             {/* Missing assets table */}
             <Text style={sectionTitleStyle}>
-              Equipements manquants ({missingAssets.length})
+              Équipements manquants ({missingAssets.length})
             </Text>
 
             <table style={tableStyle}>
               <thead>
                 <tr>
-                  <th style={thStyle}>Equipement</th>
-                  <th style={thStyle}>N. Serie</th>
-                  <th style={thStyle}>Categorie</th>
+                  <th style={thStyle}>Équipement</th>
+                  <th style={thStyle}>N. Série</th>
+                  <th style={thStyle}>Catégorie</th>
                   <th style={thStyle}>Dernier emplacement</th>
                 </tr>
               </thead>
@@ -131,13 +131,13 @@ export function AuditMissingAssetsEmail({
             {/* CTA */}
             <Section style={ctaContainerStyle}>
               <Button style={ctaButtonStyle} href={auditUrl}>
-                Voir le detail de l'audit
+                Voir le détail de l'audit
               </Button>
             </Section>
 
             <Text style={noteStyle}>
-              Ces equipements necessitent une action corrective. Veuillez verifier
-              leur emplacement et mettre a jour le systeme en consequence.
+              Ces équipements nécessitent une action corrective. Veuillez vérifier
+              leur emplacement et mettre à jour le système en conséquence.
             </Text>
 
             {/* English summary */}

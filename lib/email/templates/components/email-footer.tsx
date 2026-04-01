@@ -28,7 +28,7 @@ export function EmailFooter({ appUrl }: EmailFooterProps) {
       <Hr style={dividerStyle} />
 
       <Text style={footerTextStyle}>
-        TraviXO Systems - Suivi QR et conformite VGP pour la location de materiel
+        TraviXO Systems - Suivi QR et conformité VGP pour la location de matériel
       </Text>
 
       <Text style={footerLinksStyle}>
@@ -41,14 +41,14 @@ export function EmailFooter({ appUrl }: EmailFooterProps) {
         </Link>
         {' | '}
         <Link href={`${appUrl}/settings/notifications`} style={linkStyle}>
-          Preferences de notification
+          Préférences de notification
         </Link>
       </Text>
 
       <Text style={unsubscribeStyle}>
-        Vous recevez cet email car les alertes VGP sont activees pour votre organisation.{' '}
+        Vous recevez cet email car les alertes VGP sont activées pour votre organisation.{' '}
         <Link href={`${appUrl}/settings/notifications`} style={unsubscribeLinkStyle}>
-          Gerer les preferences
+          Gérer les préférences
         </Link>
       </Text>
 

@@ -45,22 +45,22 @@ export function ScheduleTable({ schedules, alertType }: ScheduleTableProps) {
       {/* Table Header */}
       <Row style={tableHeaderRowStyle}>
         <Column style={{ ...headerCellStyle, width: '25%' }}>
-          <Text style={headerTextStyle}>Equipement</Text>
+          <Text style={headerTextStyle}>Équipement</Text>
         </Column>
         <Column style={{ ...headerCellStyle, width: '18%' }}>
-          <Text style={headerTextStyle}>N. Serie</Text>
+          <Text style={headerTextStyle}>N. Série</Text>
         </Column>
         <Column style={{ ...headerCellStyle, width: '17%' }}>
-          <Text style={headerTextStyle}>Categorie</Text>
+          <Text style={headerTextStyle}>Catégorie</Text>
         </Column>
         <Column style={{ ...headerCellStyle, width: '15%' }}>
           <Text style={headerTextStyle}>Lieu</Text>
         </Column>
         <Column style={{ ...headerCellStyle, width: '13%' }}>
-          <Text style={headerTextStyle}>Echeance</Text>
+          <Text style={headerTextStyle}>Échéance</Text>
         </Column>
         <Column style={{ ...headerCellStyle, width: '12%' }}>
-          <Text style={headerTextStyle}>Delai</Text>
+          <Text style={headerTextStyle}>Délai</Text>
         </Column>
       </Row>
 

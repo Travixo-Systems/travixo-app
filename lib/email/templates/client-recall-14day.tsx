@@ -44,7 +44,7 @@ export function ClientRecall14Day({
     <Html>
       <Head />
       <Preview>
-        {`URGENT: ${count} equipement${count > 1 ? 's' : ''} en location - VGP dans 14 jours - ${organizationName}`}
+        {`URGENT: ${count} équipement${count > 1 ? 's' : ''} en location - VGP dans 14 jours - ${organizationName}`}
       </Preview>
       <Body style={bodyStyle}>
         <Container style={containerStyle}>
@@ -60,26 +60,26 @@ export function ClientRecall14Day({
                 ACTION URGENTE REQUISE
               </Text>
               <Text style={urgentBannerTextStyle}>
-                <strong>{count} equipement{count > 1 ? 's' : ''}</strong> actuellement en location
+                <strong>{count} équipement{count > 1 ? 's' : ''}</strong> actuellement en location
                 {clientNames.length === 1
                   ? ` chez <strong>${clientNames[0]}</strong>`
                   : ` chez ${clientNames.length} clients`
                 }{' '}
-                {count > 1 ? 'necessitent' : 'necessite'} une{' '}
+                {count > 1 ? 'nécessitent' : 'nécessite'} une{' '}
                 <strong>inspection VGP dans les 14 prochains jours</strong>.
               </Text>
             </Section>
 
             <Section style={warningBoxStyle}>
               <Text style={warningBoxTextStyle}>
-                Ces equipements doivent etre rappeles immediatement pour inspection.
-                Sans inspection VGP valide, les sorties seront bloquees automatiquement
-                par le systeme TraviXO.
+                Ces équipements doivent être rappelés immédiatement pour inspection.
+                Sans inspection VGP valide, les sorties seront bloquées automatiquement
+                par le système TraviXO.
               </Text>
             </Section>
 
             <Text style={sectionTitleStyle}>
-              Equipements a rappeler en urgence
+              Équipements à rappeler en urgence
             </Text>
             <RentalRecallTable items={items} alertType="recall_14day" />
 

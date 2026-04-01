@@ -20,7 +20,7 @@ export function ErrorStatePage({ message, onRetry, title = 'Impossible de charge
       role="alert"
       aria-live="assertive"
     >
-      <div className="mb-4 p-4 bg-red-50 rounded-full">
+      <div className="mb-4 p-4 rounded-full" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
         <WifiOff className="w-10 h-10 text-red-500" aria-hidden="true" />
       </div>
       <h2 className="text-lg font-bold text-gray-900 mb-2">{title}</h2>

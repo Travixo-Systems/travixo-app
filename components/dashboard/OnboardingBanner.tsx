@@ -56,7 +56,7 @@ export default function OnboardingBanner({
 
       <div className="space-y-2 mb-4">
         <div className="flex items-center gap-2 text-sm text-slate-700">
-          <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+          <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
             <span className="text-xs font-bold text-red-600">!</span>
           </div>
           <span>Explorez le tableau de bord — vous avez une inspection VGP en retard</span>
@@ -72,7 +72,7 @@ export default function OnboardingBanner({
       </div>
 
       <p className="text-xs text-slate-500 mb-4">
-        Consultez votre boite mail pour un fichier Excel de demonstration que vous pouvez importer immediatement.
+        Consultez votre boîte mail pour un fichier Excel de démonstration que vous pouvez importer immédiatement.
       </p>
 
       <div className="flex items-center gap-3">

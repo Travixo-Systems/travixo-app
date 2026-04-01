@@ -51,7 +51,7 @@ export function TeamInvitationEmail({
     <Html>
       <Head />
       <Preview>
-        {`Invitation a rejoindre ${organizationName} sur TraviXO`}
+        {`Invitation à rejoindre ${organizationName} sur TraviXO`}
       </Preview>
       <Body style={bodyStyle}>
         <Container style={containerStyle}>
@@ -63,14 +63,14 @@ export function TeamInvitationEmail({
             </Text>
 
             <Text style={summaryStyle}>
-              Vous avez ete invite(e) a rejoindre <strong>{organizationName}</strong> sur
+              Vous avez été invité(e) à rejoindre <strong>{organizationName}</strong> sur
               TraviXO en tant que <strong>{roleLabel.fr}</strong>.
             </Text>
 
             <Text style={detailStyle}>
-              Cette invitation a ete envoyee par <strong>{inviterEmail}</strong>.
-              TraviXO est une plateforme de suivi d'equipements et de conformite VGP
-              pour les entreprises de location de materiel.
+              Cette invitation a été envoyée par <strong>{inviterEmail}</strong>.
+              TraviXO est une plateforme de suivi d'équipements et de conformité VGP
+              pour les entreprises de location de matériel.
             </Text>
 
             {/* CTA Button */}
@@ -81,7 +81,7 @@ export function TeamInvitationEmail({
             </Section>
 
             <Text style={expiryNoteStyle}>
-              Ce lien est valable pendant 7 jours. Apres cette date, demandez a
+              Ce lien est valable pendant 7 jours. Après cette date, demandez à
               l'administrateur de renvoyer l'invitation.
             </Text>
 

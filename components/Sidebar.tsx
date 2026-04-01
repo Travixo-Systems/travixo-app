@@ -143,12 +143,12 @@ export default function Sidebar() {
         "flex flex-col h-screen border-r border-gray-800 transition-all duration-300 overflow-hidden",
         collapsed ? "w-16" : "w-64"
       )}
-      style={{ backgroundColor: colors.primary }}
+      style={{ backgroundColor: '#0a2730' }}
     >
       {/* Logo & Toggle */}
-      <div 
+      <div
         className="flex items-center justify-between h-16 px-4 border-b border-gray-800 flex-shrink-0"
-        style={{ backgroundColor: colors.primary }}
+        style={{ backgroundColor: '#0a2730' }}
       >
         {!collapsed && (
           <div className="flex items-center space-x-2 flex-1 min-w-0">
@@ -203,7 +203,7 @@ export default function Sidebar() {
         )}
         <button
           onClick={toggleCollapsed}
-          className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
+          className="flex items-center justify-center h-11 w-11 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
           aria-label={collapsed ? 'Agrandir la barre latérale' : 'Réduire la barre latérale'}
           aria-expanded={!collapsed}
         >
@@ -227,7 +227,7 @@ export default function Sidebar() {
               key={item.name}
               href={item.href}
               className={cn(
-                "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors group relative",
+                "flex items-center px-4 py-3 text-sm font-medium rounded-lg group relative",
                 isActive
                   ? 'text-white border-l-2 border-[#e8600a]'
                   : 'text-white/50 hover:text-white',
@@ -255,7 +255,7 @@ export default function Sidebar() {
               }
             }}
             className={cn(
-              "w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors",
+              "w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg",
               pathname.startsWith('/vgp')
                 ? 'text-white border-l-2 border-[#e8600a]'
                 : 'text-white/50 hover:text-white',
@@ -289,7 +289,7 @@ export default function Sidebar() {
                     key={item.name}
                     href={item.href}
                     className={cn(
-                      "flex items-center px-4 py-2 text-sm rounded-lg transition-colors",
+                      "flex items-center px-4 py-2 text-sm rounded-lg",
                       isActive
                         ? 'text-white font-medium border-l-2 border-[#e8600a]'
                         : 'text-gray-400 hover:text-white'
@@ -315,7 +315,7 @@ export default function Sidebar() {
               key={item.name}
               href={item.href}
               className={cn(
-                "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors",
+                "flex items-center px-4 py-3 text-sm font-medium rounded-lg",
                 isActive
                   ? 'text-white border-l-2 border-[#e8600a]'
                   : 'text-white/50 hover:text-white',

@@ -144,7 +144,7 @@ export function generateVGPReport(
   } else {
     doc.setTextColor(200, 0, 0);
     doc.setFontSize(9);
-    doc.text(safeText('SIRET manquant (requis pour conformite DREETS)'), 20, 51);
+    doc.text(safeText('SIRET manquant (requis pour conformité DREETS)'), 20, 51);
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(10);
   }
@@ -202,7 +202,7 @@ export function generateVGPReport(
   
   currentY += 5;
   // ✅ FIXED: Proper French formatting with space before %
-  doc.text(safeText(`Taux de conformite: ${complianceRate.toFixed(1).replace('.', ',')} %`), rightX, currentY);
+  doc.text(safeText(`Taux de conformité : ${complianceRate.toFixed(1).replace('.', ',')} %`), rightX, currentY);
 
   // ============================================================================
   // STATUS DEFINITIONS (LEGEND)
@@ -232,7 +232,7 @@ export function generateVGPReport(
   doc.setTextColor(220, 53, 69);
   doc.text('• Non conforme:', 20, legendTextY);
   doc.setTextColor(0, 0, 0);
-  doc.text(safeText('Utilisation interdite tant que les non-conformites ne sont pas levees.'), 45, legendTextY);
+  doc.text(safeText('Utilisation interdite tant que les non-conformités ne sont pas levées.'), 45, legendTextY);
 
   // ============================================================================
   // INSPECTIONS TABLE (WITH ALL MANDATORY COLUMNS)

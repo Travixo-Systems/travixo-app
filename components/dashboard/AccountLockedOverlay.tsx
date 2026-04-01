@@ -29,14 +29,14 @@ export default function AccountLockedOverlay({ children }: { children: React.Rea
         </div>
         <div>
           <h2 className="text-2xl font-bold text-gray-900">
-            Acces desactive
+            Accès désactivé
           </h2>
           <p className="mt-3 text-gray-600">
-            Votre periode d'essai de 15 jours est terminee et la periode de grace de lecture seule a expire.
-            Vos donnees sont conservees mais l'acces a la plateforme est suspendu.
+            Votre période d'essai de 15 jours est terminée et la période de grâce de lecture seule a expiré.
+            Vos données sont conservées mais l'accès à la plateforme est suspendu.
           </p>
           <p className="mt-2 text-sm text-gray-500">
-            Souscrivez a un abonnement pour retrouver l'acces complet a vos equipements, inspections VGP et audits.
+            Souscrivez à un abonnement pour retrouver l'accès complet à vos équipements, inspections VGP et audits.
           </p>
         </div>
         <Link

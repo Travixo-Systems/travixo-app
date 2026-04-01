@@ -714,7 +714,7 @@ export default function ScanPage({ params }: PageProps) {
         ) : null}
 
         {!isAuthenticated && (
-          <div className="bg-blue-50 border-2 border-blue-500 rounded-lg p-6 mb-6 text-center">
+          <div className="border-2 border-blue-500 rounded-lg p-6 mb-6 text-center" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
             <Lock className="w-12 h-12 text-blue-600 mx-auto mb-3" />
             <h2 className="text-xl font-bold text-[#00252b] mb-2">
               Login Required to Update

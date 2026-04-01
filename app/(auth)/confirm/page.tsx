@@ -215,7 +215,7 @@ function ConfirmContent() {
 
           {state === 'success' && (
             <>
-              <div className="mx-auto w-20 h-20 rounded-full bg-green-50 flex items-center justify-center">
+              <div className="mx-auto w-20 h-20 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
                 <CheckCircle className="w-10 h-10 text-green-600" />
               </div>
               <div>
@@ -241,7 +241,7 @@ function ConfirmContent() {
 
           {state === 'error' && (
             <>
-              <div className="mx-auto w-20 h-20 rounded-full bg-red-50 flex items-center justify-center">
+              <div className="mx-auto w-20 h-20 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
                 <XCircle className="w-10 h-10 text-red-600" />
               </div>
               <div>

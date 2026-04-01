@@ -18,8 +18,8 @@ export default function PilotBanner() {
           <div className="flex items-center gap-3">
             <ShieldOff className="w-5 h-5 text-red-400 flex-shrink-0" />
             <p className="text-sm text-white">
-              <span className="font-semibold">Votre acces a ete desactive.</span>
-              {' '}Votre periode d'essai est terminee. Souscrivez pour retrouver l'acces a vos donnees.
+              <span className="font-semibold">Votre accès a été désactivé.</span>
+              {' '}Votre période d'essai est terminée. Souscrivez pour retrouver l'accès à vos données.
             </p>
           </div>
           <Link
@@ -43,7 +43,7 @@ export default function PilotBanner() {
             <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
             <p className="text-sm text-amber-800">
               <span className="font-semibold">Votre pilote expire dans {daysRemaining} jour{daysRemaining !== 1 ? 's' : ''}.</span>
-              {' '}Passez au Professionnel pour conserver la conformite VGP.
+              {' '}Passez au Professionnel pour conserver la conformité VGP.
             </p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -69,9 +69,9 @@ export default function PilotBanner() {
             <Clock className="w-4 h-4 flex-shrink-0" style={{ color: '#00252b' }} />
             <p className="text-sm" style={{ color: '#00252b' }}>
               <span className="font-semibold">Pilote : {daysRemaining} jour{daysRemaining !== 1 ? 's' : ''} restant{daysRemaining !== 1 ? 's' : ''}</span>
-              {' '}&bull; 50 equipements max &bull; Conformite VGP active
+              {' '}&bull; 50 équipements max &bull; Conformité VGP active
               {usage.assets > 0 && (
-                <span className="text-gray-500"> &bull; {usage.assets}/50 equipements</span>
+                <span className="text-gray-500"> &bull; {usage.assets}/50 équipements</span>
               )}
             </p>
           </div>
@@ -88,8 +88,8 @@ export default function PilotBanner() {
           <div className="flex items-center gap-3">
             <XCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
             <p className="text-sm text-red-800">
-              <span className="font-semibold">Votre pilote a expire.</span>
-              {' '}La conformite VGP est en lecture seule. Votre acces sera desactive sous peu.
+              <span className="font-semibold">Votre pilote a expiré.</span>
+              {' '}La conformité VGP est en lecture seule. Votre accès sera désactivé sous peu.
             </p>
           </div>
           <Link

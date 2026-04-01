@@ -95,7 +95,7 @@ export default function VGPComplianceBadge({ assetId, organizationId }: VGPCompl
 
   if (vgpStatus.isCompliant) {
     return (
-      <div className="bg-green-50 border-l-4 border-b-4 border-green-500 rounded-lg p-4">
+      <div className="border-l-4 border-b-4 border-green-500 rounded-lg p-4" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
         <div className="flex items-center gap-3">
           <ShieldCheck className="w-6 h-6 text-green-600 flex-shrink-0" />
           <div>
@@ -114,7 +114,7 @@ export default function VGPComplianceBadge({ assetId, organizationId }: VGPCompl
   }
 
   return (
-    <div className="bg-red-50 border-l-4 border-b-4 border-red-500 rounded-lg p-4">
+    <div className="border-l-4 border-b-4 border-red-500 rounded-lg p-4" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
       <div className="flex items-center gap-3">
         <ShieldAlert className="w-6 h-6 text-red-600 flex-shrink-0" />
         <div>

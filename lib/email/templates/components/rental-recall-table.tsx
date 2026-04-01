@@ -40,7 +40,7 @@ export function RentalRecallTable({ items, alertType }: RentalRecallTableProps) 
     <Section style={tableContainerStyle}>
       {/* Header Row */}
       <Row style={headerRowStyle}>
-        <Column style={{ ...headerCellStyle, width: '30%' }}>Equipement</Column>
+        <Column style={{ ...headerCellStyle, width: '30%' }}>Équipement</Column>
         <Column style={{ ...headerCellStyle, width: '20%' }}>Client</Column>
         <Column style={{ ...headerCellStyle, width: '20%' }}>Sorti le</Column>
         <Column style={{ ...headerCellStyle, width: '20%' }}>VGP due</Column>

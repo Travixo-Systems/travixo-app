@@ -398,7 +398,7 @@ export default function InspectionRecorderPage({
             </label>
 
             {selectedFile ? (
-              <div className="border-2 border-green-300 bg-green-50 rounded-lg p-4">
+              <div className="border-2 border-green-300 rounded-lg p-4" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
                 <div className="flex items-center gap-3">
                   <FileText className="w-8 h-8 text-green-600" />
                   <div className="flex-1">

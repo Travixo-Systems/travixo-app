@@ -95,7 +95,7 @@ function toScheduleTableRow(
   daysUntilDue: number
 ): ScheduleTableRow {
   return {
-    assetName: schedule.assets?.name || "Equipement inconnu",
+    assetName: schedule.assets?.name || "Équipement inconnu",
     serialNumber: schedule.assets?.serial_number || "-",
     category: schedule.assets?.asset_categories?.name || "-",
     location: schedule.assets?.current_location || "-",
@@ -693,7 +693,7 @@ async function runClientRecallPass(): Promise<RecallResult> {
         };
 
         const tableRows = batch.map((item) => ({
-          assetName: item.rental.assets?.name || "Equipement inconnu",
+          assetName: item.rental.assets?.name || "Équipement inconnu",
           serialNumber: item.rental.assets?.serial_number || "-",
           category: item.rental.assets?.asset_categories?.name || "-",
           clientName: item.rental.client_name,

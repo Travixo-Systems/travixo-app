@@ -44,7 +44,7 @@ export function ClientRecall30Day({
     <Html>
       <Head />
       <Preview>
-        {`${count} equipement${count > 1 ? 's' : ''} en location necessitent un rappel VGP - ${organizationName}`}
+        {`${count} équipement${count > 1 ? 's' : ''} en location nécessitent un rappel VGP - ${organizationName}`}
       </Preview>
       <Body style={bodyStyle}>
         <Container style={containerStyle}>
@@ -56,7 +56,7 @@ export function ClientRecall30Day({
             </Text>
 
             <Text style={summaryStyle}>
-              <strong>{count} equipement{count > 1 ? 's' : ''}</strong> actuellement en location
+              <strong>{count} équipement{count > 1 ? 's' : ''}</strong> actuellement en location
               {clientNames.length === 1
                 ? ` chez <strong>${clientNames[0]}</strong>`
                 : ` chez ${clientNames.length} clients`
@@ -67,13 +67,13 @@ export function ClientRecall30Day({
 
             <Section style={infoBannerStyle}>
               <Text style={infoBannerTextStyle}>
-                Planifiez le rappel de ces equipements pour assurer la conformite VGP
-                avant l&apos;echeance. Le non-respect peut entrainer des amendes de 15 000 a 75 000 EUR.
+                Planifiez le rappel de ces équipements pour assurer la conformité VGP
+                avant l&apos;échéance. Le non-respect peut entraîner des amendes de 15 000 à 75 000 EUR.
               </Text>
             </Section>
 
             <Text style={sectionTitleStyle}>
-              Equipements a rappeler
+              Équipements à rappeler
             </Text>
             <RentalRecallTable items={items} alertType="recall_30day" />
 

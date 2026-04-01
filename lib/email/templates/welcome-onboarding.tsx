@@ -39,7 +39,7 @@ export function WelcomeOnboardingEmail({
     <Html>
       <Head />
       <Preview>
-        {`Bienvenue sur TraviXO — Votre compte ${companyName} est pret`}
+        {`Bienvenue sur TraviXO — Votre compte ${companyName} est prêt`}
       </Preview>
       <Body style={bodyStyle}>
         <Container style={containerStyle}>
@@ -51,13 +51,13 @@ export function WelcomeOnboardingEmail({
             </Text>
 
             <Text style={paragraphStyle}>
-              Votre compte TraviXO est active pour <strong>{companyName}</strong>.
+              Votre compte TraviXO est activé pour <strong>{companyName}</strong>.
             </Text>
 
             <Text style={paragraphStyle}>
-              Votre evaluation gratuite de 15 jours commence aujourd'hui. Pendant
-              cette periode, vous avez acces a l'ensemble des fonctionnalites, y
-              compris la gestion de conformite VGP.
+              Votre évaluation gratuite de 15 jours commence aujourd'hui. Pendant
+              cette période, vous avez accès à l'ensemble des fonctionnalités, y
+              compris la gestion de conformité VGP.
             </Text>
 
             {/* What's waiting */}
@@ -66,20 +66,20 @@ export function WelcomeOnboardingEmail({
                 CE QUI VOUS ATTEND
               </Text>
               <Text style={highlightTextStyle}>
-                Nous avons prepare votre espace de travail avec des equipements de
-                demonstration pour que vous puissiez decouvrir la plateforme
-                immediatement.
+                Nous avons préparé votre espace de travail avec des équipements de
+                démonstration pour que vous puissiez découvrir la plateforme
+                immédiatement.
               </Text>
               <Text style={highlightTextStyle}>
-                Votre prochaine etape : importez le fichier Excel ci-joint pour voir
-                la detection automatique des colonnes en action.
+                Votre prochaine étape : importez le fichier Excel ci-joint pour voir
+                la détection automatique des colonnes en action.
               </Text>
             </Section>
 
             {/* CTA Button */}
             <Section style={ctaContainerStyle}>
               <Button style={ctaButtonStyle} href={`${appUrl}/login`}>
-                Acceder a mon espace TraviXO
+                Accéder à mon espace TraviXO
               </Button>
             </Section>
 
@@ -87,34 +87,34 @@ export function WelcomeOnboardingEmail({
 
             {/* Excel instructions */}
             <Text style={sectionTitleStyle}>
-              VOTRE FICHIER DE DEMONSTRATION
+              VOTRE FICHIER DE DÉMONSTRATION
             </Text>
 
             <Text style={paragraphStyle}>
-              En piece jointe, vous trouverez un fichier Excel avec 20 equipements
+              En pièce jointe, vous trouverez un fichier Excel avec 20 équipements
               types. Pour l'importer :
             </Text>
 
             <Text style={stepsStyle}>
-              1. Connectez-vous a TraviXO{'\n'}
-              2. Allez dans Equipements {'>'} Importer{'\n'}
-              3. Glissez-deposez le fichier Excel{'\n'}
-              4. Verifiez la detection automatique des colonnes{'\n'}
+              1. Connectez-vous à TraviXO{'\n'}
+              2. Allez dans Équipements {'>'} Importer{'\n'}
+              3. Glissez-déposez le fichier Excel{'\n'}
+              4. Vérifiez la détection automatique des colonnes{'\n'}
               5. Cliquez sur Importer
             </Text>
 
             <Text style={detailStyle}>
-              La detection intelligente reconnait automatiquement vos colonnes, meme
-              si elles sont nommees differemment (Designation, Description, Nom,
-              Equipement...).
+              La détection intelligente reconnaît automatiquement vos colonnes, même
+              si elles sont nommées différemment (Désignation, Description, Nom,
+              Équipement...).
             </Text>
 
             <Hr style={dividerStyle} />
 
             {/* Help */}
             <Text style={helpStyle}>
-              Besoin d'aide ? Repondez directement a cet email ou
-              contactez-nous a contact@travixosystems.com.
+              Besoin d'aide ? Répondez directement à cet email ou
+              contactez-nous à contact@travixosystems.com.
             </Text>
 
             {/* English summary */}

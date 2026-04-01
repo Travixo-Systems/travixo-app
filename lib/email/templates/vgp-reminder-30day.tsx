@@ -37,7 +37,7 @@ export function VGPReminder30Day({
     <Html>
       <Head />
       <Preview>
-        {`${count} inspection${count > 1 ? 's' : ''} VGP a planifier dans les 30 prochains jours - ${organizationName}`}
+        {`${count} inspection${count > 1 ? 's' : ''} VGP à planifier dans les 30 prochains jours - ${organizationName}`}
       </Preview>
       <Body style={bodyStyle}>
         <Container style={containerStyle}>
@@ -55,20 +55,20 @@ export function VGPReminder30Day({
               <strong>
                 {count} inspection{count > 1 ? 's' : ''} VGP
               </strong>{' '}
-              a planifier dans les <strong>30 prochains jours</strong>.
+              à planifier dans les <strong>30 prochains jours</strong>.
             </Text>
 
             {/* Info Banner */}
             <Section style={infoBannerStyle}>
               <Text style={infoBannerTextStyle}>
-                Planifiez vos inspections a l'avance pour assurer la conformite
-                de votre parc et eviter les retards.
+                Planifiez vos inspections à l'avance pour assurer la conformité
+                de votre parc et éviter les retards.
               </Text>
             </Section>
 
             {/* Equipment Table */}
             <Text style={sectionTitleStyle}>
-              Equipements concernes
+              Équipements concernés
             </Text>
             <ScheduleTable
               schedules={schedules}
@@ -81,7 +81,7 @@ export function VGPReminder30Day({
                 href={`${appUrl}/vgp/schedules?status=upcoming`}
                 style={ctaButtonStyle}
               >
-                Voir les inspections a planifier
+                Voir les inspections à planifier
               </Button>
             </Section>
 

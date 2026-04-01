@@ -38,7 +38,7 @@ export function VGPOverdue({
     <Html>
       <Head />
       <Preview>
-        {`EN RETARD : ${count} inspection${count > 1 ? 's' : ''} VGP depassee${count > 1 ? 's' : ''} - Risque d'amende - ${organizationName}`}
+        {`EN RETARD : ${count} inspection${count > 1 ? 's' : ''} VGP dépassée${count > 1 ? 's' : ''} - Risque d'amende - ${organizationName}`}
       </Preview>
       <Body style={bodyStyle}>
         <Container style={containerStyle}>
@@ -61,19 +61,19 @@ export function VGPOverdue({
               <strong>
                 {count} inspection{count > 1 ? 's' : ''} VGP en retard
               </strong>
-              . Ces equipements ne sont plus en conformite reglementaire.
+              . Ces équipements ne sont plus en conformité réglementaire.
             </Text>
 
             {/* Overdue Banner */}
             <Section style={overdueBannerStyle}>
               <Text style={overdueBannerTitleStyle}>
-                Non-conformite active
+                Non-conformité active
               </Text>
               <Text style={overdueBannerTextStyle}>
-                Les equipements listes ci-dessous ont depasse leur date
-                d'echeance VGP. Ils ne doivent pas etre mis en service tant que
-                l'inspection n'a pas ete realisee. Planifiez les inspections
-                immediatement pour revenir en conformite.
+                Les équipements listés ci-dessous ont dépassé leur date
+                d'échéance VGP. Ils ne doivent pas être mis en service tant que
+                l'inspection n'a pas été réalisée. Planifiez les inspections
+                immédiatement pour revenir en conformité.
               </Text>
             </Section>
 
@@ -83,10 +83,10 @@ export function VGPOverdue({
                 Amendes DREETS applicables
               </Text>
               <Text style={fineWarningTextStyle}>
-                Rappel : Les amendes DREETS pour non-conformite VGP vont de
-                3 000 EUR a 10 000 EUR par infraction. Avec {count} equipement
+                Rappel : Les amendes DREETS pour non-conformité VGP vont de
+                3 000 EUR à 10 000 EUR par infraction. Avec {count} équipement
                 {count > 1 ? 's' : ''} en retard, l'amende potentielle totale
-                est de {(3000 * count).toLocaleString('fr-FR')} EUR a{' '}
+                est de {(3000 * count).toLocaleString('fr-FR')} EUR à{' '}
                 {(10000 * count).toLocaleString('fr-FR')} EUR.
               </Text>
             </Section>
