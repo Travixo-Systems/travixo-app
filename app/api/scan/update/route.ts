@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
     // STEP 1: Verify asset exists and QR code matches
     const { data: asset, error: assetError } = await supabase
       .from('assets')
-      .select('id, name, qr_code, organization_id, status, current_location, last_seen_at, last_seen_by')
+      .select('id, name, qr_code, organization_id, status, current_location, last_seen_at, last_seen_by, archived_at')
       .eq('id', asset_id)
       .eq('qr_code', qr_code)
       .single()
@@ -93,6 +93,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: 'Asset not found or QR code mismatch' },
         { status: 404 }
+      )
+    }
+
+    // Prevent updates to archived/retired assets
+    if (asset.archived_at && isUpdateRequest) {
+      return NextResponse.json(
+        { success: false, message: 'Cannot update archived/retired asset' },
+        { status: 403 }
       )
     }
 

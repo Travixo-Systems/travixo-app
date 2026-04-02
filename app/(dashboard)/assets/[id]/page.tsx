@@ -30,7 +30,7 @@ interface Asset {
   qr_code: string
   category_id: string | null
   archived_at?: string | null
-  asset_categories?: { id: string; name: string; color: string } | null
+  asset_categories?: { id: string; name: string } | null
 }
 
 interface VGPSchedule {
@@ -177,7 +177,7 @@ export default function AssetDetailPage() {
         .from('assets')
         .select(`
           *,
-          asset_categories ( id, name, color )
+          asset_categories ( id, name )
         `)
         .eq('id', assetId)
         .eq('organization_id', userData.organization_id)

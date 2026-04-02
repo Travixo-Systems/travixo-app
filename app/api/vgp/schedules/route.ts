@@ -77,6 +77,7 @@ export async function GET(request: Request) {
         status,
         notes,
         archived_at,
+        inspection_location,
         created_at,
         updated_at,
         assets (

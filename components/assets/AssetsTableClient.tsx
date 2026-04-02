@@ -34,7 +34,6 @@ interface Asset {
     asset_categories?: {
         id: string
         name: string
-        color: string
     } | null
 }
 

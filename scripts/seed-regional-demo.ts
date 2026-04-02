@@ -35,7 +35,7 @@ interface Agency {
   name: string
   slug: string
   locations: string[]
-  categories: { name: string; color: string }[]
+  categories: { name: string }[]
   assets: {
     name: string
     serial: string
@@ -59,10 +59,10 @@ const AGENCIES: Agency[] = [
     slug: 'locamat-idf',
     locations: ['Depot Gennevilliers (92)', 'Depot Rungis (94)', 'Depot Marne-la-Vallee (77)'],
     categories: [
-      { name: 'Nacelle', color: '#f97316' },
-      { name: 'Chariot elevateur', color: '#3b82f6' },
-      { name: 'Engin de chantier', color: '#22c55e' },
-      { name: 'Groupe electrogene', color: '#a855f7' },
+      { name: 'Nacelle' },
+      { name: 'Chariot elevateur' },
+      { name: 'Engin de chantier' },
+      { name: 'Groupe electrogene' },
     ],
     assets: [
       // Gennevilliers depot
@@ -102,9 +102,9 @@ const AGENCIES: Agency[] = [
     slug: 'alploc-rhonealpes',
     locations: ['Depot Lyon-Venissieux (69)', 'Depot Grenoble-Echirolles (38)'],
     categories: [
-      { name: 'Nacelle', color: '#f97316' },
-      { name: 'Chariot elevateur', color: '#3b82f6' },
-      { name: 'Engin de chantier', color: '#22c55e' },
+      { name: 'Nacelle' },
+      { name: 'Chariot elevateur' },
+      { name: 'Engin de chantier' },
     ],
     assets: [
       // Lyon depot
@@ -137,10 +137,10 @@ const AGENCIES: Agency[] = [
     slug: 'sudloc-sudouest',
     locations: ['Depot Toulouse-Colomiers (31)', 'Depot Bordeaux-Merignac (33)', 'Depot Pau-Lescar (64)'],
     categories: [
-      { name: 'Nacelle', color: '#f97316' },
-      { name: 'Chariot elevateur', color: '#3b82f6' },
-      { name: 'Engin de chantier', color: '#22c55e' },
-      { name: 'Materiel divers', color: '#eab308' },
+      { name: 'Nacelle' },
+      { name: 'Chariot elevateur' },
+      { name: 'Engin de chantier' },
+      { name: 'Materiel divers' },
     ],
     assets: [
       // Toulouse depot
@@ -228,7 +228,7 @@ async function seedOrgData(orgId: string, agency: Agency) {
 
     const { data: created, error } = await supabase
       .from('asset_categories')
-      .insert({ organization_id: orgId, name: cat.name, color: cat.color })
+      .insert({ organization_id: orgId, name: cat.name })
       .select('id')
       .single()
 

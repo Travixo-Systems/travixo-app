@@ -30,7 +30,6 @@ interface Asset {
     asset_categories?: {
         id: string
         name: string
-        color: string
     } | null
     vgp_schedules?: {
         id: string
@@ -81,8 +80,7 @@ export default function AssetsPageClient() {
                     *,
                     asset_categories (
                         id,
-                        name,
-                        color
+                        name
                     ),
                     vgp_schedules (
                         id,

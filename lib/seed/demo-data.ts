@@ -23,9 +23,9 @@ interface SeedResult {
 }
 
 const DEMO_CATEGORIES = [
-  { name: 'Nacelle', color: '#f97316' },
-  { name: 'Chariot elevateur', color: '#3b82f6' },
-  { name: 'Engin de chantier', color: '#22c55e' },
+  { name: 'Nacelle' },
+  { name: 'Chariot elevateur' },
+  { name: 'Engin de chantier' },
 ] as const;
 
 interface DemoAsset {
@@ -83,7 +83,6 @@ export async function seedDemoData(organizationId: string): Promise<SeedResult> 
           .insert({
             organization_id: organizationId,
             name: cat.name,
-            color: cat.color,
           })
           .select('id')
           .single();

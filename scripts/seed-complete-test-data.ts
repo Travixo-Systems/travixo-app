@@ -40,11 +40,11 @@ const COMPANY_NAMES = [
 ];
 
 const ASSET_CATEGORIES = [
-  { name: 'Engins de Chantier', color: '#3B82F6' },
-  { name: 'Équipement de Levage', color: '#10B981' },
-  { name: 'Matériel Électrique', color: '#F59E0B' },
-  { name: 'Outils Pneumatiques', color: '#EF4444' },
-  { name: 'Échafaudages', color: '#8B5CF6' }
+  { name: 'Engins de Chantier' },
+  { name: 'Équipement de Levage' },
+  { name: 'Matériel Électrique' },
+  { name: 'Outils Pneumatiques' },
+  { name: 'Échafaudages' }
 ];
 
 const ASSET_TEMPLATES = [
@@ -66,7 +66,7 @@ const ASSET_TEMPLATES = [
   { name: 'Compressor Atlas Copco', category: 'Outils Pneumatiques', price: 12000, vgp_required: false },
   
   // Scaffolding
-  { name: 'Scaffold Tower 8m', category: 'Échafaudages', color: '#8B5CF6', price: 5000, vgp_required: true },
+  { name: 'Scaffold Tower 8m', category: 'Échafaudages', price: 5000, vgp_required: true },
   { name: 'Mobile Platform 15m', category: 'Échafaudages', price: 45000, vgp_required: true }
 ];
 
@@ -215,7 +215,6 @@ async function seedCompleteData() {
       const categories = ASSET_CATEGORIES.map(cat => ({
         organization_id: org.id,
         name: cat.name,
-        color: cat.color
       }));
 
       const { data: createdCats, error: catError } = await supabase

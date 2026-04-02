@@ -68,7 +68,9 @@
       "Bash(npm install:*)",
       "Bash(node -e \"const sharp = require\\(''sharp''\\); sharp\\(''public/travixo-logo.png''\\).metadata\\(\\).then\\(m => console.log\\(m.width, m.height\\)\\)\")",
       "Bash(./node_modules/.bin/tsc --noEmit --pretty)",
-      "Bash(node node_modules/typescript/bin/tsc --noEmit --pretty)"
+      "Bash(node node_modules/typescript/bin/tsc --noEmit --pretty)",
+      "Bash(grep -rn \"color\" types/database.ts lib/seed/demo-data.ts scripts/seed-*.ts)",
+      "Bash(grep -v \"^//\")"
     ],
     "additionalDirectories": [
       "d:\\Dev\\projects\\travixo-app\\app\\(dashboard)\\assets"

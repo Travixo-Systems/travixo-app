@@ -162,6 +162,7 @@ export async function POST(request: Request) {
       certification_number,
       result,
       findings,
+      verification_type,
       interval_months,
       certificate_url,        // UploadThing URL
       certificate_file_name,  // Original filename
@@ -227,7 +228,8 @@ export async function POST(request: Request) {
         inspector_company: inspector_company || null,
         certification_number: certification_number || null,
         result,
-        findings: findings || null,
+        observations: findings || '',
+        verification_type: verification_type || 'PERIODIQUE',
         next_inspection_date: nextInspectionDate.toISOString().split('T')[0],
         certificate_url: certificate_url || null,          // UploadThing URL
         certificate_file_name: certificate_file_name || null, // Original filename
