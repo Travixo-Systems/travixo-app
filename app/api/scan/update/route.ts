@@ -47,13 +47,15 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient()
 
+    // Try to get authenticated user (non-blocking — public scans still work)
+    const { data: { user } } = await supabase.auth.getUser()
+    const scannedByUserId = user?.id ?? null
+
     // OPTION 2 AUTH CHECK: Status or Location updates require authentication
     const isUpdateRequest = status || location
-    
+
     if (isUpdateRequest) {
-      const { data: { user }, error: authError } = await supabase.auth.getUser()
-      
-      if (authError || !user) {
+      if (!user) {
         return NextResponse.json(
           { success: false, message: 'Authentication required to update asset status or location' },
           { status: 401 }
@@ -112,7 +114,7 @@ export async function POST(request: NextRequest) {
       last_seen_at: new Date().toISOString(),
     }
 
-    assetUpdates.last_seen_by = null
+    assetUpdates.last_seen_by = scannedByUserId
 
     if (location) {
       assetUpdates.current_location = location.trim().substring(0, 255)
@@ -146,7 +148,7 @@ export async function POST(request: NextRequest) {
       scanned_at: new Date().toISOString(),
       location_name: location?.trim().substring(0, 255) || null,
       notes: notes?.trim().substring(0, 500) || null,
-      scanned_by: null,
+      scanned_by: scannedByUserId,
       latitude: latitude || null,
       longitude: longitude || null,
       scan_type: 'check',
