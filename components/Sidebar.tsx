@@ -171,14 +171,14 @@ export default function Sidebar() {
         href={item.href}
         onClick={() => isMobile && setMobileOpen(false)}
         className={cn(
-          'flex items-center px-4 min-h-[44px] text-sm font-medium rounded-lg transition-colors',
+          'flex items-center min-h-[48px] rounded-lg transition-colors',
+          showLabel ? 'px-4 text-sm font-semibold' : 'justify-center px-2',
           isActive ? 'text-white border-l-2 border-[#e8600a]' : 'text-white/70 hover:text-white',
-          !showLabel && 'justify-center',
         )}
         style={isActive ? { backgroundColor: 'rgba(226,128,38,0.15)' } : undefined}
         title={!showLabel ? item.name : undefined}
       >
-        <Icon className={cn('w-5 h-5', showLabel && 'mr-3')} />
+        <Icon className={cn(showLabel ? 'w-5 h-5 mr-3' : 'w-7 h-7')} />
         {showLabel && <span>{item.name}</span>}
       </Link>
     );
@@ -205,15 +205,15 @@ export default function Sidebar() {
           }
         }}
         className={cn(
-          'w-full flex items-center justify-between px-4 min-h-[44px] text-sm font-medium rounded-lg transition-colors',
+          'w-full flex items-center justify-between min-h-[48px] rounded-lg transition-colors',
+          showLabel ? 'px-4 text-sm font-semibold' : 'justify-center px-2',
           isVgpRoute ? 'text-white border-l-2 border-[#e8600a]' : 'text-white/70 hover:text-white',
-          !showLabel && 'justify-center',
         )}
         style={isVgpRoute ? { backgroundColor: 'rgba(226,128,38,0.15)' } : undefined}
         title={!showLabel ? t('navigation.vgp') : undefined}
       >
         <div className={cn('flex items-center', !showLabel && 'justify-center w-full')}>
-          <AlertCircle className={cn('w-5 h-5', showLabel && 'mr-3')} />
+          <AlertCircle className={cn(showLabel ? 'w-5 h-5 mr-3' : 'w-7 h-7')} />
           {showLabel && <span>{t('navigation.vgp')}</span>}
         </div>
         {showLabel && (vgpOpen ? <ChevronDownIcon className="w-4 h-4" /> : <ChevronRightIcon className="w-4 h-4" />)}
@@ -231,12 +231,12 @@ export default function Sidebar() {
                 href={item.href}
                 onClick={() => { if (isMobile) setMobileOpen(false); }}
                 className={cn(
-                  'flex items-center px-4 min-h-[44px] text-sm rounded-lg transition-colors',
-                  isActive ? 'text-white font-medium border-l-2 border-[#e8600a]' : 'text-gray-400 hover:text-white',
+                  'flex items-center px-4 min-h-[48px] text-sm rounded-lg transition-colors',
+                  isActive ? 'text-white font-semibold border-l-2 border-[#e8600a]' : 'text-gray-400 hover:text-white',
                 )}
                 style={isActive ? { backgroundColor: 'rgba(226,128,38,0.15)' } : undefined}
               >
-                <Icon className="w-4 h-4 mr-3" />
+                <Icon className="w-5 h-5 mr-3" />
                 {item.name}
               </Link>
             );
@@ -267,14 +267,14 @@ export default function Sidebar() {
                   key={item.name}
                   href={item.href}
                   onClick={() => { setVgpFlyout(false); if (isMobile) setMobileOpen(false); }}
-                  className="flex items-center px-4 text-[13px] text-white transition-colors"
+                  className="flex items-center px-4 text-[15px] font-semibold text-white transition-colors"
                   style={{
-                    minHeight: 44,
+                    minHeight: 48,
                     backgroundColor: isActive ? 'rgba(232,96,10,0.15)' : undefined,
                     borderLeft: isActive ? '2px solid #e8600a' : '2px solid transparent',
                   }}
                 >
-                  <Icon className="w-4 h-4 mr-3 flex-shrink-0" />
+                  <Icon className="w-5 h-5 mr-3 flex-shrink-0" />
                   {item.name}
                 </Link>
               );
@@ -311,11 +311,11 @@ export default function Sidebar() {
             </div>
           ) : (
             <div className="flex flex-col items-center gap-1">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold cursor-pointer hover:opacity-80 transition-opacity" style={{ backgroundColor: colors.secondary }} title={getDisplayName()}>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold cursor-pointer hover:opacity-80 transition-opacity" style={{ backgroundColor: colors.secondary }} title={getDisplayName()}>
                 {getInitials()}
               </div>
-              <button onClick={handleLogout} disabled={loggingOut} className="p-1.5 text-gray-400 hover:text-red-400 rounded transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center" title={language === 'fr' ? 'Déconnexion' : 'Logout'}>
-                <ArrowRightOnRectangleIcon className="w-4 h-4" />
+              <button onClick={handleLogout} disabled={loggingOut} className="p-1.5 text-gray-400 hover:text-red-400 rounded transition-colors min-h-[48px] min-w-[48px] flex items-center justify-center" title={language === 'fr' ? 'Déconnexion' : 'Logout'}>
+                <ArrowRightOnRectangleIcon className="w-6 h-6" />
               </button>
             </div>
           )}
@@ -326,7 +326,7 @@ export default function Sidebar() {
         {!showLabel ? (
           <button
             onClick={() => setLanguage(language === 'fr' ? 'en' : 'fr')}
-            className="inline-flex items-center justify-center w-full min-h-[44px] py-2.5 rounded-lg text-xs font-bold text-gray-300 hover:text-white hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
+            className="inline-flex items-center justify-center w-full min-h-[48px] py-2.5 rounded-lg text-sm font-bold text-gray-300 hover:text-white hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
             aria-label={`Langue : ${language.toUpperCase()}`}
             title={`Basculer vers ${language === 'fr' ? 'English' : 'Français'}`}
           >
@@ -366,10 +366,10 @@ export default function Sidebar() {
           <div className="flex items-center justify-center h-16 border-b border-gray-800 flex-shrink-0">
             <button
               onClick={() => setMobileOpen(true)}
-              className="flex items-center justify-center h-11 w-11 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
+              className="flex items-center justify-center h-12 w-12 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
               aria-label={language === 'fr' ? 'Ouvrir le menu' : 'Open menu'}
             >
-              <Bars3Icon className="w-5 h-5" />
+              <Bars3Icon className="w-7 h-7" />
             </button>
           </div>
 
