@@ -70,7 +70,9 @@
       "Bash(./node_modules/.bin/tsc --noEmit --pretty)",
       "Bash(node node_modules/typescript/bin/tsc --noEmit --pretty)",
       "Bash(grep -rn \"color\" types/database.ts lib/seed/demo-data.ts scripts/seed-*.ts)",
-      "Bash(grep -v \"^//\")"
+      "Bash(grep -v \"^//\")",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)"
     ],
     "additionalDirectories": [
       "d:\\Dev\\projects\\travixo-app\\app\\(dashboard)\\assets"
