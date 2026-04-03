@@ -361,7 +361,7 @@ export default function Sidebar() {
 
   // ── Full sidebar content (used for both desktop expanded + mobile overlay) ──
   const renderSidebarContent = (showLabel: boolean) => (
-    <>
+    <div className={cn('flex flex-col flex-1 min-h-0', !showLabel && 'justify-between')}>
       <nav
         className={cn(
           'px-2',
@@ -374,7 +374,7 @@ export default function Sidebar() {
         {navigation.slice(2).map((item) => <NavItem key={item.href} item={item} showLabel={showLabel} />)}
       </nav>
       {renderUserSection(showLabel)}
-    </>
+    </div>
   );
 
   // ════════════════════════════════════════════════
