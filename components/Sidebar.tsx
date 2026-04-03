@@ -361,7 +361,7 @@ export default function Sidebar() {
 
   // ── Full sidebar content (used for both desktop expanded + mobile overlay) ──
   const renderSidebarContent = (showLabel: boolean) => (
-    <div className={cn('flex flex-col flex-1 min-h-0', !showLabel && 'justify-between')}>
+    <div className={cn('flex flex-col flex-1 min-h-0')}>
       <nav
         className={cn(
           'px-2',
