@@ -171,14 +171,14 @@ export default function Sidebar() {
         href={item.href}
         onClick={() => isMobile && setMobileOpen(false)}
         className={cn(
-          'flex items-center min-h-[48px] rounded-lg transition-colors',
-          showLabel ? 'px-4 text-sm font-semibold' : 'justify-center px-2',
+          'flex items-center rounded-lg transition-colors',
+          showLabel ? 'min-h-[48px] px-4 text-sm font-semibold' : 'min-h-[40px] justify-center px-2',
           isActive ? 'text-white border-l-2 border-[#e8600a]' : 'text-white/70 hover:text-white',
         )}
         style={isActive ? { backgroundColor: 'rgba(226,128,38,0.15)' } : undefined}
         title={!showLabel ? item.name : undefined}
       >
-        <Icon className={cn(showLabel ? 'w-5 h-5 mr-3' : 'w-7 h-7')} />
+        <Icon className={cn(showLabel ? 'w-5 h-5 mr-3' : 'w-6 h-6')} />
         {showLabel && <span>{item.name}</span>}
       </Link>
     );
@@ -205,15 +205,15 @@ export default function Sidebar() {
           }
         }}
         className={cn(
-          'w-full flex items-center justify-between min-h-[48px] rounded-lg transition-colors',
-          showLabel ? 'px-4 text-sm font-semibold' : 'justify-center px-2',
+          'w-full flex items-center justify-between rounded-lg transition-colors',
+          showLabel ? 'min-h-[48px] px-4 text-sm font-semibold' : 'min-h-[40px] justify-center px-2',
           isVgpRoute ? 'text-white border-l-2 border-[#e8600a]' : 'text-white/70 hover:text-white',
         )}
         style={isVgpRoute ? { backgroundColor: 'rgba(226,128,38,0.15)' } : undefined}
         title={!showLabel ? t('navigation.vgp') : undefined}
       >
         <div className={cn('flex items-center', !showLabel && 'justify-center w-full')}>
-          <AlertCircle className={cn(showLabel ? 'w-5 h-5 mr-3' : 'w-7 h-7')} />
+          <AlertCircle className={cn(showLabel ? 'w-5 h-5 mr-3' : 'w-6 h-6')} />
           {showLabel && <span>{t('navigation.vgp')}</span>}
         </div>
         {showLabel && (vgpOpen ? <ChevronDownIcon className="w-4 h-4" /> : <ChevronRightIcon className="w-4 h-4" />)}
@@ -362,7 +362,13 @@ export default function Sidebar() {
   // ── Full sidebar content (used for both desktop expanded + mobile overlay) ──
   const renderSidebarContent = (showLabel: boolean) => (
     <>
-      <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto" style={{ overflowX: 'hidden' }}>
+      <nav
+        className={cn(
+          'flex-1 px-2',
+          showLabel ? 'py-4 space-y-1 overflow-y-auto' : 'py-2 space-y-0 overflow-hidden',
+        )}
+        style={{ overflowX: 'hidden' }}
+      >
         {navigation.slice(0, 2).map((item) => <NavItem key={item.href} item={item} showLabel={showLabel} />)}
         {renderVgpSection(showLabel)}
         {navigation.slice(2).map((item) => <NavItem key={item.href} item={item} showLabel={showLabel} />)}
