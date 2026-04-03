@@ -288,7 +288,7 @@ export default function Sidebar() {
 
   // ── User section renderer ──
   const renderUserSection = (showLabel: boolean) => (
-    <div className="border-t border-gray-800 flex-shrink-0">
+    <div className={cn('flex-shrink-0', showLabel && 'border-t border-gray-800')}>
       {showLabel ? (
         <>
           {user && (
@@ -364,8 +364,8 @@ export default function Sidebar() {
     <>
       <nav
         className={cn(
-          'flex-1 px-2',
-          showLabel ? 'py-4 space-y-1 overflow-y-auto' : 'py-2 space-y-0 overflow-hidden',
+          'px-2',
+          showLabel ? 'flex-1 py-4 space-y-1 overflow-y-auto' : 'py-2 space-y-0 overflow-hidden',
         )}
         style={{ overflowX: 'hidden' }}
       >
