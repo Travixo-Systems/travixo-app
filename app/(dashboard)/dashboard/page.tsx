@@ -3,11 +3,18 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { AlertTriangle, ArrowRight, Calendar, Package, QrCode, TrendingUp } from "lucide-react"
+import { AlertTriangle, ArrowRight, Package, QrCode, TrendingUp } from "lucide-react"
 import { useLanguage } from "@/lib/LanguageContext"
 import { createTranslator } from "@/lib/i18n"
 import { createClient } from "@/lib/supabase/client"
 import OnboardingBanner from "@/components/dashboard/OnboardingBanner"
+
+interface CategoryUtilization {
+  category: string
+  inUse: number
+  total: number
+  rate: number
+}
 
 interface DashboardData {
   firstName: string
@@ -22,6 +29,7 @@ interface DashboardData {
   vgpCompliant: number
   upcomingInspections: { id: string; name: string; daysUntil: number }[]
   upcomingReturns: { id: string; name: string; clientName: string; daysUntil: number }[]
+  categoryUtilization: CategoryUtilization[]
 }
 
 export default function DashboardPage() {
@@ -129,6 +137,31 @@ export default function DashboardPage() {
       return { id: r.id, name: r.assets?.name || 'N/A', clientName: r.client_name, daysUntil: days }
     })
 
+    // Per-category utilization
+    const { data: assetsWithCat } = await supabase
+      .from('assets')
+      .select('status, asset_categories(name)')
+      .eq('organization_id', orgId!)
+      .is('archived_at', null)
+
+    const catMap = new Map<string, { inUse: number; total: number }>()
+    ;(assetsWithCat || []).forEach((a: any) => {
+      const catName = a.asset_categories?.name || (language === 'fr' ? 'Sans categorie' : 'Uncategorized')
+      const entry = catMap.get(catName) || { inUse: 0, total: 0 }
+      entry.total++
+      if (a.status === 'in_use') entry.inUse++
+      catMap.set(catName, entry)
+    })
+
+    const categoryUtilization: CategoryUtilization[] = Array.from(catMap.entries())
+      .map(([category, { inUse, total }]) => ({
+        category,
+        inUse,
+        total,
+        rate: total > 0 ? Math.round((inUse / total) * 100) : 0,
+      }))
+      .sort((a, b) => b.rate - a.rate)
+
     setData({
       firstName,
       orgName,
@@ -142,6 +175,7 @@ export default function DashboardPage() {
       vgpCompliant,
       upcomingInspections,
       upcomingReturns,
+      categoryUtilization,
     })
     setLoading(false)
   }
@@ -175,7 +209,7 @@ export default function DashboardPage() {
           {t('dashboard.greeting')}{data.firstName ? `, ${data.firstName}` : ''}
         </h1>
         <p className="text-[13px] mt-0.5" style={{ color: 'var(--text-muted, #777)' }}>
-          {data.orgName} — {todayStr}
+          {data.orgName} - {todayStr}
         </p>
       </div>
 
@@ -328,7 +362,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 5. Bottom row — secondary stats */}
+      {/* 5. Bottom row - secondary stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="rounded-lg p-4 text-center" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
           <Package className="w-5 h-5 mx-auto mb-1" style={{ color: 'var(--text-hint, #888)' }} />
@@ -346,6 +380,41 @@ export default function DashboardPage() {
           <p className="text-[12px] font-medium" style={{ color: 'var(--text-muted, #777)' }}>{t('dashboard.scans7Days')}</p>
         </div>
       </div>
+
+      {/* 6. Per-category utilization */}
+      {data.categoryUtilization.length > 0 && (
+        <div
+          className="rounded-lg p-4"
+          style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}
+        >
+          <h3 className="text-[13px] font-semibold uppercase tracking-wide mb-3" style={{ color: 'var(--text-hint, #888)' }}>
+            {t('dashboard.categoryUtilization')}
+          </h3>
+          <div className="space-y-2.5">
+            {data.categoryUtilization.map((cat) => (
+              <div key={cat.category}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[13px] font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                    {cat.category}
+                  </span>
+                  <span className="text-[12px] font-semibold" style={{ color: 'var(--text-muted, #777)' }}>
+                    {cat.inUse}/{cat.total} ({cat.rate}%)
+                  </span>
+                </div>
+                <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(0,0,0,0.08)' }}>
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${cat.rate}%`,
+                      backgroundColor: cat.rate >= 50 ? 'var(--accent, #e8600a)' : 'var(--text-hint, #888)',
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

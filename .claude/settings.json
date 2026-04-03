@@ -72,7 +72,8 @@
       "Bash(grep -rn \"color\" types/database.ts lib/seed/demo-data.ts scripts/seed-*.ts)",
       "Bash(grep -v \"^//\")",
       "Bash(git add:*)",
-      "Bash(git commit -m ':*)"
+      "Bash(git commit -m ':*)",
+      "Read(//^  dashboard: /{/,/^  [^ ]/**)"
     ],
     "additionalDirectories": [
       "d:\\Dev\\projects\\travixo-app\\app\\(dashboard)\\assets"

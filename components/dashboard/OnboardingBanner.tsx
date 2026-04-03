@@ -59,7 +59,7 @@ export default function OnboardingBanner({
           <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
             <span className="text-[13px] font-bold text-red-600">!</span>
           </div>
-          <span>Explorez le tableau de bord — vous avez une inspection VGP en retard</span>
+          <span>Explorez le tableau de bord - vous avez une inspection VGP en retard</span>
         </div>
         <div className="flex items-center gap-2 text-[15px] text-slate-700">
           <Upload className="w-4 h-4 text-slate-400 flex-shrink-0 ml-0.5" />

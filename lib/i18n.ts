@@ -2323,6 +2323,7 @@ export const translations = {
     totalEquipment: { en: "Total equipment", fr: "Total équipements" },
     utilization: { en: "Utilization", fr: "Utilisation" },
     scans7Days: { en: "Scans (7d)", fr: "Scans (7j)" },
+    categoryUtilization: { en: "Utilization by category", fr: "Utilisation par categorie" },
   },
 
   // ============================================================================
