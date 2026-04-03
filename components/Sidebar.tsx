@@ -289,53 +289,73 @@ export default function Sidebar() {
   // ── User section renderer ──
   const renderUserSection = (showLabel: boolean) => (
     <div className="border-t border-gray-800 flex-shrink-0">
-      {user && (
-        <div className={cn('p-3', !showLabel && 'p-2')}>
-          {showLabel ? (
-            <div className="flex items-center gap-2">
+      {showLabel ? (
+        <>
+          {user && (
+            <div className="p-3">
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/settings/profile"
+                  onClick={() => isMobile && setMobileOpen(false)}
+                  className="flex items-center gap-2 flex-1 min-w-0 hover:opacity-80 transition-opacity"
+                >
+                  <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-semibold" style={{ backgroundColor: colors.secondary }}>
+                    {getInitials()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-white truncate">{getDisplayName()}</p>
+                  </div>
+                </Link>
+                <button onClick={handleLogout} disabled={loggingOut} className="p-1.5 text-gray-400 hover:text-red-400 rounded transition-colors flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center" title={language === 'fr' ? 'Déconnexion' : 'Logout'}>
+                  <ArrowRightOnRectangleIcon className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+          <div className="px-2 pb-2">
+            <LanguageToggle />
+          </div>
+        </>
+      ) : (
+        <div className="p-1.5">
+          <div
+            className="flex flex-col items-center gap-3 rounded-lg"
+            style={{ backgroundColor: 'rgba(232,96,10,0.2)', padding: 6 }}
+          >
+            {/* Language toggle */}
+            <button
+              onClick={() => setLanguage(language === 'fr' ? 'en' : 'fr')}
+              className="inline-flex items-center justify-center w-[26px] h-[26px] rounded-full text-[10px] font-bold text-white hover:opacity-80 transition-opacity"
+              style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
+              aria-label={`Langue : ${language.toUpperCase()}`}
+              title={`Basculer vers ${language === 'fr' ? 'English' : 'Français'}`}
+            >
+              {language.toUpperCase()}
+            </button>
+            {/* Profile initials */}
+            {user && (
               <Link
                 href="/settings/profile"
                 onClick={() => isMobile && setMobileOpen(false)}
-                className="flex items-center gap-2 flex-1 min-w-0 hover:opacity-80 transition-opacity"
+                className="inline-flex items-center justify-center w-[26px] h-[26px] rounded-full text-[10px] font-bold text-white hover:opacity-80 transition-opacity"
+                style={{ backgroundColor: '#e8600a' }}
+                title={getDisplayName()}
               >
-                <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-semibold" style={{ backgroundColor: colors.secondary }}>
-                  {getInitials()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-white truncate">{getDisplayName()}</p>
-                </div>
-              </Link>
-              <button onClick={handleLogout} disabled={loggingOut} className="p-1.5 text-gray-400 hover:text-red-400 rounded transition-colors flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center" title={language === 'fr' ? 'Déconnexion' : 'Logout'}>
-                <ArrowRightOnRectangleIcon className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold cursor-pointer hover:opacity-80 transition-opacity" style={{ backgroundColor: colors.secondary }} title={getDisplayName()}>
                 {getInitials()}
-              </div>
-              <button onClick={handleLogout} disabled={loggingOut} className="p-1.5 text-gray-400 hover:text-red-400 rounded transition-colors min-h-[48px] min-w-[48px] flex items-center justify-center" title={language === 'fr' ? 'Déconnexion' : 'Logout'}>
-                <ArrowRightOnRectangleIcon className="w-6 h-6" />
-              </button>
-            </div>
-          )}
+              </Link>
+            )}
+            {/* Logout */}
+            <button
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="inline-flex items-center justify-center w-[26px] h-[26px] text-gray-400 hover:text-red-400 rounded transition-colors"
+              title={language === 'fr' ? 'Déconnexion' : 'Logout'}
+            >
+              <ArrowRightOnRectangleIcon className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
-
-      <div className={cn('pb-2', !showLabel ? 'px-1' : 'px-2')}>
-        {!showLabel ? (
-          <button
-            onClick={() => setLanguage(language === 'fr' ? 'en' : 'fr')}
-            className="inline-flex items-center justify-center w-full min-h-[48px] py-2.5 rounded-lg text-sm font-bold text-gray-300 hover:text-white hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-[#f26f00]"
-            aria-label={`Langue : ${language.toUpperCase()}`}
-            title={`Basculer vers ${language === 'fr' ? 'English' : 'Français'}`}
-          >
-            {language.toUpperCase()}
-          </button>
-        ) : (
-          <LanguageToggle />
-        )}
-      </div>
     </div>
   );
 
@@ -359,7 +379,7 @@ export default function Sidebar() {
       <>
         {/* Icon rail — always visible */}
         <div
-          className="flex flex-col h-screen w-16 flex-shrink-0 border-r border-gray-800"
+          className="flex flex-col h-screen w-16 flex-shrink-0 border-r border-gray-800 overflow-hidden"
           style={{ backgroundColor: SIDEBAR_BG }}
         >
           {/* Hamburger header */}

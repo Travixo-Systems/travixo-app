@@ -38,6 +38,14 @@ export default function DashboardPage() {
   const router = useRouter()
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isCompact, setIsCompact] = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsCompact(window.innerWidth < 640)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   useEffect(() => {
     fetchDashboardData()
@@ -197,7 +205,7 @@ export default function DashboardPage() {
   const fineRisk = data.vgpOverdue * 15000
 
   return (
-    <div className="space-y-4 min-[1026px]:space-y-5 p-3 md:p-6">
+    <div className="space-y-3 sm:space-y-4 min-[1026px]:space-y-5 p-3 md:p-6">
       {/* Onboarding */}
       {data.orgId && (
         <OnboardingBanner organizationId={data.orgId} onboardingCompleted={data.onboardingCompleted} />
@@ -216,7 +224,7 @@ export default function DashboardPage() {
       {/* 2. VGP Alert Banner (only if overdue) */}
       {data.vgpOverdue > 0 && (
         <div
-          className="rounded-lg p-4 flex items-start gap-3"
+          className="rounded-lg p-2.5 sm:p-4 flex items-start gap-2 sm:gap-3"
           style={{
             backgroundColor: 'rgba(220,38,38,0.06)',
             borderLeft: '3px solid var(--status-retard, #dc2626)',
@@ -242,7 +250,7 @@ export default function DashboardPage() {
       )}
 
       {/* 3. Three compliance cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <ComplianceCard
           label={t('dashboard.vgpOverdueLabel')}
           count={data.vgpOverdue}
@@ -264,7 +272,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 min-[1026px]:grid-cols-2 gap-3">
         {/* Left: Upcoming inspections */}
         <div
-          className="rounded-lg p-4"
+          className="rounded-lg p-2 sm:p-4"
           style={{
             backgroundColor: 'var(--card-bg, #edeff2)',
             borderLeft: '3px solid var(--accent, #e8600a)',
@@ -272,7 +280,7 @@ export default function DashboardPage() {
             borderRadius: '8px 8px 8px 0',
           }}
         >
-          <h3 className="text-[13px] font-semibold uppercase tracking-wide mb-3" style={{ color: 'var(--text-hint, #888)' }}>
+          <h3 className="text-[11px] sm:text-[13px] font-semibold uppercase tracking-wide mb-2 sm:mb-3" style={{ color: 'var(--text-hint, #888)' }}>
             {t('dashboard.inspectionsThisWeek')}
           </h3>
           {data.upcomingInspections.length === 0 ? (
@@ -280,14 +288,14 @@ export default function DashboardPage() {
               {t('dashboard.noUpcomingInspections')}
             </p>
           ) : (
-            <div className="space-y-2">
-              {data.upcomingInspections.map((insp) => (
-                <div key={insp.id} className="flex items-center justify-between min-h-[44px]">
-                  <span className="text-[14px] font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+            <div className="space-y-1 sm:space-y-2">
+              {(isCompact ? data.upcomingInspections.slice(0, 2) : data.upcomingInspections).map((insp) => (
+                <div key={insp.id} className="flex items-center justify-between min-h-[36px] sm:min-h-[44px]">
+                  <span className="text-[13px] sm:text-[14px] font-medium truncate" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                     {insp.name}
                   </span>
                   <span
-                    className="text-[12px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ml-2"
+                    className="text-[11px] sm:text-[12px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ml-2"
                     style={{
                       backgroundColor: insp.daysUntil <= 7 ? 'rgba(220,38,38,0.1)' : 'rgba(217,119,6,0.1)',
                       color: insp.daysUntil <= 7 ? '#dc2626' : '#d97706',
@@ -301,7 +309,7 @@ export default function DashboardPage() {
           )}
           <Link
             href="/vgp/schedules"
-            className="inline-flex items-center gap-1 text-[13px] font-medium mt-3 transition-colors hover:underline"
+            className="inline-flex items-center gap-1 text-[12px] sm:text-[13px] font-medium mt-2 sm:mt-3 transition-colors hover:underline"
             style={{ color: 'var(--accent, #e8600a)' }}
           >
             {t('dashboard.viewSchedules')} <ArrowRight className="w-3 h-3" />
@@ -310,7 +318,7 @@ export default function DashboardPage() {
 
         {/* Right: Upcoming returns */}
         <div
-          className="rounded-lg p-4"
+          className="rounded-lg p-2 sm:p-4"
           style={{
             backgroundColor: 'var(--card-bg, #edeff2)',
             borderLeft: '3px solid var(--accent, #e8600a)',
@@ -318,7 +326,7 @@ export default function DashboardPage() {
             borderRadius: '8px 8px 8px 0',
           }}
         >
-          <h3 className="text-[13px] font-semibold uppercase tracking-wide mb-3" style={{ color: 'var(--text-hint, #888)' }}>
+          <h3 className="text-[11px] sm:text-[13px] font-semibold uppercase tracking-wide mb-2 sm:mb-3" style={{ color: 'var(--text-hint, #888)' }}>
             {t('dashboard.expectedReturns')}
           </h3>
           {data.upcomingReturns.length === 0 ? (
@@ -326,19 +334,19 @@ export default function DashboardPage() {
               {t('dashboard.noUpcomingReturns')}
             </p>
           ) : (
-            <div className="space-y-2">
-              {data.upcomingReturns.map((r) => (
-                <div key={r.id} className="flex items-center justify-between min-h-[44px]">
+            <div className="space-y-1 sm:space-y-2">
+              {(isCompact ? data.upcomingReturns.slice(0, 1) : data.upcomingReturns).map((r) => (
+                <div key={r.id} className="flex items-center justify-between min-h-[36px] sm:min-h-[44px]">
                   <div className="min-w-0">
-                    <p className="text-[14px] font-medium truncate" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                    <p className="text-[13px] sm:text-[14px] font-medium truncate" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                       {r.name}
                     </p>
-                    <p className="text-[12px]" style={{ color: 'var(--text-muted, #777)' }}>
+                    <p className="text-[11px] sm:text-[12px]" style={{ color: 'var(--text-muted, #777)' }}>
                       {r.clientName}
                     </p>
                   </div>
                   <span
-                    className="text-[12px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ml-2"
+                    className="text-[11px] sm:text-[12px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ml-2"
                     style={{
                       backgroundColor: r.daysUntil <= 0 ? 'rgba(220,38,38,0.1)' : 'rgba(217,119,6,0.1)',
                       color: r.daysUntil <= 0 ? '#dc2626' : '#d97706',
@@ -354,7 +362,7 @@ export default function DashboardPage() {
           )}
           <Link
             href="/clients"
-            className="inline-flex items-center gap-1 text-[13px] font-medium mt-3 transition-colors hover:underline"
+            className="inline-flex items-center gap-1 text-[12px] sm:text-[13px] font-medium mt-2 sm:mt-3 transition-colors hover:underline"
             style={{ color: 'var(--accent, #e8600a)' }}
           >
             {t('dashboard.viewRentals')} <ArrowRight className="w-3 h-3" />
@@ -363,45 +371,45 @@ export default function DashboardPage() {
       </div>
 
       {/* 5. Bottom row - secondary stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="rounded-lg p-4 text-center" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
-          <Package className="w-5 h-5 mx-auto mb-1" style={{ color: 'var(--text-hint, #888)' }} />
-          <p className="text-[22px] font-bold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{data.totalAssets}</p>
-          <p className="text-[12px] font-medium" style={{ color: 'var(--text-muted, #777)' }}>{t('dashboard.totalEquipment')}</p>
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="rounded-lg p-2 sm:p-4 text-center" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
+          <Package className="w-4 h-4 sm:w-5 sm:h-5 mx-auto mb-0.5 sm:mb-1" style={{ color: 'var(--text-hint, #888)' }} />
+          <p className="text-[18px] sm:text-[22px] font-bold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{data.totalAssets}</p>
+          <p className="text-[9px] sm:text-[12px] font-semibold" style={{ color: 'var(--text-muted, #777)' }}>{t('dashboard.totalEquipment')}</p>
         </div>
-        <div className="rounded-lg p-4 text-center" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
-          <TrendingUp className="w-5 h-5 mx-auto mb-1" style={{ color: 'var(--text-hint, #888)' }} />
-          <p className="text-[22px] font-bold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{data.utilizationRate}%</p>
-          <p className="text-[12px] font-medium" style={{ color: 'var(--text-muted, #777)' }}>{t('dashboard.utilization')}</p>
+        <div className="rounded-lg p-2 sm:p-4 text-center" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
+          <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 mx-auto mb-0.5 sm:mb-1" style={{ color: 'var(--text-hint, #888)' }} />
+          <p className="text-[18px] sm:text-[22px] font-bold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{data.utilizationRate}%</p>
+          <p className="text-[9px] sm:text-[12px] font-semibold" style={{ color: 'var(--text-muted, #777)' }}>{t('dashboard.utilization')}</p>
         </div>
-        <div className="rounded-lg p-4 text-center" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
-          <QrCode className="w-5 h-5 mx-auto mb-1" style={{ color: 'var(--text-hint, #888)' }} />
-          <p className="text-[22px] font-bold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{data.recentScans}</p>
-          <p className="text-[12px] font-medium" style={{ color: 'var(--text-muted, #777)' }}>{t('dashboard.scans7Days')}</p>
+        <div className="rounded-lg p-2 sm:p-4 text-center" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
+          <QrCode className="w-4 h-4 sm:w-5 sm:h-5 mx-auto mb-0.5 sm:mb-1" style={{ color: 'var(--text-hint, #888)' }} />
+          <p className="text-[18px] sm:text-[22px] font-bold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{data.recentScans}</p>
+          <p className="text-[9px] sm:text-[12px] font-semibold" style={{ color: 'var(--text-muted, #777)' }}>{t('dashboard.scans7Days')}</p>
         </div>
       </div>
 
       {/* 6. Per-category utilization */}
       {data.categoryUtilization.length > 0 && (
         <div
-          className="rounded-lg p-4"
+          className="rounded-lg p-2.5 sm:p-4"
           style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}
         >
-          <h3 className="text-[13px] font-semibold uppercase tracking-wide mb-3" style={{ color: 'var(--text-hint, #888)' }}>
+          <h3 className="text-[11px] sm:text-[13px] font-semibold uppercase tracking-wide mb-2 sm:mb-3" style={{ color: 'var(--text-hint, #888)' }}>
             {t('dashboard.categoryUtilization')}
           </h3>
-          <div className="space-y-2.5">
+          <div className="space-y-2 sm:space-y-2.5">
             {data.categoryUtilization.map((cat) => (
               <div key={cat.category}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[13px] font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                <div className="flex items-center justify-between mb-0.5 sm:mb-1">
+                  <span className="text-[12px] sm:text-[13px] font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                     {cat.category}
                   </span>
-                  <span className="text-[12px] font-semibold" style={{ color: 'var(--text-muted, #777)' }}>
+                  <span className="text-[11px] sm:text-[12px] font-semibold" style={{ color: 'var(--text-muted, #777)' }}>
                     {cat.inUse}/{cat.total} ({cat.rate}%)
                   </span>
                 </div>
-                <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(0,0,0,0.08)' }}>
+                <div className="h-1.5 sm:h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(0,0,0,0.08)' }}>
                   <div
                     className="h-full rounded-full transition-all"
                     style={{
@@ -423,7 +431,7 @@ export default function DashboardPage() {
 function ComplianceCard({ label, count, color }: { label: string; count: number; color: string }) {
   return (
     <div
-      className="rounded-lg p-4"
+      className="rounded-lg p-2 sm:p-4"
       style={{
         backgroundColor: 'var(--card-bg, #edeff2)',
         borderLeft: `3px solid ${color}`,
@@ -431,8 +439,8 @@ function ComplianceCard({ label, count, color }: { label: string; count: number;
         borderRadius: '8px 8px 8px 0',
       }}
     >
-      <p className="text-[30px] font-bold leading-none" style={{ color }}>{count}</p>
-      <p className="text-[13px] font-medium mt-1" style={{ color: 'var(--text-secondary, #444)' }}>{label}</p>
+      <p className="text-[22px] sm:text-[30px] font-bold leading-none" style={{ color }}>{count}</p>
+      <p className="text-[10px] sm:text-[13px] font-semibold mt-0.5 sm:mt-1" style={{ color: 'var(--text-secondary, #444)' }}>{label}</p>
     </div>
   )
 }
