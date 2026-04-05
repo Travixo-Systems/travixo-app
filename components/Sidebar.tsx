@@ -288,7 +288,7 @@ export default function Sidebar() {
 
   // ── User section renderer ──
   const renderUserSection = (showLabel: boolean) => (
-    <div className={cn('flex-shrink-0', showLabel && 'border-t border-gray-800')}>
+    <div className="mt-auto flex-shrink-0 border-t border-white/10 pt-3">
       {showLabel ? (
         <>
           {user && (
@@ -364,8 +364,8 @@ export default function Sidebar() {
     <div className={cn('flex flex-col flex-1 min-h-0')}>
       <nav
         className={cn(
-          'px-2',
-          showLabel ? 'flex-1 py-4 space-y-1 overflow-y-auto' : 'py-2 space-y-0 overflow-hidden',
+          'px-2 flex-1 overflow-y-auto',
+          showLabel ? 'py-4 space-y-1' : 'py-2 space-y-0',
         )}
         style={{ overflowX: 'hidden' }}
       >
@@ -385,7 +385,7 @@ export default function Sidebar() {
       <>
         {/* Icon rail — always visible */}
         <div
-          className="flex flex-col h-screen w-16 flex-shrink-0 border-r border-gray-800 overflow-hidden"
+          className="flex flex-col h-dvh w-16 flex-shrink-0 border-r border-gray-800 overflow-hidden"
           style={{ backgroundColor: SIDEBAR_BG }}
         >
           {/* Hamburger header */}
@@ -442,7 +442,7 @@ export default function Sidebar() {
   // ════════════════════════════════════════════════
   return (
     <div
-      className={cn('flex flex-col h-screen border-r border-gray-800 transition-all duration-300', collapsed ? 'w-16' : 'w-64')}
+      className={cn('flex flex-col h-dvh border-r border-gray-800 transition-all duration-300', collapsed ? 'w-16' : 'w-64')}
       style={{ backgroundColor: SIDEBAR_BG }}
     >
       {/* Header */}
