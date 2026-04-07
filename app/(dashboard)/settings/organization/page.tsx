@@ -304,10 +304,11 @@ export default function OrganizationSettingsPage() {
                 <div className="flex items-center py-3">
                   <div className="text-[15px] font-semibold text-[var(--text-secondary,#444)] w-32">{labels.country[language]}</div>
                   <div className="text-[15px] text-[var(--text-primary,#1a1a1a)]">
-                    {orgData.country === 'FR' && labels.france[language]}
-                    {orgData.country === 'BE' && labels.belgium[language]}
-                    {orgData.country === 'CH' && labels.switzerland[language]}
-                    {orgData.country === 'LU' && labels.luxembourg[language]}
+                    {orgData.country === 'FR' ? labels.france[language]
+                      : orgData.country === 'BE' ? labels.belgium[language]
+                      : orgData.country === 'CH' ? labels.switzerland[language]
+                      : orgData.country === 'LU' ? labels.luxembourg[language]
+                      : orgData.country.toUpperCase()}
                   </div>
                 </div>
               </div>
@@ -411,13 +412,14 @@ export default function OrganizationSettingsPage() {
                     <UploadButton
                       endpoint="organizationLogo"
                       onClientUploadComplete={(res) => {
-                        if (res?.[0]?.url) {
-                          setOrgData(prev => ({ ...prev, logo_url: res[0].url }));
+                        const fileUrl = res?.[0]?.serverData?.fileUrl;
+                        if (fileUrl) {
+                          setOrgData(prev => ({ ...prev, logo_url: fileUrl }));
                           refetch();
                           toast.success(labels.logoUploadSuccess[language]);
                         }
                       }}
-                      onUploadError={(error: Error) => {
+                      onUploadError={(error) => {
                         toast.error(labels.logoUploadError[language]);
                         console.error('Upload error:', error);
                       }}

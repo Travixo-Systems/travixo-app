@@ -37,11 +37,17 @@ export default function QRCodesPageClient() {
 
             const { data } = await supabase
                 .from('assets')
-                .select('*')
+                .select('*, asset_categories(name)')
                 .eq('organization_id', userData.organization_id)
                 .order('created_at', { ascending: false })
 
-            setAssets(data || [])
+            // Map to the shape BulkQRGenerator expects
+            const mapped = (data || []).map((a: any) => ({
+                ...a,
+                category: a.asset_categories?.name || null,
+                location: a.current_location || null,
+            }))
+            setAssets(mapped)
         } finally {
             setLoading(false)
         }

@@ -126,7 +126,7 @@ export default function SettingsPage() {
             href="mailto:info@travixosystems.com"
             className="text-sm font-medium" style={{ color: 'var(--accent, #e8600a)' }}
           >
-            support@travixosystems.com
+            info@travixosystems.com
           </a>
         </div>
       </div>

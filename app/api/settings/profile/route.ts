@@ -88,6 +88,21 @@ export async function PATCH(request: Request) {
     const body = await request.json();
     const { first_name, last_name, email, avatar_url, language } = body;
 
+    // If email is changing, update auth first — fail early before touching users table
+    if (email && email !== user.email) {
+      const { error: emailError } = await supabase.auth.updateUser({
+        email: email,
+      });
+
+      if (emailError) {
+        console.error('Auth email update error:', emailError);
+        return NextResponse.json(
+          { error: 'Failed to update email. Please try again.' },
+          { status: 500 }
+        );
+      }
+    }
+
     // Build update object (only include provided fields)
     const updates: any = {
       updated_at: new Date().toISOString(),
@@ -113,19 +128,6 @@ export async function PATCH(request: Request) {
         { error: 'Failed to update profile' },
         { status: 500 }
       );
-    }
-
-    // If email was updated, also update auth email
-    if (email && email !== user.email) {
-      const { error: emailError } = await supabase.auth.updateUser({
-        email: email,
-      });
-
-      if (emailError) {
-        console.error('Auth email update error:', emailError);
-        // Don't fail the request, just log the error
-        // The user table is updated, auth email will be updated on next login
-      }
     }
 
     return NextResponse.json(profile);

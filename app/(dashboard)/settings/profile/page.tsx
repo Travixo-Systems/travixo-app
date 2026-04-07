@@ -351,13 +351,14 @@ export default function ProfileSettingsPage() {
                     <UploadButton
                       endpoint="userAvatar"
                       onClientUploadComplete={(res) => {
-                        if (res?.[0]?.url) {
-                          setProfileData(prev => ({ ...prev, avatar_url: res[0].url }));
+                        const fileUrl = res?.[0]?.serverData?.fileUrl;
+                        if (fileUrl) {
+                          setProfileData(prev => ({ ...prev, avatar_url: fileUrl }));
                           refetch();
                           toast.success(labels.avatarUploadSuccess[language]);
                         }
                       }}
-                      onUploadError={(error: Error) => {
+                      onUploadError={(error) => {
                         toast.error(labels.avatarUploadError[language]);
                         console.error('Upload error:', error);
                       }}

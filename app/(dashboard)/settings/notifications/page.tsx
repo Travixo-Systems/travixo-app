@@ -33,28 +33,29 @@ export default function NotificationsSettingsPage() {
     audit_alerts: true,
   });
 
+  const normalizeNotificationData = (prefs: any): NotificationPreferences => {
+    // Handle recipients: could be string "owner" or array ["owner"]
+    let recipientsValue = prefs.vgp_alerts?.recipients || 'owner';
+    if (Array.isArray(recipientsValue)) {
+      recipientsValue = recipientsValue[0] || 'owner';
+    }
+
+    return {
+      email_enabled: prefs.email_enabled ?? true,
+      vgp_alerts: {
+        enabled: prefs.vgp_alerts?.enabled ?? true,
+        timing: Array.isArray(prefs.vgp_alerts?.timing) ? prefs.vgp_alerts.timing : [30, 7, 1],
+        recipients: recipientsValue,
+      },
+      digest_mode: prefs.digest_mode || 'daily',
+      asset_alerts: prefs.asset_alerts ?? true,
+      audit_alerts: prefs.audit_alerts ?? true,
+    };
+  };
+
   useEffect(() => {
     if (organization?.notification_preferences) {
-      // Ensure data structure is correct with fallbacks
-      const prefs = organization.notification_preferences;
-      
-      // Handle recipients: could be string "owner" or array ["owner"]
-      let recipientsValue = prefs.vgp_alerts?.recipients || 'owner';
-      if (Array.isArray(recipientsValue)) {
-        recipientsValue = recipientsValue[0] || 'owner';
-      }
-      
-      setPreferences({
-        email_enabled: prefs.email_enabled ?? true,
-        vgp_alerts: {
-          enabled: prefs.vgp_alerts?.enabled ?? true,
-          timing: Array.isArray(prefs.vgp_alerts?.timing) ? prefs.vgp_alerts.timing : [30, 7, 1],
-          recipients: recipientsValue,
-        },
-        digest_mode: prefs.digest_mode || 'daily',
-        asset_alerts: prefs.asset_alerts ?? true,
-        audit_alerts: prefs.audit_alerts ?? true,
-      });
+      setPreferences(normalizeNotificationData(organization.notification_preferences));
     }
   }, [organization]);
 
@@ -119,7 +120,7 @@ export default function NotificationsSettingsPage() {
 
   const handleCancelEdit = () => {
     if (organization?.notification_preferences) {
-      setPreferences(organization.notification_preferences);
+      setPreferences(normalizeNotificationData(organization.notification_preferences));
     }
     setIsEditing(false);
   };
@@ -235,6 +236,8 @@ export default function NotificationsSettingsPage() {
                   {preferences.digest_mode === 'daily' && t('notifications.daily')}
                   {preferences.digest_mode === 'weekly' && t('notifications.weekly')}
                   {preferences.digest_mode === 'realtime' && t('notifications.realtime')}
+                  {preferences.digest_mode === 'immediate' && t('notifications.immediate')}
+                  {preferences.digest_mode === 'never' && t('notifications.never')}
                 </span>
               </div>
             </div>
@@ -345,9 +348,11 @@ export default function NotificationsSettingsPage() {
                     onChange={(e) => handleChangeDigestMode(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
+                    <option value="immediate">{t('notifications.immediate')}</option>
                     <option value="realtime">{t('notifications.realtime')}</option>
                     <option value="daily">{t('notifications.daily')}</option>
                     <option value="weekly">{t('notifications.weekly')}</option>
+                    <option value="never">{t('notifications.never')}</option>
                   </select>
                 </div>
               </div>

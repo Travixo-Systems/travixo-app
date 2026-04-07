@@ -73,7 +73,12 @@
       "Bash(grep -v \"^//\")",
       "Bash(git add:*)",
       "Bash(git commit -m ':*)",
-      "Read(//^  dashboard: /{/,/^  [^ ]/**)"
+      "Read(//^  dashboard: /{/,/^  [^ ]/**)",
+      "Bash(ls -la /d/Dev/projects/travixo-app/app/\\\\\\(dashboard\\\\\\)/settings/*/)",
+      "Bash(grep -rn \"fileUrl\\\\|\\\\.url\\\\b\" d:/Dev/projects/travixo-app/node_modules/uploadthing/dist/types*.js)",
+      "Bash(node -e \"const pkg = require\\('d:/Dev/projects/travixo-app/node_modules/uploadthing/package.json'\\); console.log\\(pkg.version\\)\")",
+      "Bash(grep -rn \"url\\\\b\\\\|name\\\\b\\\\|key\\\\b\\\\|size\\\\b\" d:/Dev/projects/travixo-app/node_modules/uploadthing/dist/types-*.d.ts)",
+      "Bash(grep -n \"ClientUploadedFileData\" d:/Dev/projects/travixo-app/node_modules/uploadthing/dist/types-*.d.ts)"
     ],
     "additionalDirectories": [
       "d:\\Dev\\projects\\travixo-app\\app\\(dashboard)\\assets"

@@ -2758,6 +2758,14 @@ export const translations = {
       en: "Real-time (immediate)",
       fr: "Temps réel (immédiat)",
     },
+    immediate: {
+      en: "Immediate (each event)",
+      fr: "Immédiat (chaque événement)",
+    },
+    never: {
+      en: "Never",
+      fr: "Jamais",
+    },
     otherAlerts: {
       en: "Other Alerts",
       fr: "Autres Alertes",
