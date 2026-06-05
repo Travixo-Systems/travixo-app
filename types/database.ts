@@ -40,6 +40,7 @@ export type Database = {
           stripe_customer_id: string | null
           onboarding_completed: boolean
           demo_data_seeded: boolean
+          feature_flags: Record<string, boolean> | null
         }
         Insert: {
           id?: string
@@ -72,6 +73,7 @@ export type Database = {
           stripe_customer_id?: string | null
           onboarding_completed?: boolean
           demo_data_seeded?: boolean
+          feature_flags?: Record<string, boolean> | null
         }
         Update: {
           name?: string
@@ -103,6 +105,7 @@ export type Database = {
           stripe_customer_id?: string | null
           onboarding_completed?: boolean
           demo_data_seeded?: boolean
+          feature_flags?: Record<string, boolean> | null
           updated_at?: string
         }
         Relationships: []
@@ -932,6 +935,18 @@ export type Database = {
           p_longitude?: number | null
         }
         Returns: { success: boolean; scan_id?: string; error?: string }
+      }
+      is_super_admin: {
+        Args: Record<string, never>
+        Returns: boolean
+      }
+      extend_trial: {
+        Args: { p_org_id: string; p_days: number }
+        Returns: Record<string, unknown>
+      }
+      set_feature_flag: {
+        Args: { p_org_id: string; p_flag: string; p_enabled: boolean }
+        Returns: Record<string, unknown>
       }
     }
   }
