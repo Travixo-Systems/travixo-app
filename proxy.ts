@@ -140,9 +140,14 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  // Redirect authenticated users away from auth pages
+  // Redirect authenticated users away from auth pages. Platform admins
+  // (members of platform_admins, checked via is_super_admin()) go to /admin
+  // instead of the tenant dashboard.
   if (user && (pathname === '/login' || pathname === '/signup')) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    let destination = '/dashboard'
+    const { data: isAdmin } = await supabase.rpc('is_super_admin')
+    if (isAdmin === true) destination = '/admin'
+    return NextResponse.redirect(new URL(destination, request.url))
   }
 
   return response

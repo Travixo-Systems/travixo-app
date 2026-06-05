@@ -68,3 +68,6 @@ supabase/functions/
 # Misc
 *.log
 .cache
+
+# Personal study / introspection docs (not part of the product)
+/docs/deep-dive/

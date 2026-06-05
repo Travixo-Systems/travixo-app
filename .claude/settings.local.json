@@ -5,7 +5,9 @@
       "Bash(npm run:*)",
       "Bash(npx tsc:*)",
       "Bash(timeout 15 npx next dev --turbopack)",
-      "Bash(wc -l /d/Dev/projects/travixo-app/components/assets/*.tsx /d/Dev/projects/travixo-app/components/vgp/VGPStatusBadge.tsx)"
+      "Bash(wc -l /d/Dev/projects/travixo-app/components/assets/*.tsx /d/Dev/projects/travixo-app/components/vgp/VGPStatusBadge.tsx)",
+      "Bash(find /d/Dev/projects/travixo-app/app/\\\\\\(auth\\\\\\) -name \"page.tsx\" -exec wc -l {} +)",
+      "Bash(grep -r \"organization_id IN\" /d/Dev/projects/travixo-app/supabase/migrations/*.sql)"
     ]
   }
 }

@@ -109,7 +109,18 @@ function LoginContent() {
           toast.success(t.welcomeBackToast[language])
         }
 
-        router.push('/dashboard')
+        // Platform admins (members of platform_admins) land on /admin
+        // instead of the tenant dashboard. is_super_admin() is the shared
+        // chokepoint; it reads platform_admins, not any tenant role.
+        let destination = '/dashboard'
+        try {
+          const { data: isAdmin } = await supabase.rpc('is_super_admin')
+          if (isAdmin === true) destination = '/admin'
+        } catch {
+          // On any check failure, fall back to the dashboard.
+        }
+
+        router.push(destination)
         router.refresh()
       }
     } catch (error: any) {
