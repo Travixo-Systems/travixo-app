@@ -495,7 +495,7 @@ Triggered by tapping "Checkout to Client" or "Process Return". A bottom sheet th
   is completed.
   [View VGP Details]  ← links to VGP dashboard (auth required)
 ```
-This is legally necessary for DREETS compliance. Renting non-compliant equipment exposes the rental company to EUR 15K-75K fines.
+This is legally necessary for DREETS compliance. Défaut de VGP: sanction pénale, art. L4741-1 Code du travail (montant à vérifier sur Légifrance); jusqu'à 75 000 € et 5 ans d'emprisonnement en cas d'accident.
 
 **Client Name Autocomplete:**
 ```typescript

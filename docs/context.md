@@ -10,7 +10,7 @@
 
 **Two-Pillar Model:** VGP Compliance Automation + QR-based Real-Time Asset Visibility
 
-TraviXO Systems is a B2B SaaS platform providing QR-based asset tracking and VGP (Vérifications Générales Périodiques) compliance automation for French equipment rental companies. The platform targets the €29.7B European equipment rental market, with initial focus on France where mandatory VGP inspections create €15K-€75K regulatory fine risks.
+TraviXO Systems is a B2B SaaS platform providing QR-based asset tracking and VGP (Vérifications Générales Périodiques) compliance automation for French equipment rental companies. The platform targets the €29.7B European equipment rental market, with initial focus on France where mandatory VGP inspections create regulatory fine risks. Défaut de VGP: sanction pénale, art. L4741-1 Code du travail (montant à vérifier sur Légifrance); jusqu'à 75 000 € et 5 ans d'emprisonnement en cas d'accident.
 
 **Current State:**
 - ✅ travixo-web (marketing): 100% complete, LIVE at travixosystems.com (Oct 8, 2025)
@@ -19,7 +19,7 @@ TraviXO Systems is a B2B SaaS platform providing QR-based asset tracking and VGP
 - ⏳ Pilot program: 3-4 weeks from launch-ready (deployment + critical tasks)
 
 **Two-Pillar Value Proposition:**
-1. **VGP Compliance Automation** - Prevent €15K-€75K DREETS fines via automated inspection tracking
+1. **VGP Compliance Automation** - Prevent DREETS fines via automated inspection tracking. Défaut de VGP: sanction pénale, art. L4741-1 Code du travail (montant à vérifier sur Légifrance); jusqu'à 75 000 € et 5 ans d'emprisonnement en cas d'accident.
 2. **Last Known Location Tracking** - QR scan logging shows where assets were last seen and by whom
 
 **Key Differentiator:** "15-minute setup" via Excel import with smart column detection vs. competitors' 40+ hours of manual data entry.
@@ -40,7 +40,7 @@ TraviXO Systems is a B2B SaaS platform providing QR-based asset tracking and VGP
 - Email alerts (30/7 days before deadlines)
 - PDF certificate uploads and storage
 - DREETS-compliant reporting
-- **Prevents €15K-€75K fines per violation**
+- **Défaut de VGP: sanction pénale, art. L4741-1 Code du travail (montant à vérifier sur Légifrance); jusqu'à 75 000 € et 5 ans d'emprisonnement en cas d'accident.**
 - **ROI**: Legal risk mitigation (compliance is mandatory, not optional)
 
 **Pillar 2: Last Known Location Tracking (Operational Efficiency)**
@@ -530,7 +530,7 @@ WHERE slug = 'enterprise';
 
 **Customer Value Delivered:**
 - Prevent €50K-€200K asset losses (1-2% of fleet value)
-- Avoid €15K-€75K DREETS fines
+- Défaut de VGP: sanction pénale, art. L4741-1 Code du travail (montant à vérifier sur Légifrance); jusqu'à 75 000 € et 5 ans d'emprisonnement en cas d'accident.
 - **ROI: 500-1,300%**
 
 **VGP Compliance Alone Worth €750/month:**
@@ -631,7 +631,7 @@ WHERE slug = 'enterprise';
 
 ### Why VGP-First Positioning?
 - Legal compliance creates urgency
-- Prevents €15K+ fines (immediate ROI)
+- Prevents fines (immediate ROI). Défaut de VGP: sanction pénale, art. L4741-1 Code du travail (montant à vérifier sur Légifrance); jusqu'à 75 000 € et 5 ans d'emprisonnement en cas d'accident.
 - Differentiates from generic asset trackers
 - Justifies premium pricing
 
@@ -847,7 +847,7 @@ Fixes #42
 - DREETS authority oversight
 - Certificate retention requirements
 - Inspection frequency standards (6/12/24 months)
-- Fine structure: €3K-€10K per violation
+- Défaut de VGP: sanction pénale, art. L4741-1 Code du travail (montant à vérifier sur Légifrance); jusqu'à 75 000 € et 5 ans d'emprisonnement en cas d'accident.
 
 ### Intellectual Property
 - Codebase: Proprietary (private repository)
