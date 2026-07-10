@@ -422,6 +422,18 @@ export const translations = {
         en: "Custom Integrations",
         fr: "Intégrations Personnalisées",
       },
+      qr_generation: {
+        en: "QR Code Generation",
+        fr: "Génération de QR Codes",
+      },
+      basic_reports: {
+        en: "Basic Reporting",
+        fr: "Rapports de Base",
+      },
+      rental_management: {
+        en: "Rental Management",
+        fr: "Gestion des Locations",
+      },
     },
 
     // On-demand feature tooltips
