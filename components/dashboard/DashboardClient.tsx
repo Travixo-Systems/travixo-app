@@ -79,7 +79,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                 {vgpOverdue} {vgpOverdue > 1 ? t('dashboard.vgpOverdueAlertPlural') : t('dashboard.vgpOverdueAlert')}
               </h3>
               <p className="text-[15px] text-red-700 mt-1">
-                {t('dashboard.vgpRiskSanctions')}: €{(vgpOverdue * 15000).toLocaleString()} - €{(vgpOverdue * 75000).toLocaleString()}
+                {t('dashboard.vgpRiskSanctions')}
                 <Link href="/vgp/schedules?filter=overdue" className="font-medium underline ml-2">
                   {t('dashboard.handleNow')} →
                 </Link>

@@ -61,10 +61,6 @@ function VGPContent() {
 
   const totalEquipments = summary?.total_assets_with_vgp || 0;
 
-  // Calculate financial risk
-  const financialRiskMin = overdue.length * 3000;
-  const financialRiskMax = overdue.length * 15000;
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -158,7 +154,7 @@ function VGPContent() {
         >
           <div className="flex items-center gap-2 mb-3">
             <h2 className="text-[14px] font-semibold" style={{ color: 'var(--status-retard, #dc2626)' }}>
-              {t('vgpDashboard.overdueSection')} ({overdue.length}) - {t('vgpDashboard.risk')}: €{financialRiskMin.toLocaleString()}-€{financialRiskMax.toLocaleString()}
+              {t('vgpDashboard.overdueSection')} ({overdue.length})
             </h2>
           </div>
 

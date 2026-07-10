@@ -2323,6 +2323,10 @@ export const translations = {
     overdueEquipment: { en: "overdue equipment", fr: "équipement en retard" },
     overdueEquipmentPlural: { en: "overdue equipment", fr: "équipements en retard" },
     fineExposure: { en: "Fine exposure", fr: "Risque d'amende" },
+    vgpRiskSanctions: {
+      en: "Missing VGP inspections carries criminal penalties (art. L4741-1, French Labor Code). In case of an accident, penalties can reach a 75,000 EUR fine and 5 years imprisonment.",
+      fr: "Le défaut de VGP est pénalement sanctionné (art. L4741-1 du Code du travail). En cas d'accident, les peines peuvent atteindre 75 000 € d'amende et 5 ans d'emprisonnement.",
+    },
     vgpOverdueLabel: { en: "Overdue", fr: "En retard" },
     vgpUpcomingLabel: { en: "Upcoming 30d", fr: "À venir 30j" },
     compliant: { en: "Compliant", fr: "Conformes" },
@@ -3809,8 +3813,8 @@ export const translations = {
     pdfOnly: { en: "PDF only, maximum 4 MB", fr: "PDF uniquement, maximum 4 MB" },
     uploading: { en: "Uploading...", fr: "Téléchargement..." },
     certificateRequired: {
-      en: "Required: The VGP certificate is required by DREETS. Without an official certificate from the inspection body, the inspection is not compliant and your equipment remains exposed to fines (€3K–€15K per violation).",
-      fr: "Obligatoire: Le certificat VGP est exigé par DREETS. Sans certificat officiel de l'organisme de contrôle, l'inspection n'est pas conforme et votre équipement reste exposé aux amendes (€3K–€15K par violation).",
+      en: "Required: The VGP certificate is required by DREETS. Without an official certificate from the inspection body, the inspection is not compliant. Missing VGP inspections carries criminal penalties (art. L4741-1, French Labor Code).",
+      fr: "Obligatoire : Le certificat VGP est exigé par DREETS. Sans certificat officiel de l'organisme de contrôle, l'inspection n'est pas conforme. Le défaut de VGP est pénalement sanctionné (art. L4741-1 du Code du travail).",
     },
     cancel: { en: "Cancel", fr: "Annuler" },
     submit: { en: "Record Inspection", fr: "Enregistrer l'Inspection" },
