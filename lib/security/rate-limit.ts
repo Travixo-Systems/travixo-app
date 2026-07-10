@@ -61,21 +61,21 @@ export function rateLimit(key: string, config: RateLimitConfig): RateLimitResult
 
 // Preset configurations for different endpoint categories
 export const RATE_LIMITS = {
-  /** Auth endpoints (login, signup, password reset) — strict */
+  /** Auth endpoints (login, signup, password reset), strict */
   auth: { limit: 10, windowSeconds: 60 } satisfies RateLimitConfig,
 
-  /** Password change — very strict */
+  /** Password change, very strict */
   password: { limit: 5, windowSeconds: 300 } satisfies RateLimitConfig,
 
-  /** General API — standard */
+  /** General API, standard */
   api: { limit: 100, windowSeconds: 60 } satisfies RateLimitConfig,
 
-  /** Webhooks (Stripe, etc.) — lenient */
+  /** Webhooks (Stripe, etc.), lenient */
   webhook: { limit: 200, windowSeconds: 60 } satisfies RateLimitConfig,
 
-  /** Public QR scan page — per-IP bucket collapsed to /scan, not per code */
+  /** Public QR scan page, per-IP bucket collapsed to /scan, not per code */
   scan: { limit: 30, windowSeconds: 60 } satisfies RateLimitConfig,
 
-  /** Cron jobs — strict; protected by CRON_SECRET but limit DoS if secret leaks */
+  /** Cron jobs, strict; protected by CRON_SECRET but limit DoS if secret leaks */
   cron: { limit: 5, windowSeconds: 60 } satisfies RateLimitConfig,
 } as const

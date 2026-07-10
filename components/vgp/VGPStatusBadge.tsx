@@ -1,5 +1,5 @@
 // components/vgp/VGPStatusBadge.tsx
-// Audit fix: ui-ux-audit.md §3.1, §3.2, §3.3 — VGP status not visible at a glance
+// Audit fix: ui-ux-audit.md §3.1, §3.2, §3.3, VGP status not visible at a glance
 'use client';
 
 import { useLanguage } from '@/lib/LanguageContext';
@@ -85,7 +85,7 @@ export function VGPStatusBadge({ status, size = 'sm', language: languageProp }: 
 }
 
 /**
- * Urgency countdown pill — replaces text-xs "dans 5j" in VGPDashboard.
+ * Urgency countdown pill, replaces text-xs "dans 5j" in VGPDashboard.
  * Red ≤7d, Amber ≤14d, Gray otherwise.
  */
 export function VGPCountdownPill({ daysUntil }: { daysUntil: number }) {

@@ -133,7 +133,7 @@ export async function GET() {
     } else if (['professional', 'business', 'enterprise'].includes(subscription?.plan?.slug || '')) {
       vgp_access = 'full';
     } else if (isPilot && !isPilotActive) {
-      // Expired pilot within 30-day grace period — read-only VGP
+      // Expired pilot within 30-day grace period, read-only VGP
       vgp_access = 'read_only';
     }
 

@@ -85,7 +85,7 @@ function ConfirmContent() {
         throw new Error(t.confirmInvalidLink[language])
       }
 
-      // User is authenticated — check if they already have an org
+      // User is authenticated, check if they already have an org
       const { data: existingUser } = await supabase
         .from('users')
         .select('organization_id')
@@ -93,12 +93,12 @@ function ConfirmContent() {
         .single()
 
       if (existingUser?.organization_id) {
-        // Already set up — just redirect
+        // Already set up, just redirect
         setState('success')
         return
       }
 
-      // User confirmed but no org yet — create it
+      // User confirmed but no org yet, create it
       await createOrgForUser(supabase, user)
       // Trigger demo data seeding + welcome email (non-blocking)
       triggerPostRegistration()
@@ -157,7 +157,7 @@ function ConfirmContent() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left panel — brand */}
+      {/* Left panel, brand */}
       <div
         className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12"
         style={{ background: `linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.secondary} 100%)` }}
@@ -185,7 +185,7 @@ function ConfirmContent() {
         </p>
       </div>
 
-      {/* Right panel — confirmation state */}
+      {/* Right panel, confirmation state */}
       <div className="flex-1 flex items-center justify-center bg-gray-50 p-6">
         <div className="max-w-md w-full space-y-8 text-center">
           {/* Language toggle */}

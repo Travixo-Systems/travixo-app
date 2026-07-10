@@ -53,7 +53,7 @@ export function useFeatureAccess(feature: FeatureKey): { hasAccess: boolean; isL
     return { hasAccess: false, isLoading: true };
   }
 
-  // Account locked — no access to anything
+  // Account locked, no access to anything
   if (subscriptionInfo.account_locked) {
     return { hasAccess: false, isLoading: false };
   }
@@ -151,7 +151,7 @@ export function useHasStripeSubscription() {
 }
 
 /**
- * Initiate Stripe Checkout — redirects to Stripe-hosted payment page
+ * Initiate Stripe Checkout, redirects to Stripe-hosted payment page
  */
 export function useStripeCheckout() {
   return useMutation({
@@ -172,7 +172,7 @@ export function useStripeCheckout() {
 }
 
 /**
- * Open Stripe Billing Portal — redirects to Stripe-hosted portal
+ * Open Stripe Billing Portal, redirects to Stripe-hosted portal
  */
 export function useStripePortal() {
   return useMutation({
@@ -219,7 +219,7 @@ export function useVGPAccess(): {
     return { access: 'full', isLoading: false };
   }
 
-  // Account locked (30+ days since signup, not converted) — blocked entirely
+  // Account locked (30+ days since signup, not converted), blocked entirely
   if ((subscriptionInfo as any).account_locked) {
     return { access: 'blocked', isLoading: false };
   }

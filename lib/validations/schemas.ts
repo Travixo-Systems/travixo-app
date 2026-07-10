@@ -44,7 +44,7 @@ export const updateAuditItemSchema = z.object({
   notes: z.string().max(1000).optional(),
 });
 
-// Rental checkout — matches CheckoutOverlay form fields
+// Rental checkout, matches CheckoutOverlay form fields
 export const rentalCheckoutSchema = z.object({
   clientName: z.string().min(1, { message: 'Le nom du client est requis' }),
   clientContact: z.string().optional(),
@@ -58,7 +58,7 @@ export const rentalCheckoutSchema = z.object({
   notes: z.string().max(500, { message: 'Notes : 500 caractères maximum' }).optional(),
 });
 
-// Rental return — matches ReturnOverlay form fields
+// Rental return, matches ReturnOverlay form fields
 export const rentalReturnSchema = z.object({
   rentalId: z.string().uuid({ message: 'ID de location invalide' }),
   condition: z.enum(['good', 'fair', 'damaged', '']).optional(),
@@ -66,7 +66,7 @@ export const rentalReturnSchema = z.object({
   location: z.string().max(200, { message: 'Localisation : 200 caractères maximum' }).optional(),
 });
 
-// Asset creation — matches AddAssetModal form fields
+// Asset creation, matches AddAssetModal form fields
 export const assetSchema = z.object({
   name: z.string().min(1, { message: 'Le nom est requis.' }),
   serial_number: z.string().optional(),

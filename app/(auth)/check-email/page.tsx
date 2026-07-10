@@ -67,7 +67,7 @@ function CheckEmailContent() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left panel — brand */}
+      {/* Left panel, brand */}
       <div
         className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12"
         style={{ background: `linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.secondary} 100%)` }}
@@ -95,7 +95,7 @@ function CheckEmailContent() {
         </p>
       </div>
 
-      {/* Right panel — check email message */}
+      {/* Right panel, check email message */}
       <div className="flex-1 flex items-center justify-center bg-gray-50 p-6">
         <div className="max-w-md w-full space-y-8 text-center">
           {/* Language toggle */}

@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient()
 
-    // Try to get authenticated user (non-blocking — public scans still work)
+    // Try to get authenticated user (non-blocking, public scans still work)
     const { data: { user } } = await supabase.auth.getUser()
     const scannedByUserId = user?.id ?? null
 

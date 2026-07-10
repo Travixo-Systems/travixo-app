@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Resolve the authenticated user — try access_token first (for fresh signup),
+    // Resolve the authenticated user, try access_token first (for fresh signup),
     // then fall back to session cookies (for normal login/page visit)
     let user = null;
 
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Assign user to the organization — use upsert to handle fresh signups
+    // Assign user to the organization, use upsert to handle fresh signups
     // where the users record may not exist yet
     const { error: upsertError } = await serviceClient
       .from('users')

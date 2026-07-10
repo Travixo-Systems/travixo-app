@@ -37,10 +37,10 @@ This document summarizes the security posture of the TraviXO platform for enterp
 - **Authentication:** Supabase Auth with bcrypt-hashed passwords
 - **Session management:** Secure, httpOnly cookies with server-side validation
 - **Role-based access control (RBAC):**
-  - Owner — full control, billing, team management
-  - Admin — team management, all features
-  - Member — standard access, no team management
-  - Viewer — read-only access
+  - Owner, full control, billing, team management
+  - Admin, team management, all features
+  - Member, standard access, no team management
+  - Viewer, read-only access
 - **Organization isolation:** Every database query is scoped to `organization_id`
 - **Feature gating:** Server-side RPC checks for subscription + pilot status
 
@@ -62,7 +62,7 @@ This document summarizes the security posture of the TraviXO platform for enterp
 ## Data Isolation
 
 - **Multi-tenant architecture** with strict organization-scoped queries
-- No cross-organization data access possible — enforced at the application layer AND via Supabase Row Level Security (RLS) policies
+- No cross-organization data access possible, enforced at the application layer AND via Supabase Row Level Security (RLS) policies
 - Supabase RLS policies ensure database-level enforcement independent of application code
 
 ---
@@ -72,7 +72,7 @@ This document summarizes the security posture of the TraviXO platform for enterp
 | Feature | Status |
 |---------|--------|
 | Daily automated backups | Enabled (Supabase) |
-| Point-in-Time Recovery (PITR) | Enabled — restore to any second in the last 7 days |
+| Point-in-Time Recovery (PITR) | Enabled, restore to any second in the last 7 days |
 | Backup retention | 7 days (PITR) + 30 days (daily snapshots) |
 | Recovery Time Objective (RTO) | < 1 hour |
 | Recovery Point Objective (RPO) | < 1 minute (PITR) |

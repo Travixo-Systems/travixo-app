@@ -1,5 +1,5 @@
 // components/ui/ErrorStateAlert.tsx
-// Audit fix: ui-ux-audit.md §4.1, §4.2 — silent failures on async pages
+// Audit fix: ui-ux-audit.md §4.1, §4.2, silent failures on async pages
 'use client';
 
 import { AlertTriangle, RefreshCw, WifiOff } from 'lucide-react';
@@ -11,7 +11,7 @@ interface ErrorStateProps {
 }
 
 /**
- * Full-page error state — use when the whole page fails to load.
+ * Full-page error state, use when the whole page fails to load.
  */
 export function ErrorStatePage({ message, onRetry, title = 'Impossible de charger les données' }: ErrorStateProps) {
   return (
@@ -42,7 +42,7 @@ export function ErrorStatePage({ message, onRetry, title = 'Impossible de charge
 }
 
 /**
- * Inline error banner — use when a section fails to load.
+ * Inline error banner, use when a section fails to load.
  */
 export function ErrorStateBanner({ message, onRetry, title = 'Erreur de chargement' }: ErrorStateProps) {
   return (

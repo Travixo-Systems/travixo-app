@@ -41,9 +41,9 @@ Free tier includes:
 ## 3. Vercel Analytics (Already Included)
 
 Vercel Pro includes:
-- **Web Analytics** — page views, visitors, referrers
-- **Speed Insights** — Core Web Vitals (LCP, FID, CLS)
-- **Function logs** — serverless function invocations and errors
+- **Web Analytics**, page views, visitors, referrers
+- **Speed Insights**, Core Web Vitals (LCP, FID, CLS)
+- **Function logs**, serverless function invocations and errors
 
 Enable in: Vercel Dashboard → Project → Analytics tab
 

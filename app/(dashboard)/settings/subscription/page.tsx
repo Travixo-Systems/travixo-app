@@ -176,7 +176,7 @@ export default function SubscriptionPage() {
               </div>
             )}
 
-            {/* Manage Billing button — only if org has Stripe subscription */}
+            {/* Manage Billing button, only if org has Stripe subscription */}
             {hasStripeSubscription && (
               <div className="border-l border-gray-200 pl-4">
                 <button

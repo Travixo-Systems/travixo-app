@@ -6,7 +6,7 @@
 -- "Non planifié" even when schedules exist.
 -- ============================================================================
 
--- 1. Ensure RLS is enabled (idempotent — no-op if already enabled)
+-- 1. Ensure RLS is enabled (idempotent, no-op if already enabled)
 ALTER TABLE public.vgp_schedules ENABLE ROW LEVEL SECURITY;
 
 -- 2. Ensure the FK constraint exists (the table was created via dashboard
@@ -39,7 +39,7 @@ BEGIN
   END IF;
 END $$;
 
--- 3. SELECT policy — org members can view their org's schedules
+-- 3. SELECT policy, org members can view their org's schedules
 DROP POLICY IF EXISTS "Users can view own org vgp_schedules" ON public.vgp_schedules;
 CREATE POLICY "Users can view own org vgp_schedules"
   ON public.vgp_schedules FOR SELECT
@@ -50,7 +50,7 @@ CREATE POLICY "Users can view own org vgp_schedules"
     )
   );
 
--- 4. INSERT policy — org members can create schedules for their org
+-- 4. INSERT policy, org members can create schedules for their org
 DROP POLICY IF EXISTS "Users can insert own org vgp_schedules" ON public.vgp_schedules;
 CREATE POLICY "Users can insert own org vgp_schedules"
   ON public.vgp_schedules FOR INSERT
@@ -61,7 +61,7 @@ CREATE POLICY "Users can insert own org vgp_schedules"
     )
   );
 
--- 5. UPDATE policy — org members can update their org's schedules
+-- 5. UPDATE policy, org members can update their org's schedules
 DROP POLICY IF EXISTS "Users can update own org vgp_schedules" ON public.vgp_schedules;
 CREATE POLICY "Users can update own org vgp_schedules"
   ON public.vgp_schedules FOR UPDATE
@@ -72,7 +72,7 @@ CREATE POLICY "Users can update own org vgp_schedules"
     )
   );
 
--- 6. DELETE policy — org members can delete their org's schedules
+-- 6. DELETE policy, org members can delete their org's schedules
 DROP POLICY IF EXISTS "Users can delete own org vgp_schedules" ON public.vgp_schedules;
 CREATE POLICY "Users can delete own org vgp_schedules"
   ON public.vgp_schedules FOR DELETE

@@ -67,7 +67,7 @@ export async function sendWelcomeEmail(
       from: `${SENDER_NAME} <${SENDER_EMAIL}>`,
       to: params.email,
       replyTo: REPLY_TO,
-      subject: `Bienvenue sur TraviXO — Votre compte est pret`,
+      subject: `Bienvenue sur TraviXO, Votre compte est pret`,
       html,
       attachments,
     });

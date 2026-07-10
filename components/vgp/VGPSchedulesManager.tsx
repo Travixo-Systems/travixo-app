@@ -894,7 +894,7 @@ function ArchiveModal({
             </h2>
             <p className="text-[13px] mt-0.5" style={{ color: 'var(--text-muted, #777)' }}>
               {schedule.assets?.name || 'N/A'}
-              {' — '}
+              {', '}
               {schedule.interval_months} {t('vgpSchedules.detailsModal.months')},
               {' '}{t('vgpSchedules.nextInspection')}: {formatDateFR(schedule.next_due_date)}
             </p>

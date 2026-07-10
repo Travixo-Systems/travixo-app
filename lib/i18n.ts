@@ -3804,7 +3804,7 @@ export const translations = {
     resultConditional: { en: "Conditional", fr: "Conditionnel" },
     resultConditionalDesc: { en: "Next inspection: 6 months", fr: "Prochaine inspection : 6 mois" },
     resultFailed: { en: "Non-Compliant", fr: "Non Conforme" },
-    resultFailedDesc: { en: "Equipment out of service — Re-inspection: 30 days", fr: "Équipement hors service - Réinspection : 30 jours" },
+    resultFailedDesc: { en: "Equipment out of service, Re-inspection: 30 days", fr: "Équipement hors service - Réinspection : 30 jours" },
     findings: { en: "Findings / Remarks", fr: "Constatations / Remarques" },
     findingsPlaceholder: { en: "Observations, anomalies detected, recommendations...", fr: "Observations, anomalies détectées, recommandations..." },
     certificateLabel: { en: "VGP Certificate (PDF)", fr: "Certificat VGP (PDF)" },

@@ -1,5 +1,5 @@
 /**
- * Regional Demo Seed — creates 3 realistic equipment rental agencies
+ * Regional Demo Seed, creates 3 realistic equipment rental agencies
  * across multiple French locations to demonstrate multi-location capabilities.
  *
  * Usage:
@@ -28,7 +28,7 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
 })
 
 // ---------------------------------------------------------------------------
-// Agency definitions — 3 realistic French equipment rental companies
+// Agency definitions, 3 realistic French equipment rental companies
 // ---------------------------------------------------------------------------
 
 interface Agency {
@@ -52,7 +52,7 @@ interface Agency {
 
 const AGENCIES: Agency[] = [
   // -----------------------------------------------------------------------
-  // 1. Ile-de-France — large regional player with 3 depots around Paris
+  // 1. Ile-de-France, large regional player with 3 depots around Paris
   // -----------------------------------------------------------------------
   {
     name: 'LocaMat Ile-de-France',
@@ -95,7 +95,7 @@ const AGENCIES: Agency[] = [
   },
 
   // -----------------------------------------------------------------------
-  // 2. Rhone-Alpes — mid-size company based in Lyon with 2 sites
+  // 2. Rhone-Alpes, mid-size company based in Lyon with 2 sites
   // -----------------------------------------------------------------------
   {
     name: 'Alp\'Loc Equipements',
@@ -130,7 +130,7 @@ const AGENCIES: Agency[] = [
   },
 
   // -----------------------------------------------------------------------
-  // 3. Sud-Ouest — smaller operator in Toulouse/Bordeaux corridor
+  // 3. Sud-Ouest, smaller operator in Toulouse/Bordeaux corridor
   // -----------------------------------------------------------------------
   {
     name: 'SudLoc Services',

@@ -244,7 +244,7 @@ export default function Sidebar() {
         </div>
       )}
 
-      {/* Collapsed flyout — rendered via portal to document.body */}
+      {/* Collapsed flyout, rendered via portal to document.body */}
       {vgpFlyout && !showLabel && typeof document !== 'undefined' && createPortal(
         <>
           <div className="fixed inset-0" style={{ zIndex: 9998 }} onClick={() => setVgpFlyout(false)} />
@@ -383,7 +383,7 @@ export default function Sidebar() {
   if (isMobile) {
     return (
       <>
-        {/* Icon rail — always visible */}
+        {/* Icon rail, always visible */}
         <div
           className="flex flex-col h-dvh w-16 flex-shrink-0 border-r border-gray-800 overflow-hidden"
           style={{ backgroundColor: SIDEBAR_BG }}
@@ -403,7 +403,7 @@ export default function Sidebar() {
           {renderSidebarContent(false)}
         </div>
 
-        {/* Mobile overlay — full sidebar */}
+        {/* Mobile overlay, full sidebar */}
         {mobileOpen && (
           <>
             <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setMobileOpen(false)} />

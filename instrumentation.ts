@@ -1,4 +1,4 @@
-// Next.js instrumentation hook — loads Sentry server config at startup.
+// Next.js instrumentation hook, loads Sentry server config at startup.
 // See: https://nextjs.org/docs/app/building-your-application/optimizing/instrumentation
 
 export async function register() {

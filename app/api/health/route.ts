@@ -1,4 +1,4 @@
-// GET /api/health — Lightweight health check for UptimeRobot / uptime monitors.
+// GET /api/health, Lightweight health check for UptimeRobot / uptime monitors.
 // Returns 200 if the app is running and Supabase is reachable.
 
 import { createClient } from '@supabase/supabase-js'
@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 export async function GET(request: Request) {
-  // Optional bearer token auth — set HEALTH_TOKEN env var to require it
+  // Optional bearer token auth, set HEALTH_TOKEN env var to require it
   const token = process.env.HEALTH_TOKEN
   if (token) {
     const auth = request.headers.get('authorization') ?? ''
@@ -19,7 +19,7 @@ export async function GET(request: Request) {
 
   const start = Date.now()
 
-  // Quick DB ping — single-row query to confirm Supabase is reachable
+  // Quick DB ping, single-row query to confirm Supabase is reachable
   let dbOk = false
   try {
     const supabase = createClient(

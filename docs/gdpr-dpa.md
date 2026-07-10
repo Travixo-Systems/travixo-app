@@ -7,7 +7,7 @@ Contact: contact@travixosystems.com
 
 **and**
 
-**The Customer** ("Data Controller" / "You") — the entity that has signed up for a TraviXO account.
+**The Customer** ("Data Controller" / "You"), the entity that has signed up for a TraviXO account.
 
 **Effective Date:** The date the Customer accepts this DPA or begins using the Service.
 
@@ -40,7 +40,7 @@ The Processor processes Personal Data solely to provide the TraviXO asset-tracki
 | Organization data        | Company name, organization settings           |
 | Usage data               | Login timestamps, feature usage, session data  |
 | Asset-related data       | Asset descriptions, locations, inspection records |
-| Billing data             | Managed by Stripe — see Stripe's DPA          |
+| Billing data             | Managed by Stripe, see Stripe's DPA          |
 
 ### 2.3 Purpose of Processing
 
@@ -90,10 +90,10 @@ The Controller shall:
 
 The Processor shall assist the Controller in fulfilling its obligations to respond to Data Subject requests, including:
 
-- **Right of access** (Art. 15) — Data export available via dashboard
-- **Right to rectification** (Art. 16) — Users can update their profile and organization data
-- **Right to erasure** (Art. 17) — Account deletion available upon request to contact@travixosystems.com
-- **Right to data portability** (Art. 20) — CSV/Excel export of assets, audits, and inspections
+- **Right of access** (Art. 15), Data export available via dashboard
+- **Right to rectification** (Art. 16), Users can update their profile and organization data
+- **Right to erasure** (Art. 17), Account deletion available upon request to contact@travixosystems.com
+- **Right to data portability** (Art. 20), CSV/Excel export of assets, audits, and inspections
 - **Right to restriction of processing** (Art. 18)
 - **Right to object** (Art. 21)
 

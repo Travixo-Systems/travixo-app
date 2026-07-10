@@ -2,7 +2,7 @@
 import { createClient } from '@/lib/supabase/client';
 
 /**
- * Central feature registry — single source of truth for all gated features.
+ * Central feature registry, single source of truth for all gated features.
  * Add new features here; the FeatureKey type updates automatically.
  */
 export const FEATURE_REGISTRY = {
@@ -96,7 +96,7 @@ export async function hasFeatureAccess(
 
     if (!userData?.organization_id) return false;
 
-    // Single RPC call — pilot check + status check + feature lookup
+    // Single RPC call, pilot check + status check + feature lookup
     const { data: hasAccess, error } = await supabase.rpc('has_feature_access', {
       org_id: userData.organization_id,
       feature_name: feature,

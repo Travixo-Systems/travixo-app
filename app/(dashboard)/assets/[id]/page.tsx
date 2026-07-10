@@ -93,7 +93,7 @@ const VGP_BORDER_COLORS: Record<string, string> = {
 }
 
 function formatDate(iso: string | null, lang: string): string {
-  if (!iso) return '—'
+  if (!iso) return '-'
   try {
     return new Intl.DateTimeFormat(lang === 'fr' ? 'fr-FR' : 'en-US', {
       day: 'numeric',
@@ -106,7 +106,7 @@ function formatDate(iso: string | null, lang: string): string {
 }
 
 function formatCurrency(value: number | null): string {
-  if (value == null) return '—'
+  if (value == null) return '-'
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
@@ -333,7 +333,7 @@ export default function AssetDetailPage() {
 
       {/* ---- SECTIONS ---- */}
       <div className="space-y-4">
-        {/* SECTION 1 — Asset Details */}
+        {/* SECTION 1, Asset Details */}
         <section className="rounded-lg p-5" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
           <div className="flex items-center justify-between mb-4">
             <SectionLabel>{t('assetDetail.details')}</SectionLabel>
@@ -370,7 +370,7 @@ export default function AssetDetailPage() {
           </div>
         </section>
 
-        {/* SECTION 2 — VGP Compliance */}
+        {/* SECTION 2, VGP Compliance */}
         <section
           className="rounded-lg p-5"
           style={{
@@ -432,7 +432,7 @@ export default function AssetDetailPage() {
           )}
         </section>
 
-        {/* SECTION 3 — Inspection History */}
+        {/* SECTION 3, Inspection History */}
         <section className="rounded-lg p-5" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
           <div className="flex items-center justify-between mb-4">
             <SectionLabel>{t('assetDetail.inspectionHistory')}</SectionLabel>
@@ -475,7 +475,7 @@ export default function AssetDetailPage() {
                           {insp.inspector_name}
                         </td>
                         <td className="px-3 py-2.5 text-[14px]" style={{ color: 'var(--text-secondary, #444)' }}>
-                          {insp.inspector_company || '—'}
+                          {insp.inspector_company || '-'}
                         </td>
                         <td className="px-3 py-2.5 text-[14px] font-medium" style={{ color: RESULT_COLORS[insp.result] || '#444' }}>
                           {insp.result === 'passed' ? t('assetDetail.resultPassed')
@@ -495,7 +495,7 @@ export default function AssetDetailPage() {
                               PDF ↓
                             </a>
                           ) : (
-                            <span style={{ color: 'var(--text-hint, #888)' }}>—</span>
+                            <span style={{ color: 'var(--text-hint, #888)' }}>-</span>
                           )}
                         </td>
                       </tr>
@@ -532,7 +532,7 @@ export default function AssetDetailPage() {
                       </span>
                     </div>
                     <p className="text-[12px]" style={{ color: 'var(--text-secondary, #444)' }}>
-                      {insp.inspector_name}{insp.inspector_company ? ` — ${insp.inspector_company}` : ''}
+                      {insp.inspector_name}{insp.inspector_company ? `, ${insp.inspector_company}` : ''}
                     </p>
                     <div className="mt-1">
                       {insp.certificate_url ? (
@@ -546,7 +546,7 @@ export default function AssetDetailPage() {
                           PDF ↓
                         </a>
                       ) : (
-                        <span className="text-[12px]" style={{ color: 'var(--text-hint, #888)' }}>—</span>
+                        <span className="text-[12px]" style={{ color: 'var(--text-hint, #888)' }}>-</span>
                       )}
                     </div>
                   </div>
@@ -556,7 +556,7 @@ export default function AssetDetailPage() {
           )}
         </section>
 
-        {/* SECTION 4 — Rental History */}
+        {/* SECTION 4, Rental History */}
         <section className="rounded-lg p-5" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
           <SectionLabel>{t('assetDetail.rentalHistory')}</SectionLabel>
 

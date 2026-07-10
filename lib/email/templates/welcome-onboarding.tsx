@@ -39,7 +39,7 @@ export function WelcomeOnboardingEmail({
     <Html>
       <Head />
       <Preview>
-        {`Bienvenue sur TraviXO — Votre compte ${companyName} est prêt`}
+        {`Bienvenue sur TraviXO, Votre compte ${companyName} est prêt`}
       </Preview>
       <Body style={bodyStyle}>
         <Container style={containerStyle}>

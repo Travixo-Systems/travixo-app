@@ -11,12 +11,12 @@ import AdminOrgActions from './AdminOrgActions'
 export const dynamic = 'force-dynamic'
 
 function formatDate(value: string | null): string {
-  if (!value) return '—'
+  if (!value) return '-'
   return value.slice(0, 10)
 }
 
 function formatDateTime(value: string | null): string {
-  if (!value) return '—'
+  if (!value) return '-'
   // YYYY-MM-DD HH:MM (UTC slice), locale-independent.
   return value.slice(0, 16).replace('T', ' ')
 }
@@ -70,7 +70,7 @@ function summarizeAudit(row: AuditRow): string {
     const enabled = (after as { enabled?: boolean }).enabled
     return `${flag} -> ${enabled ? 'enabled' : 'disabled'}`
   }
-  return '—'
+  return '-'
 }
 
 export default async function AdminOrgDetailPage({
@@ -137,8 +137,8 @@ export default async function AdminOrgDetailPage({
   const fields: { label: string; value: string }[] = [
     { label: 'Name', value: o.name },
     { label: 'Slug', value: o.slug },
-    { label: 'Tier', value: o.subscription_tier ?? '—' },
-    { label: 'Status', value: o.subscription_status ?? '—' },
+    { label: 'Tier', value: o.subscription_tier ?? '-' },
+    { label: 'Status', value: o.subscription_status ?? '-' },
     { label: 'Pilot', value: o.is_pilot ? 'Yes' : 'No' },
     { label: 'Trial ends', value: formatDate(o.trial_ends_at) },
     { label: 'Pilot ends', value: formatDate(o.pilot_end_date) },
@@ -205,9 +205,9 @@ export default async function AdminOrgDetailPage({
                 users.map((u) => (
                   <tr key={u.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-gray-900">{u.email}</td>
-                    <td className="px-4 py-3 text-gray-600">{u.full_name ?? '—'}</td>
+                    <td className="px-4 py-3 text-gray-600">{u.full_name ?? '-'}</td>
                     <td className="px-4 py-3 text-gray-600">{u.role}</td>
-                    <td className="px-4 py-3 text-gray-600">{u.language ?? '—'}</td>
+                    <td className="px-4 py-3 text-gray-600">{u.language ?? '-'}</td>
                     <td className="px-4 py-3 text-gray-600">{formatDate(u.created_at)}</td>
                   </tr>
                 ))
@@ -252,7 +252,7 @@ export default async function AdminOrgDetailPage({
                     <td className="px-4 py-3 text-gray-600">
                       {a.actor_id
                         ? actorEmailById.get(a.actor_id) ?? a.actor_id
-                        : '—'}
+                        : '-'}
                     </td>
                   </tr>
                 ))

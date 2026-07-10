@@ -39,13 +39,13 @@ export async function POST() {
     const fullName = orgData.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
     const alreadySeeded = orgData.organizations?.demo_data_seeded || false;
 
-    // 3. Seed demo data (idempotent — checks flag internally)
+    // 3. Seed demo data (idempotent, checks flag internally)
     let seedResult = { success: true, assetsCreated: 0, schedulesCreated: 0 };
     if (!alreadySeeded) {
       seedResult = await seedDemoData(orgId);
     }
 
-    // 4. Send welcome email (fire-and-forget — don't block confirmation)
+    // 4. Send welcome email (fire-and-forget, don't block confirmation)
     const emailResult = await sendWelcomeEmail({
       email: user.email!,
       fullName,
