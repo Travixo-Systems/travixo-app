@@ -134,7 +134,7 @@ function SignUpContent() {
         if (authError) throw authError
         if (!authData.user) throw new Error('User creation failed')
 
-        // Redirect to check-email page — org creation happens after confirmation
+        // Redirect to check-email page, org creation happens after confirmation
         router.push(`/check-email?email=${encodeURIComponent(formData.email.trim())}`)
       }
 
@@ -162,7 +162,7 @@ function SignUpContent() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left panel — brand */}
+      {/* Left panel, brand */}
       <div
         className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12"
         style={{ background: `linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.secondary} 100%)` }}
@@ -226,7 +226,7 @@ function SignUpContent() {
         </p>
       </div>
 
-      {/* Right panel — form */}
+      {/* Right panel, form */}
       <div className="flex-1 flex items-center justify-center bg-gray-50 px-6 py-10 lg:p-6">
         <div className="max-w-md w-full space-y-5 lg:space-y-6">
           {/* Mobile logo */}
@@ -268,7 +268,7 @@ function SignUpContent() {
           )}
 
           <form onSubmit={handleSignUp} className="space-y-5">
-            {/* Company name — only for normal signup */}
+            {/* Company name, only for normal signup */}
             {!isInviteRedirect && (
               <div>
                 <label htmlFor="company" className="block text-base lg:text-sm font-semibold text-gray-700 mb-2">

@@ -30,7 +30,7 @@ function looksLikeTestUser(email: string | null | undefined): boolean {
 }
 
 function formatDate(value: string | null): string {
-  if (!value) return '—'
+  if (!value) return '-'
   // Stable, locale-independent rendering (YYYY-MM-DD) so the table reads
   // the same regardless of where the admin is.
   return value.slice(0, 10)
@@ -154,8 +154,8 @@ export default async function AdminDashboardPage() {
                       </Link>
                     </td>
                     <td className="px-4 py-3 text-gray-600">{org.slug}</td>
-                    <td className="px-4 py-3 text-gray-600">{org.subscription_tier ?? '—'}</td>
-                    <td className="px-4 py-3 text-gray-600">{org.subscription_status ?? '—'}</td>
+                    <td className="px-4 py-3 text-gray-600">{org.subscription_tier ?? '-'}</td>
+                    <td className="px-4 py-3 text-gray-600">{org.subscription_status ?? '-'}</td>
                     <td className="px-4 py-3 text-gray-600">{org.is_pilot ? 'Yes' : 'No'}</td>
                     <td className="px-4 py-3 text-gray-600">{formatDate(org.trial_ends_at)}</td>
                     <td className="px-4 py-3 text-gray-600">{formatDate(org.pilot_end_date)}</td>
@@ -213,12 +213,12 @@ export default async function AdminDashboardPage() {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{u.full_name ?? '—'}</td>
+                    <td className="px-4 py-3 text-gray-600">{u.full_name ?? '-'}</td>
                     <td className="px-4 py-3 text-gray-600">{u.role}</td>
                     <td className="px-4 py-3 text-gray-600">
                       {u.organization_id
                         ? orgNameById.get(u.organization_id) ?? u.organization_id
-                        : '—'}
+                        : '-'}
                     </td>
                     <td className="px-4 py-3 text-gray-600">{formatDate(u.created_at)}</td>
                   </tr>

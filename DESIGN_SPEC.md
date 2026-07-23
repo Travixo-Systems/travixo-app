@@ -8,8 +8,8 @@ Validated 2026-03-31 by George (Uwa). This spec governs all TraviXO dashboard UI
 
 ### Read skills first
 Before making any changes, read these skill files for context:
-- `/mnt/skills/user/deralis-standards/SKILL.md` — brand rules, editorial standards, honesty framework
-- `/mnt/skills/public/frontend-design/SKILL.md` — UI quality patterns (when building new components)
+- `/mnt/skills/user/deralis-standards/SKILL.md`, brand rules, editorial standards, honesty framework
+- `/mnt/skills/public/frontend-design/SKILL.md`, UI quality patterns (when building new components)
 
 These skills contain rules that override your defaults. Read them, then proceed.
 
@@ -263,7 +263,7 @@ All modals follow the same pattern. This includes: "Ajouter Surveillance VGP", "
 - Centered vertically and horizontally
 
 ### Modal container
-- Background: `--card-bg` (`#edeff2`) — NOT white
+- Background: `--card-bg` (`#edeff2`), NOT white
 - Border-radius: 12px
 - Max-width: 560px (forms), 720px (detail views)
 - Padding: 24px
@@ -275,7 +275,7 @@ All modals follow the same pattern. This includes: "Ajouter Surveillance VGP", "
 - Close button (X): `--text-muted`, hover `--text-primary`
 
 ### Equipment identity block (in VGP/inspection modals)
-- Background: `--page-bg` (`#f6f8fd`) — slightly darker than modal bg to create depth
+- Background: `--page-bg` (`#f6f8fd`), slightly darker than modal bg to create depth
 - Border-radius: 8px
 - Padding: 12px 16px
 - Equipment name: 14px, font-weight 500, `--text-primary`
@@ -294,7 +294,7 @@ All modals follow the same pattern. This includes: "Ajouter Surveillance VGP", "
 - Left border: 3px solid `--status-conforme`
 - Text: `--status-conforme` for the date, `--text-muted` for the subtitle
 - Border-radius: 8px
-- Do NOT use bright green background — keep it subtle
+- Do NOT use bright green background, keep it subtle
 
 ### Modal buttons
 - Primary action (Save/Submit): `--accent` background, white text, border-radius 6px
@@ -482,7 +482,7 @@ CONSTRAINTS: Only change backgrounds, borders, and colors inside modal
 components. Do not change modal open/close logic, form validation,
 data submission, or component structure.
 
-Tasks — apply to EVERY modal in the app:
+Tasks, apply to EVERY modal in the app:
 - Modal container background: --card-bg (#edeff2), NOT white.
 - Equipment identity block: --page-bg (#f6f8fd) background.
 - Form inputs: --input-bg (#e3e5e9) background.
@@ -520,10 +520,10 @@ Tasks:
 Read DESIGN_SPEC.md sections 6e-6i.
 
 CONSTRAINTS: Surface color changes only. These pages likely need minimal
-work — just backgrounds and text colors. Do not restructure layouts or
+work, just backgrounds and text colors. Do not restructure layouts or
 add new features.
 
-Tasks — apply the design system to:
+Tasks, apply the design system to:
 - Audits page: --page-bg content bg, --card-bg for cards
 - Clients page: table styling matching Parc page spec
 - Equipe page: member cards/table, no colored role badges (plain text)

@@ -132,7 +132,7 @@ export default function AcceptInvitePage() {
           </div>
         )}
 
-        {/* Requires Auth State — New user needs to create account or log in */}
+        {/* Requires Auth State, New user needs to create account or log in */}
         {state === 'requires_auth' && (
           <div className="text-center py-4">
             <div
@@ -197,7 +197,7 @@ export default function AcceptInvitePage() {
           </div>
         )}
 
-        {/* Wrong Account — Logged in as someone else */}
+        {/* Wrong Account, Logged in as someone else */}
         {state === 'wrong_account' && (
           <div className="text-center py-4">
             <div

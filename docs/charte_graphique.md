@@ -396,7 +396,7 @@ font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
 ────────────────────────┐  ← Top: 5px orange
 Critical VGP Alerts     │
 15 inspections overdue  │  ← Right: 5px orange
-€75,000 potential fines │
+Sanction pénale L4741-1 │
 [View Details] →        │
 ────────────────────────┘
 ```

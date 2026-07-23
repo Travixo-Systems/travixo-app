@@ -20,7 +20,7 @@ interface FeatureCheckResult {
  * ```ts
  * const { denied, organizationId } = await requireFeature(supabase, 'vgp_compliance');
  * if (denied) return denied;
- * // proceed — organizationId is guaranteed non-null here
+ * // proceed, organizationId is guaranteed non-null here
  * ```
  */
 export async function requireFeature(
@@ -51,7 +51,7 @@ export async function requireFeature(
     };
   }
 
-  // 3. Single RPC call — checks pilot period + subscription status + feature flag
+  // 3. Single RPC call, checks pilot period + subscription status + feature flag
   const { data: hasAccess, error: rpcError } = await supabase.rpc('has_feature_access', {
     org_id: orgId,
     feature_name: feature,
@@ -88,7 +88,7 @@ export async function requireFeature(
 /**
  * Verify the authenticated user's organization has WRITE access to VGP.
  *
- * Expired pilots get read-only VGP access — they can view data but cannot
+ * Expired pilots get read-only VGP access, they can view data but cannot
  * create, edit, or delete inspections or schedules. This guard enforces that
  * at the API level.
  *
@@ -105,7 +105,7 @@ export async function requireVGPWriteAccess(
   const result = await requireFeature(supabase, 'vgp_compliance');
   if (result.denied) return result;
 
-  // Feature is available — now check if it's read-only (expired pilot)
+  // Feature is available, now check if it's read-only (expired pilot)
   const { data: org } = await supabase
     .from('organizations')
     .select('is_pilot, pilot_end_date, subscription_tier')

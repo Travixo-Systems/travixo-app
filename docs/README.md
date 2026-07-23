@@ -7,7 +7,7 @@
 - [Tech Stack](architecture/tech_stack.md) - Technical decisions
 
 ## Two-Pillar Value Proposition
-1. **VGP Compliance Automation** - Prevent €15K-€75K DREETS fines
+1. **VGP Compliance Automation** - Prevent DREETS fines. Défaut de VGP: sanction pénale, art. L4741-1 Code du travail (montant à vérifier sur Légifrance); jusqu'à 75 000 € et 5 ans d'emprisonnement en cas d'accident.
 2. **QR-based Real-Time Asset Visibility** - Know where assets are
 
 Last updated: November 10, 2025

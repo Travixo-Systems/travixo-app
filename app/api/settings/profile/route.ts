@@ -88,7 +88,7 @@ export async function PATCH(request: Request) {
     const body = await request.json();
     const { first_name, last_name, email, avatar_url, language } = body;
 
-    // If email is changing, update auth first — fail early before touching users table
+    // If email is changing, update auth first, fail early before touching users table
     if (email && email !== user.email) {
       const { error: emailError } = await supabase.auth.updateUser({
         email: email,

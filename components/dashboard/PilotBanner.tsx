@@ -10,7 +10,7 @@ export default function PilotBanner() {
 
   if (isLoading || !isPilot) return null;
 
-  // Account locked — 30+ days since signup, not converted
+  // Account locked, 30+ days since signup, not converted
   if (accountLocked) {
     return (
       <div className="bg-gray-900 border-b border-gray-700 px-4 py-3">
@@ -34,7 +34,7 @@ export default function PilotBanner() {
     );
   }
 
-  // Active pilot — expiring soon (5 days or less)
+  // Active pilot, expiring soon (5 days or less)
   if (pilotActive && daysRemaining !== null && daysRemaining <= 5) {
     return (
       <div className="bg-amber-50 border-b border-amber-200 px-4 py-3">
@@ -60,7 +60,7 @@ export default function PilotBanner() {
     );
   }
 
-  // Active pilot — normal state
+  // Active pilot, normal state
   if (pilotActive && daysRemaining !== null) {
     return (
       <div className="border-b px-4 py-2.5" style={{ backgroundColor: '#f0f4f8', borderColor: '#d1dbe6' }}>
@@ -80,7 +80,7 @@ export default function PilotBanner() {
     );
   }
 
-  // Expired pilot — read-only grace period (days 15-30)
+  // Expired pilot, read-only grace period (days 15-30)
   if (!pilotActive) {
     return (
       <div className="bg-red-50 border-b border-red-200 px-4 py-3">

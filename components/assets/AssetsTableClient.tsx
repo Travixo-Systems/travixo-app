@@ -164,7 +164,7 @@ export default function AssetsTableClient({ assets, onRefresh }: { assets: Asset
 
                             {/* Line 2: Serial */}
                             <p className="text-[11px] sm:text-[12px] font-mono mt-0.5" style={{ color: 'var(--text-hint, #888)' }}>
-                                {asset.serial_number || '—'}
+                                {asset.serial_number || '-'}
                             </p>
 
                             {/* Line 3: Category */}
@@ -174,10 +174,10 @@ export default function AssetsTableClient({ assets, onRefresh }: { assets: Asset
                                 </p>
                             )}
 
-                            {/* Line 4: Location | Status — below divider */}
+                            {/* Line 4: Location | Status, below divider */}
                             <div className="flex items-center justify-between mt-2 pt-2" style={{ borderTop: '0.5px solid #dcdee3' }}>
                                 <span className="text-[11px] sm:text-[12px]" style={{ color: 'var(--text-secondary, #444)' }}>
-                                    {asset.current_location || '—'}
+                                    {asset.current_location || '-'}
                                 </span>
                                 {isArchived ? (
                                     <span className="text-[11px] sm:text-[12px] font-medium flex-shrink-0 ml-2" style={{ color: 'var(--text-hint, #888)' }}>

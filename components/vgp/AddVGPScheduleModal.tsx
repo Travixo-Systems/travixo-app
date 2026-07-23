@@ -359,7 +359,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
           );
 
           if (vgpDueBeforeReturn) {
-            // Scenario A: VGP due BEFORE return — red warning
+            // Scenario A: VGP due BEFORE return, red warning
             return (
               <div
                 className="mx-6 mt-4 p-4 rounded-lg"
@@ -378,7 +378,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
                   {activeRental.expected_return_date && (
                     <p className="text-[13px]" style={{ color: 'var(--text-secondary, #444)' }}>
                       {t('vgpRentalContext.expectedReturn')}: {formatRentalDate(activeRental.expected_return_date)}
-                      {' '}<span style={{ color: '#dc2626' }}>— {t('vgpRentalContext.afterVgpDue')}</span>
+                      {' '}<span style={{ color: '#dc2626' }}>- {t('vgpRentalContext.afterVgpDue')}</span>
                     </p>
                   )}
                 </div>
@@ -408,7 +408,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
               </div>
             );
           } else {
-            // Scenario B: VGP due AFTER return — amber info
+            // Scenario B: VGP due AFTER return, amber info
             return (
               <div
                 className="mx-6 mt-4 p-4 rounded-lg"
@@ -423,7 +423,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
                     {activeRental.expected_return_date && (
                       <p className="text-[13px] mt-1" style={{ color: '#92400e' }}>
                         {t('vgpRentalContext.expectedReturn')}: {formatRentalDate(activeRental.expected_return_date)}
-                        {' — '}{t('vgpRentalContext.beforeVgpDue')}.
+                        {', '}{t('vgpRentalContext.beforeVgpDue')}.
                         {' '}{t('vgpRentalContext.noActionRequired')}
                       </p>
                     )}
@@ -738,7 +738,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
               {!selectedFile && (
                 <SummaryRow
                   label={language === 'fr' ? 'Rapport joint' : 'Attached report'}
-                  value={language === 'fr' ? 'Aucun — date auto-déclarée' : 'None — self-declared date'}
+                  value={language === 'fr' ? 'Aucun, date auto-déclarée' : 'None, self-declared date'}
                   valueColor="var(--text-hint, #888)"
                 />
               )}

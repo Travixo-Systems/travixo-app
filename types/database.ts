@@ -1,6 +1,6 @@
 // =============================================================================
 // Database types for Supabase client
-// Auto-synced with production Supabase schema — 2026-04-02
+// Auto-synced with production Supabase schema, 2026-04-02
 // =============================================================================
 
 export type Database = {

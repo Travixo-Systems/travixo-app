@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create audit items — active assets get 'pending', excluded get 'excluded' with reason in notes
+    // Create audit items, active assets get 'pending', excluded get 'excluded' with reason in notes
     const auditItems = [
       ...activeAssetIds.map(assetId => ({
         audit_id: audit.id,

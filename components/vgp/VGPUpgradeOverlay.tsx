@@ -28,7 +28,7 @@ export function VGPReadOnlyBanner() {
         <LockClosedIcon className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
         <div className="flex-1">
           <p className="text-[15px] font-semibold text-amber-800">
-            Mode lecture seule — Pilote expiré
+            Mode lecture seule, Pilote expiré
           </p>
           <p className="text-[15px] text-amber-700 mt-1">
             Vos données VGP sont conservées. Passez au plan Professionnel pour créer des inspections, modifier des plannings et télécharger des certificats.

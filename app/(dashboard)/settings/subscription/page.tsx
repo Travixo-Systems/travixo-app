@@ -122,9 +122,6 @@ export default function SubscriptionPage() {
     return true;
   });
 
-  // Check if user is existing paying customer (for 10% loyalty discount)
-  const isExistingCustomer = currentPlan && currentPlan.slug !== 'trial' && !isTrial;
-
   return (
     <div className="p-3 md:p-6 min-h-screen">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -179,7 +176,7 @@ export default function SubscriptionPage() {
               </div>
             )}
 
-            {/* Manage Billing button — only if org has Stripe subscription */}
+            {/* Manage Billing button, only if org has Stripe subscription */}
             {hasStripeSubscription && (
               <div className="border-l border-gray-200 pl-4">
                 <button
@@ -241,13 +238,6 @@ export default function SubscriptionPage() {
               style={billingCycle === 'yearly' ? { backgroundColor: BRAND.primary } : { color: 'var(--text-secondary, #444)' }}
             >
               {t('subscription.billingYearly')}
-              <span className={`px-1.5 py-0.5 text-[13px] font-semibold rounded ${
-                billingCycle === 'yearly'
-                  ? 'bg-white/20 text-white'
-                  : 'bg-green-50 text-green-700'
-              }`}>
-                {t('subscription.yearlySavings')}
-              </span>
             </button>
           </div>
         </div>
@@ -264,16 +254,7 @@ export default function SubscriptionPage() {
               return amount.toLocaleString('fr-FR').replace(',', ' ');
             };
 
-            // Calculate 10% loyalty discount for existing customers (round to end in 900)
-            let displayPrice = billingCycle === 'yearly' ? plan.price_yearly : plan.price_monthly;
-            let hasLoyaltyDiscount = false;
-
-            if (isExistingCustomer && !isStarter && !isEnterprise && billingCycle === 'yearly') {
-              const discounted = plan.price_yearly * 0.90;
-              // Round down to nearest 1000, then add 900
-              displayPrice = Math.floor(discounted / 1000) * 1000 + 900;
-              hasLoyaltyDiscount = true;
-            }
+            const displayPrice = billingCycle === 'yearly' ? plan.price_yearly : plan.price_monthly;
 
             // Starter basic features
             const starterBasicFeatures = [
@@ -340,18 +321,6 @@ export default function SubscriptionPage() {
                         <div className="text-[15px] font-medium mt-0.5" style={{ color: 'var(--text-secondary, #444)' }}>
                           {billingCycle === 'yearly' ? t('subscription.perYear') : t('subscription.perMonth')}
                         </div>
-
-                        {/* Show strikethrough + loyalty badge if discounted */}
-                        {hasLoyaltyDiscount && (
-                          <div className="flex items-center gap-2 mt-2">
-                            <span className="text-[13px] line-through" style={{ color: 'var(--text-muted, #777)' }}>
-                              {formatEuro(plan.price_yearly)} €
-                            </span>
-                            <span className="px-1.5 py-0.5 bg-green-50 text-green-700 text-[13px] font-semibold rounded">
-                              {t('subscription.loyaltyDiscount')}
-                            </span>
-                          </div>
-                        )}
 
                         {/* Show the alternate cycle price */}
                         <div className="text-[13px] mt-2" style={{ color: 'var(--text-muted, #777)' }}>

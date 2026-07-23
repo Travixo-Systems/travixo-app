@@ -505,7 +505,7 @@ export default function ScanPage({ params }: PageProps) {
           <p className="text-gray-600 mb-6 text-sm">{scanError.message}</p>
 
           <div className="flex flex-col gap-3">
-            {/* Retry — always shown except definitive 404 */}
+            {/* Retry, always shown except definitive 404 */}
             {!isNotFound && (
               <button
                 onClick={() => fetchAsset(0)}

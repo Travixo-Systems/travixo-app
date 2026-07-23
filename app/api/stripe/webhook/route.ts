@@ -287,7 +287,7 @@ async function handleSubscriptionChange(supabase: any, subscription: any, eventI
   };
   const status = statusMap[subscription.status] || 'active';
 
-  // Build subscription data — safe date conversions
+  // Build subscription data, safe date conversions
   const subscriptionData: Record<string, any> = {
     organization_id: organizationId,
     status,

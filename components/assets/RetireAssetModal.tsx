@@ -140,7 +140,7 @@ export default function RetireAssetModal({ isOpen, onClose, asset }: RetireAsset
                   )}
                 </div>
 
-                {/* Reason selector — pill buttons */}
+                {/* Reason selector, pill buttons */}
                 <div className="mb-4">
                   <label
                     className="block text-[13px] font-medium mb-2"
@@ -192,7 +192,7 @@ export default function RetireAssetModal({ isOpen, onClose, asset }: RetireAsset
                   />
                 </div>
 
-                {/* Warning callout — amber */}
+                {/* Warning callout, amber */}
                 <div
                   className="rounded-lg px-4 py-3 mb-6"
                   style={{

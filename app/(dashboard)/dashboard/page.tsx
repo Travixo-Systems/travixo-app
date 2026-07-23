@@ -202,8 +202,6 @@ export default function DashboardPage() {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   })
 
-  const fineRisk = data.vgpOverdue * 15000
-
   return (
     <div className="space-y-3 sm:space-y-4 min-[1026px]:space-y-5 p-3 md:p-6">
       {/* Onboarding */}
@@ -236,7 +234,7 @@ export default function DashboardPage() {
               {data.vgpOverdue} {data.vgpOverdue > 1 ? t('dashboard.overdueEquipmentPlural') : t('dashboard.overdueEquipment')}
             </p>
             <p className="text-[13px] mt-0.5" style={{ color: '#991b1b' }}>
-              {t('dashboard.fineExposure')}: €{fineRisk.toLocaleString()}
+              {t('dashboard.vgpRiskSanctions')}
             </p>
           </div>
           <Link

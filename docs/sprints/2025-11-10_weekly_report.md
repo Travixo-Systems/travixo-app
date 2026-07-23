@@ -78,7 +78,7 @@
 - DREETS compliance reporting (PDF generation)
 - Inspections history with search, filter, CSV export
 - 14/14 test cases passing
-- **Impact:** Delivers on primary value proposition (prevent €15K-€75K fines)
+- **Impact:** Delivers on primary value proposition. Défaut de VGP: sanction pénale, art. L4741-1 Code du travail (montant à vérifier sur Légifrance); jusqu'à 75 000 € et 5 ans d'emprisonnement en cas d'accident.
 
 **2. Subscription & Feature Gating System ✅**
 - 4-tier pricing structure implemented

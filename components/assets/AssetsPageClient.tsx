@@ -255,7 +255,7 @@ export default function AssetsPageClient() {
                 <>
                     {/* Search and Filter Bar */}
                     <div className="rounded-lg mb-4 p-3 min-[1026px]:p-4" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
-                        {/* Search — always full width */}
+                        {/* Search, always full width */}
                         <div className="relative mb-3 min-[1026px]:mb-0">
                             <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5" style={{ color: 'var(--text-hint, #888888)' }} />
                             <input
@@ -268,7 +268,7 @@ export default function AssetsPageClient() {
                             />
                         </div>
 
-                        {/* Filters — stack on mobile, row on desktop */}
+                        {/* Filters, stack on mobile, row on desktop */}
                         <div className="flex flex-col sm:flex-row gap-2 min-[1026px]:mt-3">
                             <div className="flex items-center gap-2 flex-1">
                                 <FunnelIcon className="h-5 w-5 flex-shrink-0 hidden sm:block" style={{ color: 'var(--text-hint, #888888)' }} />

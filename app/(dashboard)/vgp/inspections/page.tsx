@@ -370,7 +370,7 @@ function VGPInspectionsContent() {
                     </span>
                   </div>
                   <p className="text-[12px]" style={{ color: 'var(--text-secondary, #444)' }}>
-                    {inspection.inspector_name}{inspection.inspector_company ? ` — ${inspection.inspector_company}` : ''}
+                    {inspection.inspector_name}{inspection.inspector_company ? `, ${inspection.inspector_company}` : ''}
                   </p>
                   <div className="mt-1">
                     {inspection.certificate_url ? (
@@ -384,7 +384,7 @@ function VGPInspectionsContent() {
                         PDF ↓
                       </a>
                     ) : (
-                      <span className="text-[12px]" style={{ color: 'var(--text-hint, #888)' }}>—</span>
+                      <span className="text-[12px]" style={{ color: 'var(--text-hint, #888)' }}>-</span>
                     )}
                   </div>
                 </div>

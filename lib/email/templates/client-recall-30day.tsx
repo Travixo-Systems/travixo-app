@@ -67,8 +67,9 @@ export function ClientRecall30Day({
 
             <Section style={infoBannerStyle}>
               <Text style={infoBannerTextStyle}>
-                Planifiez le rappel de ces équipements pour assurer la conformité VGP
-                avant l&apos;échéance. Le non-respect peut entraîner des amendes de 15 000 à 75 000 EUR.
+                La réglementation impose une vérification générale périodique de cet
+                équipement. L&apos;échéance approche : nous organisons le rappel pour
+                maintenir votre matériel conforme.
               </Text>
             </Section>
 

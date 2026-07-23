@@ -64,8 +64,8 @@ INSERT INTO subscription_plans (name, slug, description, price_monthly, price_ye
   'Starter',
   'starter',
   'Perfect for small teams getting started',
-  250.00,
-  2700.00,
+  490.00,
+  5880.00,
   100,
   5,
   '{
@@ -86,8 +86,8 @@ INSERT INTO subscription_plans (name, slug, description, price_monthly, price_ye
   'Professional',
   'professional',
   'For growing companies with compliance needs',
-  750.00,
-  8100.00,
+  1200.00,
+  14400.00,
   500,
   15,
   '{
@@ -108,8 +108,8 @@ INSERT INTO subscription_plans (name, slug, description, price_monthly, price_ye
   'Business',
   'business',
   'For mid-size operations',
-  2500.00,
-  27000.00,
+  2400.00,
+  28800.00,
   2000,
   50,
   '{

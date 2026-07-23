@@ -1,7 +1,7 @@
-  TraviXO App — Complete User Flow Audit
+  TraviXO App, Complete User Flow Audit
 
 > **Generated:** 2026-04-01
-> **Method:** Read-only code audit — every detail sourced from actual source files.
+> **Method:** Read-only code audit, every detail sourced from actual source files.
 > **Constraint:** No files modified.
 
 ---
@@ -28,7 +28,7 @@
 **UNDO:** NO (manual delete via trash icon)
 
 **MODAL DETAIL:**
-- **MODAL TITLE:** t('assets.addAssetTitle') — "Add Asset" / "Ajouter un équipement"
+- **MODAL TITLE:** t('assets.addAssetTitle'), "Add Asset" / "Ajouter un équipement"
 - **MODAL LANGUAGE:** FR/EN via i18n context
 - **BACKGROUND:** var(--card-bg, #edeff2)
 - **FIELDS:**
@@ -40,7 +40,7 @@
   - Purchase Price (EUR) → number (step 0.01) → N → none
   - Current Value (EUR) → number (step 0.01) → N → none
   - Description → textarea (3 rows) → N → none
-- **PRE-POPULATED:** N — all fields empty, status defaults to "available"
+- **PRE-POPULATED:** N, all fields empty, status defaults to "available"
 - **BUTTONS:**
   - "Cancel" → ghost → closes modal → N → N
   - "Add Asset" → primary (orange #e8600a) → submits form → Y ("Adding...") → Y (disabled until name filled)
@@ -70,17 +70,17 @@
 5. On success → Toast "Asset updated", router.refresh(), modal closes
 
 **OUTCOME:** Asset row updated in `assets` table
-**VALIDATIONS:** HTML5 `required` on name only — NO Zod validation (inconsistency with Add)
+**VALIDATIONS:** HTML5 `required` on name only, NO Zod validation (inconsistency with Add)
 **FEEDBACK:** Toast "Asset updated" (t('assets.toastAssetUpdated'))
 **ERROR HANDLING:** Toast with error.message; modal stays open
 **UNDO:** NO
 
 **MODAL DETAIL:**
-- **MODAL TITLE:** t('assets.editAssetTitle') — "Edit Asset" / "Modifier l'équipement"
+- **MODAL TITLE:** t('assets.editAssetTitle'), "Edit Asset" / "Modifier l'équipement"
 - **MODAL LANGUAGE:** FR/EN via i18n
 - **BACKGROUND:** var(--card-bg, #edeff2)
 - **FIELDS:** Same as Add, all pre-populated from asset object
-- **PRE-POPULATED:** Y — all fields from asset data (line 51-60)
+- **PRE-POPULATED:** Y, all fields from asset data (line 51-60)
 - **BUTTONS:**
   - "Cancel" → ghost → closes → N → N
   - "Save Changes" → primary (orange) → submits → Y ("Saving...") → N
@@ -114,7 +114,7 @@
 **UNDO:** NO (hard delete)
 
 **MODAL DETAIL:**
-- **MODAL TITLE:** t('assets.deleteTitle') — "Delete Asset"
+- **MODAL TITLE:** t('assets.deleteTitle'), "Delete Asset"
 - **MODAL LANGUAGE:** FR/EN
 - **BACKGROUND:** var(--card-bg, #edeff2)
 - **FIELDS:** None (confirmation only)
@@ -149,7 +149,7 @@
 **UNDO:** NO
 
 **MODAL DETAIL:**
-- **MODAL TITLE:** t('assets.importTitle') — "Import Equipment"
+- **MODAL TITLE:** t('assets.importTitle'), "Import Equipment"
 - **MODAL LANGUAGE:** FR/EN; column detection supports bilingual headers
 - **BACKGROUND:** var(--card-bg, #edeff2)
 - **FIELDS:**
@@ -179,7 +179,7 @@
 **UNDO:** N/A
 
 **MODAL DETAIL:**
-- **MODAL TITLE:** t('assets.qrCodeTitle') — "QR Code"
+- **MODAL TITLE:** t('assets.qrCodeTitle'), "QR Code"
 - **FIELDS:** None (display only)
 - **BUTTONS:**
   - "Download" → primary (orange) → triggers PNG download → N → N
@@ -207,7 +207,7 @@
 
 ### FLOW: View Equipment Detail
 
-**STATUS: NOT IMPLEMENTED** — No dedicated `/assets/:id` detail page exists. Equipment details are viewed via the Edit modal or inline in the table.
+**STATUS: NOT IMPLEMENTED**, No dedicated `/assets/:id` detail page exists. Equipment details are viewed via the Edit modal or inline in the table.
 
 ---
 
@@ -275,7 +275,7 @@
 **UNDO:** NO (but edit_history tracks changes)
 
 **MODAL DETAIL:**
-- **MODAL TITLE:** t('vgpEditModal.title') — "Edit Schedule"
+- **MODAL TITLE:** t('vgpEditModal.title'), "Edit Schedule"
 - **MODAL LANGUAGE:** FR/EN
 - **BACKGROUND:** var(--card-bg, #edeff2)
 - **FIELDS:**
@@ -283,7 +283,7 @@
   - Next Due Date → date → Y → pre-filled from schedule
   - Notes → textarea → N → pre-filled
   - Reason for Change → textarea → conditional (if date changed) → non-empty
-- **PRE-POPULATED:** Y — next_due_date and notes from schedule
+- **PRE-POPULATED:** Y, next_due_date and notes from schedule
 - **BUTTONS:**
   - "Cancel" → ghost → closes → N → N
   - "Save" → primary → submits → Y ("Saving...") → N
@@ -307,7 +307,7 @@
 **ERROR HANDLING:** Error toast if API fails; row stays
 **UNDO:** NO (but data preserved in DB with archived_at)
 
-**MODAL DETAIL:** Uses native `window.prompt()` — no custom modal
+**MODAL DETAIL:** Uses native `window.prompt()`, no custom modal
 
 ---
 
@@ -329,7 +329,7 @@
 **ERROR HANDLING:** Red error box above form; stays on page
 **UNDO:** NO
 
-**MODAL DETAIL:** N/A — Full page, not modal
+**MODAL DETAIL:** N/A, Full page, not modal
 - **LANGUAGE:** Mostly hardcoded French (e.g., "Date d'Inspection", "Nom de l'Inspecteur", DREETS warning text)
 - **FIELDS:**
   - Inspection Date → date → Y → defaults to today
@@ -444,14 +444,14 @@
 **ERROR HANDLING:** Same as Add
 
 **MODAL DETAIL:** Same modal as Add, title changes to "Edit Client" / "Modifier un client"
-- **PRE-POPULATED:** Y — all fields from client object
+- **PRE-POPULATED:** Y, all fields from client object
 
 ---
 
 ### FLOW: Delete Client
 
 **TRIGGER:** Delete icon/button on client card
-**STEPS:** Not audited in detail — likely confirmation prompt + DELETE API call
+**STEPS:** Not audited in detail, likely confirmation prompt + DELETE API call
 **OUTCOME:** Client deleted
 
 ---
@@ -808,10 +808,10 @@
 
 | Pattern | Implementation |
 |---------|---------------|
-| **Toast library** | `react-hot-toast` — success/error/info |
+| **Toast library** | `react-hot-toast`, success/error/info |
 | **Auth** | Supabase Auth (email/password) |
 | **File uploads** | UploadThing (3 endpoints: vgpCertificate, organizationLogo, userAvatar) |
-| **i18n** | `useLanguage()` + `createTranslator(language)` — FR/EN |
+| **i18n** | `useLanguage()` + `createTranslator(language)`, FR/EN |
 | **Feature gates** | `<FeatureGate feature="...">` + `requireFeature()` in API routes |
 | **Permissions** | Roles: owner > admin > member > viewer |
 | **Payments** | Stripe Checkout + Customer Portal |
@@ -823,17 +823,17 @@
 
 ## KNOWN INCONSISTENCIES
 
-1. **Edit Asset has no Zod validation** — Add uses Zod schema, Edit uses only HTML5 `required`
-2. **Record Inspection page is mostly hardcoded French** — Other pages use i18n
-3. **Archive uses window.prompt()** — All other destructive actions use custom modals
-4. **Add Client has no success toast** — Only shows errors; other flows show success toasts
-5. **No equipment detail page** — All detail viewing happens through Edit modal
-6. **VGP inspection certificate required but not enforced in API** — Client-side only; API accepts null
-7. **Hard delete on assets** vs **soft delete on VGP schedules** — inconsistent deletion strategy
+1. **Edit Asset has no Zod validation**, Add uses Zod schema, Edit uses only HTML5 `required`
+2. **Record Inspection page is mostly hardcoded French**, Other pages use i18n
+3. **Archive uses window.prompt()**, All other destructive actions use custom modals
+4. **Add Client has no success toast**, Only shows errors; other flows show success toasts
+5. **No equipment detail page**, All detail viewing happens through Edit modal
+6. **VGP inspection certificate required but not enforced in API**, Client-side only; API accepts null
+7. **Hard delete on assets** vs **soft delete on VGP schedules**, inconsistent deletion strategy
 
 ---
 
-## UX RECOMMENDATIONS — PRIORITISED BACKLOG
+## UX RECOMMENDATIONS, PRIORITISED BACKLOG
 
 > Sorted by: CRITICAL+SMALL first (quick wins that prevent real damage), then CRITICAL+MEDIUM, then HIGH+SMALL, etc.
 
@@ -874,10 +874,10 @@
 
 **FLOW:** Delete Equipment
 **PROBLEMS:**
-- `supabase.delete().eq('id', asset.id)` — permanent destruction
+- `supabase.delete().eq('id', asset.id)`, permanent destruction
 - VGP schedules, inspections, and audit_items may reference this asset_id (FK cascade or orphans)
-- In equipment rental, assets are retired/decommissioned, not erased — regulators may audit historical inspection records
-- DESIGN_SPEC says "color = compliance status" — a deleted asset's compliance history vanishes
+- In equipment rental, assets are retired/decommissioned, not erased, regulators may audit historical inspection records
+- DESIGN_SPEC says "color = compliance status", a deleted asset's compliance history vanishes
 **RECOMMENDED FIX:**
 - Add `archived_at` and `archived_by` columns to `assets` table (same pattern as `vgp_schedules`)
 - Change delete handler to soft-delete: `UPDATE assets SET archived_at = now() WHERE id = ?`
@@ -893,7 +893,7 @@
 
 **FLOW:** Record a New Inspection
 **PROBLEMS:**
-- Form labels ("Date d'Inspection", "Nom de l'Inspecteur", "Société d'Inspection"), result buttons ("Conforme", "Conditionnel", "Non Conforme"), DREETS legal warning, submit button — all hardcoded French strings
+- Form labels ("Date d'Inspection", "Nom de l'Inspecteur", "Société d'Inspection"), result buttons ("Conforme", "Conditionnel", "Non Conforme"), DREETS legal warning, submit button, all hardcoded French strings
 - Every other page uses `useLanguage()` + `createTranslator()` i18n system
 - EN-language users see a fully French inspection form
 **RECOMMENDED FIX:**
@@ -911,8 +911,8 @@
 **FLOW:** Archive/Delete a VGP Schedule
 **PROBLEMS:**
 - Native browser `window.prompt()` looks unprofessional in a B2B SaaS product
-- Cannot be styled, localized, or branded — breaks the DESIGN_SPEC modal pattern
-- No cancel confirmation UX — user can accidentally dismiss
+- Cannot be styled, localized, or branded, breaks the DESIGN_SPEC modal pattern
+- No cancel confirmation UX, user can accidentally dismiss
 - Inconsistent: every other destructive action (Delete Asset, Complete Audit) uses a styled confirmation modal
 **RECOMMENDED FIX:**
 - Create a confirmation modal matching DESIGN_SPEC section 7 (--card-bg background, destructive red button)
@@ -929,7 +929,7 @@
 **FLOW:** Add Client / Edit Client
 **PROBLEMS:**
 - On successful create/edit, modal closes and list refreshes silently
-- User has no positive confirmation that the save worked — only errors are shown
+- User has no positive confirmation that the save worked, only errors are shown
 - Every other mutation flow (Add Asset, Edit Asset, VGP Schedule, Profile, Org Settings) shows a success toast
 **RECOMMENDED FIX:**
 - Add `toast.success(t('clients.toastClientAdded'))` after successful POST
@@ -946,7 +946,7 @@
 **FLOW:** Edit Equipment
 **PROBLEMS:**
 - Add Asset uses `assetSchema.safeParse(formData)` with per-field error display
-- Edit Asset uses only HTML5 `required` attribute on the name field — no Zod, no inline errors
+- Edit Asset uses only HTML5 `required` attribute on the name field, no Zod, no inline errors
 - User can submit invalid data (e.g., negative prices, malformed dates) from Edit that would be blocked in Add
 **RECOMMENDED FIX:**
 - Import the same `assetSchema` from `lib/validations/schemas.ts`
@@ -979,10 +979,10 @@
 
 **FLOW:** View Equipment Detail
 **PROBLEMS:**
-- No `/assets/:id` page exists — the only way to see all asset data is through the Edit modal
+- No `/assets/:id` page exists, the only way to see all asset data is through the Edit modal
 - View and Edit are conflated: opening Edit just to read data creates accidental edit risk
 - VGP history, inspection records, QR code, and audit participation are not visible from one place
-- In industrial B2B SaaS (Hilti ON!Track, ToolWatch, EZOfficeInventory), an asset detail page is standard — it's the "single source of truth" for that piece of equipment
+- In industrial B2B SaaS (Hilti ON!Track, ToolWatch, EZOfficeInventory), an asset detail page is standard, it's the "single source of truth" for that piece of equipment
 **RECOMMENDED FIX:**
 - Create `/assets/[id]/page.tsx` with read-only detail view:
   - Equipment info card (name, serial, category, status, location, purchase info)
@@ -1000,7 +1000,7 @@
 
 **FLOW:** Record a New Inspection
 **PROBLEMS:**
-- On success, the page does `router.push('/vgp')` — redirect with no toast
+- On success, the page does `router.push('/vgp')`, redirect with no toast
 - User lands on VGP dashboard with no confirmation that the inspection was saved
 - If the network is slow and the redirect is fast, user may wonder if it actually saved
 **RECOMMENDED FIX:**
@@ -1033,8 +1033,8 @@
 
 **FLOW:** Export Audit
 **PROBLEMS:**
-- PDF export failure only logs to console — no user-facing error
-- User clicks "Export", spinner shows, spinner stops, nothing happens — no explanation
+- PDF export failure only logs to console, no user-facing error
+- User clicks "Export", spinner shows, spinner stops, nothing happens, no explanation
 **RECOMMENDED FIX:**
 - Add `toast.error(t('audits.exportFailed'))` in catch block
 **PRIORITY:** MEDIUM
@@ -1047,7 +1047,7 @@
 
 **FLOW:** Delete Client
 **PROBLEMS:**
-- Could not fully audit the delete flow — appears to be a hard delete
+- Could not fully audit the delete flow, appears to be a hard delete
 - Client data (name, contact, rental history context) permanently destroyed
 - In B2B equipment rental, client records may be referenced in rental agreements, VGP inspections (who ordered the inspection), or audits
 **RECOMMENDED FIX:**
@@ -1093,7 +1093,7 @@
 **FLOW:** Change Theme/Branding
 **PROBLEMS:**
 - After saving theme, code does `window.location.reload()` after 500ms delay
-- This is a full page reload — loses scroll position, any open state, etc.
+- This is a full page reload, loses scroll position, any open state, etc.
 - Modern approach: update CSS variables dynamically without reload
 **RECOMMENDED FIX:**
 - Update CSS custom properties via `document.documentElement.style.setProperty()` instead of reload
@@ -1125,4 +1125,4 @@
 | 16 | Theme save reloads page | LOW | MEDIUM | UX polish |
 
 ### Quick wins (< 30 min each, start here):
-Items **1, 2, 6, 7, 10, 11, 12** — seven changes that close compliance gaps and add missing feedback. Total effort: ~3 hours.
+Items **1, 2, 6, 7, 10, 11, 12**, seven changes that close compliance gaps and add missing feedback. Total effort: ~3 hours.

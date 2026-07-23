@@ -108,7 +108,7 @@ UPDATE organizations
 -- SCHEMA CLEANUP: Drop stale columns per DESIGN_SPEC.md
 -- ============================================================================
 -- ── asset_categories ──
--- color: DESIGN_SPEC §3 "DO NOT use colored category badges" — never rendered
+-- color: DESIGN_SPEC §3 "DO NOT use colored category badges", never rendered
 ALTER TABLE asset_categories DROP COLUMN IF EXISTS color;
 
 -- ── assets ──
@@ -193,12 +193,12 @@ INSERT INTO clients (id, organization_id, name, email, phone, company, notes) VA
   (_cl6, _org_id, 'Nathalie Roux',     'n.roux@razel-bec.com',                     '07 99 88 77 66', 'Razel-Bec',              'Fondations spéciales');
 
 -- ============================================================================
--- PART 5: VGP SCHEDULES (12 — mix of overdue, upcoming, compliant)
+-- PART 5: VGP SCHEDULES (12, mix of overdue, upcoming, compliant)
 -- ============================================================================
 -- Relative to CURRENT_DATE so the seed stays realistic whenever you run it.
 
 INSERT INTO vgp_schedules (id, asset_id, organization_id, interval_months, last_inspection_date, next_due_date, status, created_by, inspection_location) VALUES
-  -- OVERDUE (3) — past due dates
+  -- OVERDUE (3), past due dates
   (_s1,  _a1,  _org_id, 12, (CURRENT_DATE - interval '14 months')::date, (CURRENT_DATE - interval '2 months')::date,  'active', 'Bureau Veritas', 'depot'),
   (_s2,  _a7,  _org_id, 12, (CURRENT_DATE - interval '13 months')::date, (CURRENT_DATE - interval '1 month')::date,   'active', 'APAVE',          'depot'),
   (_s3,  _a12, _org_id, 6,  (CURRENT_DATE - interval '8 months')::date,  (CURRENT_DATE - interval '15 days')::date,   'active', 'SOCOTEC',        'depot'),
@@ -208,7 +208,7 @@ INSERT INTO vgp_schedules (id, asset_id, organization_id, interval_months, last_
   (_s5,  _a8,  _org_id, 12, (CURRENT_DATE - interval '11 months')::date, (CURRENT_DATE + interval '25 days')::date,  'active', 'DEKRA',          'depot'),
   (_s6,  _a13, _org_id, 12, (CURRENT_DATE - interval '11 months')::date, (CURRENT_DATE + interval '8 days')::date,   'active', 'APAVE',          'client_site'),
 
-  -- COMPLIANT (6) — due in >30 days
+  -- COMPLIANT (6), due in >30 days
   (_s7,  _a3,  _org_id, 12, (CURRENT_DATE - interval '4 months')::date,  (CURRENT_DATE + interval '8 months')::date,  'active', 'Bureau Veritas', 'depot'),
   (_s8,  _a4,  _org_id, 12, (CURRENT_DATE - interval '6 months')::date,  (CURRENT_DATE + interval '6 months')::date,  'active', 'SOCOTEC',        'depot'),
   (_s9,  _a9,  _org_id, 12, (CURRENT_DATE - interval '3 months')::date,  (CURRENT_DATE + interval '9 months')::date,  'active', 'DEKRA',          'depot'),
@@ -217,7 +217,7 @@ INSERT INTO vgp_schedules (id, asset_id, organization_id, interval_months, last_
   (_s12, _a11, _org_id, 6,  (CURRENT_DATE - interval '2 months')::date,  (CURRENT_DATE + interval '4 months')::date,  'active', 'SOCOTEC',        'depot');
 
 -- ============================================================================
--- PART 6: VGP INSPECTIONS (past inspection history — 8 records)
+-- PART 6: VGP INSPECTIONS (past inspection history, 8 records)
 -- ============================================================================
 
 INSERT INTO vgp_inspections (
@@ -250,7 +250,7 @@ INSERT INTO vgp_inspections (
    'Sophie Laurent', 'DEKRA', 'PERIODIQUE', 'RAS - Conforme',
    'passed', 'VGP-2026-00033', (CURRENT_DATE + interval '9 months')::date, _user_id),
 
-  -- Asset 12: overdue, last inspected 8 months ago — conditional result
+  -- Asset 12: overdue, last inspected 8 months ago, conditional result
   (_org_id, _a12, _s3, (CURRENT_DATE - interval '8 months')::date,
    'Pierre Dubois', 'SOCOTEC', 'PERIODIQUE', 'Fuite circuit hydraulique vérin de flèche - réparation requise sous 30j',
    'conditional', 'VGP-2025-00311', (CURRENT_DATE - interval '15 days')::date, _user_id),
@@ -266,7 +266,7 @@ INSERT INTO vgp_inspections (
    'passed', 'VGP-2025-00401', (CURRENT_DATE + interval '7 months')::date, _user_id);
 
 -- ============================================================================
--- PART 7: RENTALS (5 — 3 active, 2 returned)
+-- PART 7: RENTALS (5, 3 active, 2 returned)
 -- ============================================================================
 
 INSERT INTO rentals (id, organization_id, asset_id, client_name, client_id, checked_out_by, checkout_date, expected_return_date, status, checkout_notes) VALUES

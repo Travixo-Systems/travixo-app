@@ -119,7 +119,7 @@ export async function getEntitlementContext(): Promise<EntitlementContext | null
  * Resolution order: overrides → subscription status → plan features → deny
  */
 export function hasFeature(ctx: EntitlementContext, feature: Feature): boolean {
-  // Account locked — no access to anything
+  // Account locked, no access to anything
   if (ctx.accountLocked) return false;
 
   // Active pilots get all features
@@ -129,7 +129,7 @@ export function hasFeature(ctx: EntitlementContext, feature: Feature): boolean {
   const override = ctx.overrides.find(o => o.feature === feature);
   if (override) {
     if (override.expires_at && new Date(override.expires_at) < new Date()) {
-      // Expired override — fall through to plan check
+      // Expired override, fall through to plan check
     } else {
       return override.granted;
     }
@@ -150,7 +150,7 @@ export function hasFeature(ctx: EntitlementContext, feature: Feature): boolean {
  * with prior access, 'blocked' if no access at all.
  */
 export function getFeatureAccessLevel(ctx: EntitlementContext, feature: Feature): FeatureAccessLevel {
-  // Account locked — everything blocked
+  // Account locked, everything blocked
   if (ctx.accountLocked) return 'blocked';
 
   // Full access if feature is enabled
