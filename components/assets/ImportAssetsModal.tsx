@@ -241,6 +241,13 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
         throw new Error(t('assets.errorNoOrganization'))
       }
 
+      // Capture as a plain string. The guard above narrows
+      // userData.organization_id to string here, but that narrowing is lost
+      // inside the .map() callbacks below, where TS can no longer prove the
+      // property has not changed -- it widens back to `string | null` and the
+      // insert overload fails to match.
+      const organizationId: string = userData.organization_id
+
       // --- Resolve category names to category_ids -------------------------
       // Match against the org's existing categories ignoring case and
       // accents, so "Chariot élévateur" in the sheet maps onto an existing
@@ -252,7 +259,7 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
       const { data: existingCats } = await supabase
         .from('asset_categories')
         .select('id, name')
-        .eq('organization_id', userData.organization_id)
+        .eq('organization_id', organizationId)
 
       const catIdByName = new Map<string, string>()
       for (const c of existingCats ?? []) catIdByName.set(norm(c.name), c.id)
@@ -269,7 +276,7 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
           .from('asset_categories')
           .insert([...wanted].map(name => ({
             name,
-            organization_id: userData.organization_id,
+            organization_id: organizationId,
           })))
           .select('id, name')
 
@@ -288,7 +295,7 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
           category_id: category_name
             ? catIdByName.get(norm(category_name)) ?? null
             : null,
-          organization_id: userData.organization_id,
+          organization_id: organizationId,
           qr_code: qrCode,
           qr_url: `${window.location.origin}/scan/${qrCode}`,
         }
