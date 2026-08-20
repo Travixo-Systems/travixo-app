@@ -71,3 +71,13 @@ supabase/functions/
 
 # Personal study / introspection docs (not part of the product)
 /docs/deep-dive/
+
+# Database migrations and Supabase local state
+# Kept out of the public repo: these describe schema and RLS policy internals.
+# The live schema lives in the Supabase dashboard; migrations are archived
+# separately (see the team's private backup, not this repo).
+/supabase/migrations/
+/supabase/.temp/
+
+# Test/debug artifacts
+/.playwright-mcp/
