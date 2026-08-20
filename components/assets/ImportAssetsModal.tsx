@@ -9,6 +9,14 @@ import * as XLSX from 'xlsx'
 import { v4 as uuidv4 } from 'uuid'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
+import {
+  norm,
+  resolveCategoryColumn,
+  resolveRowCategory,
+  summarise,
+  type InferenceSummary,
+  type ResolvedRow,
+} from '@/lib/import/categoryInference'
 
 interface ImportAssetsModalProps {
   isOpen: boolean
@@ -21,6 +29,11 @@ interface ImportPreview {
   invalid: any[]
   total: number
   detectedColumns: Record<string, string>
+  /** How the category for each valid row was decided. Same order as `valid`. */
+  categoryResolutions: ResolvedRow[]
+  categorySummary: InferenceSummary
+  /** Which column categories came from, if any, and why we think so. */
+  categoryColumn: { column: string | null; reason: string }
 }
 
 export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: ImportAssetsModalProps) {
@@ -51,13 +64,19 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
     keys.forEach(key => {
       const lower = key.toLowerCase().trim()
 
-      if (!mapping.name && (lower.includes('name') || lower.includes('equipment') || lower.includes('item') || lower.includes('asset') || lower.includes('nom') || lower.includes('equipement')))
+      // "désignation" and "libellé" are the commonest FR headers for this and
+      // were missing -- a sheet using them imported zero rows, because every
+      // row failed the "name is required" check.
+      if (!mapping.name && (lower.includes('name') || lower.includes('equipment') || lower.includes('item') || lower.includes('asset') || lower.includes('nom') || lower.includes('equipement') || lower.includes('désignation') || lower.includes('designation') || lower.includes('libellé') || lower.includes('libelle') || lower.includes('machine') || lower.includes('matériel') || lower.includes('materiel')))
         mapping.name = key
 
       if (!mapping.serial_number && (lower.includes('serial') || lower.includes('sn') || lower.includes('s/n') || lower.includes('serie') || lower.includes('numéro')))
         mapping.serial_number = key
 
-      if (!mapping.current_location && (lower.includes('location') || lower.includes('site') || lower.includes('depot') || lower.includes('warehouse') || lower.includes('emplacement') || lower.includes('entrepot')))
+      // "lieu", "chantier", "agence", "adresse" are common FR headers for this
+      // and were missing -- an unclaimed location column also risks being
+      // mistaken for a category by the value sniffer.
+      if (!mapping.current_location && (lower.includes('location') || lower.includes('site') || lower.includes('depot') || lower.includes('dépôt') || lower.includes('warehouse') || lower.includes('emplacement') || lower.includes('entrepot') || lower.includes('lieu') || lower.includes('chantier') || lower.includes('agence') || lower.includes('adresse') || lower.includes('parc')))
         mapping.current_location = key
 
       if (!mapping.status && (lower.includes('status') || lower.includes('state') || lower.includes('condition') || lower.includes('statut') || lower.includes('etat')))
@@ -71,6 +90,10 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
 
       if (!mapping.purchase_price && (lower.includes('cost') || lower.includes('price') || lower.includes('value') || lower.includes('prix') || lower.includes('cout') || lower.includes('valeur')))
         mapping.purchase_price = key
+
+      // NOTE: the category column is NOT resolved here. It gets a dedicated
+      // pass (resolveCategoryColumn) that also handles typo'd headers and
+      // files with no category header at all -- see processFile.
     })
 
     return mapping
@@ -85,7 +108,14 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
       status: 'available',
       purchase_date: null,
       purchase_price: null,
+      // Category name as written in the spreadsheet. Resolved to a
+      // category_id at insert time (see handleImport) because that needs the
+      // organization's existing categories.
+      category_name: null,
     }
+
+    // category_name is filled in by the dedicated category pass in
+    // processFile, which needs the whole sheet (not one row) to decide.
 
     if (mapping.name && row[mapping.name]) {
       asset.name = row[mapping.name].toString().trim()
@@ -145,13 +175,30 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
       }
 
       const mapping = detectColumns(data[0])
+
+      // --- Category resolution ------------------------------------------
+      // Find the category column even when its header is odd or missing.
+      // Columns already claimed by another field are excluded so a
+      // "Type" column that is really the status is not stolen.
+      const claimed = Object.values(mapping)
+      const catCol = resolveCategoryColumn(data as Record<string, unknown>[], claimed)
+
       const valid: any[] = []
       const invalid: any[] = []
+      const resolutions: ResolvedRow[] = []
 
       data.forEach((row) => {
         try {
           const cleaned = cleanAssetData(row, mapping)
+          // Give the resolver the asset name we just parsed, so it can fall
+          // back to inferring the category from the name.
+          const resolution = resolveRowCategory(
+            { ...(row as Record<string, unknown>), __assetName: cleaned.name },
+            catCol.column
+          )
+          cleaned.category_name = resolution.category
           valid.push(cleaned)
+          resolutions.push(resolution)
         } catch (error) {
           invalid.push({ row, error: error instanceof Error ? error.message : t('assets.errorInvalidData') })
         }
@@ -161,7 +208,10 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
         valid,
         invalid,
         total: data.length,
-        detectedColumns: mapping
+        detectedColumns: mapping,
+        categoryResolutions: resolutions,
+        categorySummary: summarise(resolutions),
+        categoryColumn: { column: catCol.column, reason: catCol.reason },
       })
 
     } catch (error) {
@@ -191,10 +241,53 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
         throw new Error(t('assets.errorNoOrganization'))
       }
 
+      // --- Resolve category names to category_ids -------------------------
+      // Match against the org's existing categories ignoring case and
+      // accents, so "Chariot élévateur" in the sheet maps onto an existing
+      // "Chariot elevateur" instead of creating a near-duplicate. Anything
+      // genuinely new is created once, up front.
+      const norm = (v: string) =>
+        v.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
+
+      const { data: existingCats } = await supabase
+        .from('asset_categories')
+        .select('id, name')
+        .eq('organization_id', userData.organization_id)
+
+      const catIdByName = new Map<string, string>()
+      for (const c of existingCats ?? []) catIdByName.set(norm(c.name), c.id)
+
+      const wanted = new Set<string>()
+      for (const a of preview.valid) {
+        if (a.category_name && !catIdByName.has(norm(a.category_name))) {
+          wanted.add(a.category_name.trim())
+        }
+      }
+
+      if (wanted.size > 0) {
+        const { data: created, error: catError } = await supabase
+          .from('asset_categories')
+          .insert([...wanted].map(name => ({
+            name,
+            organization_id: userData.organization_id,
+          })))
+          .select('id, name')
+
+        // A category failure must not lose the import: fall through and let
+        // those rows import uncategorised rather than aborting everything.
+        if (catError) console.error('Category creation failed:', catError)
+        for (const c of created ?? []) catIdByName.set(norm(c.name), c.id)
+      }
+
       const assetsToInsert = preview.valid.map(asset => {
         const qrCode = uuidv4()
+        // category_name is a staging field, not a column on `assets`.
+        const { category_name, ...assetColumns } = asset
         return {
-          ...asset,
+          ...assetColumns,
+          category_id: category_name
+            ? catIdByName.get(norm(category_name)) ?? null
+            : null,
           organization_id: userData.organization_id,
           qr_code: qrCode,
           qr_url: `${window.location.origin}/scan/${qrCode}`,
@@ -342,6 +435,67 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
                           ))}
                         </div>
                       </div>
+
+                      {/* Category confirmation.
+                          Inferred categories are shown before anything is
+                          written: a silently wrong category can end up driving
+                          a VGP schedule, so the user gets to see and correct
+                          the guesses first. */}
+                      <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--page-bg, #f6f8fd)' }}>
+                        <h4 className="font-medium text-[13px] mb-1" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                          {t('assets.importCategoriesTitle')}
+                        </h4>
+                        <p className="text-xs mb-3" style={{ color: 'var(--text-secondary, #444)' }}>
+                          {preview.categoryColumn.column
+                            ? `${t('assets.importCategoryFromColumn')}: "${preview.categoryColumn.column}"`
+                            : t('assets.importCategoryFromNames')}
+                          {preview.categorySummary.inferred > 0 && (
+                            <> · {preview.categorySummary.inferred} {t('assets.importCategoryInferred')}</>
+                          )}
+                          {preview.categorySummary.unmatched > 0 && (
+                            <> · {preview.categorySummary.unmatched} {t('assets.importCategoryUnmatched')}</>
+                          )}
+                        </p>
+
+                        {preview.categorySummary.byCategory.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {preview.categorySummary.byCategory.map((c) => (
+                              <span
+                                key={c.category}
+                                className="px-3 py-1 rounded-full text-xs inline-flex items-center gap-1.5"
+                                style={{
+                                  backgroundColor: c.confidence === 'high'
+                                    ? 'rgba(5,150,105,0.10)'
+                                    : c.confidence === 'medium'
+                                      ? 'rgba(217,119,6,0.10)'
+                                      : 'rgba(107,114,128,0.12)',
+                                  color: c.confidence === 'high'
+                                    ? 'var(--status-conforme, #059669)'
+                                    : c.confidence === 'medium'
+                                      ? '#92400e'
+                                      : 'var(--text-secondary, #444)',
+                                }}
+                                title={c.confidence === 'high'
+                                  ? t('assets.importConfidenceHigh')
+                                  : c.confidence === 'medium'
+                                    ? t('assets.importConfidenceMedium')
+                                    : t('assets.importConfidenceLow')}
+                              >
+                                {c.category} · {c.count}
+                                {c.confidence !== 'high' && ' ?'}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs" style={{ color: 'var(--text-hint, #888)' }}>
+                            {t('assets.importCategoryNone')}
+                          </p>
+                        )}
+
+                        <p className="text-[11px] mt-3" style={{ color: 'var(--text-hint, #888)' }}>
+                          {t('assets.importCategoryEditable')}
+                        </p>
+                      </div>
                     </div>
 
                     <div className="max-h-96 overflow-y-auto rounded-lg" style={{ backgroundColor: 'var(--page-bg, #f6f8fd)' }}>
@@ -352,6 +506,7 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
                             <th className="px-4 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888)' }}>{t('assets.tableHeaderSerial')}</th>
                             <th className="px-4 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888)' }}>{t('assets.tableHeaderLocation')}</th>
                             <th className="px-4 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888)' }}>{t('assets.tableHeaderStatus')}</th>
+                            <th className="px-4 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: 'var(--text-hint, #888)' }}>{t('assets.tableHeaderCategory')}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y" style={{ borderColor: '#dcdee3' }}>
@@ -369,6 +524,18 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
                                 }`}>
                                   {getStatusLabel(row.status)}
                                 </span>
+                              </td>
+                              <td className="px-4 py-2 text-[13px]" style={{ color: 'var(--text-secondary, #444)' }}>
+                                {row.category_name ? (
+                                  <span title={preview.categoryResolutions[idx]?.reason}>
+                                    {row.category_name}
+                                    {preview.categoryResolutions[idx]?.source === 'name' && (
+                                      <span style={{ color: 'var(--text-hint, #888)' }}> ?</span>
+                                    )}
+                                  </span>
+                                ) : (
+                                  <span style={{ color: 'var(--text-hint, #888)' }}>-</span>
+                                )}
                               </td>
                             </tr>
                           ))}
