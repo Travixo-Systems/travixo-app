@@ -1504,6 +1504,29 @@ export const translations = {
       en: "Detected Columns:",
       fr: "Colonnes Détectées :",
     },
+    tableHeaderCategory: {
+      en: "Category",
+      fr: "Catégorie",
+    },
+    importCategoriesTitle: { en: "Categories", fr: "Catégories" },
+    importCategoryFromColumn: { en: "From column", fr: "D'après la colonne" },
+    importCategoryFromNames: {
+      en: "No category column found - deduced from equipment names",
+      fr: "Aucune colonne catégorie trouvée - déduites des noms d'équipement",
+    },
+    importCategoryInferred: { en: "deduced", fr: "déduites" },
+    importCategoryUnmatched: { en: "uncategorised", fr: "sans catégorie" },
+    importCategoryNone: {
+      en: "No categories could be determined. Assets will import without one.",
+      fr: "Aucune catégorie n'a pu être déterminée. Les équipements seront importés sans catégorie.",
+    },
+    importCategoryEditable: {
+      en: "Entries marked ? were deduced from the name. You can change any category after import.",
+      fr: "Les entrées marquées ? ont été déduites du nom. Vous pourrez modifier chaque catégorie après l'import.",
+    },
+    importConfidenceHigh: { en: "Confident match", fr: "Correspondance sûre" },
+    importConfidenceMedium: { en: "Likely - worth checking", fr: "Probable - à vérifier" },
+    importConfidenceLow: { en: "Uncertain - please check", fr: "Incertain - à vérifier" },
     importChooseDifferent: {
       en: "Choose Different File",
       fr: "Choisir un Autre Fichier",
@@ -3832,6 +3855,102 @@ export const translations = {
     errorPdfOnly: { en: "Only PDF files are accepted", fr: "Seuls les fichiers PDF sont acceptés" },
     errorFileTooLarge: { en: "File is too large (max 4 MB)", fr: "Le fichier est trop volumineux (max 4 MB)" },
     notAvailable: { en: "N/A", fr: "N/D" },
+  },
+  scanPage: {
+    // Info card labels
+    serialNumber: { en: "Serial Number", fr: "Numéro de série" },
+    status: { en: "Status", fr: "Statut" },
+    location: { en: "Location", fr: "Emplacement" },
+    purchaseDate: { en: "Purchase Date", fr: "Date d'achat" },
+    description: { en: "Description", fr: "Description" },
+    notAvailable: { en: "N/A", fr: "N/D" },
+    notSet: { en: "Not set", fr: "Non renseigné" },
+    // Status labels
+    statusAvailable: { en: "Available", fr: "Disponible" },
+    statusInUse: { en: "In Use", fr: "En service" },
+    statusMaintenance: { en: "Maintenance", fr: "Maintenance" },
+    statusOutOfService: { en: "Out of Service", fr: "Hors service" },
+    // Quick status update
+    quickStatusUpdate: { en: "Quick Status Update", fr: "Mise à jour rapide du statut" },
+    // Navigation
+    backToDashboard: { en: "Back to Dashboard", fr: "Retour au tableau de bord" },
+    goToHomepage: { en: "Go to Homepage", fr: "Retour à l'accueil" },
+    // Audit banner
+    activeAudit: { en: "Active Audit", fr: "Inventaire en cours" },
+    verified: { en: "verified", fr: "vérifiés" },
+    verifying: { en: "Verifying...", fr: "Vérification..." },
+    verifyAssetInAudit: { en: "Verify Asset in Audit", fr: "Vérifier l'équipement" },
+    alreadyVerified: { en: "Already Verified", fr: "Déjà vérifié" },
+    markedAsMissing: { en: "Marked as Missing", fr: "Signalé manquant" },
+    auditVerifySuccess: { en: "Asset verified in audit!", fr: "Équipement vérifié dans l'inventaire !" },
+    auditVerifyError: { en: "Failed to verify asset in audit", fr: "Échec de la vérification de l'équipement" },
+    // Login gate
+    loginRequiredTitle: { en: "Login Required to Update", fr: "Connexion requise pour modifier" },
+    loginRequiredBody: {
+      en: "You can view asset information, but status and location updates require authentication.",
+      fr: "Vous pouvez consulter les informations de l'équipement, mais la modification du statut et de l'emplacement nécessite une connexion.",
+    },
+    loginToUpdate: { en: "Login to Update", fr: "Se connecter pour modifier" },
+    // Location update
+    updateLocation: { en: "Update Location", fr: "Mettre à jour l'emplacement" },
+    update: { en: "Update", fr: "Modifier" },
+    locationLabel: { en: "Location", fr: "Emplacement" },
+    locationPlaceholder: { en: "Enter location", fr: "Saisir l'emplacement" },
+    notesOptional: { en: "Notes (Optional)", fr: "Notes (facultatif)" },
+    notesPlaceholder: { en: "Add notes...", fr: "Ajouter des notes..." },
+    useGps: { en: "Use GPS", fr: "Utiliser le GPS" },
+    save: { en: "Save", fr: "Enregistrer" },
+    saving: { en: "Saving...", fr: "Enregistrement..." },
+    cancel: { en: "Cancel", fr: "Annuler" },
+    locationUpdateSuccess: { en: "Location updated successfully", fr: "Emplacement mis à jour avec succès" },
+    locationUpdateError: { en: "Failed to update location", fr: "Échec de la mise à jour de l'emplacement" },
+    loginToUpdateLocation: { en: "Please log in to update location", fr: "Veuillez vous connecter pour modifier l'emplacement" },
+    enterLocationError: { en: "Please enter a location", fr: "Veuillez saisir un emplacement" },
+    geolocationUnsupported: { en: "Geolocation not supported", fr: "Géolocalisation non prise en charge" },
+    gpsCaptured: { en: "GPS location captured", fr: "Position GPS enregistrée" },
+    gpsError: { en: "Could not get location", fr: "Impossible d'obtenir la position" },
+    // Status update feedback
+    statusUpdateError: { en: "Failed to update status", fr: "Échec de la mise à jour du statut" },
+    loginToUpdateStatus: { en: "Please log in to update status", fr: "Veuillez vous connecter pour modifier le statut" },
+    // Last scanned
+    lastScanned: { en: "Last Scanned", fr: "Dernier scan" },
+    when: { en: "When:", fr: "Quand :" },
+    // Relative time
+    never: { en: "Never", fr: "Jamais" },
+    justNow: { en: "Just now", fr: "À l'instant" },
+    minutesAgo: { en: "m ago", fr: "min" },
+    hoursAgo: { en: "h ago", fr: "h" },
+    daysAgo: { en: "d ago", fr: "j" },
+    timeAgoPrefix: { en: "", fr: "il y a " },
+    // Footer
+    assetId: { en: "Asset ID:", fr: "ID équipement :" },
+    scannedAt: { en: "Scanned at", fr: "Scanné le" },
+    poweredBy: { en: "Powered by", fr: "Propulsé par" },
+    // Rental overlay feedback
+    checkoutSuccess: { en: "Checkout recorded successfully", fr: "Sortie enregistrée avec succès" },
+    returnSuccess: { en: "Return recorded successfully", fr: "Retour enregistré avec succès" },
+    // Error screens
+    assetNotFound: { en: "Equipment not found", fr: "Équipement introuvable" },
+    loadError: { en: "Loading error", fr: "Erreur de chargement" },
+    qrNotRegistered: {
+      en: "This QR code is not registered in the system.",
+      fr: "Ce QR code n'est pas enregistré dans le système.",
+    },
+    networkError: {
+      en: "No network connection. Check your signal and try again.",
+      fr: "Pas de connexion réseau. Vérifiez votre signal et réessayez.",
+    },
+    genericLoadError: {
+      en: "Unable to load the equipment. Please try again.",
+      fr: "Impossible de charger l'équipement. Réessayez.",
+    },
+    timeoutError: {
+      en: "Request timed out. Check your connection and try again.",
+      fr: "Délai dépassé. Vérifiez votre connexion et réessayez.",
+    },
+    statusUpdated: { en: "Status updated:", fr: "Statut mis à jour :" },
+    retry: { en: "Retry", fr: "Réessayer" },
+    backToHome: { en: "Back to home", fr: "Retour à l'accueil" },
   },
 } as const;
 
