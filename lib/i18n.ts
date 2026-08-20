@@ -1504,10 +1504,6 @@ export const translations = {
       en: "Detected Columns:",
       fr: "Colonnes Détectées :",
     },
-    tableHeaderCategory: {
-      en: "Category",
-      fr: "Catégorie",
-    },
     importCategoriesTitle: { en: "Categories", fr: "Catégories" },
     importCategoryFromColumn: { en: "From column", fr: "D'après la colonne" },
     importCategoryFromNames: {
