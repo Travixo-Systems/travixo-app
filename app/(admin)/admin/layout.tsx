@@ -5,6 +5,7 @@
 
 import Link from 'next/link'
 import { requireSuperAdmin } from '@/lib/auth/requireSuperAdmin'
+import AdminLogoutButton from './AdminLogoutButton'
 
 export const metadata = {
   title: 'Platform Admin',
@@ -35,11 +36,14 @@ export default async function AdminLayout({
               </Link>
             </nav>
           </div>
-          <div className="text-sm text-gray-500">
-            {email}
-            <span className="ml-2 rounded bg-gray-900 px-2 py-0.5 text-xs font-medium text-white">
-              platform_admin
+          <div className="flex items-center gap-3 text-sm text-gray-500">
+            <span className="flex items-center">
+              {email}
+              <span className="ml-2 rounded bg-gray-900 px-2 py-0.5 text-xs font-medium text-white">
+                platform_admin
+              </span>
             </span>
+            <AdminLogoutButton />
           </div>
         </div>
       </header>
