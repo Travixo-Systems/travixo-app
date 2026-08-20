@@ -80,14 +80,12 @@ export function VGPOverdue({
             {/* DREETS Fine Warning - Prominent at top for overdue */}
             <Section style={fineWarningStyle}>
               <Text style={fineWarningTitleStyle}>
-                Amendes DREETS applicables
+                Sanctions applicables
               </Text>
               <Text style={fineWarningTextStyle}>
-                Rappel : Les amendes DREETS pour non-conformité VGP vont de
-                3 000 EUR à 10 000 EUR par infraction. Avec {count} équipement
-                {count > 1 ? 's' : ''} en retard, l'amende potentielle totale
-                est de {(3000 * count).toLocaleString('fr-FR')} EUR à{' '}
-                {(10000 * count).toLocaleString('fr-FR')} EUR.
+                Le défaut de VGP est pénalement sanctionné (art. L4741-1 du
+                Code du travail). {count > 1 ? `${count} équipements sont` : '1 équipement est'}
+                {' '}actuellement en retard.
               </Text>
             </Section>
 
@@ -114,10 +112,8 @@ export function VGPOverdue({
                 OVERDUE: {organizationName} has {count} VGP inspection
                 {count > 1 ? 's' : ''} past their due date. These assets are
                 non-compliant and should not be put into service until
-                inspected. DREETS fines range from EUR 3,000 to EUR 10,000
-                per violation. Total potential fine: EUR{' '}
-                {(3000 * count).toLocaleString()} to EUR{' '}
-                {(10000 * count).toLocaleString()}.
+                inspected. Missing VGP inspections carries criminal penalties
+                (art. L4741-1, French Labor Code).
               </Text>
             </Section>
           </Section>

@@ -89,12 +89,12 @@ export function VGPReminder1Day({
             {/* DREETS Fine Warning */}
             <Section style={fineWarningStyle}>
               <Text style={fineWarningTitleStyle}>
-                Risque d'amende DREETS
+                Risque de non-conformité
               </Text>
               <Text style={fineWarningTextStyle}>
-                Rappel : Les amendes DREETS pour non-conformité VGP vont de
-                3 000 EUR à 10 000 EUR par infraction. À compter de demain,
-                chaque équipement non inspecté sera en infraction.
+                Le défaut de VGP est pénalement sanctionné (art. L4741-1 du
+                Code du travail). À compter de demain, chaque équipement non
+                inspecté sera en infraction.
               </Text>
             </Section>
 
@@ -115,8 +115,8 @@ export function VGPReminder1Day({
                 CRITICAL: {count} VGP inspection{count > 1 ? 's' : ''} for{' '}
                 {organizationName} {count > 1 ? 'are' : 'is'} due TOMORROW.
                 Contact your inspection body immediately if not yet scheduled.
-                DREETS fines for VGP non-compliance range from EUR 3,000 to
-                EUR 10,000 per violation.
+                Missing VGP inspections carries criminal penalties
+                (art. L4741-1, French Labor Code).
               </Text>
             </Section>
           </Section>
