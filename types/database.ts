@@ -886,6 +886,21 @@ export type Database = {
     }
     Views: Record<string, never>
     Functions: {
+      get_asset_by_qr: {
+        Args: { p_qr_code: string }
+        Returns: {
+          id: string
+          name: string
+          serial_number: string | null
+          status: string
+          current_location: string | null
+          description: string | null
+          purchase_date: string | null
+          last_seen_at: string | null
+          category_name: string | null
+          viewer_is_member: boolean
+        }[]
+      }
       has_feature_access: {
         Args: { org_id: string; feature_name: string }
         Returns: boolean

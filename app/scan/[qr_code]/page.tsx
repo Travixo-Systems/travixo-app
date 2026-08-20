@@ -25,21 +25,24 @@ import ReturnOverlay from '@/components/rental/ReturnOverlay'
 import VGPComplianceBadge from '@/components/rental/VGPComplianceBadge'
 import RentalUpgradePrompt from '@/components/rental/RentalUpgradePrompt'
 import { useFeatureAccess } from '@/hooks/useSubscription'
+import { useLanguage } from '@/lib/LanguageContext'
+import { createTranslator } from '@/lib/i18n'
 
+// Shape returned by the get_asset_by_qr RPC. Deliberately has no
+// purchase_price / current_value / organization_id: the public scan view
+// must not expose acquisition cost or book value to anyone who scans the
+// sticker. purchase_date is NULL unless the viewer is a same-org member.
 interface Asset {
   id: string
   name: string
   serial_number: string | null
-  category_id: string | null
   current_location: string | null
   status: string
   purchase_date: string | null
-  purchase_price: number | null
   description: string | null
   last_seen_at: string | null
-  asset_categories: {
-    name: string
-  } | null
+  category_name: string | null
+  viewer_is_member: boolean
 }
 
 interface ActiveAuditContext {
@@ -57,6 +60,8 @@ interface PageProps {
 
 export default function ScanPage({ params }: PageProps) {
   const router = useRouter()
+  const { language } = useLanguage()
+  const t = createTranslator(language)
   
   const [qr_code, setQrCode] = useState<string>('')
   const [asset, setAsset] = useState<Asset | null>(null)
@@ -212,9 +217,9 @@ export default function ScanPage({ params }: PageProps) {
         item_status: 'verified',
         verified_assets: prev.verified_assets + 1,
       } : null)
-      setSuccessMessage('Asset verified in audit!')
+      setSuccessMessage(t('scanPage.auditVerifySuccess'))
     } catch (err) {
-      setErrorMessage('Failed to verify asset in audit')
+      setErrorMessage(t('scanPage.auditVerifyError'))
     } finally {
       setVerifying(false)
     }
@@ -239,25 +244,35 @@ export default function ScanPage({ params }: PageProps) {
         setTimeout(() => reject(Object.assign(new Error('timeout'), { type: 'timeout' })), 10_000)
       )
 
+      // Scoped RPC instead of a direct table read: `assets` is RLS-protected
+      // and this function returns only display-safe columns for one QR code.
       const query = supabase
-        .from('assets')
-        .select(`*, asset_categories (name)`)
-        .eq('qr_code', qr_code)
-        .single()
+        .rpc('get_asset_by_qr', { p_qr_code: qr_code })
+        .maybeSingle()
 
       const { data, error } = await Promise.race([query, timeout]) as Awaited<typeof query>
+      // Real errors first, so transient failures still hit the retry path
+      // below instead of being reported as a definitive 404.
+      // PGRST202 = the get_asset_by_qr function is missing (migration not
+      // applied). Surface it as a load error rather than "QR not registered",
+      // and don't burn retries on something that will never succeed.
+      if (error?.code === 'PGRST202') {
+        console.error('get_asset_by_qr RPC missing - apply 20260819_assets_rls_and_public_scan_view.sql')
+        setScanError({ type: 'unknown', message: t('scanPage.genericLoadError') })
+        setLoading(false)
+        return
+      }
+      if (error) throw error
 
-      // PostgREST PGRST116 = no rows (.single() with no match) → definitive 404
-      if (error?.code === 'PGRST116' || (!data && error)) {
+      // maybeSingle() yields data === null when no row matches -> definitive 404
+      if (!data) {
         setScanError({
           type: 'not_found',
-          message: 'Équipement introuvable. Ce QR code n\'est pas enregistré dans le système.',
+          message: t('scanPage.qrNotRegistered'),
         })
         setLoading(false)
         return
       }
-
-      if (error) throw error
 
       setAsset(data as unknown as Asset)
       setSelectedStatus(data.status || 'available')
@@ -274,10 +289,10 @@ export default function ScanPage({ params }: PageProps) {
       setScanError({
         type: isTimeout ? 'timeout' : isNetwork ? 'network' : 'unknown',
         message: isTimeout
-          ? 'Délai dépassé. Vérifiez votre connexion et réessayez.'
+          ? t('scanPage.timeoutError')
           : isNetwork
-          ? 'Pas de connexion réseau. Vérifiez votre signal et réessayez.'
-          : 'Impossible de charger l\'équipement. Réessayez.',
+          ? t('scanPage.networkError')
+          : t('scanPage.genericLoadError'),
       })
     } finally {
       setLoading(false)
@@ -325,7 +340,7 @@ export default function ScanPage({ params }: PageProps) {
 
   async function handleStatusUpdate(newStatus: string) {
     if (!isAuthenticated) {
-      setErrorMessage('Please log in to update asset status')
+      setErrorMessage(t('scanPage.loginToUpdateStatus'))
       return
     }
 
@@ -350,9 +365,9 @@ export default function ScanPage({ params }: PageProps) {
       const data = await response.json()
       setAsset(data.asset)
       setSelectedStatus(newStatus)
-      setSuccessMessage(`Status updated: ${getStatusLabel(newStatus)}`)
+      setSuccessMessage(`${t('scanPage.statusUpdated')} ${getStatusLabel(newStatus)}`)
     } catch (error) {
-      setErrorMessage('Failed to update status')
+      setErrorMessage(t('scanPage.statusUpdateError'))
     } finally {
       setUpdating(false)
     }
@@ -360,12 +375,12 @@ export default function ScanPage({ params }: PageProps) {
 
   async function handleLocationUpdate() {
     if (!isAuthenticated) {
-      setErrorMessage('Please log in to update location')
+      setErrorMessage(t('scanPage.loginToUpdateLocation'))
       return
     }
 
     if (!asset || !location.trim()) {
-      setErrorMessage('Please enter a location')
+      setErrorMessage(t('scanPage.enterLocationError'))
       return
     }
 
@@ -388,12 +403,12 @@ export default function ScanPage({ params }: PageProps) {
 
       const data = await response.json()
       setAsset(data.asset)
-      setSuccessMessage('Location updated successfully')
+      setSuccessMessage(t('scanPage.locationUpdateSuccess'))
       setShowLocationForm(false)
       setLocation('')
       setNotes('')
     } catch (error) {
-      setErrorMessage('Failed to update location')
+      setErrorMessage(t('scanPage.locationUpdateError'))
     } finally {
       setUpdating(false)
     }
@@ -401,7 +416,7 @@ export default function ScanPage({ params }: PageProps) {
 
   function handleUseMyLocation() {
     if (!navigator.geolocation) {
-      setErrorMessage('Geolocation not supported')
+      setErrorMessage(t('scanPage.geolocationUnsupported'))
       return
     }
 
@@ -411,10 +426,10 @@ export default function ScanPage({ params }: PageProps) {
         const { latitude, longitude } = position.coords
         setLocation(`GPS: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`)
         setUpdating(false)
-        setSuccessMessage('GPS location captured')
+        setSuccessMessage(t('scanPage.gpsCaptured'))
       },
       (error) => {
-        setErrorMessage('Could not get location')
+        setErrorMessage(t('scanPage.gpsError'))
         setUpdating(false)
       }
     )
@@ -422,10 +437,10 @@ export default function ScanPage({ params }: PageProps) {
 
   function getStatusLabel(status: string): string {
     const labels: Record<string, string> = {
-      available: 'Available',
-      in_use: 'In Use',
-      maintenance: 'Maintenance',
-      out_of_service: 'Out of Service',
+      available: t('scanPage.statusAvailable'),
+      in_use: t('scanPage.statusInUse'),
+      maintenance: t('scanPage.statusMaintenance'),
+      out_of_service: t('scanPage.statusOutOfService'),
     }
     return labels[status] || status
   }
@@ -471,17 +486,18 @@ export default function ScanPage({ params }: PageProps) {
   }
 
   function formatTimeSince(timestamp: string | null): string {
-    if (!timestamp) return 'Never'
+    if (!timestamp) return t('scanPage.never')
     
     const diff = Date.now() - new Date(timestamp).getTime()
     const minutes = Math.floor(diff / 60000)
     const hours = Math.floor(diff / 3600000)
     const days = Math.floor(diff / 86400000)
 
-    if (minutes < 1) return 'Just now'
-    if (hours < 1) return `${minutes}m ago`
-    if (days < 1) return `${hours}h ago`
-    return `${days}d ago`
+    const prefix = t('scanPage.timeAgoPrefix')
+    if (minutes < 1) return t('scanPage.justNow')
+    if (hours < 1) return `${prefix}${minutes}${t('scanPage.minutesAgo')}`
+    if (days < 1) return `${prefix}${hours}${t('scanPage.hoursAgo')}`
+    return `${prefix}${days}${t('scanPage.daysAgo')}`
   }
 
   if (loading) {
@@ -500,25 +516,25 @@ export default function ScanPage({ params }: PageProps) {
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center border-l-4 border-b-4 border-red-500">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" aria-hidden="true" />
           <h1 className="text-xl font-bold text-[#00252b] mb-2">
-            {isNotFound ? 'Équipement introuvable' : 'Erreur de chargement'}
+            {isNotFound ? t('scanPage.assetNotFound') : t('scanPage.loadError')}
           </h1>
           <p className="text-gray-600 mb-6 text-sm">{scanError.message}</p>
 
           <div className="flex flex-col gap-3">
-            {/* Retry, always shown except definitive 404 */}
+            {/* Retry — always shown except definitive 404 */}
             {!isNotFound && (
               <button
                 onClick={() => fetchAsset(0)}
                 className="inline-flex items-center justify-center gap-2 min-h-[44px] w-full px-6 py-3 bg-[#f26f00] text-white rounded-lg hover:bg-[#d96200] font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-[#f26f00] focus:ring-offset-2"
               >
-                Réessayer
+                {t('scanPage.retry')}
               </button>
             )}
             <button
               onClick={() => router.push('/')}
               className="inline-flex items-center justify-center min-h-[44px] w-full px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-gray-400"
             >
-              Retour à l&apos;accueil
+              {t('scanPage.backToHome')}
             </button>
           </div>
         </div>
@@ -531,15 +547,15 @@ export default function ScanPage({ params }: PageProps) {
       <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center border-l-4 border-b-4 border-red-500">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-[#00252b] mb-2">Équipement introuvable</h1>
+          <h1 className="text-xl font-bold text-[#00252b] mb-2">{t('scanPage.assetNotFound')}</h1>
           <p className="text-gray-600 mb-6 text-sm">
-            Ce QR code n&apos;est pas enregistré dans le système.
+            {t('scanPage.qrNotRegistered')}
           </p>
           <button
             onClick={() => router.push('/')}
             className="inline-flex items-center justify-center min-h-[44px] w-full px-6 py-3 bg-[#f26f00] text-white rounded-lg hover:bg-[#d96200] font-semibold transition-all"
           >
-            Retour à l&apos;accueil
+              {t('scanPage.backToHome')}
           </button>
         </div>
       </div>
@@ -577,14 +593,14 @@ export default function ScanPage({ params }: PageProps) {
             <div className="flex items-center gap-3 mb-3">
               <ClipboardCheck className="w-6 h-6 text-orange-400" />
               <div className="flex-1">
-                <p className="font-bold text-sm">Active Audit</p>
+                <p className="font-bold text-sm">{t('scanPage.activeAudit')}</p>
                 <p className="text-white/80 text-xs">{auditContext.audit_name}</p>
               </div>
               <div className="text-right">
                 <p className="text-sm font-bold">
                   {auditContext.verified_assets}/{auditContext.total_assets}
                 </p>
-                <p className="text-white/60 text-xs">verified</p>
+                <p className="text-white/60 text-xs">{t('scanPage.verified')}</p>
               </div>
             </div>
 
@@ -607,24 +623,24 @@ export default function ScanPage({ params }: PageProps) {
                 {verifying ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Verifying...
+                    {t('scanPage.verifying')}
                   </>
                 ) : (
                   <>
                     <CheckCircle className="w-5 h-5" />
-                    Verify Asset in Audit
+                    {t('scanPage.verifyAssetInAudit')}
                   </>
                 )}
               </button>
             ) : auditContext.item_status === 'verified' ? (
               <div className="w-full py-3 bg-green-500/20 text-green-300 rounded-lg font-bold text-sm text-center flex items-center justify-center gap-2">
                 <CheckCircle className="w-5 h-5" />
-                Already Verified
+                {t('scanPage.alreadyVerified')}
               </div>
             ) : auditContext.item_status === 'missing' ? (
               <div className="w-full py-3 bg-red-500/20 text-red-300 rounded-lg font-bold text-sm text-center flex items-center justify-center gap-2">
                 <AlertCircle className="w-5 h-5" />
-                Marked as Missing
+                {t('scanPage.markedAsMissing')}
               </div>
             ) : null}
           </div>
@@ -636,11 +652,11 @@ export default function ScanPage({ params }: PageProps) {
             className="text-[#f26f00] hover:text-[#d96200] font-semibold mb-4 flex items-center"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
-            {isAuthenticated ? 'Back to Dashboard' : 'Go to Homepage'}
+            {isAuthenticated ? t('scanPage.backToDashboard') : t('scanPage.goToHomepage')}
           </button>
           <h1 className="text-3xl font-bold text-[#00252b]">{asset.name}</h1>
-          {asset.asset_categories && (
-            <p className="text-gray-600 mt-1 font-medium">{asset.asset_categories.name}</p>
+          {asset.category_name && (
+            <p className="text-gray-600 mt-1 font-medium">{asset.category_name}</p>
           )}
         </div>
 
@@ -648,12 +664,12 @@ export default function ScanPage({ params }: PageProps) {
           <div className="grid grid-cols-2 gap-4 mb-4">
             <InfoCard 
               icon={<Package className="w-5 h-5" />}
-              label="Serial Number" 
-              value={asset.serial_number || 'N/A'} 
+              label={t('scanPage.serialNumber')} 
+              value={asset.serial_number || t('scanPage.notAvailable')} 
             />
             <InfoCard
               icon={null}
-              label="Status"
+              label={t('scanPage.status')}
               value={
                 <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold ${getStatusBadgeClass(asset.status)}`}>
                   {getStatusIcon(asset.status)}
@@ -663,28 +679,22 @@ export default function ScanPage({ params }: PageProps) {
             />
             <InfoCard 
               icon={<MapPin className="w-5 h-5" />}
-              label="Location" 
-              value={asset.current_location || 'Not set'} 
+              label={t('scanPage.location')} 
+              value={asset.current_location || t('scanPage.notSet')} 
             />
-            <InfoCard
-              icon={<Calendar className="w-5 h-5" />}
-              label="Purchase Date"
-              value={asset.purchase_date ? new Date(asset.purchase_date).toLocaleDateString() : 'N/A'}
-            />
+            {asset.viewer_is_member && (
+              <InfoCard
+                icon={<Calendar className="w-5 h-5" />}
+                label={t('scanPage.purchaseDate')}
+                value={asset.purchase_date ? new Date(asset.purchase_date).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US') : t('scanPage.notAvailable')}
+              />
+            )}
           </div>
 
-          {asset.purchase_price && (
-            <div className="bg-[#00252b] rounded-lg p-4 mt-4">
-              <h3 className="font-semibold text-white mb-2">Purchase Price</h3>
-              <p className="text-3xl font-bold text-[#f26f00]">
-                €{asset.purchase_price.toLocaleString()}
-              </p>
-            </div>
-          )}
 
           {asset.description && (
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mt-4">
-              <h3 className="font-semibold text-[#00252b] mb-2">Description</h3>
+              <h3 className="font-semibold text-[#00252b] mb-2">{t('scanPage.description')}</h3>
               <p className="text-gray-700 text-sm">{asset.description}</p>
             </div>
           )}
@@ -717,23 +727,23 @@ export default function ScanPage({ params }: PageProps) {
           <div className="border-2 border-blue-500 rounded-lg p-6 mb-6 text-center" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
             <Lock className="w-12 h-12 text-blue-600 mx-auto mb-3" />
             <h2 className="text-xl font-bold text-[#00252b] mb-2">
-              Login Required to Update
+              {t('scanPage.loginRequiredTitle')}
             </h2>
             <p className="text-gray-700 mb-4 font-medium">
-              You can view asset information, but status and location updates require authentication.
+              {t('scanPage.loginRequiredBody')}
             </p>
             <button
               onClick={() => router.push(`/login?redirectTo=/scan/${qr_code}`)}
               className="px-6 py-3 bg-[#f26f00] text-white rounded-lg hover:bg-[#d96200] font-bold transition-all"
             >
-              Login to Update
+              {t('scanPage.loginToUpdate')}
             </button>
           </div>
         )}
 
         {isAuthenticated && (
           <div className="bg-gray-50 rounded-lg shadow-md border-t-[5px] border-r-[5px] border-[#f26f00] p-6 mb-6">
-            <h2 className="text-xl font-bold text-[#00252b] mb-4">Quick Status Update</h2>
+            <h2 className="text-xl font-bold text-[#00252b] mb-4">{t('scanPage.quickStatusUpdate')}</h2>
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => handleStatusUpdate('available')}
@@ -742,7 +752,7 @@ export default function ScanPage({ params }: PageProps) {
                 style={{ minHeight: '48px' }}
               >
                 <CheckCircle className="w-5 h-5" />
-                Available
+                {t('scanPage.statusAvailable')}
               </button>
               <button
                 onClick={() => handleStatusUpdate('in_use')}
@@ -751,7 +761,7 @@ export default function ScanPage({ params }: PageProps) {
                 style={{ minHeight: '48px' }}
               >
                 <Package className="w-5 h-5" />
-                In Use
+                {t('scanPage.statusInUse')}
               </button>
               <button
                 onClick={() => handleStatusUpdate('maintenance')}
@@ -760,7 +770,7 @@ export default function ScanPage({ params }: PageProps) {
                 style={{ minHeight: '48px' }}
               >
                 <Wrench className="w-5 h-5" />
-                Maintenance
+                {t('scanPage.statusMaintenance')}
               </button>
               <button
                 onClick={() => handleStatusUpdate('out_of_service')}
@@ -769,7 +779,7 @@ export default function ScanPage({ params }: PageProps) {
                 style={{ minHeight: '48px' }}
               >
                 <CircleSlash className="w-5 h-5" />
-                Out of Service
+                {t('scanPage.statusOutOfService')}
               </button>
             </div>
           </div>
@@ -780,14 +790,14 @@ export default function ScanPage({ params }: PageProps) {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-[#00252b] flex items-center gap-2">
                 <MapPin className="w-6 h-6 text-[#f26f00]" />
-                Update Location
+                {t('scanPage.updateLocation')}
               </h2>
               {!showLocationForm && (
                 <button
                   onClick={() => setShowLocationForm(true)}
                   className="px-4 py-2 bg-[#f26f00] text-white rounded-lg hover:bg-[#d96200] font-semibold transition-all"
                 >
-                  Update
+                  {t('scanPage.update')}
                 </button>
               )}
             </div>
@@ -796,13 +806,13 @@ export default function ScanPage({ params }: PageProps) {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-bold text-[#00252b] mb-2">
-                    Location
+                    {t('scanPage.locationLabel')}
                   </label>
                   <input
                     type="text"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
-                    placeholder="Enter location"
+                    placeholder={t('scanPage.locationPlaceholder')}
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
                     style={{ fontSize: '16px' }}
                     maxLength={255}
@@ -811,12 +821,12 @@ export default function ScanPage({ params }: PageProps) {
 
                 <div>
                   <label className="block text-sm font-bold text-[#00252b] mb-2">
-                    Notes (Optional)
+                    {t('scanPage.notesOptional')}
                   </label>
                   <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Add notes..."
+                    placeholder={t('scanPage.notesPlaceholder')}
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00]"
                     style={{ fontSize: '16px' }}
                     rows={3}
@@ -832,14 +842,14 @@ export default function ScanPage({ params }: PageProps) {
                     className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-bold disabled:opacity-50 min-h-[48px] flex items-center justify-center gap-2"
                   >
                     <Navigation className="w-5 h-5" />
-                    Use GPS
+                    {t('scanPage.useGps')}
                   </button>
                   <button
                     onClick={handleLocationUpdate}
                     disabled={updating || !location.trim()}
                     className="flex-1 px-4 py-3 bg-[#f26f00] text-white rounded-lg hover:bg-[#d96200] font-bold disabled:opacity-50 min-h-[48px]"
                   >
-                    {updating ? 'Saving...' : 'Save'}
+                    {updating ? t('scanPage.saving') : t('scanPage.save')}
                   </button>
                   <button
                     onClick={() => {
@@ -850,7 +860,7 @@ export default function ScanPage({ params }: PageProps) {
                     disabled={updating}
                     className="px-4 py-3 bg-white text-[#00252b] border-2 border-[#00252b] rounded-lg hover:bg-[#00252b] hover:text-white font-bold disabled:opacity-50 min-h-[48px] transition-all"
                   >
-                    Cancel
+                    {t('scanPage.cancel')}
                   </button>
                 </div>
               </div>
@@ -862,17 +872,17 @@ export default function ScanPage({ params }: PageProps) {
           <div className="bg-white rounded-lg shadow-md border-l-4 border-b-4 border-gray-400 p-6 mb-6">
             <h2 className="text-xl font-bold text-[#00252b] mb-4 flex items-center gap-2">
               <Clock className="w-6 h-6 text-gray-600" />
-              Last Scanned
+              {t('scanPage.lastScanned')}
             </h2>
             <div className="space-y-2">
               <p className="text-gray-800 font-medium flex items-center gap-2">
                 <Clock className="w-4 h-4 text-gray-600" />
-                <span className="font-bold">When:</span> {formatTimeSince(asset.last_seen_at)}
+                <span className="font-bold">{t('scanPage.when')}</span> {formatTimeSince(asset.last_seen_at)}
               </p>
               {asset.current_location && (
                 <p className="text-gray-800 font-medium flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-gray-600" />
-                  <span className="font-bold">Location:</span> {asset.current_location}
+                  <span className="font-bold">{t('scanPage.location')}:</span> {asset.current_location}
                 </p>
               )}
             </div>
@@ -880,12 +890,12 @@ export default function ScanPage({ params }: PageProps) {
         )}
 
         <div className="text-center mt-6 space-y-2">
-          <p className="text-xs text-gray-600 font-medium">Asset ID: {asset.id.substring(0, 8)}...</p>
+          <p className="text-xs text-gray-600 font-medium">{t('scanPage.assetId')} {asset.id.substring(0, 8)}...</p>
           <p className="text-xs text-gray-600 font-medium">
-            Scanned at {new Date().toLocaleString()}
+            {t('scanPage.scannedAt')} {new Date().toLocaleString(language === 'fr' ? 'fr-FR' : 'en-US')}
           </p>
           <p className="text-sm text-[#00252b] mt-4 font-semibold">
-            Powered by <span className="text-[#f26f00]">TraviXO</span>
+            {t('scanPage.poweredBy')} <span className="text-[#f26f00]">TraviXO</span>
           </p>
         </div>
       </div>
@@ -900,7 +910,7 @@ export default function ScanPage({ params }: PageProps) {
           onSuccess={() => {
             setShowCheckoutOverlay(false)
             setRentalKey(prev => prev + 1)
-            setSuccessMessage('Sortie enregistrée avec succès')
+            setSuccessMessage(t('scanPage.checkoutSuccess'))
             fetchAsset()
           }}
         />
@@ -919,7 +929,7 @@ export default function ScanPage({ params }: PageProps) {
             setShowReturnOverlay(false)
             setReturnRental(null)
             setRentalKey(prev => prev + 1)
-            setSuccessMessage('Retour enregistré avec succès')
+            setSuccessMessage(t('scanPage.returnSuccess'))
             fetchAsset()
           }}
         />

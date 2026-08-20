@@ -1,5 +1,22 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+
+// Service-role client for the parts of a scan that must work for LOGGED-OUT
+// users. assets/scans are RLS-protected and no longer carry a public policy
+// (see 20260820_drop_permissive_public_policies.sql), so the anon-key client
+// cannot read the asset or stamp last_seen_* on an anonymous scan.
+//
+// This route does its own authorization first -- status/location updates
+// require a session and same-org membership (see the auth check below) --
+// so the elevated client is only used AFTER those checks have passed.
+function serviceClient() {
+  return createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } }
+  )
+}
 
 // POST /api/scan/update
 // OPTION 2 SECURITY: Requires authentication for status/location updates
@@ -46,8 +63,13 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = await createClient()
+    // Elevated client, used only after this route's own authorization checks.
+    // Needed because the asset read, the last_seen stamp and the scan log all
+    // have to work for logged-out scanners, and those tables are now RLS'd
+    // with no public policy.
+    const db = serviceClient()
 
-    // Try to get authenticated user (non-blocking, public scans still work)
+    // Try to get authenticated user (non-blocking — public scans still work)
     const { data: { user } } = await supabase.auth.getUser()
     const scannedByUserId = user?.id ?? null
 
@@ -69,13 +91,22 @@ export async function POST(request: NextRequest) {
         .eq('id', user.id)
         .single()
 
-      const { data: assetData } = await supabase
+      // Read the target org with the elevated client so this compares two
+      // real values. With the session client, a cross-org asset comes back
+      // as null and the check below would be passing only because
+      // `orgId !== undefined` happens to be true -- and it would wrongly
+      // ALLOW the update if both sides were ever undefined.
+      const { data: assetData } = await db
         .from('assets')
         .select('organization_id')
         .eq('id', asset_id)
         .single()
 
-      if (userData?.organization_id !== assetData?.organization_id) {
+      if (
+        !userData?.organization_id ||
+        !assetData?.organization_id ||
+        userData.organization_id !== assetData.organization_id
+      ) {
         return NextResponse.json(
           { success: false, message: 'Unauthorized: Cannot update assets from another organization' },
           { status: 403 }
@@ -84,7 +115,8 @@ export async function POST(request: NextRequest) {
     }
 
     // STEP 1: Verify asset exists and QR code matches
-    const { data: asset, error: assetError } = await supabase
+    // Elevated: anonymous scanners have no read access to assets.
+    const { data: asset, error: assetError } = await db
       .from('assets')
       .select('id, name, qr_code, organization_id, status, current_location, last_seen_at, last_seen_by, archived_at')
       .eq('id', asset_id)
@@ -127,7 +159,10 @@ export async function POST(request: NextRequest) {
     assetUpdates.updated_at = new Date().toISOString()
 
     // STEP 3: Update asset
-    const { data: updatedAsset, error: updateError } = await supabase
+    // Elevated: an anonymous scan still stamps last_seen_at/last_seen_by.
+    // Status/location changes were already gated by the auth + same-org
+    // check above, so this cannot be used to write across tenants.
+    const { data: updatedAsset, error: updateError } = await db
       .from('assets')
       .update(assetUpdates)
       .eq('id', asset_id)
@@ -154,7 +189,8 @@ export async function POST(request: NextRequest) {
       scan_type: 'check',
     }
 
-    const { data: scan, error: scanError } = await supabase
+    // Elevated: public QR scan logging must work for logged-out users.
+    const { data: scan, error: scanError } = await db
       .from('scans')
       .insert(scanRecord)
       .select('id, scanned_at, location_name, notes, scanned_by')
