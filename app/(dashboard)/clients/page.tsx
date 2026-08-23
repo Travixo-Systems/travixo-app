@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Plus, Search, Users, Package, AlertTriangle, Edit3, X, Loader2 } from 'lucide-react'
+import { Plus, Search, Users, Package, AlertTriangle, ChevronRight, Edit3, X, Loader2 } from 'lucide-react'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
 import FeatureGate from '@/components/subscription/FeatureGate'
@@ -234,18 +234,20 @@ export default function ClientsPage() {
               return (
                 <div
                   key={client.id}
-                  className="relative rounded-lg p-5 hover:bg-black/[0.02] transition-colors"
+                  className="relative rounded-lg p-5"
                   style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}
                 >
                   <div className="flex justify-between items-start mb-3">
+                    {/* The company is the account; the person is the contact at
+                        it. Lead with the company when we have one. */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-base truncate" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
-                        <Link href={`/clients/${client.id}`} className="hover:underline">
-                          {client.name}
-                        </Link>
+                      <h3 className="font-semibold text-[17px] truncate" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                        {client.company || client.name}
                       </h3>
                       {client.company && (
-                        <p className="text-[13px] mt-0.5 truncate" style={{ color: 'var(--text-muted, #777)' }}>{client.company}</p>
+                        <p className="text-[13px] mt-0.5 truncate" style={{ color: 'var(--text-secondary, #444)' }}>
+                          {client.name}
+                        </p>
                       )}
                     </div>
                     <button
@@ -275,10 +277,16 @@ export default function ClientsPage() {
                     <p className="text-[13px] line-clamp-2 mb-3" style={{ color: 'var(--text-hint, #888)' }}>{client.notes}</p>
                   )}
 
-                  <div className="flex items-center flex-wrap gap-x-3 gap-y-2 pt-3 border-t" style={{ borderColor: '#dcdee3' }}>
+                  {/* The stats footer is the click target, not the name: it
+                      keeps a large tap area well clear of the edit button. */}
+                  <Link
+                    href={`/clients/${client.id}`}
+                    className="flex items-center flex-wrap gap-x-3 gap-y-2 pt-3 -mx-2 px-2 pb-1 rounded-md border-t hover:bg-black/[0.05] transition-colors"
+                    style={{ borderColor: '#dcdee3' }}
+                  >
                     <div className="flex items-center gap-1.5">
                       <Package className="w-3.5 h-3.5" style={{ color: 'var(--text-hint, #888)' }} />
-                      <span className="text-[13px]" style={{ color: 'var(--text-muted, #777)' }}>
+                      <span className="text-[13px] font-medium" style={{ color: 'var(--text-secondary, #444)' }}>
                         {client.active_rental_count} {t('clients.equipmentOut')}
                       </span>
                     </div>
@@ -305,7 +313,12 @@ export default function ClientsPage() {
                           : `${t('clients.vgpDue')} ${vgpDays}${language === 'fr' ? 'j' : 'd'}`}
                       </span>
                     )}
-                  </div>
+
+                    <ChevronRight
+                      className="w-4 h-4 ml-auto flex-shrink-0"
+                      style={{ color: 'var(--text-hint, #888)' }}
+                    />
+                  </Link>
                 </div>
               )
             })}

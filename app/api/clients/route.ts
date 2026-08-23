@@ -33,7 +33,12 @@ export async function GET(request: NextRequest) {
       .limit(limit)
 
     if (q) {
-      query = query.ilike('name', `%${q}%`)
+      // Match either the contact name or the company: the card leads with the
+      // company, so searching for it has to work.
+      const escaped = q.replace(/[%_,()]/g, '')
+      if (escaped) {
+        query = query.or(`name.ilike.%${escaped}%,company.ilike.%${escaped}%`)
+      }
     }
 
     const { data, error } = await query
