@@ -9,6 +9,7 @@ import { createPortal } from 'react-dom';
 import {
   HomeIcon,
   CubeIcon,
+  QrCodeIcon,
   ClipboardDocumentListIcon,
   UsersIcon,
   UserGroupIcon,
@@ -130,6 +131,7 @@ export default function Sidebar() {
   const navigation = [
     { name: t('navigation.dashboard'), href: '/dashboard', icon: HomeIcon },
     { name: t('navigation.assets'), href: '/assets', icon: CubeIcon },
+    { name: t('navigation.scans'), href: '/scans', icon: QrCodeIcon },
     { name: t('navigation.audits'), href: '/audits', icon: ClipboardDocumentListIcon },
     { name: t('navigation.clients'), href: '/clients', icon: UserGroupIcon },
     { name: t('navigation.team'), href: '/team', icon: UsersIcon },

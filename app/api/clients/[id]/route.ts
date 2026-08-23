@@ -37,24 +37,90 @@ export async function GET(
       return NextResponse.json({ error: 'not_found' }, { status: 404 })
     }
 
-    // Fetch active rentals for this client
-    const { data: activeRentals } = await supabase
+    // Full rental history for this client, newest first, with asset details.
+    const { data: rentals } = await supabase
       .from('rentals')
-      .select('id, asset_id, client_name, checkout_date, expected_return_date, status')
+      .select(`
+        id,
+        asset_id,
+        client_name,
+        checkout_date,
+        expected_return_date,
+        actual_return_date,
+        return_condition,
+        status,
+        assets ( name, serial_number, qr_code )
+      `)
       .eq('client_id', id)
-      .eq('status', 'active')
+      .eq('organization_id', userData.organization_id)
       .order('checkout_date', { ascending: false })
+      .limit(200) as { data: RentalWithAsset[] | null }
 
-    // Count total rentals
-    const { count: totalRentals } = await supabase
-      .from('rentals')
-      .select('*', { count: 'exact', head: true })
-      .eq('client_id', id)
+    const allRentals = rentals || []
+    const activeRentals = allRentals.filter((r) => r.status === 'active')
+
+    // VGP deadlines for the assets this client currently holds. This is the
+    // compliance signal that makes the client page actionable: equipment out
+    // with a client whose VGP is due is a legal risk for the rental company.
+    const activeAssetIds = [...new Set(activeRentals.map((r) => r.asset_id))]
+    const vgpByAsset = new Map<string, string>()
+
+    if (activeAssetIds.length > 0) {
+      const { data: schedules } = await supabase
+        .from('vgp_schedules')
+        .select('asset_id, next_due_date')
+        .eq('organization_id', userData.organization_id)
+        .eq('status', 'active')
+        .is('archived_at', null)
+        .in('asset_id', activeAssetIds)
+
+      for (const s of schedules || []) {
+        const existing = vgpByAsset.get(s.asset_id)
+        if (!existing || s.next_due_date < existing) {
+          vgpByAsset.set(s.asset_id, s.next_due_date)
+        }
+      }
+    }
+
+    // Most recent recall already sent per rental. Surfacing this prevents
+    // re-nagging a client about machines they have already acknowledged.
+    const lastRecallByRental = new Map<string, string>()
+
+    if (allRentals.length > 0) {
+      const { data: alerts } = await supabase
+        .from('client_recall_alerts')
+        .select('rental_id, sent_at')
+        .eq('organization_id', userData.organization_id)
+        .eq('sent', true)
+        .in('rental_id', allRentals.map((r) => r.id))
+        .order('sent_at', { ascending: false })
+
+      for (const a of alerts || []) {
+        if (a.sent_at && !lastRecallByRental.has(a.rental_id)) {
+          lastRecallByRental.set(a.rental_id, a.sent_at)
+        }
+      }
+    }
+
+    const decorate = (r: RentalWithAsset) => ({
+      id: r.id,
+      asset_id: r.asset_id,
+      asset_name: r.assets?.name || null,
+      serial_number: r.assets?.serial_number || null,
+      checkout_date: r.checkout_date,
+      expected_return_date: r.expected_return_date,
+      actual_return_date: r.actual_return_date,
+      return_condition: r.return_condition,
+      status: r.status,
+      vgp_due_date: vgpByAsset.get(r.asset_id) || null,
+      last_recall_at: lastRecallByRental.get(r.id) || null,
+    })
 
     return NextResponse.json({
       client,
-      active_rentals: activeRentals || [],
-      total_rentals: totalRentals || 0,
+      active_rentals: activeRentals.map(decorate),
+      past_rentals: allRentals.filter((r) => r.status !== 'active').map(decorate),
+      total_rentals: allRentals.length,
     })
   } catch (error) {
     console.error('Client fetch error:', error)
@@ -130,4 +196,16 @@ export async function PATCH(
     console.error('Client update API error:', error)
     return NextResponse.json({ error: 'internal_error' }, { status: 500 })
   }
+}
+
+interface RentalWithAsset {
+  id: string
+  asset_id: string
+  client_name: string
+  checkout_date: string
+  expected_return_date: string | null
+  actual_return_date: string | null
+  return_condition: string | null
+  status: string
+  assets: { name: string; serial_number: string | null; qr_code: string | null } | null
 }

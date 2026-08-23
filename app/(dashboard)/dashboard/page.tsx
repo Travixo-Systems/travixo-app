@@ -4,13 +4,16 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { AlertTriangle, ArrowRight, Package, QrCode, TrendingUp } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 import { useLanguage } from "@/lib/LanguageContext"
 import { createTranslator } from "@/lib/i18n"
 import { createClient } from "@/lib/supabase/client"
 import OnboardingBanner from "@/components/dashboard/OnboardingBanner"
+import StatusBadge from "@/components/ui/StatusBadge"
 
 interface CategoryUtilization {
   category: string
+  categoryId: string | null
   inUse: number
   total: number
   rate: number
@@ -27,8 +30,10 @@ interface DashboardData {
   vgpOverdue: number
   vgpUpcoming: number
   vgpCompliant: number
-  upcomingInspections: { id: string; name: string; daysUntil: number }[]
-  upcomingReturns: { id: string; name: string; clientName: string; daysUntil: number }[]
+  activeRentalCount: number
+  overdueReturns: number
+  upcomingInspections: { id: string; assetId: string | null; name: string; daysUntil: number }[]
+  upcomingReturns: { id: string; assetId: string; name: string; clientName: string; daysUntil: number }[]
   categoryUtilization: CategoryUtilization[]
 }
 
@@ -82,10 +87,13 @@ export default function DashboardPage() {
       .eq('organization_id', orgId!)
       .is('archived_at', null)
 
+    // Must exclude archived assets exactly like totalAssets above: archiving a
+    // rented-out machine would otherwise push utilization above 100%.
     const { count: inUseAssets } = await supabase
       .from('assets')
       .select('*', { count: 'exact', head: true })
       .eq('organization_id', orgId!)
+      .is('archived_at', null)
       .eq('status', 'in_use')
 
     const utilizationRate = totalAssets && inUseAssets
@@ -104,17 +112,20 @@ export default function DashboardPage() {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
+    // Completed schedules are excluded: a finished inspection must not keep
+    // counting toward "overdue".
     const { data: vgpSchedules } = await supabase
       .from('vgp_schedules')
       .select('id, next_due_date, assets(id, name)')
       .eq('organization_id', orgId!)
       .is('archived_at', null)
+      .neq('status', 'completed')
       .order('next_due_date', { ascending: true })
 
     let vgpOverdue = 0
     let vgpUpcoming = 0
     let vgpCompliant = 0
-    const upcomingInspections: { id: string; name: string; daysUntil: number }[] = []
+    const upcomingInspections: { id: string; assetId: string | null; name: string; daysUntil: number }[] = []
 
     vgpSchedules?.forEach((s: any) => {
       const days = Math.ceil((new Date(s.next_due_date).getTime() - today.getTime()) / 86_400_000)
@@ -123,17 +134,36 @@ export default function DashboardPage() {
       } else if (days <= 30) {
         vgpUpcoming++
         if (upcomingInspections.length < 3) {
-          upcomingInspections.push({ id: s.id, name: s.assets?.name || 'N/A', daysUntil: days })
+          upcomingInspections.push({
+            id: s.id,
+            assetId: s.assets?.id || null,
+            name: s.assets?.name || 'N/A',
+            daysUntil: days,
+          })
         }
       } else {
         vgpCompliant++
       }
     })
 
-    // Upcoming rental returns
+    // Rental returns. Fetched in full (not just the 3 shown) so the widget can
+    // report how many are outstanding and how many are already late, rather
+    // than silently implying there are only three.
+    const { data: allActiveRentals } = await supabase
+      .from('rentals')
+      .select('expected_return_date')
+      .eq('organization_id', orgId!)
+      .eq('status', 'active')
+
+    const activeRentalCount = (allActiveRentals || []).length
+    const overdueReturns = (allActiveRentals || []).filter(
+      (r) => r.expected_return_date && new Date(r.expected_return_date) < today
+    ).length
+
     const { data: rentals } = await supabase
       .from('rentals')
-      .select('id, client_name, expected_return_date, assets(name)')
+      .select('id, asset_id, client_name, expected_return_date, assets(name)')
+      .eq('organization_id', orgId!)
       .eq('status', 'active')
       .order('expected_return_date', { ascending: true })
       .limit(3)
@@ -142,28 +172,36 @@ export default function DashboardPage() {
       const days = r.expected_return_date
         ? Math.ceil((new Date(r.expected_return_date).getTime() - today.getTime()) / 86_400_000)
         : 0
-      return { id: r.id, name: r.assets?.name || 'N/A', clientName: r.client_name, daysUntil: days }
+      return {
+        id: r.id,
+        assetId: r.asset_id,
+        name: r.assets?.name || 'N/A',
+        clientName: r.client_name,
+        daysUntil: days,
+      }
     })
 
-    // Per-category utilization
+    // Per-category utilization. category_id is carried through so each bar can
+    // link to the matching filter on the assets page.
     const { data: assetsWithCat } = await supabase
       .from('assets')
-      .select('status, asset_categories(name)')
+      .select('status, category_id, asset_categories(name)')
       .eq('organization_id', orgId!)
       .is('archived_at', null)
 
-    const catMap = new Map<string, { inUse: number; total: number }>()
+    const catMap = new Map<string, { categoryId: string | null; inUse: number; total: number }>()
     ;(assetsWithCat || []).forEach((a: any) => {
       const catName = a.asset_categories?.name || (language === 'fr' ? 'Sans categorie' : 'Uncategorized')
-      const entry = catMap.get(catName) || { inUse: 0, total: 0 }
+      const entry = catMap.get(catName) || { categoryId: a.category_id || null, inUse: 0, total: 0 }
       entry.total++
       if (a.status === 'in_use') entry.inUse++
       catMap.set(catName, entry)
     })
 
     const categoryUtilization: CategoryUtilization[] = Array.from(catMap.entries())
-      .map(([category, { inUse, total }]) => ({
+      .map(([category, { categoryId, inUse, total }]) => ({
         category,
+        categoryId,
         inUse,
         total,
         rate: total > 0 ? Math.round((inUse / total) * 100) : 0,
@@ -181,6 +219,8 @@ export default function DashboardPage() {
       vgpOverdue,
       vgpUpcoming,
       vgpCompliant,
+      activeRentalCount,
+      overdueReturns,
       upcomingInspections,
       upcomingReturns,
       categoryUtilization,
@@ -230,7 +270,7 @@ export default function DashboardPage() {
         >
           <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: '#dc2626' }} />
           <div className="flex-1 min-w-0">
-            <p className="text-[14px] font-semibold" style={{ color: '#dc2626' }}>
+            <p className="text-[14px] font-semibold" style={{ color: '#991b1b' }}>
               {data.vgpOverdue} {data.vgpOverdue > 1 ? t('dashboard.overdueEquipmentPlural') : t('dashboard.overdueEquipment')}
             </p>
             <p className="text-[13px] mt-0.5" style={{ color: '#991b1b' }}>
@@ -253,12 +293,16 @@ export default function DashboardPage() {
           label={t('dashboard.vgpOverdueLabel')}
           count={data.vgpOverdue}
           color="var(--status-retard, #dc2626)"
+          href="/vgp/schedules?status=overdue"
         />
         <ComplianceCard
           label={t('dashboard.vgpUpcomingLabel')}
           count={data.vgpUpcoming}
           color="var(--status-bientot, #d97706)"
+          href="/vgp/schedules?status=upcoming"
         />
+        {/* No link: this is reassurance, not a task. Nothing needs doing about
+            equipment that is compliant. */}
         <ComplianceCard
           label={t('dashboard.compliant')}
           count={data.vgpCompliant}
@@ -287,28 +331,43 @@ export default function DashboardPage() {
             </p>
           ) : (
             <div className="space-y-1 sm:space-y-2">
-              {(isCompact ? data.upcomingInspections.slice(0, 2) : data.upcomingInspections).map((insp) => (
-                <div key={insp.id} className="flex items-center justify-between min-h-[36px] sm:min-h-[44px]">
-                  <span className="text-[13px] sm:text-[14px] font-medium truncate" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
-                    {insp.name}
-                  </span>
-                  <span
-                    className="text-[11px] sm:text-[12px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ml-2"
-                    style={{
-                      backgroundColor: insp.daysUntil <= 7 ? 'rgba(220,38,38,0.1)' : 'rgba(217,119,6,0.1)',
-                      color: insp.daysUntil <= 7 ? '#dc2626' : '#d97706',
-                    }}
+              {(isCompact ? data.upcomingInspections.slice(0, 2) : data.upcomingInspections).map((insp) => {
+                const rowClass = 'flex items-center justify-between min-h-[36px] sm:min-h-[44px] -mx-2 px-2 rounded-md'
+                const body = (
+                  <>
+                    <span className="text-[13px] sm:text-[14px] font-medium truncate" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                      {insp.name}
+                    </span>
+                    <StatusBadge
+                      tone={insp.daysUntil <= 7 ? 'retard' : 'bientot'}
+                      hideIcon
+                      className="flex-shrink-0 ml-2 tabular-nums"
+                    >
+                      {insp.daysUntil}{language === 'fr' ? 'j' : 'd'}
+                    </StatusBadge>
+                  </>
+                )
+
+                // Whole row is the target. Schedules with no asset joined stay
+                // static rather than linking to /assets/null.
+                return insp.assetId ? (
+                  <Link
+                    key={insp.id}
+                    href={`/assets/${insp.assetId}`}
+                    className={`${rowClass} hover:bg-black/[0.04] transition-colors`}
                   >
-                    {insp.daysUntil}{language === 'fr' ? 'j' : 'd'}
-                  </span>
-                </div>
-              ))}
+                    {body}
+                  </Link>
+                ) : (
+                  <div key={insp.id} className={rowClass}>{body}</div>
+                )
+              })}
             </div>
           )}
           <Link
             href="/vgp/schedules"
             className="inline-flex items-center gap-1 text-[12px] sm:text-[13px] font-medium mt-2 sm:mt-3 transition-colors hover:underline"
-            style={{ color: 'var(--accent, #e8600a)' }}
+            style={{ color: 'var(--accent-text, #b04a06)' }}
           >
             {t('dashboard.viewSchedules')} <ArrowRight className="w-3 h-3" />
           </Link>
@@ -334,57 +393,75 @@ export default function DashboardPage() {
           ) : (
             <div className="space-y-1 sm:space-y-2">
               {(isCompact ? data.upcomingReturns.slice(0, 1) : data.upcomingReturns).map((r) => (
-                <div key={r.id} className="flex items-center justify-between min-h-[36px] sm:min-h-[44px]">
+                // Whole row is one link: a partially-clickable row produces dead
+                // clicks for field users. Targets the asset, where the return
+                // action lives; the client is reachable from there.
+                <Link
+                  key={r.id}
+                  href={`/assets/${r.assetId}`}
+                  className="flex items-center justify-between min-h-[36px] sm:min-h-[44px] -mx-2 px-2 rounded-md hover:bg-black/[0.04] transition-colors"
+                >
                   <div className="min-w-0">
                     <p className="text-[13px] sm:text-[14px] font-medium truncate" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                       {r.name}
                     </p>
-                    <p className="text-[11px] sm:text-[12px]" style={{ color: 'var(--text-muted, #777)' }}>
+                    <p className="text-[11px] sm:text-[12px] truncate" style={{ color: 'var(--text-muted, #777)' }}>
                       {r.clientName}
                     </p>
                   </div>
-                  <span
-                    className="text-[11px] sm:text-[12px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ml-2"
-                    style={{
-                      backgroundColor: r.daysUntil <= 0 ? 'rgba(220,38,38,0.1)' : 'rgba(217,119,6,0.1)',
-                      color: r.daysUntil <= 0 ? '#dc2626' : '#d97706',
-                    }}
+                  <StatusBadge
+                    tone={r.daysUntil <= 0 ? 'retard' : 'bientot'}
+                    hideIcon={r.daysUntil > 0}
+                    className="flex-shrink-0 ml-2 tabular-nums"
                   >
                     {r.daysUntil <= 0
                       ? (language === 'fr' ? 'En retard' : 'Overdue')
                       : `${r.daysUntil}${language === 'fr' ? 'j' : 'd'}`}
-                  </span>
-                </div>
+                  </StatusBadge>
+                </Link>
               ))}
             </div>
           )}
           <Link
-            href="/clients"
+            href="/assets?status=in_use"
             className="inline-flex items-center gap-1 text-[12px] sm:text-[13px] font-medium mt-2 sm:mt-3 transition-colors hover:underline"
-            style={{ color: 'var(--accent, #e8600a)' }}
+            style={{ color: 'var(--accent-text, #b04a06)' }}
           >
-            {t('dashboard.viewRentals')} <ArrowRight className="w-3 h-3" />
+            {t('dashboard.viewRentals')}
+            {data.activeRentalCount > 0 && ` (${data.activeRentalCount})`}
+            <ArrowRight className="w-3 h-3" />
           </Link>
+
+          {/* Equipment already past its return date. Without this the widget
+              shows at most 3 rows and reads as if only 3 are outstanding. */}
+          {data.overdueReturns > 0 && (
+            <p className="text-[11px] sm:text-[12px] mt-1.5 font-medium" style={{ color: '#dc2626' }}>
+              {data.overdueReturns} {t('dashboard.ofWhichOverdue')}
+            </p>
+          )}
         </div>
       </div>
 
       {/* 5. Bottom row - secondary stats */}
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <div className="rounded-lg p-2 sm:p-4 text-center" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
-          <Package className="w-4 h-4 sm:w-5 sm:h-5 mx-auto mb-0.5 sm:mb-1" style={{ color: 'var(--text-hint, #888)' }} />
-          <p className="text-[18px] sm:text-[22px] font-bold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{data.totalAssets}</p>
-          <p className="text-[9px] sm:text-[12px] font-semibold" style={{ color: 'var(--text-muted, #777)' }}>{t('dashboard.totalEquipment')}</p>
-        </div>
-        <div className="rounded-lg p-2 sm:p-4 text-center" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
-          <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 mx-auto mb-0.5 sm:mb-1" style={{ color: 'var(--text-hint, #888)' }} />
-          <p className="text-[18px] sm:text-[22px] font-bold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{data.utilizationRate}%</p>
-          <p className="text-[9px] sm:text-[12px] font-semibold" style={{ color: 'var(--text-muted, #777)' }}>{t('dashboard.utilization')}</p>
-        </div>
-        <div className="rounded-lg p-2 sm:p-4 text-center" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
-          <QrCode className="w-4 h-4 sm:w-5 sm:h-5 mx-auto mb-0.5 sm:mb-1" style={{ color: 'var(--text-hint, #888)' }} />
-          <p className="text-[18px] sm:text-[22px] font-bold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{data.recentScans}</p>
-          <p className="text-[9px] sm:text-[12px] font-semibold" style={{ color: 'var(--text-muted, #777)' }}>{t('dashboard.scans7Days')}</p>
-        </div>
+        <StatTile
+          icon={Package}
+          value={data.totalAssets}
+          label={t('dashboard.totalEquipment')}
+          href="/assets"
+        />
+        {/* No link: a health indicator, not a to-do. */}
+        <StatTile
+          icon={TrendingUp}
+          value={`${data.utilizationRate}%`}
+          label={t('dashboard.utilization')}
+        />
+        <StatTile
+          icon={QrCode}
+          value={data.recentScans}
+          label={t('dashboard.scans7Days')}
+          href="/scans"
+        />
       </div>
 
       {/* 6. Per-category utilization */}
@@ -397,27 +474,44 @@ export default function DashboardPage() {
             {t('dashboard.categoryUtilization')}
           </h3>
           <div className="space-y-2 sm:space-y-2.5">
-            {data.categoryUtilization.map((cat) => (
-              <div key={cat.category}>
-                <div className="flex items-center justify-between mb-0.5 sm:mb-1">
-                  <span className="text-[12px] sm:text-[13px] font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
-                    {cat.category}
-                  </span>
-                  <span className="text-[11px] sm:text-[12px] font-semibold" style={{ color: 'var(--text-muted, #777)' }}>
-                    {cat.inUse}/{cat.total} ({cat.rate}%)
-                  </span>
-                </div>
-                <div className="h-1.5 sm:h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(0,0,0,0.08)' }}>
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{
-                      width: `${cat.rate}%`,
-                      backgroundColor: cat.rate >= 50 ? 'var(--accent, #e8600a)' : 'var(--text-hint, #888)',
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
+            {data.categoryUtilization.map((cat) => {
+              const body = (
+                <>
+                  <div className="flex items-center justify-between mb-0.5 sm:mb-1">
+                    <span className="text-[12px] sm:text-[13px] font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                      {cat.category}
+                    </span>
+                    <span className="text-[11px] sm:text-[12px] font-semibold" style={{ color: 'var(--text-muted, #777)' }}>
+                      {cat.inUse}/{cat.total} ({cat.rate}%)
+                    </span>
+                  </div>
+                  <div className="h-1.5 sm:h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(0,0,0,0.08)' }}>
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{
+                        width: `${cat.rate}%`,
+                        backgroundColor: cat.rate >= 50 ? 'var(--accent, #e8600a)' : 'var(--text-hint, #888)',
+                      }}
+                    />
+                  </div>
+                </>
+              )
+
+              // Label and bar are one target. Uncategorised assets have no id to
+              // filter by, so that row stays static rather than linking to a
+              // filter that would match nothing.
+              return cat.categoryId ? (
+                <Link
+                  key={cat.category}
+                  href={`/assets?category=${cat.categoryId}`}
+                  className="block -mx-2 px-2 py-1 rounded-md hover:bg-black/[0.04] transition-colors"
+                >
+                  {body}
+                </Link>
+              ) : (
+                <div key={cat.category} className="-mx-2 px-2 py-1">{body}</div>
+              )
+            })}
           </div>
         </div>
       )}
@@ -425,20 +519,78 @@ export default function DashboardPage() {
   )
 }
 
-// ── Compliance card with L + bottom accent border ──
-function ComplianceCard({ label, count, color }: { label: string; count: number; color: string }) {
+// ── Secondary stat tile ──
+// `href` is optional by design. A metric only links when there is something to
+// do about it; a reassurance figure stays inert and drops the hover affordance,
+// so the row does not train the user to click numbers that lead nowhere.
+function StatTile({
+  icon: Icon,
+  value,
+  label,
+  href,
+}: {
+  icon: LucideIcon
+  value: number | string
+  label: string
+  href?: string
+}) {
+  const body = (
+    <>
+      <Icon className="w-4 h-4 sm:w-5 sm:h-5 mx-auto mb-0.5 sm:mb-1" style={{ color: 'var(--text-hint, #888)' }} />
+      <p className="text-[18px] sm:text-[22px] font-bold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{value}</p>
+      <p className="text-[9px] sm:text-[12px] font-semibold" style={{ color: 'var(--text-muted, #777)' }}>{label}</p>
+    </>
+  )
+  const base = 'block rounded-lg p-2 sm:p-4 text-center'
+  const style = { backgroundColor: 'var(--card-bg, #edeff2)' }
+
+  if (!href) {
+    return <div className={base} style={style}>{body}</div>
+  }
+
   return (
-    <div
-      className="rounded-lg p-2 sm:p-4"
-      style={{
-        backgroundColor: 'var(--card-bg, #edeff2)',
-        borderLeft: `3px solid ${color}`,
-        borderBottom: `3px solid ${color}`,
-        borderRadius: '8px 8px 8px 0',
-      }}
-    >
+    <Link href={href} className={`${base} hover:bg-black/[0.04] transition-colors`} style={style}>
+      {body}
+    </Link>
+  )
+}
+
+// ── Compliance card with L + bottom accent border ──
+// Overdue and upcoming link out: they are the dashboard's calls to action, so
+// every part of them must be tappable. "Compliant" is reassurance, not a task,
+// and is rendered without a link (see `href` note on StatTile).
+function ComplianceCard({
+  label,
+  count,
+  color,
+  href,
+}: {
+  label: string
+  count: number
+  color: string
+  href?: string
+}) {
+  const body = (
+    <>
       <p className="text-[22px] sm:text-[30px] font-bold leading-none" style={{ color }}>{count}</p>
       <p className="text-[10px] sm:text-[13px] font-semibold mt-0.5 sm:mt-1" style={{ color: 'var(--text-secondary, #444)' }}>{label}</p>
-    </div>
+    </>
+  )
+  const base = 'block rounded-lg p-2 sm:p-4'
+  const style = {
+    backgroundColor: 'var(--card-bg, #edeff2)',
+    borderLeft: `3px solid ${color}`,
+    borderBottom: `3px solid ${color}`,
+    borderRadius: '8px 8px 8px 0',
+  }
+
+  if (!href) {
+    return <div className={base} style={style}>{body}</div>
+  }
+
+  return (
+    <Link href={href} className={`${base} hover:bg-black/[0.04] transition-colors`} style={style}>
+      {body}
+    </Link>
   )
 }

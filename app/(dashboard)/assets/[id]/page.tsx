@@ -54,6 +54,7 @@ interface Inspection {
 
 interface Rental {
   id: string
+  client_id: string | null
   client_name: string
   checkout_date: string
   expected_return_date: string | null
@@ -209,7 +210,7 @@ export default function AssetDetailPage() {
       // Fetch rental history
       const { data: rentalData } = await supabase
         .from('rentals')
-        .select('id, client_name, checkout_date, expected_return_date, actual_return_date, status')
+        .select('id, client_id, client_name, checkout_date, expected_return_date, actual_return_date, status')
         .eq('asset_id', assetId)
         .order('checkout_date', { ascending: false })
 
@@ -272,7 +273,7 @@ export default function AssetDetailPage() {
       <Link
         href="/assets"
         className="inline-flex items-center gap-1.5 text-[14px] font-medium mb-4 transition-colors hover:underline"
-        style={{ color: 'var(--accent, #e8600a)' }}
+        style={{ color: 'var(--accent-text, #b04a06)' }}
       >
         <ArrowLeft className="w-4 h-4" />
         {t('assetDetail.backToAssets')}
@@ -340,7 +341,7 @@ export default function AssetDetailPage() {
             <button
               onClick={() => setShowEdit(true)}
               className="text-[13px] font-medium transition-colors hover:underline"
-              style={{ color: 'var(--accent, #e8600a)' }}
+              style={{ color: 'var(--accent-text, #b04a06)' }}
             >
               {t('assetDetail.modify')}
             </button>
@@ -384,7 +385,7 @@ export default function AssetDetailPage() {
               <Link
                 href={`/vgp/inspection/${schedule.id}`}
                 className="text-[13px] font-medium transition-colors hover:underline"
-                style={{ color: 'var(--accent, #e8600a)' }}
+                style={{ color: 'var(--accent-text, #b04a06)' }}
               >
                 {t('assetDetail.newInspection')}
               </Link>
@@ -424,7 +425,7 @@ export default function AssetDetailPage() {
               <button
                 onClick={() => setShowVGPSetup(true)}
                 className="text-[14px] font-medium transition-colors hover:underline"
-                style={{ color: 'var(--accent, #e8600a)' }}
+                style={{ color: 'var(--accent-text, #b04a06)' }}
               >
                 {t('assetDetail.vgpConfigure')}
               </button>
@@ -440,7 +441,7 @@ export default function AssetDetailPage() {
               <Link
                 href={`/vgp/inspection/${schedule.id}`}
                 className="text-[13px] font-medium transition-colors hover:underline"
-                style={{ color: 'var(--accent, #e8600a)' }}
+                style={{ color: 'var(--accent-text, #b04a06)' }}
               >
                 {t('assetDetail.newInspection')}
               </Link>
@@ -490,7 +491,7 @@ export default function AssetDetailPage() {
                               target="_blank"
                               rel="noopener noreferrer"
                               className="font-medium hover:underline"
-                              style={{ color: 'var(--accent, #e8600a)' }}
+                              style={{ color: 'var(--accent-text, #b04a06)' }}
                             >
                               PDF ↓
                             </a>
@@ -541,7 +542,7 @@ export default function AssetDetailPage() {
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center min-h-[44px] text-[12px] font-medium hover:underline"
-                          style={{ color: 'var(--accent, #e8600a)' }}
+                          style={{ color: 'var(--accent-text, #b04a06)' }}
                         >
                           PDF ↓
                         </a>
@@ -587,7 +588,13 @@ export default function AssetDetailPage() {
                           style={isActive ? { backgroundColor: 'rgba(5, 150, 105, 0.06)' } : undefined}
                         >
                           <td className="px-3 py-2.5 text-[14px] font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
-                            {rental.client_name}
+                            {rental.client_id ? (
+                              <Link href={`/clients/${rental.client_id}`} className="hover:underline">
+                                {rental.client_name}
+                              </Link>
+                            ) : (
+                              rental.client_name
+                            )}
                           </td>
                           <td className="px-3 py-2.5 text-[14px]" style={{ color: 'var(--text-secondary, #444)' }}>
                             {formatDate(rental.checkout_date, language)}
@@ -619,7 +626,13 @@ export default function AssetDetailPage() {
                     >
                       <div className="flex items-center justify-between min-h-[44px]">
                         <span className="text-[14px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
-                          {rental.client_name}
+                          {rental.client_id ? (
+                            <Link href={`/clients/${rental.client_id}`} className="hover:underline">
+                              {rental.client_name}
+                            </Link>
+                          ) : (
+                            rental.client_name
+                          )}
                         </span>
                         <span
                           className="text-[14px] font-semibold"

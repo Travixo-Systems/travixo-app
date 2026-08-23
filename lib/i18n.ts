@@ -2349,7 +2349,13 @@ export const translations = {
     vgpOverdueLabel: { en: "Overdue", fr: "En retard" },
     vgpUpcomingLabel: { en: "Upcoming 30d", fr: "À venir 30j" },
     compliant: { en: "Compliant", fr: "Conformes" },
-    inspectionsThisWeek: { en: "Upcoming inspections", fr: "Inspections cette semaine" },
+    // Populated with everything due within 30 days, not one week.
+    inspectionsThisWeek: { en: "Upcoming inspections", fr: "Inspections à venir (30j)" },
+    viewAllReturns: { en: "View all", fr: "Voir tout" },
+    ofWhichOverdue: { en: "overdue", fr: "en retard" },
+    activeRentals: { en: "equipment out", fr: "équipement(s) sorti(s)" },
+    viewScans: { en: "View scan activity", fr: "Voir l'activité de scan" },
+    scanActivity: { en: "Scan activity", fr: "Activité de scan" },
     noUpcomingInspections: { en: "No inspections due soon", fr: "Aucune inspection à venir" },
     viewSchedules: { en: "View schedule", fr: "Voir le suivi" },
     expectedReturns: { en: "Expected returns", fr: "Retours prévus" },
@@ -2372,6 +2378,10 @@ export const translations = {
     assets: {
       en: "Fleet",
       fr: "Parc",
+    },
+    scans: {
+      en: "Scan activity",
+      fr: "Activité de scan",
     },
     vgp: {
       en: "VGP Compliance",
@@ -3309,6 +3319,165 @@ export const translations = {
       en: "equipment out",
       fr: "équipement(s) sorti(s)",
     },
+    backToClients: {
+      en: "Back to clients",
+      fr: "Retour aux clients",
+    },
+    currentlyOut: {
+      en: "Currently out",
+      fr: "Actuellement sorti",
+    },
+    rentalHistory: {
+      en: "Rental history",
+      fr: "Historique des locations",
+    },
+    noActiveRentals: {
+      en: "No equipment currently out with this client",
+      fr: "Aucun équipement actuellement chez ce client",
+    },
+    noRentalHistory: {
+      en: "No past rentals",
+      fr: "Aucune location passée",
+    },
+    checkedOut: {
+      en: "Checked out",
+      fr: "Sorti le",
+    },
+    dueBack: {
+      en: "Due back",
+      fr: "Retour prévu",
+    },
+    returnedOn: {
+      en: "Returned",
+      fr: "Retourné le",
+    },
+    overdue: {
+      en: "Overdue",
+      fr: "En retard",
+    },
+    vgpDue: {
+      en: "VGP due",
+      fr: "VGP due",
+    },
+    vgpOverdue: {
+      en: "VGP overdue",
+      fr: "VGP en retard",
+    },
+    noEmailWarning: {
+      en: "No email on file - VGP recall notices cannot be sent to this client.",
+      fr: "Aucun email enregistré - les rappels VGP ne peuvent pas être envoyés à ce client.",
+    },
+    addEmail: {
+      en: "Add email",
+      fr: "Ajouter un email",
+    },
+    sendRecall: {
+      en: "Send VGP recall",
+      fr: "Envoyer un rappel VGP",
+    },
+    recallSentTo: {
+      en: "Recall sent to",
+      fr: "Rappel envoyé à",
+    },
+    viewAsset: {
+      en: "View asset",
+      fr: "Voir l'actif",
+    },
+    clientNotFound: {
+      en: "Client not found",
+      fr: "Client introuvable",
+    },
+    viewAllEquipment: {
+      en: "View all equipment",
+      fr: "Voir tout l'équipement",
+    },
+    equipmentPageTitle: {
+      en: "Equipment",
+      fr: "Équipement",
+    },
+    backToClient: {
+      en: "Back to client",
+      fr: "Retour au client",
+    },
+    filterAll: {
+      en: "All",
+      fr: "Tout",
+    },
+    filterOut: {
+      en: "Currently out",
+      fr: "Actuellement sorti",
+    },
+    filterReturned: {
+      en: "Returned",
+      fr: "Retourné",
+    },
+    filterVgpRisk: {
+      en: "VGP at risk",
+      fr: "VGP à risque",
+    },
+    selectAll: {
+      en: "Select all",
+      fr: "Tout sélectionner",
+    },
+    clearSelection: {
+      en: "Clear",
+      fr: "Effacer",
+    },
+    recallSelected: {
+      en: "Send recall",
+      fr: "Envoyer un rappel",
+    },
+    recallSelectedCount: {
+      en: "Recall selected",
+      fr: "Rappeler la sélection",
+    },
+    recallGroupedNote: {
+      en: "Sends one email listing the selected equipment.",
+      fr: "Envoie un seul email listant l'équipement sélectionné.",
+    },
+    noEquipment: {
+      en: "No equipment matches this filter",
+      fr: "Aucun équipement ne correspond à ce filtre",
+    },
+    lastRecall: {
+      en: "Last recall",
+      fr: "Dernier rappel",
+    },
+    neverRecalled: {
+      en: "Never recalled",
+      fr: "Jamais rappelé",
+    },
+  },
+
+  // ============================================================================
+  // SCANS
+  // ============================================================================
+  scans: {
+    pageTitle: { en: "Scan activity", fr: "Activité de scan" },
+    pageSubtitle: {
+      en: "Where your equipment was last seen, and by whom",
+      fr: "Où votre matériel a été vu pour la dernière fois, et par qui",
+    },
+    searchPlaceholder: { en: "Search equipment or location...", fr: "Rechercher un équipement ou un lieu..." },
+    noScans: { en: "No scans yet", fr: "Aucun scan pour le moment" },
+    noScansDescription: {
+      en: "Scans appear here when someone scans a QR code on a piece of equipment.",
+      fr: "Les scans apparaissent ici lorsqu'un QR code est scanné sur un équipement.",
+    },
+    noResults: { en: "No scans match this filter", fr: "Aucun scan ne correspond à ce filtre" },
+    last7Days: { en: "Last 7 days", fr: "7 derniers jours" },
+    last30Days: { en: "Last 30 days", fr: "30 derniers jours" },
+    allTime: { en: "All time", fr: "Tout" },
+    typeAll: { en: "All types", fr: "Tous les types" },
+    typeCheck: { en: "Check", fr: "Vérification" },
+    typeInventory: { en: "Inventory", fr: "Inventaire" },
+    typeCheckout: { en: "Checkout", fr: "Sortie" },
+    typeReturn: { en: "Return", fr: "Retour" },
+    scannedBy: { en: "by", fr: "par" },
+    unknownUser: { en: "Unknown user", fr: "Utilisateur inconnu" },
+    noLocation: { en: "No location", fr: "Sans lieu" },
+    totalScans: { en: "scans", fr: "scans" },
+    loadMore: { en: "Load more", fr: "Charger plus" },
   },
 
   // ============================================================================
@@ -3788,6 +3957,10 @@ export const translations = {
     onSiteInspection: { en: "On-site inspection", fr: "Inspection sur site" },
     recallSent: { en: "Recall sent for", fr: "Rappel envoyé pour" },
     recallFailed: { en: "Failed to send recall", fr: "Erreur lors de l'envoi du rappel" },
+    recallNoEmail: {
+      en: "No email address on file for this client. Add one to send a recall.",
+      fr: "Aucune adresse email enregistrée pour ce client. Ajoutez-en une pour envoyer un rappel.",
+    },
     inspectionLocation: { en: "Inspection location", fr: "Lieu d'inspection" },
     depot: { en: "Depot", fr: "Dépôt" },
     clientSite: { en: "Client site", fr: "Sur site client" },

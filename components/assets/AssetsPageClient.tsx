@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import AddAssetButton from '@/components/assets/AddAssetButton'
 import ImportAssetsButton from '@/components/assets/ImportAssetsButton'
 import AssetsTableClient from '@/components/assets/AssetsTableClient'
@@ -37,19 +37,28 @@ interface Asset {
     }[] | null
 }
 
+const VALID_STATUSES = ['all', 'available', 'in_use', 'maintenance', 'retired']
+
 export default function AssetsPageClient() {
     const router = useRouter()
+    const searchParams = useSearchParams()
     const supabase = createClient()
     const { language } = useLanguage()
     const t = createTranslator(language)
-    
+
+    const statusParam = searchParams.get('status')
+    const initialStatus = statusParam && VALID_STATUSES.includes(statusParam) ? statusParam : 'all'
+    const initialCategory = searchParams.get('category') || 'all'
+
     const [assets, setAssets] = useState<Asset[]>([])
     const [loading, setLoading] = useState(true)
     
     // Search and filter states
     const [searchQuery, setSearchQuery] = useState('')
-    const [statusFilter, setStatusFilter] = useState<string>('all')
-    const [categoryFilter, setCategoryFilter] = useState<string>('all')
+    // Seeded from ?status= so links like "view rentals" land on a real filtered
+    // list instead of an unfiltered page the user has to re-filter by hand.
+    const [statusFilter, setStatusFilter] = useState<string>(initialStatus)
+    const [categoryFilter, setCategoryFilter] = useState<string>(initialCategory)
     const [showArchived, setShowArchived] = useState(false)
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 50
@@ -208,6 +217,16 @@ export default function AssetsPageClient() {
         return Array.from(catMap.values()).sort((a, b) => a.name.localeCompare(b.name))
     }, [assets])
 
+    // A ?category= id that matches nothing (deleted category, stale bookmark)
+    // would otherwise render an empty table with no visible filter selected.
+    // Fall back to "all" once the real category list is known.
+    useEffect(() => {
+        if (categoryFilter === 'all' || assets.length === 0) return
+        if (!categories.some(c => c.id === categoryFilter)) {
+            setCategoryFilter('all')
+        }
+    }, [categories, categoryFilter, assets.length])
+
     if (loading) {
         return (
             <div className="p-3 md:p-6 flex justify-center items-center h-64">
@@ -233,7 +252,7 @@ export default function AssetsPageClient() {
                     <Link
                         href="/qr-codes"
                         className="hidden sm:flex items-center gap-2 px-4 py-2 text-white rounded-lg font-semibold transition-colors hover:opacity-90"
-                        style={{ backgroundColor: 'var(--accent, #e8600a)' }}
+                        style={{ backgroundColor: 'var(--accent-fill, #a84605)' }}
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <rect x="3" y="3" width="7" height="7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -328,7 +347,7 @@ export default function AssetsPageClient() {
                             onClick={() => setShowArchived(!showArchived)}
                             className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors"
                             style={{
-                                color: showArchived ? 'var(--accent, #e8600a)' : 'var(--text-muted, #777)',
+                                color: showArchived ? 'var(--accent-text, #b04a06)' : 'var(--text-muted, #5f5f5f)',
                                 backgroundColor: showArchived ? 'rgba(232, 96, 10, 0.08)' : 'transparent',
                             }}
                         >
@@ -382,7 +401,7 @@ export default function AssetsPageClient() {
                                                         onClick={() => setCurrentPage(pageNum)}
                                                         className={`px-3 py-1 border rounded-md ${
                                                             currentPage === pageNum
-                                                                ? 'text-white border-[#e8600a] bg-[#e8600a]'
+                                                                ? 'text-white border-[#a84605] bg-[#a84605]'
                                                                 : 'border-gray-300 hover:bg-black/[0.03]'
                                                         }`}
                                                     >

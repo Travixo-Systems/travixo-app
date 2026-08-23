@@ -91,6 +91,40 @@ function deriveStatus(nextDueISO: string): StatusFilter {
   return 'compliant';
 }
 
+const SCHEDULES_PAGE_SIZE = 1000;
+
+/**
+ * Load every non-archived schedule, following the API's pagination.
+ *
+ * This view derives its status counts and filters in memory, so a partial load
+ * is not a smaller list - it is wrong numbers. Previously it asked for
+ * limit=1000 against an API that silently capped at 100, so a fleet of 615
+ * schedules reported "overdue 100, upcoming 0" and the upcoming/soon filters
+ * returned nothing.
+ */
+async function fetchAllSchedules(signal?: AbortSignal): Promise<Schedule[]> {
+  const out: Schedule[] = [];
+
+  for (let page = 1; ; page++) {
+    const res = await fetch(
+      `/api/vgp/schedules?include_archived=false&limit=${SCHEDULES_PAGE_SIZE}&page=${page}`,
+      signal ? { signal } : undefined
+    );
+
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      throw new Error(json?.error || `HTTP ${res.status}`);
+    }
+
+    const json = await res.json();
+    out.push(...((json?.schedules || []) as Schedule[]).filter((s) => !s.archived_at));
+
+    if (!json?.has_more) break;
+  }
+
+  return out;
+}
+
 function formatDateFR(iso: string): string {
   try {
     return new Intl.DateTimeFormat('fr-FR', {
@@ -200,17 +234,7 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
         if (fetchCtrl.current) fetchCtrl.current.abort();
         fetchCtrl.current = new AbortController();
 
-        const res = await fetch('/api/vgp/schedules?include_archived=false&limit=1000', {
-          signal: fetchCtrl.current.signal,
-        });
-
-        if (!res.ok) {
-          const json = await res.json().catch(() => ({}));
-          throw new Error(json?.error || `HTTP ${res.status}`);
-        }
-
-        const json = await res.json();
-        const allSchedules: Schedule[] = (json?.schedules || []).filter((s: any) => !s.archived_at);
+        const allSchedules = await fetchAllSchedules(fetchCtrl.current.signal);
 
         setSchedules(allSchedules);
       } catch (e: any) {
@@ -321,12 +345,7 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
     setToast({ message: t('vgpSchedules.success.updated'), type: 'success' });
     
     try {
-      const res = await fetch('/api/vgp/schedules?include_archived=false&limit=1000');
-      if (res.ok) {
-        const json = await res.json();
-        const allSchedules: Schedule[] = (json?.schedules || []).filter((s: any) => !s.archived_at);
-        setSchedules(allSchedules);
-      }
+      setSchedules(await fetchAllSchedules());
     } catch (e) {
       console.error('Refetch error:', e);
     }

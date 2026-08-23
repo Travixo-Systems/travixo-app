@@ -94,7 +94,7 @@ export default function SettingsPage() {
               >
                 <div className="flex items-center space-x-4">
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--page-bg, #f6f8fd)' }}>
-                    <Icon className="w-5 h-5" style={{ color: 'var(--accent, #e8600a)' }} />
+                    <Icon className="w-5 h-5" style={{ color: 'var(--accent-text, #b04a06)' }} />
                   </div>
                   <div>
                     <h3 className="text-sm font-medium" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
@@ -124,7 +124,7 @@ export default function SettingsPage() {
           </p>
           <a
             href="mailto:info@travixosystems.com"
-            className="text-sm font-medium" style={{ color: 'var(--accent, #e8600a)' }}
+            className="text-sm font-medium" style={{ color: 'var(--accent-text, #b04a06)' }}
           >
             info@travixosystems.com
           </a>

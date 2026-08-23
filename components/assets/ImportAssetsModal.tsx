@@ -385,7 +385,7 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
                       <button
                         onClick={processFile}
                         disabled={isProcessing}
-                        className="w-full mt-6 text-white py-3 rounded-md font-semibold hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: 'var(--accent, #e8600a)' }}
+                        className="w-full mt-6 text-white py-3 rounded-md font-semibold hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: 'var(--accent-fill, #a84605)' }}
                       >
                         {isProcessing ? t('assets.importProcessing') : t('assets.importPreview')}
                       </button>
@@ -563,7 +563,7 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
                       <button
                         onClick={handleImport}
                         disabled={isImporting || preview.valid.length === 0}
-                        className="px-6 py-2 text-sm font-medium text-white rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed" style={{ backgroundColor: 'var(--accent, #e8600a)' }}
+                        className="px-6 py-2 text-sm font-medium text-white rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed" style={{ backgroundColor: 'var(--accent-fill, #a84605)' }}
                       >
                         {isImporting ? t('assets.importImporting') : `${t('assets.importCount')} ${preview.valid.length} ${t('assets.importEquipmentUnit')}`}
                       </button>

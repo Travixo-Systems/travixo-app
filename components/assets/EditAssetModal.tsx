@@ -265,7 +265,7 @@ export default function EditAssetModal({ isOpen, onClose, asset }: EditAssetModa
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="px-4 py-2 text-[15px] font-medium text-white rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed" style={{ backgroundColor: 'var(--accent, #e8600a)' }}
+                      className="px-4 py-2 text-[15px] font-medium text-white rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed" style={{ backgroundColor: 'var(--accent-fill, #a84605)' }}
                     >
                       {isLoading ? t('assets.buttonSaving') : t('assets.buttonSaveChanges')}
                     </button>

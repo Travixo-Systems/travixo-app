@@ -379,7 +379,7 @@ function VGPInspectionsContent() {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center min-h-[44px] text-[12px] font-medium hover:underline"
-                        style={{ color: 'var(--accent, #e8600a)' }}
+                        style={{ color: 'var(--accent-text, #b04a06)' }}
                       >
                         PDF ↓
                       </a>

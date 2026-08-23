@@ -197,7 +197,7 @@ export default function AssetsTableClient({ assets, onRefresh }: { assets: Asset
                                         <button
                                             onClick={(e) => { e.stopPropagation(); handleRestore(asset) }}
                                             className="flex-1 min-h-[44px] rounded text-[12px] font-medium text-white"
-                                            style={{ backgroundColor: 'var(--accent, #e8600a)' }}
+                                            style={{ backgroundColor: 'var(--accent-fill, #a84605)' }}
                                         >
                                             {language === 'fr' ? 'Restaurer' : 'Restore'}
                                         </button>
@@ -214,7 +214,7 @@ export default function AssetsTableClient({ assets, onRefresh }: { assets: Asset
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); setVgpAsset(asset) }}
                                                 className="flex-1 min-h-[44px] rounded text-[12px] font-medium text-white flex items-center justify-center"
-                                                style={{ backgroundColor: 'var(--accent, #e8600a)' }}
+                                                style={{ backgroundColor: 'var(--accent-fill, #a84605)' }}
                                             >
                                                 VGP
                                             </button>
@@ -283,7 +283,7 @@ export default function AssetsTableClient({ assets, onRefresh }: { assets: Asset
                                             href={`/assets/${asset.id}`}
                                             className="transition-colors hover:underline"
                                             style={{ color: 'var(--text-primary, #1a1a1a)' }}
-                                            onMouseEnter={e => { e.currentTarget.style.color = 'var(--accent, #e8600a)' }}
+                                            onMouseEnter={e => { e.currentTarget.style.color = 'var(--accent-text, #b04a06)' }}
                                             onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-primary, #1a1a1a)' }}
                                         >
                                             {asset.name}
@@ -322,7 +322,7 @@ export default function AssetsTableClient({ assets, onRefresh }: { assets: Asset
                                             <button
                                                 onClick={() => handleRestore(asset)}
                                                 className="text-[14px] font-medium transition-colors hover:underline"
-                                                style={{ color: 'var(--accent, #e8600a)' }}
+                                                style={{ color: 'var(--accent-text, #b04a06)' }}
                                             >
                                                 {language === 'fr' ? 'Restaurer' : 'Restore'}
                                             </button>

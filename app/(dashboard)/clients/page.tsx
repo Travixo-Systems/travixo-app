@@ -1,10 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Plus, Search, Users, Package, AlertTriangle, Edit3, X, Loader2 } from 'lucide-react'
+import Link from 'next/link'
+import { Plus, Search, Users, Package, AlertTriangle, ChevronRight, Edit3, X, Loader2 } from 'lucide-react'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
 import FeatureGate from '@/components/subscription/FeatureGate'
+import StatusBadge from '@/components/ui/StatusBadge'
 import toast from 'react-hot-toast'
 
 interface Client {
@@ -19,6 +21,18 @@ interface Client {
 
 interface ClientWithRentals extends Client {
   active_rental_count: number
+  overdue_rental_count: number
+  soonest_vgp_due: string | null
+}
+
+/** Days until a VGP due date; null when there is no schedule. */
+function daysUntilVgp(due: string | null): number | null {
+  if (!due) return null
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const target = new Date(due)
+  target.setHours(0, 0, 0, 0)
+  return Math.floor((target.getTime() - today.getTime()) / 86_400_000)
 }
 
 export default function ClientsPage() {
@@ -48,12 +62,7 @@ export default function ClientsPage() {
       const res = await fetch(`/api/clients?${params}`)
       if (res.ok) {
         const data = await res.json()
-        // For each client, we'll show them but we don't have rental count from API yet
-        // The clients list response has basic info
-        setClients((data.clients || []).map((c: Client) => ({
-          ...c,
-          active_rental_count: 0, // Will be computed later if needed
-        })))
+        setClients(data.clients || [])
       }
     } catch {
       // Silent fail
@@ -174,7 +183,7 @@ export default function ClientsPage() {
           <button
             onClick={openAdd}
             className="flex items-center gap-2 px-4 py-2.5 text-white rounded-md font-medium hover:opacity-90 transition-colors text-[15px]"
-            style={{ backgroundColor: 'var(--accent, #e8600a)' }}
+            style={{ backgroundColor: 'var(--accent-fill, #a84605)' }}
           >
             <Plus className="w-4 h-4" />
             {t('clients.addClient')}
@@ -219,55 +228,92 @@ export default function ClientsPage() {
         {/* Client cards */}
         {!loading && clients.length > 0 && (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {clients.map((client) => (
-              <div
-                key={client.id}
-                className="rounded-lg p-5 hover:bg-black/[0.02] transition-colors"
-                style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}
-              >
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-base truncate" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
-                      {client.name}
-                    </h3>
-                    {client.company && (
-                      <p className="text-[13px] mt-0.5 truncate" style={{ color: 'var(--text-muted, #777)' }}>{client.company}</p>
+            {clients.map((client) => {
+              const vgpDays = daysUntilVgp(client.soonest_vgp_due)
+              const vgpAtRisk = vgpDays !== null && vgpDays <= 30
+
+              return (
+                <div
+                  key={client.id}
+                  className="relative rounded-lg p-5"
+                  style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    {/* The company is the account; the person is the contact at
+                        it. Lead with the company when we have one. */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-[17px] truncate" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                        {client.company || client.name}
+                      </h3>
+                      {client.company && (
+                        <p className="text-[13px] mt-0.5 truncate" style={{ color: 'var(--text-secondary, #444)' }}>
+                          {client.name}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => openEdit(client)}
+                      aria-label={t('clients.editClient')}
+                      className="relative z-10 p-1.5 hover:bg-black/[0.05] rounded-lg transition-colors ml-2"
+                    >
+                      <Edit3 className="w-4 h-4" style={{ color: 'var(--text-muted, #777)' }} />
+                    </button>
+                  </div>
+
+                  <div className="space-y-1.5 mb-3">
+                    {client.email ? (
+                      <p className="text-[13px] truncate" style={{ color: 'var(--text-secondary, #444)' }}>{client.email}</p>
+                    ) : client.active_rental_count > 0 ? (
+                      <p className="text-[12px] inline-flex items-center gap-1.5" style={{ color: '#d97706' }}>
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        {t('clients.addEmail')}
+                      </p>
+                    ) : null}
+                    {client.phone && (
+                      <p className="text-[13px]" style={{ color: 'var(--text-secondary, #444)' }}>{client.phone}</p>
                     )}
                   </div>
-                  <button
-                    onClick={() => openEdit(client)}
-                    className="p-1.5 hover:bg-black/[0.05] rounded-lg transition-colors ml-2"
+
+                  {client.notes && (
+                    <p className="text-[13px] line-clamp-2 mb-3" style={{ color: 'var(--text-hint, #888)' }}>{client.notes}</p>
+                  )}
+
+                  {/* The stats footer is the click target, not the name: it
+                      keeps a large tap area well clear of the edit button. */}
+                  <Link
+                    href={`/clients/${client.id}`}
+                    className="flex items-center flex-wrap gap-x-3 gap-y-2 pt-3 -mx-2 px-2 pb-1 rounded-md border-t hover:bg-black/[0.05] transition-colors"
+                    style={{ borderColor: '#dcdee3' }}
                   >
-                    <Edit3 className="w-4 h-4" style={{ color: 'var(--text-muted, #777)' }} />
-                  </button>
-                </div>
+                    <div className="flex items-center gap-1.5">
+                      <Package className="w-3.5 h-3.5" style={{ color: 'var(--text-hint, #888)' }} />
+                      <span className="text-[13px] font-medium" style={{ color: 'var(--text-secondary, #444)' }}>
+                        {client.active_rental_count} {t('clients.equipmentOut')}
+                      </span>
+                    </div>
 
-                <div className="space-y-1.5 mb-3">
-                  {client.email && (
-                    <p className="text-[13px] truncate" style={{ color: 'var(--text-secondary, #444)' }}>{client.email}</p>
-                  )}
-                  {client.phone && (
-                    <p className="text-[13px]" style={{ color: 'var(--text-secondary, #444)' }}>{client.phone}</p>
-                  )}
-                </div>
+                    {client.overdue_rental_count > 0 && (
+                      <StatusBadge tone="retard">
+                        {client.overdue_rental_count} {t('clients.overdue')}
+                      </StatusBadge>
+                    )}
 
-                {client.notes && (
-                  <p className="text-[13px] line-clamp-2 mb-3" style={{ color: 'var(--text-hint, #888)' }}>{client.notes}</p>
-                )}
+                    {vgpAtRisk && (
+                      <StatusBadge tone={vgpDays! < 0 ? 'retard' : 'bientot'}>
+                        {vgpDays! < 0
+                          ? t('clients.vgpOverdue')
+                          : `${t('clients.vgpDue')} ${vgpDays}${language === 'fr' ? 'j' : 'd'}`}
+                      </StatusBadge>
+                    )}
 
-                <div className="flex items-center gap-3 pt-3 border-t" style={{ borderColor: '#dcdee3' }}>
-                  <div className="flex items-center gap-1.5">
-                    <Package className="w-3.5 h-3.5" style={{ color: 'var(--text-hint, #888)' }} />
-                    <span className="text-[13px]" style={{ color: 'var(--text-muted, #777)' }}>
-                      {new Date(client.created_at).toLocaleDateString(
-                        language === 'fr' ? 'fr-FR' : 'en-US',
-                        { day: 'numeric', month: 'short', year: 'numeric' }
-                      )}
-                    </span>
-                  </div>
+                    <ChevronRight
+                      className="w-4 h-4 ml-auto flex-shrink-0"
+                      style={{ color: 'var(--text-hint, #888)' }}
+                    />
+                  </Link>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
 
@@ -379,7 +425,7 @@ export default function ClientsPage() {
                     type="submit"
                     disabled={formSubmitting || !formName.trim()}
                     className="flex-1 py-2.5 text-white rounded-md font-medium hover:opacity-90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                    style={{ backgroundColor: 'var(--accent, #e8600a)' }}
+                    style={{ backgroundColor: 'var(--accent-fill, #a84605)' }}
                   >
                     {formSubmitting ? (
                       <Loader2 className="w-4 h-4 animate-spin" />

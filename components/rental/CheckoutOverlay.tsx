@@ -162,8 +162,25 @@ export default function CheckoutOverlay({
         if (createRes.ok) {
           const newClient = await createRes.json()
           clientId = newClient.id
+        } else {
+          const createData = await createRes.json().catch(() => ({}))
+          // A duplicate name means the client already exists in this org. Reuse
+          // it rather than creating an orphaned rental with no client_id, which
+          // would silently break recall notices and rental history.
+          if (createData.error === 'client_exists') {
+            const lookup = await fetch(
+              `/api/clients?q=${encodeURIComponent(clientName.trim())}&limit=10`
+            )
+            if (lookup.ok) {
+              const { clients: matches } = await lookup.json()
+              const exact = (matches || []).find(
+                (c: Client) =>
+                  c.name.trim().toLowerCase() === clientName.trim().toLowerCase()
+              )
+              if (exact) clientId = exact.id
+            }
+          }
         }
-        // If client creation fails (e.g. duplicate), continue without client_id
       }
 
       const response = await fetch('/api/rentals/checkout', {

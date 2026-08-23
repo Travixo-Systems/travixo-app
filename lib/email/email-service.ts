@@ -18,6 +18,8 @@ import { VGPReminder1Day } from './templates/vgp-reminder-1day';
 import { VGPOverdue } from './templates/vgp-overdue';
 import { ClientRecall30Day } from './templates/client-recall-30day';
 import { ClientRecall14Day } from './templates/client-recall-14day';
+import { ClientRecallNotice } from './templates/client-recall-notice';
+import type { ClientRecallNoticeItem } from './templates/client-recall-notice';
 
 import type {
   VGPAlertType,
@@ -471,6 +473,88 @@ export async function sendClientRecallEmail(
       const msg = sendError instanceof Error ? sendError.message : String(sendError);
       console.log(`${logPrefix} Exception (attempt ${attempt}): ${msg}`);
       if (attempt === 2) return { success: false, error: `Send exception: ${msg}` };
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+  }
+
+  return { success: false, error: 'All send attempts failed' };
+}
+
+// ---------------------------------------------------------------------------
+// Client-facing recall notice
+//
+// sendClientRecallEmail (above) notifies ORG STAFF that rented equipment needs
+// VGP planning. This function notifies THE CLIENT holding the equipment, which
+// is what actually gets the machine back before the deadline.
+// ---------------------------------------------------------------------------
+
+/**
+ * Send a recall notice directly to a renting client.
+ *
+ * `replyTo` is set to the rental company's contact address (falling back to the
+ * TraviXO reply-to) so the client's response reaches the org, not TraviXO.
+ */
+export async function sendClientRecallNotice(params: {
+  organizationName: string;
+  clientName: string;
+  clientEmail: string;
+  items: ClientRecallNoticeItem[];
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+}): Promise<{ success: boolean; emailId?: string; error?: string }> {
+  const logPrefix = '[EMAIL-RECALL-CLIENT]';
+  const { organizationName, clientName, clientEmail, items, contactEmail, contactPhone } = params;
+
+  if (!clientEmail || items.length === 0) {
+    return { success: false, error: 'No client email or items' };
+  }
+
+  const resend = getResendClient();
+
+  const count = items.length;
+  const soonest = items.reduce(
+    (min, i) => (i.daysUntilDue < min ? i.daysUntilDue : min),
+    items[0].daysUntilDue
+  );
+  const subject =
+    soonest <= 14
+      ? `URGENT - ${count} équipement${count > 1 ? 's' : ''} à restituer pour VGP - ${organizationName}`
+      : `Rappel VGP : ${count} équipement${count > 1 ? 's' : ''} en location - ${organizationName}`;
+
+  let html: string;
+  try {
+    html = await render(
+      ClientRecallNotice({ organizationName, clientName, items, contactEmail, contactPhone })
+    );
+  } catch (renderError) {
+    const msg = renderError instanceof Error ? renderError.message : String(renderError);
+    console.log(`${logPrefix} Template render error: ${msg}`);
+    return { success: false, error: `Template render failed: ${msg}` };
+  }
+
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const { data, error } = await resend.emails.send({
+        from: `${organizationName} via TraviXO <${SENDER_EMAIL}>`,
+        to: [clientEmail],
+        replyTo: contactEmail || REPLY_TO,
+        subject,
+        html,
+      });
+
+      if (error) {
+        console.log(`${logPrefix} Resend error (attempt ${attempt}): ${error.message}`);
+        if (attempt === 2) return { success: false, error: `Resend error: ${error.message}` };
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        continue;
+      }
+
+      console.log(`${logPrefix} Sent to client: ${data?.id} (attempt ${attempt})`);
+      return { success: true, emailId: data?.id };
+    } catch (sendError) {
+      const msg = sendError instanceof Error ? sendError.message : String(sendError);
+      console.log(`${logPrefix} Send exception (attempt ${attempt}): ${msg}`);
+      if (attempt === 2) return { success: false, error: msg };
       await new Promise((resolve) => setTimeout(resolve, 2000));
     }
   }

@@ -20,7 +20,7 @@ export default function AddAssetButton({ onSuccess }: AddAssetButtonProps) {
       <button
         onClick={() => setIsOpen(true)}
         className="inline-flex items-center px-4 py-2 border border-transparent text-[15px] font-medium rounded-md text-white hover:opacity-90 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#e8600a]"
-        style={{ backgroundColor: 'var(--accent, #e8600a)' }}
+        style={{ backgroundColor: 'var(--accent-fill, #a84605)' }}
       >
         <PlusIcon className="h-5 w-5 mr-2" />
         {t('assets.buttonAddAsset')}

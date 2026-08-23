@@ -138,32 +138,28 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
     if (!activeRental || !nextDueDate) return;
     setRecallSending(true);
     try {
-      const supabase = createClient();
-
-      // Get org id from current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-      const { data: userData } = await supabase
-        .from('users')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
-      if (!userData?.organization_id) throw new Error('No organization');
-
-      const { error: insertErr } = await supabase
-        .from('client_recall_alerts')
-        .insert({
-          organization_id: userData.organization_id,
+      const res = await fetch('/api/vgp/recall', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           rental_id: activeRental.id,
-          client_id: activeRental.client_id,
-          asset_id: asset.id,
-          alert_type: 'manual_recall',
           next_due_date: nextDueDate.toISOString().split('T')[0],
-        });
-      if (insertErr) throw insertErr;
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (data.error === 'client_email_missing') {
+          toast.error(t('vgpRentalContext.recallNoEmail'));
+          return;
+        }
+        throw new Error(data.error || 'recall_failed');
+      }
+
       toast.success(`${t('vgpRentalContext.recallSent')} ${activeRental.client_name}`);
     } catch (err) {
-      console.error('Recall insert error:', err);
+      console.error('Recall error:', err);
       toast.error(t('vgpRentalContext.recallFailed'));
     } finally {
       setRecallSending(false);
@@ -388,7 +384,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
                     onClick={handleRecall}
                     disabled={recallSending}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-white rounded-md hover:opacity-90 disabled:opacity-50 transition-colors"
-                    style={{ backgroundColor: 'var(--accent, #e8600a)' }}
+                    style={{ backgroundColor: 'var(--accent-fill, #a84605)' }}
                   >
                     <Phone className="w-3.5 h-3.5" />
                     {recallSending
@@ -547,7 +543,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
               </label>
               {selectedFile ? (
                 <div className="flex items-center gap-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)' }}>
-                  <FileText className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--accent, #e8600a)' }} />
+                  <FileText className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--accent-text, #b04a06)' }} />
                   <div className="flex-1 min-w-0">
                     <p className="text-[14px] font-medium truncate" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                       {selectedFile.name}
@@ -641,7 +637,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
                       onClick={() => setInspectionLocation(loc)}
                       className="flex-1 px-4 py-2 rounded-full text-[13px] font-medium transition-colors"
                       style={inspectionLocation === loc ? {
-                        backgroundColor: 'var(--accent, #e8600a)',
+                        backgroundColor: 'var(--accent-fill, #a84605)',
                         color: '#fff',
                       } : {
                         backgroundColor: 'var(--input-bg, #e3e5e9)',
@@ -675,7 +671,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
                 onClick={handleContinueToSummary}
                 disabled={!isFormValid}
                 className="flex-1 px-4 py-2 text-white rounded-md text-[14px] font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: 'var(--accent, #e8600a)' }}
+                style={{ backgroundColor: 'var(--accent-fill, #a84605)' }}
               >
                 {language === 'fr' ? 'Vérifier et confirmer' : 'Review & confirm'}
               </button>
@@ -732,7 +728,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
                 <SummaryRow
                   label={language === 'fr' ? 'Rapport joint' : 'Attached report'}
                   value={selectedFile.name}
-                  icon={<FileText className="w-4 h-4 inline mr-1" style={{ color: 'var(--accent, #e8600a)' }} />}
+                  icon={<FileText className="w-4 h-4 inline mr-1" style={{ color: 'var(--accent-text, #b04a06)' }} />}
                 />
               )}
               {!selectedFile && (
@@ -762,7 +758,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
                 <div className="w-full h-2 rounded-full" style={{ backgroundColor: 'var(--input-bg, #e3e5e9)' }}>
                   <div
                     className="h-2 rounded-full transition-all"
-                    style={{ width: `${uploadProgress}%`, backgroundColor: 'var(--accent, #e8600a)' }}
+                    style={{ width: `${uploadProgress}%`, backgroundColor: 'var(--accent-fill, #a84605)' }}
                   />
                 </div>
                 <p className="text-[12px] text-center" style={{ color: 'var(--text-muted, #777)' }}>
@@ -787,7 +783,7 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
                 onClick={handleConfirmAndSave}
                 disabled={submitting || isUploading}
                 className="flex-1 px-4 py-2 text-white rounded-md text-[14px] font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: 'var(--accent, #e8600a)' }}
+                style={{ backgroundColor: 'var(--accent-fill, #a84605)' }}
               >
                 {submitting || isUploading
                   ? t('vgpScheduleModal.submitting')

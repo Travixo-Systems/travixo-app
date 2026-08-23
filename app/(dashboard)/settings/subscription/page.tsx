@@ -206,7 +206,7 @@ export default function SubscriptionPage() {
 
         {isPilot && (
           <div className="rounded-lg border-l-4 p-4 flex items-start gap-3" style={{ backgroundColor: 'var(--card-bg, #edeff2)', borderLeftColor: 'var(--accent, #e8600a)' }}>
-            <SparklesIcon className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: 'var(--accent, #e8600a)' }} />
+            <SparklesIcon className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: 'var(--accent-text, #b04a06)' }} />
             <div>
               <p className="text-[15px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('subscription.pilotAccess')}</p>
               <p className="text-[13px] mt-0.5" style={{ color: 'var(--text-secondary, #444)' }}>{t('subscription.pilotDescription')}</p>
@@ -352,7 +352,7 @@ export default function SubscriptionPage() {
                       onClick={() => openPortal()}
                       disabled={portalPending}
                       className={`w-full py-2.5 px-4 rounded-lg font-medium text-[15px] transition-colors text-white hover:opacity-90 ${portalPending ? 'opacity-60' : ''}`}
-                      style={{ backgroundColor: 'var(--accent, #e8600a)' }}
+                      style={{ backgroundColor: 'var(--accent-fill, #a84605)' }}
                     >
                       {portalPending ? t('subscription.loading') : t('subscription.changePlan')}
                     </button>
@@ -361,7 +361,7 @@ export default function SubscriptionPage() {
                       onClick={() => handlePlanAction(plan.slug)}
                       disabled={isActionLoading}
                       className={`w-full py-2.5 px-4 rounded-lg font-medium text-[15px] transition-colors text-white hover:opacity-90 ${isActionLoading ? 'opacity-60' : ''}`}
-                      style={{ backgroundColor: 'var(--accent, #e8600a)' }}
+                      style={{ backgroundColor: 'var(--accent-fill, #a84605)' }}
                     >
                       {isActionLoading
                         ? t('subscription.loading')
@@ -485,7 +485,7 @@ function FeatureItem({
         <CheckIcon className="w-4 h-4 flex-shrink-0" style={{ color: BRAND.success }} />
       )}
       {isOnDemand && (
-        <ClockIcon className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--accent, #e8600a)' }} />
+        <ClockIcon className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--accent-text, #b04a06)' }} />
       )}
       {isComingSoon && (
         <ClockIcon className="w-4 h-4 text-[var(--text-hint,#888)] flex-shrink-0" />
