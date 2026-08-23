@@ -23,11 +23,13 @@ interface ScanRow {
 }
 
 /** Visual treatment per scan type, keyed to the same palette as the rest of the app. */
+/* Each type already carries its own icon, so status never rests on hue alone.
+   Inks are the darkened variants that clear 4.5:1 against these tints. */
 const TYPE_STYLES: Record<string, { bg: string; color: string; icon: typeof QrCode }> = {
-  checkout: { bg: 'rgba(217,119,6,0.1)', color: '#d97706', icon: LogOut },
-  return: { bg: 'rgba(5,150,105,0.1)', color: '#059669', icon: LogIn },
-  inventory: { bg: 'rgba(0,0,0,0.06)', color: '#555', icon: ClipboardCheck },
-  check: { bg: 'rgba(0,0,0,0.06)', color: '#555', icon: ArrowRightLeft },
+  checkout: { bg: '#ebe0d5', color: '#8a4b03', icon: LogOut },
+  return: { bg: '#d1e3e1', color: '#036143', icon: LogIn },
+  inventory: { bg: '#dfe2e6', color: '#3f4650', icon: ClipboardCheck },
+  check: { bg: '#dfe2e6', color: '#3f4650', icon: ArrowRightLeft },
 }
 
 export default function ScansPageClient() {
@@ -181,7 +183,7 @@ export default function ScansPageClient() {
             className="px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors"
             style={
               range === r.key
-                ? { backgroundColor: 'var(--accent, #e8600a)', color: '#fff' }
+                ? { backgroundColor: 'var(--accent-fill, #a84605)', color: '#fff' }
                 : { backgroundColor: 'var(--card-bg, #edeff2)', color: 'var(--text-secondary, #444)' }
             }
           >
@@ -263,7 +265,7 @@ export default function ScansPageClient() {
                     </p>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
                       <span
-                        className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                        className="text-[12px] font-semibold px-2 py-0.5 rounded-full"
                         style={{ backgroundColor: style.bg, color: style.color }}
                       >
                         {typeLabel(s.scan_type)}

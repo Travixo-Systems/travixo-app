@@ -98,7 +98,7 @@ export default function ViewQRModal({ isOpen, onClose, asset }: ViewQRModalProps
 
                   <button
                     onClick={downloadQR}
-                    className="inline-flex items-center px-4 py-2 text-[15px] font-medium rounded-md text-white hover:opacity-90" style={{ backgroundColor: 'var(--accent, #e8600a)' }}
+                    className="inline-flex items-center px-4 py-2 text-[15px] font-medium rounded-md text-white hover:opacity-90" style={{ backgroundColor: 'var(--accent-fill, #a84605)' }}
                   >
                     <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
                     {t('assets.qrDownload')}

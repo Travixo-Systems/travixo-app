@@ -6,6 +6,7 @@ import { Plus, Search, Users, Package, AlertTriangle, ChevronRight, Edit3, X, Lo
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
 import FeatureGate from '@/components/subscription/FeatureGate'
+import StatusBadge from '@/components/ui/StatusBadge'
 import toast from 'react-hot-toast'
 
 interface Client {
@@ -182,7 +183,7 @@ export default function ClientsPage() {
           <button
             onClick={openAdd}
             className="flex items-center gap-2 px-4 py-2.5 text-white rounded-md font-medium hover:opacity-90 transition-colors text-[15px]"
-            style={{ backgroundColor: 'var(--accent, #e8600a)' }}
+            style={{ backgroundColor: 'var(--accent-fill, #a84605)' }}
           >
             <Plus className="w-4 h-4" />
             {t('clients.addClient')}
@@ -292,26 +293,17 @@ export default function ClientsPage() {
                     </div>
 
                     {client.overdue_rental_count > 0 && (
-                      <span
-                        className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                        style={{ backgroundColor: 'rgba(220,38,38,0.1)', color: '#dc2626' }}
-                      >
+                      <StatusBadge tone="retard">
                         {client.overdue_rental_count} {t('clients.overdue')}
-                      </span>
+                      </StatusBadge>
                     )}
 
                     {vgpAtRisk && (
-                      <span
-                        className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                        style={{
-                          backgroundColor: vgpDays! < 0 ? 'rgba(220,38,38,0.1)' : 'rgba(217,119,6,0.1)',
-                          color: vgpDays! < 0 ? '#dc2626' : '#d97706',
-                        }}
-                      >
+                      <StatusBadge tone={vgpDays! < 0 ? 'retard' : 'bientot'}>
                         {vgpDays! < 0
                           ? t('clients.vgpOverdue')
                           : `${t('clients.vgpDue')} ${vgpDays}${language === 'fr' ? 'j' : 'd'}`}
-                      </span>
+                      </StatusBadge>
                     )}
 
                     <ChevronRight
@@ -433,7 +425,7 @@ export default function ClientsPage() {
                     type="submit"
                     disabled={formSubmitting || !formName.trim()}
                     className="flex-1 py-2.5 text-white rounded-md font-medium hover:opacity-90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                    style={{ backgroundColor: 'var(--accent, #e8600a)' }}
+                    style={{ backgroundColor: 'var(--accent-fill, #a84605)' }}
                   >
                     {formSubmitting ? (
                       <Loader2 className="w-4 h-4 animate-spin" />

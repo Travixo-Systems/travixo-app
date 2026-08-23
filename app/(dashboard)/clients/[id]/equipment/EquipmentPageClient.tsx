@@ -7,6 +7,7 @@ import { ArrowLeft, Loader2, Send, AlertTriangle, ShieldAlert } from 'lucide-rea
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
 import FeatureGate from '@/components/subscription/FeatureGate'
+import StatusBadge from '@/components/ui/StatusBadge'
 import toast from 'react-hot-toast'
 
 interface Client {
@@ -189,7 +190,7 @@ export default function EquipmentPageClient() {
         <Link
           href="/clients"
           className="inline-flex items-center gap-2 text-[14px] font-medium mb-6"
-          style={{ color: 'var(--accent, #e8600a)' }}
+          style={{ color: 'var(--accent-text, #b04a06)' }}
         >
           <ArrowLeft className="w-4 h-4" />
           {t('clients.backToClients')}
@@ -222,7 +223,7 @@ export default function EquipmentPageClient() {
         <Link
           href={`/clients/${clientId}`}
           className="inline-flex items-center gap-2 text-[14px] font-medium mb-5 hover:underline"
-          style={{ color: 'var(--accent, #e8600a)' }}
+          style={{ color: 'var(--accent-text, #b04a06)' }}
         >
           <ArrowLeft className="w-4 h-4" />
           {t('clients.backToClient')}
@@ -261,7 +262,7 @@ export default function EquipmentPageClient() {
               className="px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors"
               style={
                 filter === f.key
-                  ? { backgroundColor: 'var(--accent, #e8600a)', color: '#fff' }
+                  ? { backgroundColor: 'var(--accent-fill, #a84605)', color: '#fff' }
                   : { backgroundColor: 'var(--card-bg, #edeff2)', color: 'var(--text-secondary, #444)' }
               }
             >
@@ -276,7 +277,7 @@ export default function EquipmentPageClient() {
             <button
               onClick={toggleAll}
               className="text-[13px] font-medium hover:underline"
-              style={{ color: 'var(--accent, #e8600a)' }}
+              style={{ color: 'var(--accent-text, #b04a06)' }}
             >
               {selected.size === recallable.length ? t('clients.clearSelection') : t('clients.selectAll')}
             </button>
@@ -363,17 +364,11 @@ export default function EquipmentPageClient() {
 
                     <div className="flex flex-col items-end gap-2 flex-shrink-0">
                       {vgpAtRisk && (
-                        <span
-                          className="text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
-                          style={{
-                            backgroundColor: vgpDays! < 0 ? 'rgba(220,38,38,0.1)' : 'rgba(217,119,6,0.1)',
-                            color: vgpDays! < 0 ? '#dc2626' : '#d97706',
-                          }}
-                        >
+                        <StatusBadge tone={vgpDays! < 0 ? 'retard' : 'bientot'}>
                           {vgpDays! < 0
                             ? t('clients.vgpOverdue')
                             : `${t('clients.vgpDue')} ${vgpDays}${language === 'fr' ? 'j' : 'd'}`}
-                        </span>
+                        </StatusBadge>
                       )}
 
                       {canRecall && (
@@ -404,7 +399,7 @@ export default function EquipmentPageClient() {
         <div className="fixed bottom-0 left-0 right-0 z-40 border-t" style={{ backgroundColor: 'var(--card-bg, #edeff2)', borderColor: '#dcdee3' }}>
           <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 min-w-0">
-              <ShieldAlert className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--accent, #e8600a)' }} />
+              <ShieldAlert className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--accent-text, #b04a06)' }} />
               <span className="text-[13px] truncate" style={{ color: 'var(--text-secondary, #444)' }}>
                 {selected.size} {t('clients.equipmentOut')}
               </span>
@@ -421,7 +416,7 @@ export default function EquipmentPageClient() {
                 onClick={() => sendRecall([...selected])}
                 disabled={sending}
                 className="inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-medium text-white rounded-md hover:opacity-90 disabled:opacity-50 transition-opacity"
-                style={{ backgroundColor: 'var(--accent, #e8600a)' }}
+                style={{ backgroundColor: 'var(--accent-fill, #a84605)' }}
               >
                 {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 {t('clients.recallSelectedCount')} ({selected.size})

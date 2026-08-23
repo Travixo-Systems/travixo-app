@@ -779,7 +779,7 @@ export default function AuditsPage() {
                     onClick={() => setFormData({ ...formData, scope: 'all', selectedLocation: '', selectedCategory: '' })}
                     className={`px-3 py-2 text-[15px] font-medium rounded-lg border transition-colors ${
                       formData.scope === 'all'
-                        ? 'border-[#e8600a] bg-[#e8600a]/10 text-[#e8600a]'
+                        ? 'border-[#e8600a] bg-[#e8600a]/10 text-[#b04a06]'
                         : 'border-[#dcdee3] hover:bg-black/[0.02]'
                     }`}
                   >
@@ -789,7 +789,7 @@ export default function AuditsPage() {
                     onClick={() => setFormData({ ...formData, scope: 'location', selectedCategory: '' })}
                     className={`px-3 py-2 text-[15px] font-medium rounded-lg border transition-colors ${
                       formData.scope === 'location'
-                        ? 'border-[#e8600a] bg-[#e8600a]/10 text-[#e8600a]'
+                        ? 'border-[#e8600a] bg-[#e8600a]/10 text-[#b04a06]'
                         : 'border-[#dcdee3] hover:bg-black/[0.02]'
                     }`}
                   >
@@ -799,7 +799,7 @@ export default function AuditsPage() {
                     onClick={() => setFormData({ ...formData, scope: 'category', selectedLocation: '' })}
                     className={`px-3 py-2 text-[15px] font-medium rounded-lg border transition-colors ${
                       formData.scope === 'category'
-                        ? 'border-[#e8600a] bg-[#e8600a]/10 text-[#e8600a]'
+                        ? 'border-[#e8600a] bg-[#e8600a]/10 text-[#b04a06]'
                         : 'border-[#dcdee3] hover:bg-black/[0.02]'
                     }`}
                   >

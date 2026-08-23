@@ -9,6 +9,7 @@ import { useLanguage } from "@/lib/LanguageContext"
 import { createTranslator } from "@/lib/i18n"
 import { createClient } from "@/lib/supabase/client"
 import OnboardingBanner from "@/components/dashboard/OnboardingBanner"
+import StatusBadge from "@/components/ui/StatusBadge"
 
 interface CategoryUtilization {
   category: string
@@ -269,7 +270,7 @@ export default function DashboardPage() {
         >
           <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: '#dc2626' }} />
           <div className="flex-1 min-w-0">
-            <p className="text-[14px] font-semibold" style={{ color: '#dc2626' }}>
+            <p className="text-[14px] font-semibold" style={{ color: '#991b1b' }}>
               {data.vgpOverdue} {data.vgpOverdue > 1 ? t('dashboard.overdueEquipmentPlural') : t('dashboard.overdueEquipment')}
             </p>
             <p className="text-[13px] mt-0.5" style={{ color: '#991b1b' }}>
@@ -337,15 +338,13 @@ export default function DashboardPage() {
                     <span className="text-[13px] sm:text-[14px] font-medium truncate" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                       {insp.name}
                     </span>
-                    <span
-                      className="text-[11px] sm:text-[12px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ml-2"
-                      style={{
-                        backgroundColor: insp.daysUntil <= 7 ? 'rgba(220,38,38,0.1)' : 'rgba(217,119,6,0.1)',
-                        color: insp.daysUntil <= 7 ? '#dc2626' : '#d97706',
-                      }}
+                    <StatusBadge
+                      tone={insp.daysUntil <= 7 ? 'retard' : 'bientot'}
+                      hideIcon
+                      className="flex-shrink-0 ml-2 tabular-nums"
                     >
                       {insp.daysUntil}{language === 'fr' ? 'j' : 'd'}
-                    </span>
+                    </StatusBadge>
                   </>
                 )
 
@@ -368,7 +367,7 @@ export default function DashboardPage() {
           <Link
             href="/vgp/schedules"
             className="inline-flex items-center gap-1 text-[12px] sm:text-[13px] font-medium mt-2 sm:mt-3 transition-colors hover:underline"
-            style={{ color: 'var(--accent, #e8600a)' }}
+            style={{ color: 'var(--accent-text, #b04a06)' }}
           >
             {t('dashboard.viewSchedules')} <ArrowRight className="w-3 h-3" />
           </Link>
@@ -410,17 +409,15 @@ export default function DashboardPage() {
                       {r.clientName}
                     </p>
                   </div>
-                  <span
-                    className="text-[11px] sm:text-[12px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ml-2"
-                    style={{
-                      backgroundColor: r.daysUntil <= 0 ? 'rgba(220,38,38,0.1)' : 'rgba(217,119,6,0.1)',
-                      color: r.daysUntil <= 0 ? '#dc2626' : '#d97706',
-                    }}
+                  <StatusBadge
+                    tone={r.daysUntil <= 0 ? 'retard' : 'bientot'}
+                    hideIcon={r.daysUntil > 0}
+                    className="flex-shrink-0 ml-2 tabular-nums"
                   >
                     {r.daysUntil <= 0
                       ? (language === 'fr' ? 'En retard' : 'Overdue')
                       : `${r.daysUntil}${language === 'fr' ? 'j' : 'd'}`}
-                  </span>
+                  </StatusBadge>
                 </Link>
               ))}
             </div>
@@ -428,7 +425,7 @@ export default function DashboardPage() {
           <Link
             href="/assets?status=in_use"
             className="inline-flex items-center gap-1 text-[12px] sm:text-[13px] font-medium mt-2 sm:mt-3 transition-colors hover:underline"
-            style={{ color: 'var(--accent, #e8600a)' }}
+            style={{ color: 'var(--accent-text, #b04a06)' }}
           >
             {t('dashboard.viewRentals')}
             {data.activeRentalCount > 0 && ` (${data.activeRentalCount})`}

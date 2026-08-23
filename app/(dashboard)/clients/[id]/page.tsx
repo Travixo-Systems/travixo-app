@@ -18,6 +18,7 @@ import {
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
 import FeatureGate from '@/components/subscription/FeatureGate'
+import StatusBadge from '@/components/ui/StatusBadge'
 import toast from 'react-hot-toast'
 
 interface Client {
@@ -142,7 +143,7 @@ export default function ClientDetailPage() {
         <Link
           href="/clients"
           className="inline-flex items-center gap-2 text-[14px] font-medium mb-6"
-          style={{ color: 'var(--accent, #e8600a)' }}
+          style={{ color: 'var(--accent-text, #b04a06)' }}
         >
           <ArrowLeft className="w-4 h-4" />
           {t('clients.backToClients')}
@@ -170,7 +171,7 @@ export default function ClientDetailPage() {
         <Link
           href="/clients"
           className="inline-flex items-center gap-2 text-[14px] font-medium mb-5 hover:underline"
-          style={{ color: 'var(--accent, #e8600a)' }}
+          style={{ color: 'var(--accent-text, #b04a06)' }}
         >
           <ArrowLeft className="w-4 h-4" />
           {t('clients.backToClients')}
@@ -288,7 +289,7 @@ export default function ClientDetailPage() {
             <Link
               href={`/clients/${clientId}/equipment?filter=out`}
               className="inline-flex items-center gap-1 text-[13px] font-medium hover:underline"
-              style={{ color: 'var(--accent, #e8600a)' }}
+              style={{ color: 'var(--accent-text, #b04a06)' }}
             >
               {t('clients.viewAllEquipment')}
               <ArrowRight className="w-3.5 h-3.5" />
@@ -352,18 +353,11 @@ export default function ClientDetailPage() {
 
                       <div className="flex flex-col items-end gap-2">
                         {vgpAtRisk && (
-                          <span
-                            className="text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
-                            style={{
-                              backgroundColor:
-                                vgpDays! < 0 ? 'rgba(220,38,38,0.1)' : 'rgba(217,119,6,0.1)',
-                              color: vgpDays! < 0 ? '#dc2626' : '#d97706',
-                            }}
-                          >
+                          <StatusBadge tone={vgpDays! < 0 ? 'retard' : 'bientot'}>
                             {vgpDays! < 0
                               ? t('clients.vgpOverdue')
                               : `${t('clients.vgpDue')} ${vgpDays}${language === 'fr' ? 'j' : 'd'}`}
-                          </span>
+                          </StatusBadge>
                         )}
 
                         {vgpAtRisk && client.email && (
@@ -371,7 +365,7 @@ export default function ClientDetailPage() {
                             onClick={() => handleRecall(rental)}
                             disabled={recallingId === rental.id}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium text-white rounded-md hover:opacity-90 disabled:opacity-50 transition-opacity whitespace-nowrap"
-                            style={{ backgroundColor: 'var(--accent, #e8600a)' }}
+                            style={{ backgroundColor: 'var(--accent-fill, #a84605)' }}
                           >
                             {recallingId === rental.id ? (
                               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -391,7 +385,7 @@ export default function ClientDetailPage() {
                 <Link
                   href={`/clients/${clientId}/equipment?filter=out`}
                   className="flex items-center justify-center gap-1 rounded-lg py-3 text-[13px] font-medium hover:bg-black/[0.04] transition-colors"
-                  style={{ backgroundColor: 'var(--card-bg, #edeff2)', color: 'var(--accent, #e8600a)' }}
+                  style={{ backgroundColor: 'var(--card-bg, #edeff2)', color: 'var(--accent-text, #b04a06)' }}
                 >
                   {t('clients.viewAllEquipment')} ({activeRentals.length})
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -414,7 +408,7 @@ export default function ClientDetailPage() {
               <Link
                 href={`/clients/${clientId}/equipment?filter=returned`}
                 className="inline-flex items-center gap-1 text-[13px] font-medium hover:underline"
-                style={{ color: 'var(--accent, #e8600a)' }}
+                style={{ color: 'var(--accent-text, #b04a06)' }}
               >
                 {t('clients.viewAllEquipment')}
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -457,7 +451,7 @@ export default function ClientDetailPage() {
                 <Link
                   href={`/clients/${clientId}/equipment?filter=returned`}
                   className="flex items-center justify-center gap-1 rounded-lg py-3 text-[13px] font-medium hover:bg-black/[0.04] transition-colors"
-                  style={{ backgroundColor: 'var(--card-bg, #edeff2)', color: 'var(--accent, #e8600a)' }}
+                  style={{ backgroundColor: 'var(--card-bg, #edeff2)', color: 'var(--accent-text, #b04a06)' }}
                 >
                   {t('clients.viewAllEquipment')} ({pastRentals.length})
                   <ArrowRight className="w-3.5 h-3.5" />

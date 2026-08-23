@@ -273,7 +273,7 @@ export default function AssetDetailPage() {
       <Link
         href="/assets"
         className="inline-flex items-center gap-1.5 text-[14px] font-medium mb-4 transition-colors hover:underline"
-        style={{ color: 'var(--accent, #e8600a)' }}
+        style={{ color: 'var(--accent-text, #b04a06)' }}
       >
         <ArrowLeft className="w-4 h-4" />
         {t('assetDetail.backToAssets')}
@@ -341,7 +341,7 @@ export default function AssetDetailPage() {
             <button
               onClick={() => setShowEdit(true)}
               className="text-[13px] font-medium transition-colors hover:underline"
-              style={{ color: 'var(--accent, #e8600a)' }}
+              style={{ color: 'var(--accent-text, #b04a06)' }}
             >
               {t('assetDetail.modify')}
             </button>
@@ -385,7 +385,7 @@ export default function AssetDetailPage() {
               <Link
                 href={`/vgp/inspection/${schedule.id}`}
                 className="text-[13px] font-medium transition-colors hover:underline"
-                style={{ color: 'var(--accent, #e8600a)' }}
+                style={{ color: 'var(--accent-text, #b04a06)' }}
               >
                 {t('assetDetail.newInspection')}
               </Link>
@@ -425,7 +425,7 @@ export default function AssetDetailPage() {
               <button
                 onClick={() => setShowVGPSetup(true)}
                 className="text-[14px] font-medium transition-colors hover:underline"
-                style={{ color: 'var(--accent, #e8600a)' }}
+                style={{ color: 'var(--accent-text, #b04a06)' }}
               >
                 {t('assetDetail.vgpConfigure')}
               </button>
@@ -441,7 +441,7 @@ export default function AssetDetailPage() {
               <Link
                 href={`/vgp/inspection/${schedule.id}`}
                 className="text-[13px] font-medium transition-colors hover:underline"
-                style={{ color: 'var(--accent, #e8600a)' }}
+                style={{ color: 'var(--accent-text, #b04a06)' }}
               >
                 {t('assetDetail.newInspection')}
               </Link>
@@ -491,7 +491,7 @@ export default function AssetDetailPage() {
                               target="_blank"
                               rel="noopener noreferrer"
                               className="font-medium hover:underline"
-                              style={{ color: 'var(--accent, #e8600a)' }}
+                              style={{ color: 'var(--accent-text, #b04a06)' }}
                             >
                               PDF ↓
                             </a>
@@ -542,7 +542,7 @@ export default function AssetDetailPage() {
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center min-h-[44px] text-[12px] font-medium hover:underline"
-                          style={{ color: 'var(--accent, #e8600a)' }}
+                          style={{ color: 'var(--accent-text, #b04a06)' }}
                         >
                           PDF ↓
                         </a>

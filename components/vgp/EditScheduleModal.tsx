@@ -121,7 +121,7 @@ export function EditScheduleModal({ schedule, isOpen, onClose, onSuccess }: Edit
           )}
 
           {error && (
-            <div className="px-3 py-2 rounded-lg text-sm" style={{ backgroundColor: 'rgba(220,38,38,0.08)', color: 'var(--status-retard, #dc2626)' }}>
+            <div className="px-3 py-2 rounded-lg text-sm" style={{ backgroundColor: 'rgba(220,38,38,0.08)', color: 'var(--status-retard-ink, #991b1b)' }}>
               {error}
             </div>
           )}
@@ -137,7 +137,7 @@ export function EditScheduleModal({ schedule, isOpen, onClose, onSuccess }: Edit
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 text-white rounded-md font-medium hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: 'var(--accent, #e8600a)' }}
+              className="flex-1 px-4 py-2 text-white rounded-md font-medium hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: 'var(--accent-fill, #a84605)' }}
               disabled={isSubmitting}
             >
               {isSubmitting ? t('vgpEditModal.saving') : t('vgpEditModal.save')}

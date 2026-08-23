@@ -39,20 +39,38 @@ html[data-theme="light"],
   --page-bg: #f6f8fd;
   --card-bg: #edeef1;
   --sidebar-bg: #0a2730;
-  --accent: #e8600a;
   --input-bg: #e3e5e9;
 
-  /* Design spec semantic status colors */
-  --status-conforme: #059669;
-  --status-bientot: #d97706;
+  /* Brand orange, split by role (WCAG AA).
+     #e8600a is 2.96:1 on --card-bg and only 3.44:1 behind white text, so it
+     fails AA wherever it carries or backs text. It stays the brand colour for
+     large decorative use - sidebar rail, card borders, logo - while text and
+     button fills use the darker shades.
+       --accent          decorative only, never text or a text background
+       --accent-text     inline links and icons on light surfaces   4.73:1
+       --accent-fill     button/chip grounds behind white text       5.93:1 */
+  --accent: #e8600a;
+  --accent-text: #b04a06;
+  --accent-fill: #a84605;
+  --accent-fill-hover: #8f3b04;
+
+  /* Design spec semantic status colors.
+     Used for large figures and borders; small text uses the -ink pairs below. */
+  --status-conforme: #047954;
+  --status-bientot: #a85c04;
   --status-retard: #dc2626;
   --status-neutral: #6b7280;
+
+  /* Status text for small type (badges, 4.5:1 over their own tinted fill) */
+  --status-conforme-ink: #036143;
+  --status-bientot-ink: #8a4b03;
+  --status-retard-ink: #991b1b;
 
   /* Design spec text colors */
   --text-primary: #1a1a1a;
   --text-secondary: #444444;
-  --text-muted: #777777;
-  --text-hint: #888888;
+  --text-muted: #5f5f5f;
+  --text-hint: #6a6a6a;
 }
 
 @theme inline {

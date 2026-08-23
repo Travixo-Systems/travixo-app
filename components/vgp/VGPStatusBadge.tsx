@@ -30,12 +30,59 @@ const STATUS_CONFIG: Record<VGPStatus, StatusConfig> = {
   },
 };
 
-const STATUS_COLORS: Record<VGPStatus, { dot: string; text: string }> = {
-  overdue:   { dot: '#dc2626', text: '#dc2626' },
-  upcoming:  { dot: '#d97706', text: '#d97706' },
-  compliant: { dot: '#059669', text: '#059669' },
-  unknown:   { dot: '#6b7280', text: '#888888' },
+/* Text sits directly on the card surface; these all clear 4.5:1 there. */
+const STATUS_COLORS: Record<VGPStatus, { text: string }> = {
+  overdue:   { text: '#991b1b' },
+  upcoming:  { text: '#8a4b03' },
+  compliant: { text: '#036143' },
+  unknown:   { text: '#4b5563' },
 };
+
+/**
+ * Per-status glyph. Replaces the former colour-only dot: under deuteranopia the
+ * red and amber dots were indistinguishable, which WCAG 1.4.1 prohibits.
+ * Strokes are drawn on a 16px grid so they stay crisp at badge size.
+ */
+function StatusGlyph({ status, className }: { status: VGPStatus; className?: string }) {
+  const common = {
+    viewBox: '0 0 16 16',
+    className,
+    fill: 'none' as const,
+    'aria-hidden': true,
+    focusable: 'false' as const,
+  };
+  if (status === 'overdue') {
+    return (
+      <svg {...common}>
+        <path d="M8 2.4 1.9 13.1h12.2L8 2.4Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+        <path d="M8 6.4v3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+        <circle cx="8" cy="11.3" r=".95" fill="currentColor" />
+      </svg>
+    );
+  }
+  if (status === 'upcoming') {
+    return (
+      <svg {...common}>
+        <circle cx="8" cy="8" r="5.9" stroke="currentColor" strokeWidth="1.6" />
+        <path d="M8 4.6V8l2.3 1.7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  if (status === 'compliant') {
+    return (
+      <svg {...common}>
+        <circle cx="8" cy="8" r="5.9" stroke="currentColor" strokeWidth="1.6" />
+        <path d="m5.4 8.2 1.9 1.9 3.4-3.9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  return (
+    <svg {...common}>
+      <circle cx="8" cy="8" r="5.9" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M5.5 8h5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 interface VGPStatusBadgeProps {
   status: VGPStatus;
@@ -65,7 +112,7 @@ export function VGPStatusBadge({ status, size = 'sm', language: languageProp }: 
         role="status"
         aria-label={`VGP status: ${label}`}
       >
-        <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: colors.dot }} aria-hidden="true" />
+        <StatusGlyph status={status} className="w-[18px] h-[18px] flex-shrink-0" />
         {label}
       </span>
     );
@@ -78,7 +125,7 @@ export function VGPStatusBadge({ status, size = 'sm', language: languageProp }: 
       role="status"
       aria-label={`VGP status: ${label}`}
     >
-      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: colors.dot }} aria-hidden="true" />
+      <StatusGlyph status={status} className="w-4 h-4 flex-shrink-0" />
       {label}
     </span>
   );

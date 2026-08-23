@@ -252,7 +252,7 @@ export default function AssetsPageClient() {
                     <Link
                         href="/qr-codes"
                         className="hidden sm:flex items-center gap-2 px-4 py-2 text-white rounded-lg font-semibold transition-colors hover:opacity-90"
-                        style={{ backgroundColor: 'var(--accent, #e8600a)' }}
+                        style={{ backgroundColor: 'var(--accent-fill, #a84605)' }}
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <rect x="3" y="3" width="7" height="7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -347,7 +347,7 @@ export default function AssetsPageClient() {
                             onClick={() => setShowArchived(!showArchived)}
                             className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors"
                             style={{
-                                color: showArchived ? 'var(--accent, #e8600a)' : 'var(--text-muted, #777)',
+                                color: showArchived ? 'var(--accent-text, #b04a06)' : 'var(--text-muted, #5f5f5f)',
                                 backgroundColor: showArchived ? 'rgba(232, 96, 10, 0.08)' : 'transparent',
                             }}
                         >
@@ -401,7 +401,7 @@ export default function AssetsPageClient() {
                                                         onClick={() => setCurrentPage(pageNum)}
                                                         className={`px-3 py-1 border rounded-md ${
                                                             currentPage === pageNum
-                                                                ? 'text-white border-[#e8600a] bg-[#e8600a]'
+                                                                ? 'text-white border-[#a84605] bg-[#a84605]'
                                                                 : 'border-gray-300 hover:bg-black/[0.03]'
                                                         }`}
                                                     >

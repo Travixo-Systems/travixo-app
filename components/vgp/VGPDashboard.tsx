@@ -183,7 +183,7 @@ function VGPContent() {
             <button
               onClick={() => window.location.href = '/vgp/schedules?status=overdue'}
               className="mt-3 text-[13px] font-semibold transition-colors"
-              style={{ color: 'var(--accent, #e8600a)' }}
+              style={{ color: 'var(--accent-text, #b04a06)' }}
             >
               {t('vgpDashboard.viewAll')} →
             </button>
@@ -225,7 +225,7 @@ function VGPContent() {
             <button
               onClick={() => window.location.href = '/vgp/schedules?status=upcoming'}
               className="mt-3 text-[13px] font-semibold transition-colors"
-              style={{ color: 'var(--accent, #e8600a)' }}
+              style={{ color: 'var(--accent-text, #b04a06)' }}
             >
               {t('vgpDashboard.viewAllInTracking')} →
             </button>
