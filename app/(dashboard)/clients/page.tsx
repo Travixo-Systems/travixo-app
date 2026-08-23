@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { Plus, Search, Users, Package, AlertTriangle, Edit3, X, Loader2 } from 'lucide-react'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
@@ -19,6 +20,18 @@ interface Client {
 
 interface ClientWithRentals extends Client {
   active_rental_count: number
+  overdue_rental_count: number
+  soonest_vgp_due: string | null
+}
+
+/** Days until a VGP due date; null when there is no schedule. */
+function daysUntilVgp(due: string | null): number | null {
+  if (!due) return null
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const target = new Date(due)
+  target.setHours(0, 0, 0, 0)
+  return Math.floor((target.getTime() - today.getTime()) / 86_400_000)
 }
 
 export default function ClientsPage() {
@@ -48,12 +61,7 @@ export default function ClientsPage() {
       const res = await fetch(`/api/clients?${params}`)
       if (res.ok) {
         const data = await res.json()
-        // For each client, we'll show them but we don't have rental count from API yet
-        // The clients list response has basic info
-        setClients((data.clients || []).map((c: Client) => ({
-          ...c,
-          active_rental_count: 0, // Will be computed later if needed
-        })))
+        setClients(data.clients || [])
       }
     } catch {
       // Silent fail
@@ -219,55 +227,88 @@ export default function ClientsPage() {
         {/* Client cards */}
         {!loading && clients.length > 0 && (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {clients.map((client) => (
-              <div
-                key={client.id}
-                className="rounded-lg p-5 hover:bg-black/[0.02] transition-colors"
-                style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}
-              >
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-base truncate" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
-                      {client.name}
-                    </h3>
-                    {client.company && (
-                      <p className="text-[13px] mt-0.5 truncate" style={{ color: 'var(--text-muted, #777)' }}>{client.company}</p>
+            {clients.map((client) => {
+              const vgpDays = daysUntilVgp(client.soonest_vgp_due)
+              const vgpAtRisk = vgpDays !== null && vgpDays <= 30
+
+              return (
+                <div
+                  key={client.id}
+                  className="relative rounded-lg p-5 hover:bg-black/[0.02] transition-colors"
+                  style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-base truncate" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                        <Link href={`/clients/${client.id}`} className="hover:underline">
+                          {client.name}
+                        </Link>
+                      </h3>
+                      {client.company && (
+                        <p className="text-[13px] mt-0.5 truncate" style={{ color: 'var(--text-muted, #777)' }}>{client.company}</p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => openEdit(client)}
+                      aria-label={t('clients.editClient')}
+                      className="relative z-10 p-1.5 hover:bg-black/[0.05] rounded-lg transition-colors ml-2"
+                    >
+                      <Edit3 className="w-4 h-4" style={{ color: 'var(--text-muted, #777)' }} />
+                    </button>
+                  </div>
+
+                  <div className="space-y-1.5 mb-3">
+                    {client.email ? (
+                      <p className="text-[13px] truncate" style={{ color: 'var(--text-secondary, #444)' }}>{client.email}</p>
+                    ) : client.active_rental_count > 0 ? (
+                      <p className="text-[12px] inline-flex items-center gap-1.5" style={{ color: '#d97706' }}>
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        {t('clients.addEmail')}
+                      </p>
+                    ) : null}
+                    {client.phone && (
+                      <p className="text-[13px]" style={{ color: 'var(--text-secondary, #444)' }}>{client.phone}</p>
                     )}
                   </div>
-                  <button
-                    onClick={() => openEdit(client)}
-                    className="p-1.5 hover:bg-black/[0.05] rounded-lg transition-colors ml-2"
-                  >
-                    <Edit3 className="w-4 h-4" style={{ color: 'var(--text-muted, #777)' }} />
-                  </button>
-                </div>
 
-                <div className="space-y-1.5 mb-3">
-                  {client.email && (
-                    <p className="text-[13px] truncate" style={{ color: 'var(--text-secondary, #444)' }}>{client.email}</p>
+                  {client.notes && (
+                    <p className="text-[13px] line-clamp-2 mb-3" style={{ color: 'var(--text-hint, #888)' }}>{client.notes}</p>
                   )}
-                  {client.phone && (
-                    <p className="text-[13px]" style={{ color: 'var(--text-secondary, #444)' }}>{client.phone}</p>
-                  )}
-                </div>
 
-                {client.notes && (
-                  <p className="text-[13px] line-clamp-2 mb-3" style={{ color: 'var(--text-hint, #888)' }}>{client.notes}</p>
-                )}
+                  <div className="flex items-center flex-wrap gap-x-3 gap-y-2 pt-3 border-t" style={{ borderColor: '#dcdee3' }}>
+                    <div className="flex items-center gap-1.5">
+                      <Package className="w-3.5 h-3.5" style={{ color: 'var(--text-hint, #888)' }} />
+                      <span className="text-[13px]" style={{ color: 'var(--text-muted, #777)' }}>
+                        {client.active_rental_count} {t('clients.equipmentOut')}
+                      </span>
+                    </div>
 
-                <div className="flex items-center gap-3 pt-3 border-t" style={{ borderColor: '#dcdee3' }}>
-                  <div className="flex items-center gap-1.5">
-                    <Package className="w-3.5 h-3.5" style={{ color: 'var(--text-hint, #888)' }} />
-                    <span className="text-[13px]" style={{ color: 'var(--text-muted, #777)' }}>
-                      {new Date(client.created_at).toLocaleDateString(
-                        language === 'fr' ? 'fr-FR' : 'en-US',
-                        { day: 'numeric', month: 'short', year: 'numeric' }
-                      )}
-                    </span>
+                    {client.overdue_rental_count > 0 && (
+                      <span
+                        className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                        style={{ backgroundColor: 'rgba(220,38,38,0.1)', color: '#dc2626' }}
+                      >
+                        {client.overdue_rental_count} {t('clients.overdue')}
+                      </span>
+                    )}
+
+                    {vgpAtRisk && (
+                      <span
+                        className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                        style={{
+                          backgroundColor: vgpDays! < 0 ? 'rgba(220,38,38,0.1)' : 'rgba(217,119,6,0.1)',
+                          color: vgpDays! < 0 ? '#dc2626' : '#d97706',
+                        }}
+                      >
+                        {vgpDays! < 0
+                          ? t('clients.vgpOverdue')
+                          : `${t('clients.vgpDue')} ${vgpDays}${language === 'fr' ? 'j' : 'd'}`}
+                      </span>
+                    )}
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
 

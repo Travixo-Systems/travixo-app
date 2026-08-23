@@ -138,32 +138,28 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
     if (!activeRental || !nextDueDate) return;
     setRecallSending(true);
     try {
-      const supabase = createClient();
-
-      // Get org id from current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-      const { data: userData } = await supabase
-        .from('users')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
-      if (!userData?.organization_id) throw new Error('No organization');
-
-      const { error: insertErr } = await supabase
-        .from('client_recall_alerts')
-        .insert({
-          organization_id: userData.organization_id,
+      const res = await fetch('/api/vgp/recall', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           rental_id: activeRental.id,
-          client_id: activeRental.client_id,
-          asset_id: asset.id,
-          alert_type: 'manual_recall',
           next_due_date: nextDueDate.toISOString().split('T')[0],
-        });
-      if (insertErr) throw insertErr;
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (data.error === 'client_email_missing') {
+          toast.error(t('vgpRentalContext.recallNoEmail'));
+          return;
+        }
+        throw new Error(data.error || 'recall_failed');
+      }
+
       toast.success(`${t('vgpRentalContext.recallSent')} ${activeRental.client_name}`);
     } catch (err) {
-      console.error('Recall insert error:', err);
+      console.error('Recall error:', err);
       toast.error(t('vgpRentalContext.recallFailed'));
     } finally {
       setRecallSending(false);

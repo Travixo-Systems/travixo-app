@@ -3309,6 +3309,74 @@ export const translations = {
       en: "equipment out",
       fr: "équipement(s) sorti(s)",
     },
+    backToClients: {
+      en: "Back to clients",
+      fr: "Retour aux clients",
+    },
+    currentlyOut: {
+      en: "Currently out",
+      fr: "Actuellement sorti",
+    },
+    rentalHistory: {
+      en: "Rental history",
+      fr: "Historique des locations",
+    },
+    noActiveRentals: {
+      en: "No equipment currently out with this client",
+      fr: "Aucun équipement actuellement chez ce client",
+    },
+    noRentalHistory: {
+      en: "No past rentals",
+      fr: "Aucune location passée",
+    },
+    checkedOut: {
+      en: "Checked out",
+      fr: "Sorti le",
+    },
+    dueBack: {
+      en: "Due back",
+      fr: "Retour prévu",
+    },
+    returnedOn: {
+      en: "Returned",
+      fr: "Retourné le",
+    },
+    overdue: {
+      en: "Overdue",
+      fr: "En retard",
+    },
+    vgpDue: {
+      en: "VGP due",
+      fr: "VGP due",
+    },
+    vgpOverdue: {
+      en: "VGP overdue",
+      fr: "VGP en retard",
+    },
+    noEmailWarning: {
+      en: "No email on file - VGP recall notices cannot be sent to this client.",
+      fr: "Aucun email enregistré - les rappels VGP ne peuvent pas être envoyés à ce client.",
+    },
+    addEmail: {
+      en: "Add email",
+      fr: "Ajouter un email",
+    },
+    sendRecall: {
+      en: "Send VGP recall",
+      fr: "Envoyer un rappel VGP",
+    },
+    recallSentTo: {
+      en: "Recall sent to",
+      fr: "Rappel envoyé à",
+    },
+    viewAsset: {
+      en: "View asset",
+      fr: "Voir l'actif",
+    },
+    clientNotFound: {
+      en: "Client not found",
+      fr: "Client introuvable",
+    },
   },
 
   // ============================================================================
@@ -3788,6 +3856,10 @@ export const translations = {
     onSiteInspection: { en: "On-site inspection", fr: "Inspection sur site" },
     recallSent: { en: "Recall sent for", fr: "Rappel envoyé pour" },
     recallFailed: { en: "Failed to send recall", fr: "Erreur lors de l'envoi du rappel" },
+    recallNoEmail: {
+      en: "No email address on file for this client. Add one to send a recall.",
+      fr: "Aucune adresse email enregistrée pour ce client. Ajoutez-en une pour envoyer un rappel.",
+    },
     inspectionLocation: { en: "Inspection location", fr: "Lieu d'inspection" },
     depot: { en: "Depot", fr: "Dépôt" },
     clientSite: { en: "Client site", fr: "Sur site client" },

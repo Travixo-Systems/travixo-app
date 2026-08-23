@@ -28,7 +28,7 @@ interface DashboardData {
   vgpUpcoming: number
   vgpCompliant: number
   upcomingInspections: { id: string; name: string; daysUntil: number }[]
-  upcomingReturns: { id: string; name: string; clientName: string; daysUntil: number }[]
+  upcomingReturns: { id: string; name: string; clientName: string; clientId: string | null; daysUntil: number }[]
   categoryUtilization: CategoryUtilization[]
 }
 
@@ -133,7 +133,8 @@ export default function DashboardPage() {
     // Upcoming rental returns
     const { data: rentals } = await supabase
       .from('rentals')
-      .select('id, client_name, expected_return_date, assets(name)')
+      .select('id, client_id, client_name, expected_return_date, assets(name)')
+      .eq('organization_id', orgId!)
       .eq('status', 'active')
       .order('expected_return_date', { ascending: true })
       .limit(3)
@@ -142,7 +143,13 @@ export default function DashboardPage() {
       const days = r.expected_return_date
         ? Math.ceil((new Date(r.expected_return_date).getTime() - today.getTime()) / 86_400_000)
         : 0
-      return { id: r.id, name: r.assets?.name || 'N/A', clientName: r.client_name, daysUntil: days }
+      return {
+        id: r.id,
+        name: r.assets?.name || 'N/A',
+        clientName: r.client_name,
+        clientId: r.client_id,
+        daysUntil: days,
+      }
     })
 
     // Per-category utilization
@@ -340,7 +347,13 @@ export default function DashboardPage() {
                       {r.name}
                     </p>
                     <p className="text-[11px] sm:text-[12px]" style={{ color: 'var(--text-muted, #777)' }}>
-                      {r.clientName}
+                      {r.clientId ? (
+                        <Link href={`/clients/${r.clientId}`} className="hover:underline">
+                          {r.clientName}
+                        </Link>
+                      ) : (
+                        r.clientName
+                      )}
                     </p>
                   </div>
                   <span

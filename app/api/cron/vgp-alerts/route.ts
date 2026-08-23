@@ -494,8 +494,91 @@ export async function runVGPAlertsCron(): Promise<CronResult> {
 interface RecallResult {
   organizations_processed: number;
   recall_emails_sent: number;
+  /** Recall notices delivered to the renting clients themselves. */
+  client_emails_sent: number;
   recall_items_found: number;
   errors: string[];
+}
+
+/**
+ * Email each client holding equipment with an approaching VGP deadline.
+ *
+ * Groups a batch by client so a client with three machines gets one email
+ * listing all three, not three separate emails. Clients with no email on file
+ * are skipped and logged - the internal alert still covers those.
+ */
+interface RecallRentalRow {
+  client_name: string;
+  client_contact: string | null;
+  clients: { name: string | null; email: string | null } | null;
+  assets: { name: string | null; serial_number: string | null } | null;
+}
+
+async function notifyClientsOfRecall(
+  orgName: string,
+  batch: { rental: RecallRentalRow; nextDueDate: string; daysUntilDue: number }[]
+): Promise<number> {
+  const RECALL_PREFIX = "[RECALL-CLIENT]";
+  const { sendClientRecallNotice } = await import("@/lib/email/email-service");
+
+  interface NoticeItem {
+    assetName: string;
+    serialNumber: string;
+    vgpDueDate: string;
+    daysUntilDue: number;
+  }
+
+  // Group items by recipient email.
+  const byEmail = new Map<string, { clientName: string; items: NoticeItem[] }>();
+
+  for (const item of batch) {
+    const linked = item.rental.clients;
+    const contact = item.rental.client_contact;
+    const email: string | null =
+      linked?.email || (contact && contact.includes("@") ? contact.trim() : null);
+
+    if (!email) continue;
+
+    const [y, m, d] = item.nextDueDate.split("-");
+    const entry: { clientName: string; items: NoticeItem[] } = byEmail.get(email) || {
+      clientName: linked?.name || item.rental.client_name,
+      items: [],
+    };
+    entry.items.push({
+      assetName: item.rental.assets?.name || "Équipement",
+      serialNumber: item.rental.assets?.serial_number || "-",
+      vgpDueDate: `${d}/${m}/${y}`,
+      daysUntilDue: item.daysUntilDue,
+    });
+    byEmail.set(email, entry);
+  }
+
+  const skipped = batch.length - [...byEmail.values()].reduce((n, e) => n + e.items.length, 0);
+  if (skipped > 0) {
+    console.log(`${RECALL_PREFIX} ${skipped} item(s) skipped - no client email on file`);
+  }
+
+  let sentCount = 0;
+  for (const [email, entry] of byEmail) {
+    try {
+      const res = await sendClientRecallNotice({
+        organizationName: orgName,
+        clientName: entry.clientName,
+        clientEmail: email,
+        items: entry.items,
+      });
+      if (res.success) {
+        sentCount++;
+      } else {
+        console.log(`${RECALL_PREFIX} Failed for ${email}: ${res.error}`);
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.log(`${RECALL_PREFIX} Exception for ${email}: ${msg}`);
+    }
+  }
+
+  return sentCount;
 }
 
 async function runClientRecallPass(): Promise<RecallResult> {
@@ -505,6 +588,7 @@ async function runClientRecallPass(): Promise<RecallResult> {
   const result: RecallResult = {
     organizations_processed: 0,
     recall_emails_sent: 0,
+    client_emails_sent: 0,
     recall_items_found: 0,
     errors: [],
   };
@@ -525,8 +609,13 @@ async function runClientRecallPass(): Promise<RecallResult> {
         organization_id,
         client_name,
         client_id,
+        client_contact,
         checkout_date,
         expected_return_date,
+        clients (
+          name,
+          email
+        ),
         assets (
           name,
           serial_number,
@@ -741,6 +830,12 @@ async function runClientRecallPass(): Promise<RecallResult> {
             console.log(
               `${RECALL_PREFIX} Sent ${alertType} for ${batch.length} items to ${orgName}`
             );
+
+            // Notify the clients themselves. The internal email above tells
+            // staff what to plan; this is what actually gets the equipment
+            // back before the VGP deadline.
+            const sent = await notifyClientsOfRecall(orgName, batch);
+            result.client_emails_sent += sent;
           } else {
             console.log(
               `${RECALL_PREFIX} Failed ${alertType} for ${orgName}: ${sendResult.error}`
