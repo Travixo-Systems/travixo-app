@@ -28,7 +28,7 @@ interface DashboardData {
   vgpUpcoming: number
   vgpCompliant: number
   upcomingInspections: { id: string; name: string; daysUntil: number }[]
-  upcomingReturns: { id: string; name: string; clientName: string; clientId: string | null; daysUntil: number }[]
+  upcomingReturns: { id: string; assetId: string; name: string; clientName: string; daysUntil: number }[]
   categoryUtilization: CategoryUtilization[]
 }
 
@@ -133,7 +133,7 @@ export default function DashboardPage() {
     // Upcoming rental returns
     const { data: rentals } = await supabase
       .from('rentals')
-      .select('id, client_id, client_name, expected_return_date, assets(name)')
+      .select('id, asset_id, client_name, expected_return_date, assets(name)')
       .eq('organization_id', orgId!)
       .eq('status', 'active')
       .order('expected_return_date', { ascending: true })
@@ -145,9 +145,9 @@ export default function DashboardPage() {
         : 0
       return {
         id: r.id,
+        assetId: r.asset_id,
         name: r.assets?.name || 'N/A',
         clientName: r.client_name,
-        clientId: r.client_id,
         daysUntil: days,
       }
     })
@@ -341,19 +341,20 @@ export default function DashboardPage() {
           ) : (
             <div className="space-y-1 sm:space-y-2">
               {(isCompact ? data.upcomingReturns.slice(0, 1) : data.upcomingReturns).map((r) => (
-                <div key={r.id} className="flex items-center justify-between min-h-[36px] sm:min-h-[44px]">
+                // Whole row is one link: a partially-clickable row produces dead
+                // clicks for field users. Targets the asset, where the return
+                // action lives; the client is reachable from there.
+                <Link
+                  key={r.id}
+                  href={`/assets/${r.assetId}`}
+                  className="flex items-center justify-between min-h-[36px] sm:min-h-[44px] -mx-2 px-2 rounded-md hover:bg-black/[0.04] transition-colors"
+                >
                   <div className="min-w-0">
                     <p className="text-[13px] sm:text-[14px] font-medium truncate" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
                       {r.name}
                     </p>
-                    <p className="text-[11px] sm:text-[12px]" style={{ color: 'var(--text-muted, #777)' }}>
-                      {r.clientId ? (
-                        <Link href={`/clients/${r.clientId}`} className="hover:underline">
-                          {r.clientName}
-                        </Link>
-                      ) : (
-                        r.clientName
-                      )}
+                    <p className="text-[11px] sm:text-[12px] truncate" style={{ color: 'var(--text-muted, #777)' }}>
+                      {r.clientName}
                     </p>
                   </div>
                   <span
@@ -367,12 +368,12 @@ export default function DashboardPage() {
                       ? (language === 'fr' ? 'En retard' : 'Overdue')
                       : `${r.daysUntil}${language === 'fr' ? 'j' : 'd'}`}
                   </span>
-                </div>
+                </Link>
               ))}
             </div>
           )}
           <Link
-            href="/clients"
+            href="/assets?status=in_use"
             className="inline-flex items-center gap-1 text-[12px] sm:text-[13px] font-medium mt-2 sm:mt-3 transition-colors hover:underline"
             style={{ color: 'var(--accent, #e8600a)' }}
           >

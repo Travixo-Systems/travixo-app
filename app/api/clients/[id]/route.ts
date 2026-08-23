@@ -82,6 +82,26 @@ export async function GET(
       }
     }
 
+    // Most recent recall already sent per rental. Surfacing this prevents
+    // re-nagging a client about machines they have already acknowledged.
+    const lastRecallByRental = new Map<string, string>()
+
+    if (allRentals.length > 0) {
+      const { data: alerts } = await supabase
+        .from('client_recall_alerts')
+        .select('rental_id, sent_at')
+        .eq('organization_id', userData.organization_id)
+        .eq('sent', true)
+        .in('rental_id', allRentals.map((r) => r.id))
+        .order('sent_at', { ascending: false })
+
+      for (const a of alerts || []) {
+        if (a.sent_at && !lastRecallByRental.has(a.rental_id)) {
+          lastRecallByRental.set(a.rental_id, a.sent_at)
+        }
+      }
+    }
+
     const decorate = (r: RentalWithAsset) => ({
       id: r.id,
       asset_id: r.asset_id,
@@ -93,6 +113,7 @@ export async function GET(
       return_condition: r.return_condition,
       status: r.status,
       vgp_due_date: vgpByAsset.get(r.asset_id) || null,
+      last_recall_at: lastRecallByRental.get(r.id) || null,
     })
 
     return NextResponse.json({

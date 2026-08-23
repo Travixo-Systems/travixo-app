@@ -3377,6 +3377,66 @@ export const translations = {
       en: "Client not found",
       fr: "Client introuvable",
     },
+    viewAllEquipment: {
+      en: "View all equipment",
+      fr: "Voir tout l'équipement",
+    },
+    equipmentPageTitle: {
+      en: "Equipment",
+      fr: "Équipement",
+    },
+    backToClient: {
+      en: "Back to client",
+      fr: "Retour au client",
+    },
+    filterAll: {
+      en: "All",
+      fr: "Tout",
+    },
+    filterOut: {
+      en: "Currently out",
+      fr: "Actuellement sorti",
+    },
+    filterReturned: {
+      en: "Returned",
+      fr: "Retourné",
+    },
+    filterVgpRisk: {
+      en: "VGP at risk",
+      fr: "VGP à risque",
+    },
+    selectAll: {
+      en: "Select all",
+      fr: "Tout sélectionner",
+    },
+    clearSelection: {
+      en: "Clear",
+      fr: "Effacer",
+    },
+    recallSelected: {
+      en: "Send recall",
+      fr: "Envoyer un rappel",
+    },
+    recallSelectedCount: {
+      en: "Recall selected",
+      fr: "Rappeler la sélection",
+    },
+    recallGroupedNote: {
+      en: "Sends one email listing the selected equipment.",
+      fr: "Envoie un seul email listant l'équipement sélectionné.",
+    },
+    noEquipment: {
+      en: "No equipment matches this filter",
+      fr: "Aucun équipement ne correspond à ce filtre",
+    },
+    lastRecall: {
+      en: "Last recall",
+      fr: "Dernier rappel",
+    },
+    neverRecalled: {
+      en: "Never recalled",
+      fr: "Jamais rappelé",
+    },
   },
 
   // ============================================================================

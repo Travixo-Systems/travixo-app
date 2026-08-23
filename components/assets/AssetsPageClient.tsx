@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import AddAssetButton from '@/components/assets/AddAssetButton'
 import ImportAssetsButton from '@/components/assets/ImportAssetsButton'
 import AssetsTableClient from '@/components/assets/AssetsTableClient'
@@ -37,18 +37,26 @@ interface Asset {
     }[] | null
 }
 
+const VALID_STATUSES = ['all', 'available', 'in_use', 'maintenance', 'retired']
+
 export default function AssetsPageClient() {
     const router = useRouter()
+    const searchParams = useSearchParams()
     const supabase = createClient()
     const { language } = useLanguage()
     const t = createTranslator(language)
-    
+
+    const statusParam = searchParams.get('status')
+    const initialStatus = statusParam && VALID_STATUSES.includes(statusParam) ? statusParam : 'all'
+
     const [assets, setAssets] = useState<Asset[]>([])
     const [loading, setLoading] = useState(true)
     
     // Search and filter states
     const [searchQuery, setSearchQuery] = useState('')
-    const [statusFilter, setStatusFilter] = useState<string>('all')
+    // Seeded from ?status= so links like "view rentals" land on a real filtered
+    // list instead of an unfiltered page the user has to re-filter by hand.
+    const [statusFilter, setStatusFilter] = useState<string>(initialStatus)
     const [categoryFilter, setCategoryFilter] = useState<string>('all')
     const [showArchived, setShowArchived] = useState(false)
     const [currentPage, setCurrentPage] = useState(1)

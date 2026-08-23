@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft,
+  ArrowRight,
   Package,
   AlertTriangle,
   Mail,
@@ -230,19 +231,23 @@ export default function ClientDetailPage() {
           </div>
         )}
 
-        {/* Summary tiles */}
+        {/* Summary tiles - each is a whole-tile link into the equipment list,
+            pre-filtered, so there are no dead zones to click. */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
           <SummaryTile
+            href={`/clients/${clientId}/equipment?filter=out`}
             label={t('clients.currentlyOut')}
             value={activeRentals.length}
             accent="var(--text-primary, #1a1a1a)"
           />
           <SummaryTile
+            href={`/clients/${clientId}/equipment?filter=out`}
             label={t('clients.overdue')}
             value={overdueCount}
             accent={overdueCount > 0 ? '#dc2626' : 'var(--text-primary, #1a1a1a)'}
           />
           <SummaryTile
+            href={`/clients/${clientId}/equipment?filter=all`}
             label={t('clients.totalRentals')}
             value={activeRentals.length + pastRentals.length}
             accent="var(--text-primary, #1a1a1a)"
@@ -270,14 +275,25 @@ export default function ClientDetailPage() {
           </div>
         )}
 
-        {/* Active rentals */}
+        {/* Active rentals - summary only; the full, actionable list lives on
+            the equipment page. */}
         <section className="mb-8">
-          <h2
-            className="text-[13px] font-semibold uppercase tracking-wide mb-3"
-            style={{ color: 'var(--text-hint, #888)' }}
-          >
-            {t('clients.currentlyOut')}
-          </h2>
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h2
+              className="text-[13px] font-semibold uppercase tracking-wide"
+              style={{ color: 'var(--text-hint, #888)' }}
+            >
+              {t('clients.currentlyOut')}
+            </h2>
+            <Link
+              href={`/clients/${clientId}/equipment?filter=out`}
+              className="inline-flex items-center gap-1 text-[13px] font-medium hover:underline"
+              style={{ color: 'var(--accent, #e8600a)' }}
+            >
+              {t('clients.viewAllEquipment')}
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
 
           {activeRentals.length === 0 ? (
             <p className="text-[14px] py-4" style={{ color: 'var(--text-muted, #777)' }}>
@@ -285,7 +301,7 @@ export default function ClientDetailPage() {
             </p>
           ) : (
             <div className="space-y-2">
-              {activeRentals.map((rental) => {
+              {activeRentals.slice(0, 5).map((rental) => {
                 const returnDays = daysUntil(rental.expected_return_date)
                 const vgpDays = daysUntil(rental.vgp_due_date)
                 const isOverdue = returnDays !== null && returnDays < 0
@@ -370,18 +386,41 @@ export default function ClientDetailPage() {
                   </div>
                 )
               })}
+
+              {activeRentals.length > 5 && (
+                <Link
+                  href={`/clients/${clientId}/equipment?filter=out`}
+                  className="flex items-center justify-center gap-1 rounded-lg py-3 text-[13px] font-medium hover:bg-black/[0.04] transition-colors"
+                  style={{ backgroundColor: 'var(--card-bg, #edeff2)', color: 'var(--accent, #e8600a)' }}
+                >
+                  {t('clients.viewAllEquipment')} ({activeRentals.length})
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              )}
             </div>
           )}
         </section>
 
         {/* History */}
         <section>
-          <h2
-            className="text-[13px] font-semibold uppercase tracking-wide mb-3"
-            style={{ color: 'var(--text-hint, #888)' }}
-          >
-            {t('clients.rentalHistory')}
-          </h2>
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h2
+              className="text-[13px] font-semibold uppercase tracking-wide"
+              style={{ color: 'var(--text-hint, #888)' }}
+            >
+              {t('clients.rentalHistory')}
+            </h2>
+            {pastRentals.length > 0 && (
+              <Link
+                href={`/clients/${clientId}/equipment?filter=returned`}
+                className="inline-flex items-center gap-1 text-[13px] font-medium hover:underline"
+                style={{ color: 'var(--accent, #e8600a)' }}
+              >
+                {t('clients.viewAllEquipment')}
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            )}
+          </div>
 
           {pastRentals.length === 0 ? (
             <p className="text-[14px] py-4" style={{ color: 'var(--text-muted, #777)' }}>
@@ -389,19 +428,21 @@ export default function ClientDetailPage() {
             </p>
           ) : (
             <div className="space-y-1.5">
-              {pastRentals.map((rental) => (
-                <div
+              {pastRentals.slice(0, 5).map((rental) => (
+                // Whole row links, not just the name - a partially-clickable
+                // row produces dead clicks.
+                <Link
                   key={rental.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg px-4 py-3"
+                  href={`/assets/${rental.asset_id}`}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg px-4 py-3 hover:bg-black/[0.04] transition-colors"
                   style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}
                 >
-                  <Link
-                    href={`/assets/${rental.asset_id}`}
-                    className="text-[14px] font-medium hover:underline min-w-0"
+                  <span
+                    className="text-[14px] font-medium min-w-0"
                     style={{ color: 'var(--text-primary, #1a1a1a)' }}
                   >
                     {rental.asset_name || t('clients.viewAsset')}
-                  </Link>
+                  </span>
                   <span className="text-[12px]" style={{ color: 'var(--text-muted, #777)' }}>
                     {formatDate(rental.checkout_date)}
                     {' → '}
@@ -409,8 +450,19 @@ export default function ClientDetailPage() {
                       ? formatDate(rental.actual_return_date)
                       : '-'}
                   </span>
-                </div>
+                </Link>
               ))}
+
+              {pastRentals.length > 5 && (
+                <Link
+                  href={`/clients/${clientId}/equipment?filter=returned`}
+                  className="flex items-center justify-center gap-1 rounded-lg py-3 text-[13px] font-medium hover:bg-black/[0.04] transition-colors"
+                  style={{ backgroundColor: 'var(--card-bg, #edeff2)', color: 'var(--accent, #e8600a)' }}
+                >
+                  {t('clients.viewAllEquipment')} ({pastRentals.length})
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              )}
             </div>
           )}
         </section>
@@ -423,13 +475,19 @@ function SummaryTile({
   label,
   value,
   accent,
+  href,
 }: {
   label: string
   value: number
   accent: string
+  href: string
 }) {
   return (
-    <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
+    <Link
+      href={href}
+      className="block rounded-lg p-4 hover:bg-black/[0.04] transition-colors"
+      style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}
+    >
       <div className="flex items-center gap-1.5 mb-1">
         <Package className="w-3.5 h-3.5" style={{ color: 'var(--text-hint, #888)' }} />
         <span
@@ -442,6 +500,6 @@ function SummaryTile({
       <p className="text-[24px] font-semibold" style={{ color: accent }}>
         {value}
       </p>
-    </div>
+    </Link>
   )
 }

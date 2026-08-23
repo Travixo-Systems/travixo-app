@@ -5,8 +5,18 @@ import { NextRequest, NextResponse } from 'next/server'
 /**
  * POST /api/vgp/recall
  *
- * Sends a VGP recall notice to the client currently holding a rented asset,
- * and records the send in client_recall_alerts.
+ * Sends a VGP recall notice to the client currently holding rented assets, and
+ * records the send in client_recall_alerts.
+ *
+ * Accepts either a single rental:
+ *   { rental_id, next_due_date }
+ * or several belonging to the SAME client:
+ *   { rentals: [{ rental_id, next_due_date }, ...] }
+ *
+ * Several rentals produce ONE grouped email listing every machine, matching how
+ * the nightly cron groups per client. Selecting a subset is deliberate: after a
+ * client has acknowledged an earlier recall, you want to chase only the machines
+ * that were not in it rather than re-nagging about the ones they handled.
  *
  * Replaces the previous client-side insert in AddVGPScheduleModal, which was
  * blocked by RLS (client_recall_alerts has no user INSERT policy - inserts are
@@ -32,18 +42,33 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { rental_id, next_due_date } = body
+
+    // Normalize both request shapes into one list.
+    const requested: { rental_id: string; next_due_date: string }[] = Array.isArray(body.rentals)
+      ? body.rentals
+      : [{ rental_id: body.rental_id, next_due_date: body.next_due_date }]
+
+    if (requested.length === 0) {
+      return NextResponse.json({ error: 'no_rentals' }, { status: 400 })
+    }
+    if (requested.length > 50) {
+      return NextResponse.json({ error: 'too_many_rentals' }, { status: 400 })
+    }
 
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-    if (!rental_id || !uuidRegex.test(rental_id)) {
-      return NextResponse.json({ error: 'invalid_rental_id' }, { status: 400 })
-    }
-    if (!next_due_date || !/^\d{4}-\d{2}-\d{2}$/.test(next_due_date)) {
-      return NextResponse.json({ error: 'invalid_next_due_date' }, { status: 400 })
+    for (const r of requested) {
+      if (!r?.rental_id || !uuidRegex.test(r.rental_id)) {
+        return NextResponse.json({ error: 'invalid_rental_id' }, { status: 400 })
+      }
+      if (!r?.next_due_date || !/^\d{4}-\d{2}-\d{2}$/.test(r.next_due_date)) {
+        return NextResponse.json({ error: 'invalid_next_due_date' }, { status: 400 })
+      }
     }
 
-    // Load the rental, scoped to the caller's org (RLS also enforces this).
-    const { data: rental, error: rentalError } = await supabase
+    const dueByRental = new Map(requested.map((r) => [r.rental_id, r.next_due_date]))
+
+    // Load the rentals, scoped to the caller's org (RLS also enforces this).
+    const { data: rentalData, error: rentalError } = await supabase
       .from('rentals')
       .select(`
         id,
@@ -55,45 +80,57 @@ export async function POST(request: NextRequest) {
         status,
         assets ( name, serial_number )
       `)
-      .eq('id', rental_id)
-      .eq('organization_id', userData.organization_id)
-      .single() as { data: RentalRow | null; error: unknown }
+      .in('id', [...dueByRental.keys()])
+      .eq('organization_id', userData.organization_id) as { data: RentalRow[] | null; error: unknown }
 
-    if (rentalError || !rental) {
+    const rentals = rentalData || []
+
+    if (rentalError || rentals.length === 0) {
+      return NextResponse.json({ error: 'rental_not_found' }, { status: 404 })
+    }
+    if (rentals.length !== dueByRental.size) {
       return NextResponse.json({ error: 'rental_not_found' }, { status: 404 })
     }
 
-    if (rental.status !== 'active') {
+    if (rentals.some((r) => r.status !== 'active')) {
       return NextResponse.json({ error: 'rental_not_active' }, { status: 409 })
     }
+
+    // Every rental must belong to the same client - one email, one recipient.
+    const clientKey = (r: RentalRow) => r.client_id || `name:${r.client_name}`
+    if (new Set(rentals.map(clientKey)).size > 1) {
+      return NextResponse.json({ error: 'mixed_clients' }, { status: 400 })
+    }
+
+    const first = rentals[0]
 
     // Resolve the client's email: prefer the linked client record, fall back to
     // client_contact when it looks like an email address (legacy rentals with
     // no client_id).
     let clientEmail: string | null = null
-    let clientDisplayName = rental.client_name
+    let clientDisplayName = first.client_name
 
-    if (rental.client_id) {
+    if (first.client_id) {
       const { data: client } = await supabase
         .from('clients')
         .select('name, email')
-        .eq('id', rental.client_id)
+        .eq('id', first.client_id)
         .eq('organization_id', userData.organization_id)
         .single()
 
       if (client) {
-        clientDisplayName = client.name || rental.client_name
+        clientDisplayName = client.name || first.client_name
         clientEmail = client.email
       }
     }
 
-    if (!clientEmail && rental.client_contact?.includes('@')) {
-      clientEmail = rental.client_contact.trim()
+    if (!clientEmail && first.client_contact?.includes('@')) {
+      clientEmail = first.client_contact.trim()
     }
 
     if (!clientEmail) {
       return NextResponse.json(
-        { error: 'client_email_missing', client_id: rental.client_id },
+        { error: 'client_email_missing', client_id: first.client_id },
         { status: 422 }
       )
     }
@@ -105,16 +142,25 @@ export async function POST(request: NextRequest) {
       .eq('id', userData.organization_id)
       .single()
 
-    const dueDate = new Date(next_due_date)
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-    dueDate.setHours(0, 0, 0, 0)
-    const daysUntilDue = Math.floor(
-      (dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-    )
 
-    const [y, m, d] = next_due_date.split('-')
-    const formattedDue = `${d}/${m}/${y}`
+    const items = rentals.map((r) => {
+      const due = dueByRental.get(r.id)!
+      const dueDate = new Date(due)
+      dueDate.setHours(0, 0, 0, 0)
+      const [y, m, d] = due.split('-')
+
+      return {
+        assetName: r.assets?.name || 'Équipement',
+        serialNumber: r.assets?.serial_number || '-',
+        vgpDueDate: `${d}/${m}/${y}`,
+        daysUntilDue: Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)),
+      }
+    })
+
+    // Soonest deadline first, so the most urgent machine leads the email.
+    items.sort((a, b) => a.daysUntilDue - b.daysUntilDue)
 
     const { sendClientRecallNotice } = await import('@/lib/email/email-service')
 
@@ -122,14 +168,7 @@ export async function POST(request: NextRequest) {
       organizationName: org?.name || 'TraviXO',
       clientName: clientDisplayName,
       clientEmail,
-      items: [
-        {
-          assetName: rental.assets?.name || 'Équipement',
-          serialNumber: rental.assets?.serial_number || '-',
-          vgpDueDate: formattedDue,
-          daysUntilDue,
-        },
-      ],
+      items,
       contactEmail: userData.email || null,
       contactPhone: org?.phone || null,
     })
@@ -139,24 +178,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'email_failed' }, { status: 502 })
     }
 
-    // Record the send with the service role: client_recall_alerts intentionally
-    // has no user INSERT policy.
+    // Record the sends with the service role: client_recall_alerts
+    // intentionally has no user INSERT policy.
     const serviceUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
     if (serviceUrl && serviceKey) {
       const admin = createServiceClient(serviceUrl, serviceKey)
-      const { error: insertError } = await admin.from('client_recall_alerts').insert({
-        organization_id: userData.organization_id,
-        rental_id: rental.id,
-        client_id: rental.client_id,
-        asset_id: rental.asset_id,
-        alert_type: 'manual_recall',
-        next_due_date,
-        sent: true,
-        sent_at: new Date().toISOString(),
-        email_sent_to: [clientEmail],
-      })
+      const sentAt = new Date().toISOString()
+
+      const { error: insertError } = await admin.from('client_recall_alerts').insert(
+        rentals.map((r) => ({
+          organization_id: userData.organization_id,
+          rental_id: r.id,
+          client_id: r.client_id,
+          asset_id: r.asset_id,
+          alert_type: 'manual_recall',
+          next_due_date: dueByRental.get(r.id)!,
+          sent: true,
+          sent_at: sentAt,
+          email_sent_to: [clientEmail],
+        }))
+      )
 
       // The email already went out; a logging failure must not fail the request.
       if (insertError) {
@@ -164,7 +207,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, sent_to: clientEmail })
+    return NextResponse.json({
+      success: true,
+      sent_to: clientEmail,
+      count: rentals.length,
+    })
   } catch (error) {
     console.error('Recall error:', error)
     return NextResponse.json({ error: 'internal_error' }, { status: 500 })
