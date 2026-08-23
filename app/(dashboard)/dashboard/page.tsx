@@ -10,6 +10,7 @@ import { createTranslator } from "@/lib/i18n"
 import { createClient } from "@/lib/supabase/client"
 import OnboardingBanner from "@/components/dashboard/OnboardingBanner"
 import StatusBadge from "@/components/ui/StatusBadge"
+import { useCountUp } from "@/lib/hooks/useCountUp"
 
 interface CategoryUtilization {
   category: string
@@ -228,13 +229,7 @@ export default function DashboardPage() {
     setLoading(false)
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: 'var(--accent, #e8600a)' }} />
-      </div>
-    )
-  }
+  if (loading) return <DashboardSkeleton />
 
   if (!data) return null
 
@@ -243,7 +238,7 @@ export default function DashboardPage() {
   })
 
   return (
-    <div className="space-y-3 sm:space-y-4 min-[1026px]:space-y-5 p-3 md:p-6">
+    <div className="space-y-3 sm:space-y-4 min-[1026px]:space-y-5 p-3 md:p-6 animate-enter">
       {/* Onboarding */}
       {data.orgId && (
         <OnboardingBanner organizationId={data.orgId} onboardingCompleted={data.onboardingCompleted} />
@@ -519,6 +514,46 @@ export default function DashboardPage() {
   )
 }
 
+/**
+ * Loading state for the dashboard.
+ *
+ * Deliberately mirrors the real layout - same grids, same card heights - so
+ * content replaces the placeholder in place instead of the page reflowing.
+ * The dashboard issues several sequential queries; a shaped skeleton reports
+ * progress where a centred spinner only reports waiting.
+ */
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-3 sm:space-y-4 min-[1026px]:space-y-5 p-3 md:p-6" aria-busy="true" aria-live="polite">
+      <span className="sr-only">Chargement du tableau de bord</span>
+
+      <div className="space-y-2">
+        <div className="skeleton h-6 w-56" />
+        <div className="skeleton h-4 w-72" />
+      </div>
+
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="skeleton h-[86px] sm:h-[104px]" />
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 min-[1026px]:grid-cols-2 gap-3">
+        <div className="skeleton h-[188px]" />
+        <div className="skeleton h-[188px]" />
+      </div>
+
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="skeleton h-[84px] sm:h-[96px]" />
+        ))}
+      </div>
+
+      <div className="skeleton h-[150px]" />
+    </div>
+  )
+}
+
 // ── Secondary stat tile ──
 // `href` is optional by design. A metric only links when there is something to
 // do about it; a reassurance figure stays inert and drops the hover affordance,
@@ -534,10 +569,17 @@ function StatTile({
   label: string
   href?: string
 }) {
+  // `value` may carry a unit ("23%"); animate the number and keep the suffix.
+  const numeric = typeof value === 'number' ? value : parseInt(value, 10)
+  const suffix = typeof value === 'number' ? '' : value.replace(/^-?\d+/, '')
+  const shown = useCountUp(Number.isNaN(numeric) ? 0 : numeric)
+
   const body = (
     <>
       <Icon className="w-4 h-4 sm:w-5 sm:h-5 mx-auto mb-0.5 sm:mb-1" style={{ color: 'var(--text-hint, #888)' }} />
-      <p className="text-[18px] sm:text-[22px] font-bold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{value}</p>
+      <p className="text-[18px] sm:text-[22px] font-bold tabular-nums" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+        {Number.isNaN(numeric) ? value : `${shown}${suffix}`}
+      </p>
       <p className="text-[9px] sm:text-[12px] font-semibold" style={{ color: 'var(--text-muted, #777)' }}>{label}</p>
     </>
   )
@@ -549,7 +591,7 @@ function StatTile({
   }
 
   return (
-    <Link href={href} className={`${base} hover:bg-black/[0.04] transition-colors`} style={style}>
+    <Link href={href} className={`${base} card-lift hover:bg-black/[0.04]`} style={style}>
       {body}
     </Link>
   )
@@ -570,9 +612,10 @@ function ComplianceCard({
   color: string
   href?: string
 }) {
+  const shown = useCountUp(count)
   const body = (
     <>
-      <p className="text-[22px] sm:text-[30px] font-bold leading-none" style={{ color }}>{count}</p>
+      <p className="text-[22px] sm:text-[30px] font-bold leading-none tabular-nums" style={{ color }}>{shown}</p>
       <p className="text-[10px] sm:text-[13px] font-semibold mt-0.5 sm:mt-1" style={{ color: 'var(--text-secondary, #444)' }}>{label}</p>
     </>
   )
@@ -589,7 +632,7 @@ function ComplianceCard({
   }
 
   return (
-    <Link href={href} className={`${base} hover:bg-black/[0.04] transition-colors`} style={style}>
+    <Link href={href} className={`${base} card-lift hover:bg-black/[0.04]`} style={style}>
       {body}
     </Link>
   )

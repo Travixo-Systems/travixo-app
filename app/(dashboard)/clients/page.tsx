@@ -203,10 +203,13 @@ export default function ClientsPage() {
           />
         </div>
 
-        {/* Loading */}
+        {/* Loading - mirrors the card grid so results land in place */}
         {loading && (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true" aria-live="polite">
+            <span className="sr-only">{t('common.loading')}</span>
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="skeleton h-[196px]" />
+            ))}
           </div>
         )}
 
@@ -227,7 +230,7 @@ export default function ClientsPage() {
 
         {/* Client cards */}
         {!loading && clients.length > 0 && (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 animate-enter">
             {clients.map((client) => {
               const vgpDays = daysUntilVgp(client.soonest_vgp_due)
               const vgpAtRisk = vgpDays !== null && vgpDays <= 30
@@ -282,7 +285,7 @@ export default function ClientsPage() {
                       keeps a large tap area well clear of the edit button. */}
                   <Link
                     href={`/clients/${client.id}`}
-                    className="flex items-center flex-wrap gap-x-3 gap-y-2 pt-3 -mx-2 px-2 pb-1 rounded-md border-t hover:bg-black/[0.05] transition-colors"
+                    className="flex items-center flex-wrap gap-x-3 gap-y-2 pt-3 -mx-2 px-2 pb-1 rounded-md border-t hover:bg-black/[0.05] transition-colors duration-150"
                     style={{ borderColor: '#dcdee3' }}
                   >
                     <div className="flex items-center gap-1.5">
