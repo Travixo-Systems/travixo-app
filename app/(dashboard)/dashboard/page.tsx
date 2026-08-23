@@ -300,15 +300,12 @@ export default function DashboardPage() {
           color="var(--status-bientot, #d97706)"
           href="/vgp/schedules?status=upcoming"
         />
-        {/* Links to the unfiltered list on purpose. This card counts everything
-            not due within 30 days, whereas the schedules page splits that into
-            "soon" (31-90d) and "compliant" (>90d) - so ?status=compliant would
-            show far fewer rows than the number clicked. */}
+        {/* No link: this is reassurance, not a task. Nothing needs doing about
+            equipment that is compliant. */}
         <ComplianceCard
           label={t('dashboard.compliant')}
           count={data.vgpCompliant}
           color="var(--status-conforme, #059669)"
-          href="/vgp/schedules"
         />
       </div>
 
@@ -456,11 +453,11 @@ export default function DashboardPage() {
           label={t('dashboard.totalEquipment')}
           href="/assets"
         />
+        {/* No link: a health indicator, not a to-do. */}
         <StatTile
           icon={TrendingUp}
           value={`${data.utilizationRate}%`}
           label={t('dashboard.utilization')}
-          href="/assets?status=in_use"
         />
         <StatTile
           icon={QrCode}
@@ -526,7 +523,9 @@ export default function DashboardPage() {
 }
 
 // ── Secondary stat tile ──
-// Whole tile links; the three bottom stats share this shape.
+// `href` is optional by design. A metric only links when there is something to
+// do about it; a reassurance figure stays inert and drops the hover affordance,
+// so the row does not train the user to click numbers that lead nowhere.
 function StatTile({
   icon: Icon,
   value,
@@ -536,24 +535,33 @@ function StatTile({
   icon: LucideIcon
   value: number | string
   label: string
-  href: string
+  href?: string
 }) {
-  return (
-    <Link
-      href={href}
-      className="block rounded-lg p-2 sm:p-4 text-center hover:bg-black/[0.04] transition-colors"
-      style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}
-    >
+  const body = (
+    <>
       <Icon className="w-4 h-4 sm:w-5 sm:h-5 mx-auto mb-0.5 sm:mb-1" style={{ color: 'var(--text-hint, #888)' }} />
       <p className="text-[18px] sm:text-[22px] font-bold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{value}</p>
       <p className="text-[9px] sm:text-[12px] font-semibold" style={{ color: 'var(--text-muted, #777)' }}>{label}</p>
+    </>
+  )
+  const base = 'block rounded-lg p-2 sm:p-4 text-center'
+  const style = { backgroundColor: 'var(--card-bg, #edeff2)' }
+
+  if (!href) {
+    return <div className={base} style={style}>{body}</div>
+  }
+
+  return (
+    <Link href={href} className={`${base} hover:bg-black/[0.04] transition-colors`} style={style}>
+      {body}
     </Link>
   )
 }
 
 // ── Compliance card with L + bottom accent border ──
-// The whole card is the link: these counts are the dashboard's primary call to
-// action, so every part of them must be tappable.
+// Overdue and upcoming link out: they are the dashboard's calls to action, so
+// every part of them must be tappable. "Compliant" is reassurance, not a task,
+// and is rendered without a link (see `href` note on StatTile).
 function ComplianceCard({
   label,
   count,
@@ -563,21 +571,29 @@ function ComplianceCard({
   label: string
   count: number
   color: string
-  href: string
+  href?: string
 }) {
-  return (
-    <Link
-      href={href}
-      className="block rounded-lg p-2 sm:p-4 hover:bg-black/[0.04] transition-colors"
-      style={{
-        backgroundColor: 'var(--card-bg, #edeff2)',
-        borderLeft: `3px solid ${color}`,
-        borderBottom: `3px solid ${color}`,
-        borderRadius: '8px 8px 8px 0',
-      }}
-    >
+  const body = (
+    <>
       <p className="text-[22px] sm:text-[30px] font-bold leading-none" style={{ color }}>{count}</p>
       <p className="text-[10px] sm:text-[13px] font-semibold mt-0.5 sm:mt-1" style={{ color: 'var(--text-secondary, #444)' }}>{label}</p>
+    </>
+  )
+  const base = 'block rounded-lg p-2 sm:p-4'
+  const style = {
+    backgroundColor: 'var(--card-bg, #edeff2)',
+    borderLeft: `3px solid ${color}`,
+    borderBottom: `3px solid ${color}`,
+    borderRadius: '8px 8px 8px 0',
+  }
+
+  if (!href) {
+    return <div className={base} style={style}>{body}</div>
+  }
+
+  return (
+    <Link href={href} className={`${base} hover:bg-black/[0.04] transition-colors`} style={style}>
+      {body}
     </Link>
   )
 }

@@ -57,8 +57,12 @@ export async function GET(request: Request) {
     const dueAfter = searchParams.get("due_after") || undefined;
     const includeArchived = searchParams.get("include_archived") === "true";
     const page = Math.max(1, parseIntSafe(searchParams.get("page")) || 1);
+    // Cap raised from 100: the schedules page derives its status counts client
+    // side from the rows it holds, so a silent truncation made the whole fleet
+    // look overdue (the first page is the soonest-due) and left the "upcoming"
+    // and "soon" filters empty. Callers still page via `page`/`has_more`.
     const limit = Math.min(
-      100,
+      1000,
       Math.max(1, parseIntSafe(searchParams.get("limit")) || 50)
     );
     const from = (page - 1) * limit;
