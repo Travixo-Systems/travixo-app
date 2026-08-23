@@ -48,6 +48,7 @@ export default function AssetsPageClient() {
 
     const statusParam = searchParams.get('status')
     const initialStatus = statusParam && VALID_STATUSES.includes(statusParam) ? statusParam : 'all'
+    const initialCategory = searchParams.get('category') || 'all'
 
     const [assets, setAssets] = useState<Asset[]>([])
     const [loading, setLoading] = useState(true)
@@ -57,7 +58,7 @@ export default function AssetsPageClient() {
     // Seeded from ?status= so links like "view rentals" land on a real filtered
     // list instead of an unfiltered page the user has to re-filter by hand.
     const [statusFilter, setStatusFilter] = useState<string>(initialStatus)
-    const [categoryFilter, setCategoryFilter] = useState<string>('all')
+    const [categoryFilter, setCategoryFilter] = useState<string>(initialCategory)
     const [showArchived, setShowArchived] = useState(false)
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 50
@@ -215,6 +216,16 @@ export default function AssetsPageClient() {
         })
         return Array.from(catMap.values()).sort((a, b) => a.name.localeCompare(b.name))
     }, [assets])
+
+    // A ?category= id that matches nothing (deleted category, stale bookmark)
+    // would otherwise render an empty table with no visible filter selected.
+    // Fall back to "all" once the real category list is known.
+    useEffect(() => {
+        if (categoryFilter === 'all' || assets.length === 0) return
+        if (!categories.some(c => c.id === categoryFilter)) {
+            setCategoryFilter('all')
+        }
+    }, [categories, categoryFilter, assets.length])
 
     if (loading) {
         return (

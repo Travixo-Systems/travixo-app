@@ -2349,7 +2349,13 @@ export const translations = {
     vgpOverdueLabel: { en: "Overdue", fr: "En retard" },
     vgpUpcomingLabel: { en: "Upcoming 30d", fr: "À venir 30j" },
     compliant: { en: "Compliant", fr: "Conformes" },
-    inspectionsThisWeek: { en: "Upcoming inspections", fr: "Inspections cette semaine" },
+    // Populated with everything due within 30 days, not one week.
+    inspectionsThisWeek: { en: "Upcoming inspections", fr: "Inspections à venir (30j)" },
+    viewAllReturns: { en: "View all", fr: "Voir tout" },
+    ofWhichOverdue: { en: "overdue", fr: "en retard" },
+    activeRentals: { en: "equipment out", fr: "équipement(s) sorti(s)" },
+    viewScans: { en: "View scan activity", fr: "Voir l'activité de scan" },
+    scanActivity: { en: "Scan activity", fr: "Activité de scan" },
     noUpcomingInspections: { en: "No inspections due soon", fr: "Aucune inspection à venir" },
     viewSchedules: { en: "View schedule", fr: "Voir le suivi" },
     expectedReturns: { en: "Expected returns", fr: "Retours prévus" },
@@ -2372,6 +2378,10 @@ export const translations = {
     assets: {
       en: "Fleet",
       fr: "Parc",
+    },
+    scans: {
+      en: "Scan activity",
+      fr: "Activité de scan",
     },
     vgp: {
       en: "VGP Compliance",
@@ -3437,6 +3447,37 @@ export const translations = {
       en: "Never recalled",
       fr: "Jamais rappelé",
     },
+  },
+
+  // ============================================================================
+  // SCANS
+  // ============================================================================
+  scans: {
+    pageTitle: { en: "Scan activity", fr: "Activité de scan" },
+    pageSubtitle: {
+      en: "Where your equipment was last seen, and by whom",
+      fr: "Où votre matériel a été vu pour la dernière fois, et par qui",
+    },
+    searchPlaceholder: { en: "Search equipment or location...", fr: "Rechercher un équipement ou un lieu..." },
+    noScans: { en: "No scans yet", fr: "Aucun scan pour le moment" },
+    noScansDescription: {
+      en: "Scans appear here when someone scans a QR code on a piece of equipment.",
+      fr: "Les scans apparaissent ici lorsqu'un QR code est scanné sur un équipement.",
+    },
+    noResults: { en: "No scans match this filter", fr: "Aucun scan ne correspond à ce filtre" },
+    last7Days: { en: "Last 7 days", fr: "7 derniers jours" },
+    last30Days: { en: "Last 30 days", fr: "30 derniers jours" },
+    allTime: { en: "All time", fr: "Tout" },
+    typeAll: { en: "All types", fr: "Tous les types" },
+    typeCheck: { en: "Check", fr: "Vérification" },
+    typeInventory: { en: "Inventory", fr: "Inventaire" },
+    typeCheckout: { en: "Checkout", fr: "Sortie" },
+    typeReturn: { en: "Return", fr: "Retour" },
+    scannedBy: { en: "by", fr: "par" },
+    unknownUser: { en: "Unknown user", fr: "Utilisateur inconnu" },
+    noLocation: { en: "No location", fr: "Sans lieu" },
+    totalScans: { en: "scans", fr: "scans" },
+    loadMore: { en: "Load more", fr: "Charger plus" },
   },
 
   // ============================================================================
