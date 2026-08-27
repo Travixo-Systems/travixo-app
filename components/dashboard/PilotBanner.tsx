@@ -2,11 +2,18 @@
 
 import Link from 'next/link';
 import { Clock, AlertTriangle, XCircle, ShieldOff, ArrowUpRight } from 'lucide-react';
-import { usePilotStatus, useUsage } from '@/hooks/useSubscription';
+import { usePilotStatus, useUsage, useCurrentPlan } from '@/hooks/useSubscription';
 
 export default function PilotBanner() {
   const { isPilot, pilotActive, daysRemaining, accountLocked, isLoading } = usePilotStatus();
   const usage = useUsage();
+
+  // The plan this pilot falls back to when the window closes. A pilot has every
+  // feature unlocked regardless of it, so it is the difference between what
+  // they use today and what they keep after paying.
+  const fallbackPlan = useCurrentPlan();
+  const fallbackHasVgp = (fallbackPlan?.features as Record<string, unknown> | undefined)?.vgp_compliance === true;
+  const fallbackPlanName = fallbackPlan?.name || 'Starter';
 
   if (isLoading || !isPilot) return null;
 
@@ -73,13 +80,19 @@ export default function PilotBanner() {
               {usage.assets > 0 && (
                 <span className="text-gray-500"> &bull; {usage.assets}/50 équipements</span>
               )}
-              {/* The pilot unlocks every feature, but Starter does not include
-                  VGP. Saying so here - where a depot manager works every day -
-                  rather than only on the billing page means nobody discovers
-                  it after paying. */}
-              <span className="block text-[13px] mt-0.5" style={{ color: '#5a6b73' }}>
-                La conformité VGP n&apos;est pas incluse dans Starter. Elle est incluse à partir de Professionnel.
-              </span>
+              {/* The pilot unlocks every feature, but the plan the org would
+                  fall back to may not include VGP. Say so here - where a depot
+                  manager works every day - rather than only on the billing
+                  page, so nobody discovers it after paying.
+
+                  Only shown when their own fallback plan actually drops it:
+                  telling a Professional pilot that Starter lacks VGP is noise
+                  about a plan they are not on. */}
+              {!fallbackHasVgp && (
+                <span className="block text-[13px] mt-0.5" style={{ color: '#5a6b73' }}>
+                  La conformité VGP n&apos;est pas incluse dans {fallbackPlanName}. Elle est incluse à partir de Professionnel.
+                </span>
+              )}
             </p>
           </div>
           <Link
