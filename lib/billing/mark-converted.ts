@@ -72,6 +72,46 @@ export async function markOrganizationConverted(
 const PAYING_STATUSES = new Set(['active', 'trialing', 'past_due'])
 
 /**
+ * Map a Stripe subscription status onto the status we store and display.
+ *
+ * The important case is `trialing`. Stripe uses it for two different things:
+ *
+ *   1. a genuine free trial, where no money has changed hands
+ *   2. the 90-day deferral we attach to Professional annual so one €14 400
+ *      payment buys 15 months (lib/billing/service-term.ts)
+ *
+ * In our product only the second exists — a pilot is tracked on the
+ * organization, never as a Stripe subscription. So a Stripe `trialing` here
+ * always means someone has already paid, and storing it verbatim made the
+ * billing page tell a customer who had just paid €14 400 that they were on an
+ * "Essai" ending in 90 days.
+ *
+ * `hasPaid` is the caller's evidence that money moved (a checkout completed,
+ * or a subscription carrying a real price). When it is true, trialing is
+ * recorded as active and the deferral is communicated as included service
+ * rather than as a trial.
+ */
+export function billingStatusFromStripe(
+  stripeStatus: string | null | undefined,
+  hasPaid: boolean
+): string {
+  const map: Record<string, string> = {
+    active: 'active',
+    past_due: 'past_due',
+    canceled: 'cancelled',
+    unpaid: 'past_due',
+    trialing: 'trialing',
+    incomplete: 'trialing',
+    incomplete_expired: 'expired',
+    paused: 'cancelled',
+  }
+  const mapped = map[stripeStatus || ''] || 'active'
+  // A paid subscription is never presented as a trial.
+  if (hasPaid && mapped === 'trialing') return 'active'
+  return mapped
+}
+
+/**
  * Whether a Stripe subscription status should convert the org.
  *
  * `trialing` counts: a Professional annual purchase carries a 90-day trial for

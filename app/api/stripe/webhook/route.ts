@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { markOrganizationConverted, isPayingStatus } from '@/lib/billing/mark-converted';
+import { markOrganizationConverted, isPayingStatus, billingStatusFromStripe } from '@/lib/billing/mark-converted';
 
 export const runtime = 'nodejs';
 
@@ -327,17 +327,12 @@ async function handleSubscriptionChange(supabase: any, subscription: any, eventI
   }
 
   // Map status
-  const statusMap: Record<string, string> = {
-    active: 'active',
-    past_due: 'past_due',
-    canceled: 'cancelled',
-    unpaid: 'past_due',
-    trialing: 'trialing',
-    incomplete: 'trialing',
-    incomplete_expired: 'expired',
-    paused: 'cancelled',
-  };
-  const status = statusMap[subscription.status] || 'active';
+  // A Stripe subscription only exists here because someone paid: pilots are
+  // tracked on the organization, never as a subscription. So a Stripe
+  // `trialing` is our 90-day service-term deferral, not a free trial, and
+  // must not be stored or displayed as one.
+  const hasPaid = isPayingStatus(subscription.status);
+  const status = billingStatusFromStripe(subscription.status, hasPaid);
 
   // Build subscription data, safe date conversions
   const subscriptionData: Record<string, any> = {
