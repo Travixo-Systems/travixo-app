@@ -73,8 +73,23 @@ export default function PilotBanner() {
               {usage.assets > 0 && (
                 <span className="text-gray-500"> &bull; {usage.assets}/50 équipements</span>
               )}
+              {/* The pilot unlocks every feature, but Starter does not include
+                  VGP. Saying so here - where a depot manager works every day -
+                  rather than only on the billing page means nobody discovers
+                  it after paying. */}
+              <span className="block text-[13px] mt-0.5" style={{ color: '#5a6b73' }}>
+                La conformité VGP n&apos;est pas incluse dans Starter. Elle est incluse à partir de Professionnel.
+              </span>
             </p>
           </div>
+          <Link
+            href="/settings/subscription"
+            className="inline-flex items-center gap-1 px-4 py-1.5 text-[15px] font-medium rounded-lg transition-colors flex-shrink-0 text-white"
+            style={{ backgroundColor: '#a84605' }}
+          >
+            Voir les forfaits
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </Link>
         </div>
       </div>
     );
