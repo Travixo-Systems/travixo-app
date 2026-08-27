@@ -264,18 +264,15 @@ export default function AuditsPage() {
       const uniqueLocations = [...new Set((assetsData || []).map(a => a.current_location).filter(Boolean))] as string[];
       setLocations(uniqueLocations);
 
-      // Fetch categories - try org-specific first, then all
-      let { data: categoriesData } = await supabase
+      // Fetch this organization's categories. There is deliberately no
+      // fall back to an unfiltered fetch: that only ever returned rows
+      // because asset_categories had RLS disabled, so it was listing other
+      // tenants' category names. An org with no categories yet should show
+      // an empty filter, not another company's labels.
+      const { data: categoriesData } = await supabase
         .from('asset_categories')
         .select('id, name')
         .eq('organization_id', userData.organization_id);
-
-      if (!categoriesData || categoriesData.length === 0) {
-        const { data: allCategories } = await supabase
-          .from('asset_categories')
-          .select('id, name');
-        categoriesData = allCategories;
-      }
 
       setCategories(categoriesData || []);
     } catch (err) {

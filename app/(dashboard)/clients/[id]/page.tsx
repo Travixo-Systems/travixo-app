@@ -479,7 +479,7 @@ function SummaryTile({
   return (
     <Link
       href={href}
-      className="block rounded-lg p-4 hover:bg-black/[0.04] transition-colors"
+      className="block rounded-lg p-4 card-lift hover:bg-black/[0.04]"
       style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}
     >
       <div className="flex items-center gap-1.5 mb-1">

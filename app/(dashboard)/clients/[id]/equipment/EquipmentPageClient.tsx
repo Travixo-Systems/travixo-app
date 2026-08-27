@@ -140,13 +140,28 @@ export default function EquipmentPageClient() {
     )
   }
 
-  /** Recall one rental, or every currently-selected rental as one grouped email. */
+  /**
+   * Recall one rental, or every currently-selected rental as one grouped email.
+   *
+   * Applied optimistically: the "last recall" date updates the moment the
+   * button is pressed, and rolls back if the send fails. This is the action a
+   * depot manager repeats most, and waiting on a round-trip before showing any
+   * change made every press feel slow.
+   */
   async function sendRecall(ids: string[]) {
     if (ids.length === 0 || sending) return
     setSending(true)
+
+    const previous = rentals
+    const now = new Date().toISOString()
+    const target = new Set(ids)
+    setRentals((prev) =>
+      prev.map((r) => (target.has(r.id) ? { ...r, last_recall_at: now } : r))
+    )
+
     try {
       const payload = ids
-        .map((id) => rentals.find((r) => r.id === id))
+        .map((id) => previous.find((r) => r.id === id))
         .filter((r): r is ClientRental => !!r?.vgp_due_date)
         .map((r) => ({ rental_id: r.id, next_due_date: r.vgp_due_date as string }))
 
@@ -158,6 +173,7 @@ export default function EquipmentPageClient() {
       const data = await res.json()
 
       if (!res.ok) {
+        setRentals(previous)
         toast.error(
           data.error === 'client_email_missing'
             ? t('clients.noEmailWarning')
@@ -170,6 +186,7 @@ export default function EquipmentPageClient() {
       setSelected(new Set())
       fetchData()
     } catch {
+      setRentals(previous)
       toast.error(t('vgpRentalContext.recallFailed'))
     } finally {
       setSending(false)
@@ -293,7 +310,7 @@ export default function EquipmentPageClient() {
             {t('clients.noEquipment')}
           </p>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2 animate-enter" key={filter}>
             {visible.map((r) => {
               const vgpDays = daysUntil(r.vgp_due_date)
               const vgpAtRisk = r.status === 'active' && vgpDays !== null && vgpDays <= 30

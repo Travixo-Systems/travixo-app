@@ -131,6 +131,80 @@ input, select, textarea {
   animation: slideUp 0.3s ease-out;
 }
 
+/* ---------------------------------------------------------------------------
+   Motion
+   Everything below serves perceived speed, not decoration: a skeleton that
+   shows the shape of what is loading, and short transitions so lists change
+   state rather than snap. Compliance colours are never animated - an overdue
+   VGP warning must read as a fact, not an effect.
+   --------------------------------------------------------------------------- */
+
+/* Skeleton placeholder. A sweep across a flat block reads as "loading" without
+   the spinner's implication that nothing is happening yet. */
+@keyframes skeletonSweep {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+.skeleton {
+  background-color: var(--card-bg, #edeef1);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: skeletonSweep 1.4s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+/* Content arriving after a load. Opacity and a few pixels only - no scale, no
+   slide from off-screen. */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.animate-enter {
+  animation: fadeInUp 0.22s ease-out both;
+}
+
+/* Card lift. Kept to 1px: enough to confirm the whole card is the target,
+   not enough to shift the reader's eye. */
+.card-lift {
+  transition: transform 0.16s ease-out, box-shadow 0.16s ease-out,
+    background-color 0.16s ease-out;
+}
+
+.card-lift:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+}
+
+/* Honour the OS setting. Vestibular disorders make looping and travelling
+   motion genuinely unpleasant, so animation is disabled rather than shortened -
+   the skeleton keeps its flat surface and simply stops sweeping. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .skeleton {
+    background-image: none;
+  }
+
+  .card-lift:hover {
+    transform: none;
+  }
+}
+
 /* Brand utility classes */
 .btn-primary {
   @apply bg-navy text-white font-medium px-4 py-2 rounded-md

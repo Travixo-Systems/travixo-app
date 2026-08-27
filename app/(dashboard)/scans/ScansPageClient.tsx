@@ -238,7 +238,7 @@ export default function ScansPageClient() {
             {visible.length} {t('scans.totalScans')}
           </p>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 animate-enter" key={`${range}-${type}`}>
             {visible.map((s) => {
               const style = TYPE_STYLES[s.scan_type || ''] || TYPE_STYLES.check
               const Icon = style.icon
