@@ -2,19 +2,18 @@
 
 import Link from 'next/link';
 import { Clock, AlertTriangle, XCircle, ShieldOff, ArrowUpRight } from 'lucide-react';
-import { usePilotStatus, useUsage, useCurrentPlan } from '@/hooks/useSubscription';
+import { usePilotStatus, useUsage } from '@/hooks/useSubscription';
 
 export default function PilotBanner() {
   const { isPilot, pilotActive, daysRemaining, accountLocked, isLoading } = usePilotStatus();
   const usage = useUsage();
 
-  // The plan this pilot falls back to when the window closes. A pilot has every
-  // feature unlocked regardless of it, so it is the difference between what
-  // they use today and what they keep after paying.
-  const fallbackPlan = useCurrentPlan();
-  const fallbackHasVgp = (fallbackPlan?.features as Record<string, unknown> | undefined)?.vgp_compliance === true;
-  const fallbackPlanName = fallbackPlan?.name || 'Starter';
-
+  // Nothing below reads the org's plan on purpose. A pilot has every feature
+  // unlocked whatever plan it nominally sits on, and the two records of that
+  // plan currently disagree anyway (organizations.subscription_tier says
+  // starter while the subscriptions row points at professional). Branching on
+  // an unreliable value would show the notice to the wrong people; the notice
+  // is true for every pilot, so it is shown to every pilot.
   if (isLoading || !isPilot) return null;
 
   // Account locked, 30+ days since signup, not converted
@@ -80,19 +79,19 @@ export default function PilotBanner() {
               {usage.assets > 0 && (
                 <span className="text-gray-500"> &bull; {usage.assets}/50 équipements</span>
               )}
-              {/* The pilot unlocks every feature, but the plan the org would
-                  fall back to may not include VGP. Say so here - where a depot
-                  manager works every day - rather than only on the billing
-                  page, so nobody discovers it after paying.
+              {/* The pilot unlocks every feature, whatever plan the org sits
+                  on. Starter does not include VGP compliance, so a depot
+                  manager who runs inspections for 30 days and then buys
+                  Starter would lose the module he came for.
 
-                  Only shown when their own fallback plan actually drops it:
-                  telling a Professional pilot that Starter lacks VGP is noise
-                  about a plan they are not on. */}
-              {!fallbackHasVgp && (
-                <span className="block text-[13px] mt-0.5" style={{ color: '#5a6b73' }}>
-                  La conformité VGP n&apos;est pas incluse dans {fallbackPlanName}. Elle est incluse à partir de Professionnel.
-                </span>
-              )}
+                  Said here, on every dashboard screen, rather than only on the
+                  billing page: by the time someone opens pricing they have
+                  already decided, and this is the fact that should shape the
+                  decision. Shown to every pilot because it is true for every
+                  pilot - during the pilot the plan is not yet a constraint. */}
+              <span className="block text-[13px] mt-0.5" style={{ color: '#5a6b73' }}>
+                Votre pilote inclut toutes les fonctionnalités. La conformité VGP est incluse à partir de Professionnel, pas dans Starter.
+              </span>
             </p>
           </div>
           <Link
