@@ -8,6 +8,7 @@ import toast from 'react-hot-toast'
 import { LogIn, Loader2, Mail, Lock, Users } from 'lucide-react'
 import { useLanguage } from '@/lib/LanguageContext'
 import { translations } from '@/lib/i18n'
+import { SIGN_OUT_SCOPE_LOCAL } from '@/lib/supabase/cookie-name'
 
 const BRAND = {
   primary: '#00252b',
@@ -79,7 +80,7 @@ function LoginContent() {
 
       if (data.user) {
         if (!data.user.email_confirmed_at) {
-          await supabase.auth.signOut()
+          await supabase.auth.signOut(SIGN_OUT_SCOPE_LOCAL)
           setUnconfirmedEmail(formData.email)
           setShowUnconfirmed(true)
           return

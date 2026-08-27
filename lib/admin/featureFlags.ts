@@ -45,3 +45,34 @@ export type ExtendDays = (typeof ALLOWED_EXTEND_DAYS)[number]
 export function isAllowedExtendDays(days: number): days is ExtendDays {
   return (ALLOWED_EXTEND_DAYS as readonly number[]).includes(days)
 }
+
+// ---------------------------------------------------------------------------
+// End-pilot modes.
+//
+// Mirrors the {'read_only','locked'} allowlist enforced inside
+// public.end_pilot (supabase/migrations/20260827_admin_end_pilot.sql).
+//
+// The two modes are the two natural states of an expired pilot, not new
+// ones: 'read_only' is the day-30 grace window, 'locked' is day 45+. See
+// lib/billing/access-model.ts for why the grace window matters.
+// ---------------------------------------------------------------------------
+export const ALLOWED_END_MODES = ['read_only', 'locked'] as const
+export type EndMode = (typeof ALLOWED_END_MODES)[number]
+
+export function isAllowedEndMode(mode: string): mode is EndMode {
+  return (ALLOWED_END_MODES as readonly string[]).includes(mode)
+}
+
+/** Human-readable consequence of each mode, for the confirmation UI. */
+export const END_MODE_LABELS: Record<EndMode, { label: string; description: string }> = {
+  read_only: {
+    label: 'End now (read-only)',
+    description:
+      'Ends the pilot immediately. The org keeps read access to everything it built, but cannot write. This is the normal day-30 state.',
+  },
+  locked: {
+    label: 'End and lock out',
+    description:
+      'Ends the pilot AND skips the grace period, locking the org out of everything except billing. For abuse or fraudulent signups.',
+  },
+}

@@ -963,6 +963,10 @@ export type Database = {
         Args: { p_org_id: string; p_flag: string; p_enabled: boolean }
         Returns: Record<string, unknown>
       }
+      end_pilot: {
+        Args: { p_org_id: string; p_mode: string }
+        Returns: Record<string, unknown>
+      }
     }
   }
 }

@@ -20,7 +20,9 @@ import { createClient } from '@/lib/supabase/server'
 import { requireSuperAdmin } from '@/lib/auth/requireSuperAdmin'
 import {
   isAllowedExtendDays,
+  isAllowedEndMode,
   isAllowedFlag,
+  type EndMode,
   type ExtendDays,
 } from '@/lib/admin/featureFlags'
 
@@ -68,6 +70,47 @@ export async function extendTrial(
 }
 
 // ---------------------------------------------------------------------------
+// endPilot(orgId, mode)
+//   Ends a running pilot immediately.
+//
+//   mode 'read_only' drops the org into the natural day-30 grace window
+//   (reads everything it built, writes nothing). mode 'locked' also skips
+//   the grace period, for abuse.
+//
+//   The DB refuses a converted (paying) org and a non-pilot org. Both are
+//   re-checked there, not only here: a paying customer must never lose
+//   access to a misclick on this screen.
+// ---------------------------------------------------------------------------
+export async function endPilot(
+  orgId: string,
+  mode: string
+): Promise<ActionResult> {
+  await requireSuperAdmin()
+
+  if (!UUID_RE.test(orgId)) {
+    return { ok: false, error: 'Invalid organization id.' }
+  }
+  if (!isAllowedEndMode(mode)) {
+    return { ok: false, error: 'Unknown end-pilot mode.' }
+  }
+  const safeMode: EndMode = mode
+
+  const supabase = await createClient()
+  const { error } = await supabase.rpc('end_pilot', {
+    p_org_id: orgId,
+    p_mode: safeMode,
+  })
+
+  if (error) {
+    return { ok: false, error: mapRpcError(error.message) }
+  }
+
+  revalidatePath(`/admin/orgs/${orgId}`)
+  revalidatePath('/admin')
+  return { ok: true }
+}
+
+// ---------------------------------------------------------------------------
 // toggleFeatureFlag(orgId, flag, enabled)
 //   flag must be in ALLOWED_FLAGS. Flips exactly one jsonb key.
 // ---------------------------------------------------------------------------
@@ -105,6 +148,13 @@ function mapRpcError(message: string): string {
   if (message.includes('not_authorized')) return 'Not authorized.'
   if (message.includes('invalid_days')) return 'Extension length not allowed.'
   if (message.includes('invalid_flag')) return 'Feature flag not allowed.'
+  if (message.includes('invalid_mode')) return 'End-pilot mode not allowed.'
+  if (message.includes('already_converted')) {
+    return 'This organization has converted to paid. Ending its pilot is not allowed.'
+  }
+  if (message.includes('not_a_pilot')) {
+    return 'This organization is not on a pilot.'
+  }
   if (message.includes('org_not_found')) return 'Organization not found.'
   return 'Action failed.'
 }

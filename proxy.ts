@@ -4,6 +4,13 @@ import { NextResponse, type NextRequest } from 'next/server'
 import type { CookieOptions } from '@supabase/ssr'
 import { rateLimit, RATE_LIMITS } from '@/lib/security/rate-limit'
 import { validateCsrf } from '@/lib/security/csrf'
+import {
+  ACCOUNT_SLOT_HEADER,
+  RESOLVED_SLOT_HEADER,
+  SLOT_HINT_COOKIE,
+  cookieOptionsForSlot,
+  parseSlot,
+} from '@/lib/supabase/account-slot'
 
 function getClientIp(request: NextRequest): string {
   return (
@@ -62,10 +69,37 @@ export async function proxy(request: NextRequest) {
     )
   }
 
+  // --- Per-tab account slot ---
+  //
+  // A tab declares which of its accounts this request belongs to via
+  // ACCOUNT_SLOT_HEADER. The value is client-controlled, so parseSlot()
+  // bounds it to [0, MAX_ACCOUNT_SLOTS) -- anything else becomes slot 0.
+  // Slot 0 keeps the original cookie name, so a request with no header (a
+  // plain navigation, an old tab, curl) behaves exactly as before.
+  //
+  // The RESOLVED value is forwarded to Server Components on a DIFFERENT
+  // header, so server-side code reads a value that has already been
+  // validated here rather than trusting the inbound one.
+  //
+  // The header is authoritative because it is per-tab. It is present on
+  // fetch() (installAccountSlotFetch wraps them all) but NOT on a plain
+  // navigation, which no script mediates. For those, fall back to the
+  // SLOT_HINT_COOKIE the active tab keeps up to date. Both go through
+  // parseSlot(), so neither can widen the set of reachable cookie names.
+  const headerSlot = request.headers.get(ACCOUNT_SLOT_HEADER)
+  const slot =
+    headerSlot !== null
+      ? parseSlot(headerSlot)
+      : parseSlot(request.cookies.get(SLOT_HINT_COOKIE)?.value)
+  const slotCookieOptions = cookieOptionsForSlot(slot)
+
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set(RESOLVED_SLOT_HEADER, String(slot))
+
   // --- Supabase Auth ---
   let response = NextResponse.next({
     request: {
-      headers: request.headers,
+      headers: requestHeaders,
     },
   })
 
@@ -73,6 +107,11 @@ export async function proxy(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      // Resolved per request from the tab's slot, so two tabs on different
+      // slots read two different cookies and hold two different sessions.
+      // The proxy decides who is signed in for EVERY protected route, so a
+      // mismatch here logs the whole app out. See lib/supabase/account-slot.ts.
+      cookieOptions: slotCookieOptions,
       cookies: {
         get(name: string) {
           return request.cookies.get(name)?.value
@@ -85,7 +124,7 @@ export async function proxy(request: NextRequest) {
           })
           response = NextResponse.next({
             request: {
-              headers: request.headers,
+              headers: requestHeaders,
             },
           })
           response.cookies.set({
@@ -102,7 +141,7 @@ export async function proxy(request: NextRequest) {
           })
           response = NextResponse.next({
             request: {
-              headers: request.headers,
+              headers: requestHeaders,
             },
           })
           response.cookies.set({

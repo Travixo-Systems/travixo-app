@@ -1,18 +1,23 @@
 // app/api/vgp/compliance-summary/route.ts
 
 import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { RESOLVED_SLOT_HEADER, cookieOptionsForSlot } from '@/lib/supabase/account-slot';
+import { cookies, headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { CookieOptions } from '@supabase/ssr';
 import { requireFeature } from '@/lib/server/require-feature';
 
 async function createClient() {
   const cookieStore = await cookies();
+  // Per-tab account slot, resolved by proxy.ts. Absent -> slot 0.
+  const slotRaw = (await headers()).get(RESOLVED_SLOT_HEADER);
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      // Must match every other Supabase client; see lib/supabase/cookie-name.ts
+      cookieOptions: cookieOptionsForSlot(slotRaw),
       cookies: {
         get(name: string) {
           return cookieStore.get(name)?.value;

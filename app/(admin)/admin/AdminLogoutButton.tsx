@@ -13,6 +13,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
 import { createClient } from '@/lib/supabase/client'
+import { SIGN_OUT_SCOPE_LOCAL } from '@/lib/supabase/cookie-name'
 
 export default function AdminLogoutButton() {
   const router = useRouter()
@@ -22,7 +23,7 @@ export default function AdminLogoutButton() {
     if (loggingOut) return
     setLoggingOut(true)
     const supabase = createClient()
-    await supabase.auth.signOut()
+    await supabase.auth.signOut(SIGN_OUT_SCOPE_LOCAL)
     router.push('/login')
     router.refresh()
   }

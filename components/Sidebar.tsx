@@ -28,7 +28,9 @@ import { createTranslator } from '@/lib/i18n';
 import { LanguageToggle } from './LanguageToggle';
 import { useTheme } from '@/lib/ThemeContext';
 import { cn } from '@/lib/utils';
-import { createClient } from '@/lib/supabase/client';
+import { createClient, getCurrentSlot, listSlots, setCurrentSlot } from '@/lib/supabase/client';
+import { SIGN_OUT_SCOPE_LOCAL } from '@/lib/supabase/cookie-name'
+import { cookieNameForSlot, slotLabel } from '@/lib/supabase/account-slot'
 
 const MOBILE_BREAKPOINT = 1026;
 const SIDEBAR_BG = '#0a2730';
@@ -111,7 +113,7 @@ export default function Sidebar() {
 
   const handleLogout = async () => {
     setLoggingOut(true);
-    await supabase.auth.signOut();
+    await supabase.auth.signOut(SIGN_OUT_SCOPE_LOCAL);
   };
 
   const getInitials = () => {
@@ -314,6 +316,10 @@ export default function Sidebar() {
               </div>
             </div>
           )}
+          {/* Per-tab account switcher. Only shown once a second account is
+              actually in use, so a single-account user never sees it. See
+              lib/supabase/account-slot.ts. */}
+          <SidebarAccountSwitcher language={language} />
           <div className="px-2 pb-2">
             <LanguageToggle />
           </div>
@@ -470,6 +476,70 @@ export default function Sidebar() {
 
       {/* Nav content */}
       {renderSidebarContent(isExpanded)}
+    </div>
+  );
+}
+
+/**
+ * Per-tab account switcher, styled for the dark sidebar.
+ *
+ * Deliberately hidden until a second slot is actually in use: a user with one
+ * account should never see an "accounts" control they have no use for. It
+ * appears once this tab is on a non-default slot, or once another slot holds
+ * a session (detected by that slot's cookie being present).
+ *
+ * Switching only changes which auth cookie THIS TAB reads -- it signs nobody
+ * in or out. A full page load is used so every Server Component re-renders
+ * against the new slot.
+ */
+function SidebarAccountSwitcher({ language }: { language: string }) {
+  const [slot, setSlot] = useState(0);
+  const [available, setAvailable] = useState<number[]>([]);
+
+  useEffect(() => {
+    const current = getCurrentSlot();
+    setSlot(current);
+
+    // A slot is "in use" if its cookie exists. document.cookie only exposes
+    // non-HttpOnly cookies, which is what the Supabase browser client writes.
+    const inUse = listSlots().filter((s) => {
+      if (s === current) return true;
+      const name = cookieNameForSlot(s);
+      return document.cookie.split('; ').some((c) => c.startsWith(`${name}=`));
+    });
+    setAvailable(inUse);
+  }, []);
+
+  // One account in play: nothing to switch between.
+  if (available.length < 2 && slot === 0) return null;
+
+  return (
+    <div className="px-2 pb-2">
+      <div className="rounded border border-white/10 bg-white/5 p-1.5">
+        <div className="px-1 pb-1 text-[10px] uppercase tracking-wide text-gray-400">
+          {language === 'fr' ? 'Compte de cet onglet' : 'This tab’s account'}
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {listSlots().map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => {
+                if (s === slot) return;
+                setCurrentSlot(s);
+                window.location.assign(window.location.pathname);
+              }}
+              className={
+                s === slot
+                  ? 'rounded bg-white/20 px-2 py-1 text-xs font-medium text-white'
+                  : 'rounded px-2 py-1 text-xs text-gray-300 hover:bg-white/10'
+              }
+            >
+              {slotLabel(s)}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { useLanguage } from "@/lib/LanguageContext"
 import { createTranslator } from "@/lib/i18n"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
+import { SIGN_OUT_SCOPE_LOCAL } from '@/lib/supabase/cookie-name'
 
 interface DashboardData {
   orgName: string
@@ -27,7 +28,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
 
   const handleLogout = async () => {
     const supabase = createClient()
-    await supabase.auth.signOut()
+    await supabase.auth.signOut(SIGN_OUT_SCOPE_LOCAL)
     router.push('/login')
   }
 
