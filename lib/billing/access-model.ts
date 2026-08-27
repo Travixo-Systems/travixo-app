@@ -68,6 +68,26 @@ export const PILOT_GRACE_DAYS = 15
 /** Day at which an unconverted pilot loses everything. */
 export const PILOT_LOCKOUT_DAYS = PILOT_FULL_DAYS + PILOT_GRACE_DAYS
 
+/**
+ * Assets a pilot may hold.
+ *
+ * This was 50, which was lower than every plan sold — Starter allows 100 and
+ * Professional 500 — so a prospect evaluated TraviXO under the most
+ * restrictive version of it. A depot with 200 machines would import 50, hit
+ * the wall, and conclude the product did not fit a fleet Professional handles
+ * four times over. Evaluation should never be the constraint.
+ *
+ * 400 sits above the point where a real fleet stops fitting, and below
+ * Professional's 500 so converting still gains headroom.
+ *
+ * Hardcoded rather than read from the plan on purpose: during the pilot the
+ * plan is not yet a constraint, and the two records of which plan an org sits
+ * on currently disagree (organizations.subscription_tier says starter while
+ * the subscriptions row points at professional). One number every pilot gets
+ * is honest; a number derived from an unreliable field is not.
+ */
+export const PILOT_MAX_ASSETS = 400
+
 export type AccessLevel = 'full' | 'read_only' | 'locked'
 
 export interface OrgAccessInput {

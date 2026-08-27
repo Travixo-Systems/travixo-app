@@ -3880,7 +3880,7 @@ export const translations = {
     },
     confirmSuccessDetails: {
       en: "50 equipment max • VGP compliance included • No credit card required",
-      fr: "50 équipements max • Conformité VGP incluse • Aucune carte requise",
+      fr: "400 équipements max • Conformité VGP incluse • Aucune carte requise",
     },
     confirmErrorTitle: {
       en: "Confirmation error",

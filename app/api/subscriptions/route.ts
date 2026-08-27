@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { CookieOptions } from '@supabase/ssr';
 import { isAccountLocked } from '@/lib/billing/pilot-window';
+import { PILOT_MAX_ASSETS } from '@/lib/billing/access-model';
 
 async function createClient() {
   const cookieStore = await cookies();
@@ -112,8 +113,8 @@ export async function GET() {
       daysRemaining = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     }
 
-    // Asset limit: 50 for active pilots, plan limit otherwise
-    const maxAssets = isPilotActive ? 50 : (subscription?.plan?.max_assets || 100);
+    // Asset limit: the pilot cap while the pilot runs, the plan limit after.
+    const maxAssets = isPilotActive ? PILOT_MAX_ASSETS : (subscription?.plan?.max_assets || 100);
 
     // Hard cutoff after the full window plus the read-only grace period
     // (30 + 15). The figures live in lib/billing/pilot-window.

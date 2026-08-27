@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { isAccountLocked } from '@/lib/billing/pilot-window';
+import { PILOT_MAX_ASSETS } from '@/lib/billing/access-model';
 
 export type Feature =
   | 'qr_tracking'
@@ -102,7 +103,7 @@ export async function getEntitlementContext(): Promise<EntitlementContext | null
     planSlug: sub?.plan?.slug || 'starter',
     planFeatures: sub?.plan?.features || {},
     overrides: overrideResult.data || [],
-    maxAssets: pilotActive ? 50 : (sub?.plan?.max_assets || 100),
+    maxAssets: pilotActive ? PILOT_MAX_ASSETS : (sub?.plan?.max_assets || 100),
     maxUsers: sub?.plan?.max_users || 5,
     currentAssets: assetCount.count || 0,
     currentUsers: userCount.count || 0,

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Clock, AlertTriangle, XCircle, ShieldOff, ArrowUpRight } from 'lucide-react';
 import { usePilotStatus, useUsage } from '@/hooks/useSubscription';
+import { PILOT_MAX_ASSETS } from '@/lib/billing/access-model';
 
 export default function PilotBanner() {
   const { isPilot, pilotActive, daysRemaining, accountLocked, isLoading } = usePilotStatus();
@@ -75,9 +76,9 @@ export default function PilotBanner() {
             <Clock className="w-4 h-4 flex-shrink-0" style={{ color: '#00252b' }} />
             <p className="text-[15px]" style={{ color: '#00252b' }}>
               <span className="font-semibold">Pilote : {daysRemaining} jour{daysRemaining !== 1 ? 's' : ''} restant{daysRemaining !== 1 ? 's' : ''}</span>
-              {' '}&bull; 50 équipements max &bull; Conformité VGP active
+              {' '}&bull; {PILOT_MAX_ASSETS} équipements max &bull; Conformité VGP active
               {usage.assets > 0 && (
-                <span className="text-gray-500"> &bull; {usage.assets}/50 équipements</span>
+                <span className="text-gray-500"> &bull; {usage.assets}/{PILOT_MAX_ASSETS} équipements</span>
               )}
               {/* The pilot unlocks every feature, whatever plan the org sits
                   on. Starter does not include VGP compliance, so a depot
