@@ -89,25 +89,72 @@ export const RESOLVED_SLOT_HEADER = 'x-travixo-account-resolved'
 export const SLOT_STORAGE_KEY = 'travixo.account.slot'
 
 /**
- * Cookie carrying the slot for plain NAVIGATIONS.
+ * URL prefix segment carrying the slot, e.g. /u/1/dashboard.
  *
- * The header covers fetch(), but a link click or a typed URL is a browser
- * navigation and sends no custom header -- the server would fall back to slot
- * 0 and render the wrong account for a tab that had switched.
+ * ---------------------------------------------------------------------------
+ * WHY THE URL, AND NOT A COOKIE
+ * ---------------------------------------------------------------------------
  *
- * A cookie is per-BROWSER, not per-tab, so this alone cannot be the source of
- * truth (both tabs would share it). It is used as a HINT and is rewritten by
- * the active tab on every navigation and on focus, so it always reflects the
- * tab the user is actually looking at. The per-tab sessionStorage value stays
- * authoritative for fetch(), and a tab that finds the hint disagreeing with
- * its own slot corrects it.
+ * An earlier version of this module used a browser-wide "hint" cookie for
+ * plain navigations. It was WRONG and produced exactly this bug: after a
+ * reload, two tabs on different accounts both showed whichever account had
+ * signed in last.
  *
- * The trade-off, stated plainly: with two tabs on different slots, a plain
- * navigation in the background tab can briefly render the foreground tab's
- * account until that tab's own script corrects it. Data fetches never do
- * this, because they carry the header.
+ * The reason is structural. A reload is a plain navigation: no script runs
+ * before the request, so no custom header can be attached. The only per-request
+ * state the browser sends is the URL and the cookie jar -- and the cookie jar
+ * is shared by every tab. Using it to answer "which account is THIS TAB on"
+ * means the last writer wins, always. No amount of re-publishing on focus
+ * fixes that; it is the wrong kind of storage for the question.
+ *
+ * The URL is per-tab by construction, and the browser resends it verbatim on
+ * reload, on back/forward, and on restore-after-crash. It is the only channel
+ * with those properties. This is why Google uses /u/0/, /u/1/ and why every
+ * other app that solves this puts the account in the path.
+ *
+ * ---------------------------------------------------------------------------
+ * WHY THIS COSTS NOTHING ELSEWHERE
+ * ---------------------------------------------------------------------------
+ *
+ * proxy.ts STRIPS the prefix and rewrites to the real path, so the app never
+ * sees it: /u/1/dashboard is served by the /dashboard route. No Link, no
+ * router.push, no redirect and no API route changes. The address bar carries
+ * the account; the application code does not know the prefix exists.
+ *
+ * Slot 0 has NO prefix, so every existing URL and bookmark is unaffected.
  */
-export const SLOT_HINT_COOKIE = 'travixo-slot'
+export const SLOT_URL_PREFIX = 'u'
+
+/**
+ * Split a pathname into its slot and the real application path.
+ *
+ * Total: any path that is not a well-formed slot prefix comes back as slot 0
+ * with the path unchanged. Notably '/users', '/upload' and '/u' are NOT slot
+ * prefixes -- only '/u/<digits>' followed by '/' or end-of-string.
+ */
+export function splitSlotPath(pathname: string): { slot: number; path: string } {
+  const m = /^\/u\/(\d+)(\/.*)?$/.exec(pathname)
+  if (!m) return { slot: DEFAULT_SLOT, path: pathname }
+
+  const slot = parseSlot(m[1])
+  // An out-of-range slot silently becomes 0, and its path is still stripped:
+  // /u/99/dashboard serves /dashboard on slot 0 rather than 404ing.
+  return { slot, path: m[2] && m[2] !== '' ? m[2] : '/' }
+}
+
+/**
+ * Build a browser-facing path for a slot. Slot 0 returns the path unchanged.
+ *
+ * Idempotent: passing an already-prefixed path re-prefixes correctly rather
+ * than nesting (/u/1/u/1/x can never be produced).
+ */
+export function withSlotPath(slot: string | number | null | undefined, pathname: string): string {
+  const n = parseSlot(slot)
+  const { path } = splitSlotPath(pathname)
+  const clean = path.startsWith('/') ? path : `/${path}`
+  if (n === DEFAULT_SLOT) return clean
+  return clean === '/' ? `/${SLOT_URL_PREFIX}/${n}` : `/${SLOT_URL_PREFIX}/${n}${clean}`
+}
 
 /**
  * Coerce anything into a valid slot number.

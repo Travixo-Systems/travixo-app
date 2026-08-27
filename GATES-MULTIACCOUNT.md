@@ -1,5 +1,10 @@
 # Gates: two different accounts, two tabs, one browser (Phase 2)
 
+> SUPERSEDED IN PART by GATES-SLOT-URL.md. The cookie-hint fallback described
+> below was WRONG: it broke on reload (both tabs showed the last account).
+> The slot now travels in the URL. Gates G1-G9 here still hold; the mechanism
+> line about SLOT_HINT_COOKIE does not.
+
 OWNS: lib/supabase/account-slot.ts, lib/supabase/cookie-name.ts, lib/supabase/client.ts, lib/supabase/server.ts, components/AccountSlotBootstrap.tsx, components/AccountSwitcher.tsx, app/layout.tsx, proxy.ts, app/api/**/route.ts, app/api/uploadthing/core.ts, scripts/verify-multiaccount.mjs, scripts/verify-multiaccount-wiring.mjs
 
 Scope: Let a prospect hold TWO DIFFERENT accounts signed in at once, in two

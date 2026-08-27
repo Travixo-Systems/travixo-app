@@ -4,10 +4,11 @@ import {
   ACCOUNT_SLOT_HEADER,
   DEFAULT_SLOT,
   MAX_ACCOUNT_SLOTS,
-  SLOT_HINT_COOKIE,
   SLOT_STORAGE_KEY,
   cookieOptionsForSlot,
   parseSlot,
+  splitSlotPath,
+  withSlotPath,
 } from './account-slot'
 
 /**
@@ -20,6 +21,15 @@ import {
  */
 export function getCurrentSlot(): number {
   if (typeof window === 'undefined') return DEFAULT_SLOT
+
+  // The URL wins. It is what the browser resends on a reload, so it is the
+  // only value guaranteed to agree with what the SERVER just rendered. Reading
+  // sessionStorage first would let a restored tab disagree with its own page.
+  const fromUrl = splitSlotPath(window.location.pathname).slot
+  if (fromUrl !== DEFAULT_SLOT) return fromUrl
+
+  // No prefix in the URL: fall back to this tab's remembered slot. This covers
+  // the moment just after the user picks a new slot, before the navigation.
   try {
     return parseSlot(window.sessionStorage.getItem(SLOT_STORAGE_KEY))
   } catch {
@@ -40,35 +50,56 @@ export function setCurrentSlot(slot: number): number {
   try {
     window.sessionStorage.setItem(SLOT_STORAGE_KEY, String(n))
   } catch {
-    // Storage unavailable: the tab stays on whatever it had. Callers reload
-    // afterwards, so a silent no-op degrades to "switch did not take".
+    // Storage unavailable: the URL still carries the slot after the caller
+    // navigates, and the URL is what actually decides. sessionStorage is only
+    // a convenience for the instant between picking a slot and navigating.
   }
-  publishSlotHint(n)
   return n
 }
 
+/** The URL this tab should navigate to in order to adopt `slot`. */
+export function slotUrl(slot: number, pathname?: string): string {
+  const base =
+    pathname ?? (typeof window === 'undefined' ? '/' : window.location.pathname)
+  return withSlotPath(slot, base)
+}
+
 /**
- * Write this tab's slot into the hint cookie the proxy reads for plain
- * navigations (a link click carries no custom header).
+ * Keep this tab's in-page links pointing at its own slot.
  *
- * The cookie is per-browser, so the LAST tab to publish wins. That is why the
- * active tab republishes on mount and on focus: the tab the user is looking
- * at is the one whose navigations must resolve correctly.
+ * The URL is what makes a reload resolve correctly, so a slot-1 tab must stay
+ * on /u/1/... as the user navigates. Next's client router rewrites history
+ * without a full request, so a plain <Link href="/assets"> would drop the
+ * prefix and the NEXT reload would land on slot 0.
  *
- * SameSite=Lax so it rides along with top-level navigations, which is exactly
- * the case it exists for. Not HttpOnly by necessity -- client script owns it.
- * It carries no credential, only which cookie NAME to read; the session token
- * itself stays in its own cookie.
+ * Rather than rewrite 74 Link hrefs, this intercepts history updates and
+ * re-applies the prefix. It is a no-op on slot 0, which is the common case.
  */
-export function publishSlotHint(slot: number): void {
-  if (typeof document === 'undefined') return
-  const n = parseSlot(slot)
-  try {
-    const secure = window.location.protocol === 'https:' ? '; Secure' : ''
-    document.cookie = `${SLOT_HINT_COOKIE}=${n}; path=/; SameSite=Lax${secure}`
-  } catch {
-    // Cookies blocked: navigations fall back to slot 0. fetch() still carries
-    // the header, so data requests stay correct.
+export function installSlotHistoryGuard(): void {
+  if (typeof window === 'undefined') return
+  const w = window as Window & { __travixoSlotHistory?: boolean }
+  if (w.__travixoSlotHistory) return
+  w.__travixoSlotHistory = true
+
+  const fix = (url: string | URL | null | undefined): string | URL | null | undefined => {
+    const slot = getCurrentSlot()
+    if (slot === 0 || url === null || url === undefined) return url
+    try {
+      const u = new URL(String(url), window.location.href)
+      if (u.origin !== window.location.origin) return url
+      const next = withSlotPath(slot, u.pathname)
+      if (next === u.pathname) return url
+      u.pathname = next
+      return u.pathname + u.search + u.hash
+    } catch {
+      return url
+    }
+  }
+
+  for (const method of ['pushState', 'replaceState'] as const) {
+    const original = history[method].bind(history)
+    history[method] = (data: unknown, unused: string, url?: string | URL | null) =>
+      original(data, unused, fix(url) as string | URL | null | undefined)
   }
 }
 

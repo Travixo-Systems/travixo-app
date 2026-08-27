@@ -28,7 +28,7 @@ import { createTranslator } from '@/lib/i18n';
 import { LanguageToggle } from './LanguageToggle';
 import { useTheme } from '@/lib/ThemeContext';
 import { cn } from '@/lib/utils';
-import { createClient, getCurrentSlot, listSlots, setCurrentSlot } from '@/lib/supabase/client';
+import { createClient, getCurrentSlot, listSlots, setCurrentSlot, slotUrl } from '@/lib/supabase/client';
 import { SIGN_OUT_SCOPE_LOCAL } from '@/lib/supabase/cookie-name'
 import { cookieNameForSlot, slotLabel } from '@/lib/supabase/account-slot'
 
@@ -510,8 +510,17 @@ function SidebarAccountSwitcher({ language }: { language: string }) {
     setAvailable(inUse);
   }, []);
 
-  // One account in play: nothing to switch between.
-  if (available.length < 2 && slot === 0) return null;
+  // Switching = navigating to this tab's slot URL. The URL is what makes the
+  // choice survive a reload, so a full assign() (not router.push) is used:
+  // every Server Component must re-render against the new slot.
+  const switchTo = (s: number) => {
+    if (s === slot) return;
+    setCurrentSlot(s);
+    window.location.assign(slotUrl(s));
+  };
+
+  // The next slot with no session yet — "add another account".
+  const nextFree = listSlots().find((s) => !available.includes(s));
 
   return (
     <div className="px-2 pb-2">
@@ -520,15 +529,11 @@ function SidebarAccountSwitcher({ language }: { language: string }) {
           {language === 'fr' ? 'Compte de cet onglet' : 'This tab’s account'}
         </div>
         <div className="flex flex-wrap gap-1">
-          {listSlots().map((s) => (
+          {available.map((s) => (
             <button
               key={s}
               type="button"
-              onClick={() => {
-                if (s === slot) return;
-                setCurrentSlot(s);
-                window.location.assign(window.location.pathname);
-              }}
+              onClick={() => switchTo(s)}
               className={
                 s === slot
                   ? 'rounded bg-white/20 px-2 py-1 text-xs font-medium text-white'
@@ -538,6 +543,25 @@ function SidebarAccountSwitcher({ language }: { language: string }) {
               {slotLabel(s)}
             </button>
           ))}
+          {nextFree !== undefined && (
+            <button
+              type="button"
+              onClick={() => switchTo(nextFree)}
+              className="rounded border border-dashed border-white/25 px-2 py-1 text-xs text-gray-300 hover:bg-white/10"
+              title={
+                language === 'fr'
+                  ? 'Se connecter à un autre compte dans cet onglet'
+                  : 'Sign in to another account in this tab'
+              }
+            >
+              {language === 'fr' ? '+ Ajouter' : '+ Add account'}
+            </button>
+          )}
+        </div>
+        <div className="px-1 pt-1 text-[10px] leading-tight text-gray-500">
+          {language === 'fr'
+            ? 'Chaque onglet garde son propre compte.'
+            : 'Each tab keeps its own account.'}
         </div>
       </div>
     </div>

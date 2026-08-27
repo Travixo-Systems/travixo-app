@@ -43,7 +43,11 @@ if (!proxy) {
 const proxyChecks = [
   ['reads the inbound slot header', /request\.headers\.get\(ACCOUNT_SLOT_HEADER\)/],
   ['validates it through parseSlot', /parseSlot\(/],
-  ['falls back to the hint cookie for navigations', /request\.cookies\.get\(SLOT_HINT_COOKIE\)/],
+  // The URL is the fix for the reported reload bug: it is per-tab and the
+  // browser resends it on reload, which a browser-wide cookie can never be.
+  ['resolves the slot from the URL prefix', /splitSlotPath\(rawPathname\)/],
+  ['rewrites the stripped path so app routes are unchanged', /NextResponse\.rewrite\(rewriteUrl/],
+  ['keeps the slot prefix on redirects', /withSlotPath\(slot,/],
   ['derives cookie options from the slot', /cookieOptionsForSlot\(slot\)/],
   ['forwards the RESOLVED slot to server components', /requestHeaders\.set\(RESOLVED_SLOT_HEADER/],
   ['passes slot-derived options to the Supabase client', /cookieOptions: slotCookieOptions/],
@@ -176,7 +180,7 @@ if (!client) {
     ['leaves cross-origin requests untouched', /if \(!sameOrigin\) return original/],
     ['disables the ssr singleton', /isSingleton: false/],
     ['caches one client per slot', /clientsBySlot/],
-    ['publishes the navigation hint cookie', /publishSlotHint/],
+    ['keeps client navigation on the slot prefix', /installSlotHistoryGuard/],
   ]
   for (const [label, re] of clientChecks) {
     if (re.test(client)) pass(`client ${label}`)
@@ -208,9 +212,10 @@ if (!boot) {
 } else {
   const bootChecks = [
     ['installs the fetch wrapper', /installAccountSlotFetch\(\)/],
-    ['republishes the hint on focus', /addEventListener\('focus'/],
-    ['republishes on visibility change', /visibilitychange/],
-    ['cleans up its listeners', /removeEventListener/],
+    // The history guard replaced the old focus/visibility republishing, which
+    // existed only to keep a browser-wide hint cookie fresh. That cookie was
+    // the reload bug; the URL prefix needs no upkeep.
+    ['installs the history guard so links keep the slot prefix', /installSlotHistoryGuard\(\)/],
   ]
   for (const [label, re] of bootChecks) {
     if (re.test(boot)) pass(`bootstrap ${label}`)

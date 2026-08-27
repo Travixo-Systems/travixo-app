@@ -11,48 +11,25 @@
 //     fetch('/api/...') call sites -- one missed call site would silently
 //     talk to the wrong account.
 //
-//  2. Keep the navigation hint cookie pointing at the tab the user is
-//     actually looking at. A link click sends no custom header, so the proxy
-//     falls back to that cookie. The cookie is per-browser, so the ACTIVE tab
-//     must own it: republish on mount, on focus, and on visibility change.
+//  2. Keep client-side navigation on this tab's slot prefix. Next's router
+//     updates history without a full request, so a plain <Link href="/assets">
+//     would drop /u/1 and the next RELOAD would resolve to slot 0. The guard
+//     re-applies the prefix instead of rewriting 74 hrefs.
+//
+// Both are no-ops on slot 0, which is what a single-account user is on.
 //
 // Renders nothing.
 
 import { useEffect } from 'react'
 import {
-  getCurrentSlot,
   installAccountSlotFetch,
-  publishSlotHint,
+  installSlotHistoryGuard,
 } from '@/lib/supabase/client'
 
 export default function AccountSlotBootstrap() {
   useEffect(() => {
     installAccountSlotFetch()
-
-    const republish = () => publishSlotHint(getCurrentSlot())
-
-    // Claim the hint immediately: this tab is mounting, so it is the one
-    // whose navigations must resolve to its own slot.
-    republish()
-
-    // Reclaim it whenever this tab becomes the one in front. Without this,
-    // the last tab to load would keep the hint forever and the other tab's
-    // link clicks would resolve to the wrong account.
-    const onVisibility = () => {
-      if (document.visibilityState === 'visible') republish()
-    }
-    window.addEventListener('focus', republish)
-    document.addEventListener('visibilitychange', onVisibility)
-
-    // Also claim it just before a navigation leaves this tab, which covers
-    // the case where the user never focused it (e.g. middle-click restore).
-    window.addEventListener('pageshow', republish)
-
-    return () => {
-      window.removeEventListener('focus', republish)
-      document.removeEventListener('visibilitychange', onVisibility)
-      window.removeEventListener('pageshow', republish)
-    }
+    installSlotHistoryGuard()
   }, [])
 
   return null

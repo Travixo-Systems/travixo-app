@@ -7,9 +7,10 @@ import { validateCsrf } from '@/lib/security/csrf'
 import {
   ACCOUNT_SLOT_HEADER,
   RESOLVED_SLOT_HEADER,
-  SLOT_HINT_COOKIE,
   cookieOptionsForSlot,
   parseSlot,
+  splitSlotPath,
+  withSlotPath,
 } from '@/lib/supabase/account-slot'
 
 function getClientIp(request: NextRequest): string {
@@ -31,7 +32,13 @@ function getRateLimitConfig(pathname: string) {
 }
 
 export async function proxy(request: NextRequest) {
-  const pathname = request.nextUrl.pathname
+  // Strip the account-slot prefix FIRST, so every check below -- rate
+  // limiting, protected-route matching, the login redirect -- sees the real
+  // application path. /u/1/dashboard must be treated as /dashboard in every
+  // respect except which auth cookie is read.
+  const rawPathname = request.nextUrl.pathname
+  const { slot: urlSlot, path: pathname } = splitSlotPath(rawPathname)
+  const hasSlotPrefix = pathname !== rawPathname
   const ip = getClientIp(request)
 
   // --- Rate Limiting ---
@@ -81,27 +88,58 @@ export async function proxy(request: NextRequest) {
   // header, so server-side code reads a value that has already been
   // validated here rather than trusting the inbound one.
   //
-  // The header is authoritative because it is per-tab. It is present on
-  // fetch() (installAccountSlotFetch wraps them all) but NOT on a plain
-  // navigation, which no script mediates. For those, fall back to the
-  // SLOT_HINT_COOKIE the active tab keeps up to date. Both go through
-  // parseSlot(), so neither can widen the set of reachable cookie names.
+  // Resolution order, and why:
+  //
+  //   1. the URL prefix  (/u/1/dashboard)  -- authoritative
+  //   2. the request header (fetch only)   -- for same-page API calls
+  //
+  // The URL comes FIRST because it is the only per-tab channel the browser
+  // resends on a RELOAD. An earlier version used a browser-wide hint cookie
+  // here, and it caused the bug this replaces: after reloading, two tabs on
+  // different accounts both showed whichever account signed in last, because
+  // one shared cookie cannot answer a per-tab question.
+  //
+  // The header still matters: a fetch() from a slot-1 page may target a plain
+  // /api/... URL with no prefix, and installAccountSlotFetch attaches the
+  // slot to those. It is only consulted when the URL carries no prefix.
+  //
+  // Both go through parseSlot(), so neither can widen the reachable cookie set.
   const headerSlot = request.headers.get(ACCOUNT_SLOT_HEADER)
   const slot =
-    headerSlot !== null
-      ? parseSlot(headerSlot)
-      : parseSlot(request.cookies.get(SLOT_HINT_COOKIE)?.value)
+    hasSlotPrefix
+      ? urlSlot
+      : headerSlot !== null
+        ? parseSlot(headerSlot)
+        : 0
   const slotCookieOptions = cookieOptionsForSlot(slot)
 
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set(RESOLVED_SLOT_HEADER, String(slot))
 
+  // Build the pass-through response.
+  //
+  // When the URL carries a slot prefix we REWRITE to the stripped path, so
+  // /u/1/dashboard is served by the /dashboard route. The browser keeps
+  // showing /u/1/dashboard -- which is the whole point, since that is what it
+  // will resend on reload -- while the application never sees the prefix. No
+  // route, Link, redirect or API path in the app changes.
+  //
+  // Defined as a function because the Supabase cookie callbacks rebuild the
+  // response when a token refreshes; all rebuilds must make the same choice,
+  // or a refresh would drop the rewrite and 404.
+  const passThrough = () => {
+    if (!hasSlotPrefix) {
+      return NextResponse.next({ request: { headers: requestHeaders } })
+    }
+    const rewriteUrl = request.nextUrl.clone()
+    rewriteUrl.pathname = pathname // the stripped, real path
+    return NextResponse.rewrite(rewriteUrl, {
+      request: { headers: requestHeaders },
+    })
+  }
+
   // --- Supabase Auth ---
-  let response = NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  })
+  let response = passThrough()
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -122,11 +160,7 @@ export async function proxy(request: NextRequest) {
             value,
             ...options,
           })
-          response = NextResponse.next({
-            request: {
-              headers: requestHeaders,
-            },
-          })
+          response = passThrough()
           response.cookies.set({
             name,
             value,
@@ -139,11 +173,7 @@ export async function proxy(request: NextRequest) {
             value: '',
             ...options,
           })
-          response = NextResponse.next({
-            request: {
-              headers: requestHeaders,
-            },
-          })
+          response = passThrough()
           response.cookies.set({
             name,
             value: '',
@@ -172,10 +202,14 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith(route)
   )
 
-  // Redirect unauthenticated users trying to access protected routes
+  // Redirect unauthenticated users trying to access protected routes.
+  //
+  // Both the /login target and the redirectTo value keep this tab's slot
+  // prefix. Without that, signing in from a slot-1 tab would land back on
+  // slot 0 and the tab would silently change account.
   if (!user && isProtectedRoute) {
-    const redirectUrl = new URL('/login', request.url)
-    redirectUrl.searchParams.set('redirectTo', pathname)
+    const redirectUrl = new URL(withSlotPath(slot, '/login'), request.url)
+    redirectUrl.searchParams.set('redirectTo', withSlotPath(slot, pathname))
     return NextResponse.redirect(redirectUrl)
   }
 
@@ -186,7 +220,9 @@ export async function proxy(request: NextRequest) {
     let destination = '/dashboard'
     const { data: isAdmin } = await supabase.rpc('is_super_admin')
     if (isAdmin === true) destination = '/admin'
-    return NextResponse.redirect(new URL(destination, request.url))
+    return NextResponse.redirect(
+      new URL(withSlotPath(slot, destination), request.url)
+    )
   }
 
   return response
@@ -204,6 +240,13 @@ export const config = {
     '/api/:path*',
     '/scan/:path*',
     '/login',
-    '/signup'
+    '/signup',
+    // Account-slot URLs (/u/1/dashboard, ...). The proxy MUST run for these:
+    // it is what strips the prefix and rewrites to the real route. Without
+    // this entry the prefixed URLs would bypass the proxy entirely and 404.
+    // One broad entry rather than a prefixed copy of every route above, so a
+    // route added later cannot be forgotten here.
+    '/u/:slot/:path*',
+    '/u/:slot',
   ],
 }
