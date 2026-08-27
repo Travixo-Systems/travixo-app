@@ -139,19 +139,61 @@ export async function POST(request: NextRequest) {
 // GET endpoint for testing if the route loads
 export async function GET() {
   try {
-    const checks = {
-      stripe_key: !!process.env.STRIPE_SECRET_KEY,
+    // Presence alone cannot catch the failure that actually bites: a test key
+    // deployed to production. `!!` reads true for sk_test_ and sk_live_ alike,
+    // so report the MODE. A price id is opaque, so report only whether it is
+    // set and well formed (price_...), never the value itself.
+    const secret = process.env.STRIPE_SECRET_KEY || '';
+    const publishable = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
+
+    const keyMode = secret.startsWith('sk_live_')
+      ? 'live'
+      : secret.startsWith('sk_test_')
+        ? 'test'
+        : secret
+          ? 'unrecognised'
+          : 'missing';
+
+    const publishableMode = publishable.startsWith('pk_live_')
+      ? 'live'
+      : publishable.startsWith('pk_test_')
+        ? 'test'
+        : publishable
+          ? 'unrecognised'
+          : 'missing';
+
+    const priceVars = {
+      price_starter_monthly: process.env.STRIPE_PRICE_STARTER_MONTHLY,
+      price_starter_annual: process.env.STRIPE_PRICE_STARTER_ANNUAL,
+      price_professional_monthly: process.env.STRIPE_PRICE_PROFESSIONAL_MONTHLY,
+      price_professional_annual: process.env.STRIPE_PRICE_PROFESSIONAL_ANNUAL,
+      price_business_monthly: process.env.STRIPE_PRICE_BUSINESS_MONTHLY,
+      price_business_annual: process.env.STRIPE_PRICE_BUSINESS_ANNUAL,
+    };
+
+    // A Payment Link URL pasted in place of a price id fails at checkout with
+    // "No such price", so flag the shape here rather than at the till.
+    const prices = Object.fromEntries(
+      Object.entries(priceVars).map(([k, v]) => [
+        k,
+        !v ? 'missing' : v.startsWith('price_') ? 'ok' : 'malformed',
+      ])
+    );
+
+    const malformed = Object.values(prices).filter((v) => v !== 'ok').length;
+    const consistent = keyMode === publishableMode;
+
+    return NextResponse.json({
+      status: 'ok',
+      stripe_mode: keyMode,
+      publishable_mode: publishableMode,
+      keys_consistent: consistent,
       webhook_secret: !!process.env.STRIPE_WEBHOOK_SECRET,
       supabase_url: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
       service_role_key: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-      price_starter_monthly: !!process.env.STRIPE_PRICE_STARTER_MONTHLY,
-      price_starter_annual: !!process.env.STRIPE_PRICE_STARTER_ANNUAL,
-      price_professional_monthly: !!process.env.STRIPE_PRICE_PROFESSIONAL_MONTHLY,
-      price_professional_annual: !!process.env.STRIPE_PRICE_PROFESSIONAL_ANNUAL,
-      price_business_monthly: !!process.env.STRIPE_PRICE_BUSINESS_MONTHLY,
-      price_business_annual: !!process.env.STRIPE_PRICE_BUSINESS_ANNUAL,
-    };
-    return NextResponse.json({ status: 'ok', env: checks });
+      prices,
+      ready_to_charge: keyMode === 'live' && consistent && malformed === 0,
+    });
   } catch (error: any) {
     return NextResponse.json({ status: 'error', message: error.message }, { status: 500 });
   }
