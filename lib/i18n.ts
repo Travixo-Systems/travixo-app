@@ -335,6 +335,25 @@ export const translations = {
       en: "Your payment has failed. Please update your payment method to avoid service suspension.",
       fr: "Votre paiement a échoué. Veuillez mettre à jour votre moyen de paiement pour éviter la suspension du service.",
     },
+    // Shown on a plan card while the org is still a pilot, when that plan does
+    // not include something the pilot currently has. Named before purchase so
+    // nobody buys Starter and then finds VGP behind an upgrade wall.
+    pilotBanner: {
+      en: "Your pilot unlocks every feature",
+      fr: "Votre pilote débloque toutes les fonctionnalités",
+    },
+    pilotVsPlanTitle: {
+      en: "Not included in this plan",
+      fr: "Non inclus dans ce forfait",
+    },
+    pilotVsPlanNote: {
+      en: "You have access to these during your pilot. They are not part of this plan.",
+      fr: "Vous y avez accès pendant votre pilote. Ils ne font pas partie de ce forfait.",
+    },
+    pilotVsPlanUpgrade: {
+      en: "Included from Professional upwards.",
+      fr: "Inclus à partir de Professionnel.",
+    },
     renewalDate: {
       en: "Renewal",
       fr: "Renouvellement",

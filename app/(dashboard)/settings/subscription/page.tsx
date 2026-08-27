@@ -10,6 +10,8 @@ import {
   useHasStripeSubscription,
 } from '@/hooks/useSubscription';
 import { formatPrice, getPlanBadgeColor, getStatusBadgeColor } from '@/lib/subscription';
+import { AlertTriangle } from 'lucide-react';
+import { featuresLostOnPlan, planRemovesPilotFeatures } from '@/lib/billing/pilot-vs-plan';
 import {
   CheckIcon,
   XMarkIcon,
@@ -379,6 +381,40 @@ export default function SubscriptionPage() {
                       ? t('subscription.unlimitedAssets')
                       : `${plan.max_assets.toLocaleString()} ${t('subscription.assetsLabel')}`}
                   </div>
+
+                  {/* While still on the pilot, name what this plan does NOT
+                      include. A pilot has every feature unlocked, so buying
+                      Starter silently removes VGP compliance - the reason most
+                      customers are here. Saying so before the purchase is the
+                      difference between a plan choice and feeling mis-sold. */}
+                  {planRemovesPilotFeatures(plan, !!isPilot) && (
+                    <div
+                      className="mb-4 rounded-lg border p-3"
+                      style={{ borderColor: '#e8d5b7', backgroundColor: '#fdf8f0' }}
+                    >
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle
+                          className="w-4 h-4 flex-shrink-0 mt-0.5"
+                          style={{ color: '#a85c04' }}
+                        />
+                        <div>
+                          <div className="text-[13px] font-semibold" style={{ color: '#7a4303' }}>
+                            {t('subscription.pilotVsPlanTitle')}
+                          </div>
+                          <ul className="mt-1.5 space-y-1">
+                            {featuresLostOnPlan(plan).map(key => (
+                              <li key={key} className="text-[13px]" style={{ color: '#7a4303' }}>
+                                • {t(`subscription.featureLabels.${key}`)}
+                              </li>
+                            ))}
+                          </ul>
+                          <div className="mt-1.5 text-[12px]" style={{ color: '#8a6642' }}>
+                            {t('subscription.pilotVsPlanNote')}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="space-y-2.5">
                     {isStarter ? (
