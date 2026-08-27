@@ -3591,9 +3591,9 @@ export const translations = {
     signIn: { en: "Sign in", fr: "Se connecter" },
     noAccountYet: { en: "Don't have an account? ", fr: "Pas encore de compte ? " },
     createAccount: { en: "Create an account", fr: "Créer un compte" },
-    freeTrial15Days: {
-      en: "Free 15-day trial",
-      fr: "Évaluation gratuite de 15 jours",
+    freeTrial30Days: {
+      en: "Free 30-day trial",
+      fr: "Évaluation gratuite de 30 jours",
     },
     loginSuccessInvite: {
       en: "Login successful! Accepting invitation...",
@@ -3627,8 +3627,8 @@ export const translations = {
       fr: "Gérez vos équipements.\nEn toute conformité.",
     },
     signupHeroSubtitle: {
-      en: "Start your 15-day free pilot. Full access, no credit card required.",
-      fr: "Démarrez votre pilote gratuit de 15 jours. Accès complet, aucune carte requise.",
+      en: "Start your 30-day free pilot. Full access, no credit card required.",
+      fr: "Démarrez votre pilote gratuit de 30 jours. Accès complet, aucune carte requise.",
     },
     signupFeature1: {
       en: "Digital inventory audits",
@@ -3655,8 +3655,8 @@ export const translations = {
       fr: "Votre adresse d'invitation",
     },
     signupNormalHeader: {
-      en: "Free 15-day trial",
-      fr: "Évaluation gratuite de 15 jours",
+      en: "Free 30-day trial",
+      fr: "Évaluation gratuite de 30 jours",
     },
     signupNormalSubheader: {
       en: "VGP compliance included • No credit card required",
@@ -3807,8 +3807,8 @@ export const translations = {
       fr: "Plus qu'une étape.",
     },
     checkEmailHeroSubtitle: {
-      en: "Verify your email address to activate your account and start your 15-day pilot.",
-      fr: "Vérifiez votre adresse email pour activer votre compte et démarrer votre pilote de 15 jours.",
+      en: "Verify your email address to activate your account and start your 30-day pilot.",
+      fr: "Vérifiez votre adresse email pour activer votre compte et démarrer votre pilote de 30 jours.",
     },
     checkEmailTitle: {
       en: "Check your inbox",
@@ -3819,8 +3819,8 @@ export const translations = {
       fr: "Nous avons envoyé un email de confirmation à :",
     },
     checkEmailClickLink: {
-      en: "Click the link in the email to verify your account and activate your free 15-day pilot.",
-      fr: "Cliquez sur le lien dans l'email pour vérifier votre compte et activer votre pilote gratuit de 15 jours.",
+      en: "Click the link in the email to verify your account and activate your free 30-day pilot.",
+      fr: "Cliquez sur le lien dans l'email pour vérifier votre compte et activer votre pilote gratuit de 30 jours.",
     },
     checkEmailTipsTitle: {
       en: "Didn't receive the email?",
@@ -3867,16 +3867,16 @@ export const translations = {
       fr: "Vérification en cours...",
     },
     confirmLoadingSubtitle: {
-      en: "Setting up your account and activating your 15-day pilot.",
-      fr: "Configuration de votre compte et activation du pilote de 15 jours.",
+      en: "Setting up your account and activating your 30-day pilot.",
+      fr: "Configuration de votre compte et activation du pilote de 30 jours.",
     },
     confirmSuccessTitle: {
       en: "Email verified!",
       fr: "Email vérifié !",
     },
     confirmSuccessSubtitle: {
-      en: "Your account is ready. Your free 15-day pilot is active.",
-      fr: "Votre compte est prêt. Votre pilote gratuit de 15 jours est actif.",
+      en: "Your account is ready. Your free 30-day pilot is active.",
+      fr: "Votre compte est prêt. Votre pilote gratuit de 30 jours est actif.",
     },
     confirmSuccessDetails: {
       en: "50 equipment max • VGP compliance included • No credit card required",

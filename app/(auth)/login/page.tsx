@@ -311,7 +311,7 @@ function LoginContent() {
               className="font-semibold hover:underline"
               style={{ color: BRAND.primary }}
             >
-              {isInviteRedirect ? t.createAccount[language] : t.freeTrial15Days[language]}
+              {isInviteRedirect ? t.createAccount[language] : t.freeTrial30Days[language]}
             </Link>
           </div>
         </div>

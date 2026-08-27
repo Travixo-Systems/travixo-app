@@ -55,7 +55,7 @@ export function WelcomeOnboardingEmail({
             </Text>
 
             <Text style={paragraphStyle}>
-              Votre évaluation gratuite de 15 jours commence aujourd'hui. Pendant
+              Votre évaluation gratuite de 30 jours commence aujourd'hui. Pendant
               cette période, vous avez accès à l'ensemble des fonctionnalités, y
               compris la gestion de conformité VGP.
             </Text>
@@ -122,7 +122,7 @@ export function WelcomeOnboardingEmail({
               <Text style={englishTitleStyle}>English Summary</Text>
               <Text style={englishTextStyle}>
                 Your TraviXO account for <strong>{companyName}</strong> is active.
-                Your 15-day free evaluation starts today with full VGP compliance
+                Your 30-day free evaluation starts today with full VGP compliance
                 access. We've pre-loaded demo equipment in your dashboard. Import the
                 attached Excel file to experience smart column detection.
               </Text>

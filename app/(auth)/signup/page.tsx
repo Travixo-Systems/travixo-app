@@ -194,7 +194,7 @@ function SignUpContent() {
                 En toute conformité.
               </h2>
               <p className="mt-4 text-white/70 text-lg">
-                Start your 15-day free pilot. Full access, no credit card required.
+                Start your 30-day free pilot. Full access, no credit card required.
               </p>
             </div>
           )}

@@ -32,7 +32,7 @@ export default function AccountLockedOverlay({ children }: { children: React.Rea
             Accès désactivé
           </h2>
           <p className="mt-3 text-gray-600">
-            Votre période d'essai de 15 jours est terminée et la période de grâce de lecture seule a expiré.
+            Votre période d'essai de 30 jours est terminée et la période de grâce de lecture seule a expiré.
             Vos données sont conservées mais l'accès à la plateforme est suspendu.
           </p>
           <p className="mt-2 text-[15px] text-gray-500">

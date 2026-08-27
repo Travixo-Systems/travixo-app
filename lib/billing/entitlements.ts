@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { isAccountLocked } from '@/lib/billing/pilot-window';
 
 export type Feature =
   | 'qr_tracking'
@@ -87,13 +88,13 @@ export async function getEntitlementContext(): Promise<EntitlementContext | null
     (!org?.pilot_end_date || new Date() <= new Date(org.pilot_end_date));
 
   const convertedToPaid = org?.converted_to_paid || false;
-  let daysSincePilotStart = 0;
-  if (isPilot && org?.pilot_start_date) {
-    daysSincePilotStart = Math.ceil(
-      (new Date().getTime() - new Date(org.pilot_start_date).getTime()) / (1000 * 60 * 60 * 24)
-    );
-  }
-  const accountLocked = isPilot && !pilotActive && !convertedToPaid && daysSincePilotStart > 30;
+  // 30 days full, then 15 read-only, then locked. Window lives in one place.
+  const accountLocked = isAccountLocked({
+    isPilot,
+    pilotActive,
+    convertedToPaid,
+    pilotStartDate: org?.pilot_start_date,
+  });
 
   return {
     organizationId: orgId,

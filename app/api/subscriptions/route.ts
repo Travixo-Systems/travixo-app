@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { CookieOptions } from '@supabase/ssr';
+import { isAccountLocked } from '@/lib/billing/pilot-window';
 
 async function createClient() {
   const cookieStore = await cookies();
@@ -114,15 +115,15 @@ export async function GET() {
     // Asset limit: 50 for active pilots, plan limit otherwise
     const maxAssets = isPilotActive ? 50 : (subscription?.plan?.max_assets || 100);
 
-    // Hard cutoff: 30 days after pilot start, if not converted → kill access
+    // Hard cutoff after the full window plus the read-only grace period
+    // (30 + 15). The figures live in lib/billing/pilot-window.
     const convertedToPaid = org?.converted_to_paid || false;
-    let daysSincePilotStart = 0;
-    if (isPilot && org?.pilot_start_date) {
-      daysSincePilotStart = Math.ceil(
-        (new Date().getTime() - new Date(org.pilot_start_date).getTime()) / (1000 * 60 * 60 * 24)
-      );
-    }
-    const accountLocked = isPilot && !isPilotActive && !convertedToPaid && daysSincePilotStart > 30;
+    const accountLocked = isAccountLocked({
+      isPilot,
+      pilotActive: isPilotActive,
+      convertedToPaid,
+      pilotStartDate: org?.pilot_start_date,
+    });
 
     // Determine VGP access level
     let vgp_access: 'full' | 'read_only' | 'blocked' = 'blocked';
@@ -133,7 +134,7 @@ export async function GET() {
     } else if (['professional', 'business', 'enterprise'].includes(subscription?.plan?.slug || '')) {
       vgp_access = 'full';
     } else if (isPilot && !isPilotActive) {
-      // Expired pilot within 30-day grace period, read-only VGP
+      // Expired pilot inside the read-only grace window, read-only VGP
       vgp_access = 'read_only';
     }
 
