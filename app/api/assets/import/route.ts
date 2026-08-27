@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import * as XLSX from 'xlsx'
 import { v4 as uuidv4 } from 'uuid'
+import { requireWriteAccess } from '@/lib/server/require-write-access'
 
 function detectColumns(firstRow: any): Record<string, string> {
   const mapping: Record<string, string> = {}
@@ -95,6 +96,11 @@ function cleanAssetData(row: any, mapping: Record<string, string>) {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
+
+    // Refuse mutations once the pilot has expired. The whole app becomes
+    // read-only at day 30 - see lib/billing/access-model.ts.
+    const writeGate = await requireWriteAccess(supabase)
+    if (writeGate.denied) return writeGate.denied
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {

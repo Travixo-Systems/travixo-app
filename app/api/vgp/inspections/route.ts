@@ -7,6 +7,7 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { CookieOptions } from '@supabase/ssr';
 import { requireFeature, requireVGPWriteAccess } from '@/lib/server/require-feature';
+import { requireWriteAccess } from '@/lib/server/require-write-access';
 
 /**
  * Create authenticated Supabase client for server-side operations
@@ -140,6 +141,11 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
+
+    // Refuse mutations once the pilot has expired. The whole app becomes
+    // read-only at day 30 - see lib/billing/access-model.ts.
+    const writeGate = await requireWriteAccess(supabase);
+    if (writeGate.denied) return writeGate.denied;
 
     // Feature gate: require VGP write access (blocks expired pilots)
     const { denied, organizationId } = await requireVGPWriteAccess(supabase);

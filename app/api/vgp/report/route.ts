@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 import type { CookieOptions } from "@supabase/ssr";
 import { generateVGPReport } from "@/lib/pdf-generator";
 import { requireFeature } from "@/lib/server/require-feature";
+import { requireWriteAccess } from '@/lib/server/require-write-access';
 
 const INSPECTION_FIELDS = `
   id,
@@ -58,6 +59,11 @@ async function createClient() {
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
+
+    // Refuse mutations once the pilot has expired. The whole app becomes
+    // read-only at day 30 - see lib/billing/access-model.ts.
+    const writeGate = await requireWriteAccess(supabase);
+    if (writeGate.denied) return writeGate.denied;
 
     // Feature gate: require vgp_compliance (also handles auth + org lookup)
     const { denied, organizationId } = await requireFeature(supabase, 'vgp_compliance');

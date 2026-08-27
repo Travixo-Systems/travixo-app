@@ -2,6 +2,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { requireFeature } from '@/lib/server/require-feature';
+import { requireWriteAccess } from '@/lib/server/require-write-access';
 
 async function createClient() {
   const cookieStore = await cookies();
@@ -71,6 +72,11 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const supabase = await createClient();
+
+  // Refuse mutations once the pilot has expired. The whole app becomes
+  // read-only at day 30 - see lib/billing/access-model.ts.
+  const writeGate = await requireWriteAccess(supabase);
+  if (writeGate.denied) return writeGate.denied;
   const { alert_ids } = await request.json();
 
   // Feature gate: require vgp_compliance

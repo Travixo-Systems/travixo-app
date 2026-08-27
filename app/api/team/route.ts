@@ -6,6 +6,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { requireWriteAccess } from '@/lib/server/require-write-access';
 
 // ============================================================================
 // GET /api/team - List all team members for the organization
@@ -83,6 +84,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
+
+    // Refuse mutations once the pilot has expired. The whole app becomes
+    // read-only at day 30 - see lib/billing/access-model.ts.
+    const writeGate = await requireWriteAccess(supabase);
+    if (writeGate.denied) return writeGate.denied;
     
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -186,6 +192,11 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const supabase = await createClient();
+
+    // Refuse mutations once the pilot has expired. The whole app becomes
+    // read-only at day 30 - see lib/billing/access-model.ts.
+    const writeGate = await requireWriteAccess(supabase);
+    if (writeGate.denied) return writeGate.denied;
     
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -311,6 +322,11 @@ export async function PATCH(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const supabase = await createClient();
+
+    // Refuse mutations once the pilot has expired. The whole app becomes
+    // read-only at day 30 - see lib/billing/access-model.ts.
+    const writeGate = await requireWriteAccess(supabase);
+    if (writeGate.denied) return writeGate.denied;
     
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
