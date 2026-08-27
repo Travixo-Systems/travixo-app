@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { markOrganizationConverted, isPayingStatus } from '@/lib/billing/mark-converted';
 
 export const runtime = 'nodejs';
 
@@ -256,6 +257,15 @@ async function handleCheckoutCompleted(supabase: any, session: any, eventId: str
     if (error) console.error('[Webhook] checkout: save customer_id error:', error.message);
   }
 
+  // Convert the org out of pilot state. Without this the customer keeps
+  // is_pilot=true and converted_to_paid=false, so the read-only gate freezes
+  // them once their original pilot window closes -- despite having paid.
+  const { error: convErr } = await markOrganizationConverted(supabase, organizationId, {
+    status: 'active',
+  });
+  if (convErr) console.error('[Webhook] checkout: mark converted error:', convErr);
+  else console.log(`[Webhook] org ${organizationId} converted to paid`);
+
   await logBillingEvent(supabase, {
     organizationId,
     eventType: 'checkout_completed',
@@ -370,12 +380,28 @@ async function handleSubscriptionChange(supabase: any, subscription: any, eventI
     else console.log('[Webhook] subscription inserted successfully');
   }
 
-  // Update organization status
-  const { error: orgErr } = await supabase
-    .from('organizations')
-    .update({ subscription_status: status })
-    .eq('id', organizationId);
-  if (orgErr) console.error('[Webhook] org status update error:', orgErr.message);
+  // Update organization status, and convert out of pilot when the Stripe
+  // status means they are genuinely paying. Checkout is not the only path to a
+  // paid subscription: a plan change or a recovered payment arrives here, and
+  // a customer converting that way would otherwise stay a pilot forever.
+  //
+  // Note 'trialing' counts as paying. Professional annual carries a 90-day
+  // Stripe trial to deliver the 15-month service term, so the customers who
+  // paid the most arrive here as trialing.
+  if (isPayingStatus(subscription.status)) {
+    const { error: convErr } = await markOrganizationConverted(supabase, organizationId, {
+      planSlug: planInfo?.slug || null,
+      status,
+    });
+    if (convErr) console.error('[Webhook] subscription: mark converted error:', convErr);
+    else console.log(`[Webhook] org ${organizationId} converted (${subscription.status})`);
+  } else {
+    const { error: orgErr } = await supabase
+      .from('organizations')
+      .update({ subscription_status: status })
+      .eq('id', organizationId);
+    if (orgErr) console.error('[Webhook] org status update error:', orgErr.message);
+  }
 
   await logBillingEvent(supabase, {
     organizationId,
