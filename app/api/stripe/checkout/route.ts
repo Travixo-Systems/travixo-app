@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { stripe, PRICE_MAP, getOrCreateStripeCustomer, type PlanSlug, type BillingCycle } from '@/lib/stripe';
+import { trialPeriodDays, serviceMonths } from '@/lib/billing/service-term';
 
 export async function POST(request: NextRequest) {
   let step = 'init';
@@ -116,6 +117,8 @@ export async function POST(request: NextRequest) {
 
     // Step 8: Create Stripe Checkout session
     step = 'create_session';
+    // undefined for every plan/cycle without a bonus term
+    const trialDays = trialPeriodDays(planSlug, billingCycle);
     const origin = request.headers.get('origin') || 'https://app.travixosystems.com';
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -124,7 +127,18 @@ export async function POST(request: NextRequest) {
       success_url: `${origin}/settings/subscription?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/settings/subscription?checkout=canceled`,
       subscription_data: {
-        metadata: { organization_id: org.id },
+        metadata: {
+          organization_id: org.id,
+          // Recorded so the term a customer actually bought is visible on the
+          // Stripe subscription, not only inferable from the trial length.
+          service_months: String(serviceMonths(planSlug, billingCycle)),
+        },
+        // Professional annual is sold as 15 months of service for the price of
+        // 12. Stripe has no 15-month interval, so the bonus is a trial that
+        // defers the first renewal. trialDays is undefined for every other
+        // plan/cycle, and spreading undefined omits the key rather than
+        // sending trial_period_days: 0, which Stripe rejects.
+        ...(trialDays ? { trial_period_days: trialDays } : {}),
       },
       metadata: { organization_id: org.id },
       locale: 'fr',
