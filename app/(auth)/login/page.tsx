@@ -3,7 +3,13 @@
 import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import {
+  createClient,
+  claimSlotForNewLogin,
+  getCurrentSlot,
+  setCurrentSlot,
+  slotUrl,
+} from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
 import { LogIn, Loader2, Mail, Lock, Users } from 'lucide-react'
 import { useLanguage } from '@/lib/LanguageContext'
@@ -71,7 +77,23 @@ function LoginContent() {
     setShowUnconfirmed(false)
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // Claim a slot BEFORE signing in, so the new session is written to its
+      // own cookie instead of overwriting a session another tab is using.
+      //
+      // This is what lets two accounts be connected at the same time with no
+      // UI: the first login takes slot 0, and a login in a second tab
+      // automatically takes the next free slot. The user does nothing.
+      const targetSlot = claimSlotForNewLogin()
+      if (targetSlot !== null && targetSlot !== getCurrentSlot()) {
+        setCurrentSlot(targetSlot)
+      }
+      const loginSlot = targetSlot ?? getCurrentSlot()
+
+      // createClient() reads the slot we just set, so this client writes to
+      // the right cookie.
+      const scopedSupabase = createClient()
+
+      const { data, error } = await scopedSupabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
       })
@@ -113,8 +135,12 @@ function LoginContent() {
         // Everyone lands on the tenant dashboard after login, platform
         // admins included. /admin is reached deliberately by navigating
         // there; the admin layout still gates it via requireSuperAdmin().
-        router.push('/dashboard')
-        router.refresh()
+        //
+        // A full page load, not router.push: the slot may have changed, and
+        // every Server Component must re-render against the new cookie. The
+        // URL carries the slot so a reload keeps this tab on this account.
+        window.location.assign(slotUrl(loginSlot, '/dashboard'))
+        return
       }
     } catch (error: any) {
       console.error('Error:', error)

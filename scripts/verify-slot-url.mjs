@@ -222,16 +222,26 @@ if (boot && /installSlotHistoryGuard\(\)/.test(boot)) {
   fail('bootstrap does not install the history guard — links would drop the prefix')
 }
 
-const sidebar = read('components/Sidebar.tsx')
-if (sidebar && /slotUrl\(s\)/.test(sidebar)) {
-  pass('the switcher navigates to the slot URL (so the choice survives reload)')
+// A second account must happen AUTOMATICALLY when a second tab signs in.
+// There is deliberately NO switcher UI: the user opens a tab, logs in as
+// someone else, and both accounts stay connected.
+const login = read('app/(auth)/login/page.tsx')
+if (login && /claimSlotForNewLogin\(\)/.test(login)) {
+  pass('login claims a free slot automatically (no UI needed for a 2nd account)')
 } else {
-  fail('the switcher does not navigate to a slot URL')
+  fail('login does not claim a slot — a second sign-in would overwrite the first')
 }
-if (sidebar && /Add account|Ajouter/.test(sidebar)) {
-  pass('the switcher offers adding a second account (feature is discoverable)')
+if (login && /slotUrl\(loginSlot/.test(login)) {
+  pass('login lands on the slot URL, so the account survives a reload')
 } else {
-  fail('no way to ADD a second account — the feature would be unreachable')
+  fail('login does not redirect to the slot URL')
+}
+
+const sidebar = read('components/Sidebar.tsx')
+if (sidebar && !/SidebarAccountSwitcher/.test(sidebar)) {
+  pass('no account-switcher UI (it was never asked for; login handles it)')
+} else {
+  fail('a switcher UI is still present')
 }
 
 // ---------------------------------------------------------------------

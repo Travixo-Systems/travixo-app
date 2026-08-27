@@ -224,11 +224,12 @@ if (!boot) {
 }
 
 // A switcher must exist, or the feature is unreachable by a user.
-const sidebar = read('components/Sidebar.tsx')
-if (sidebar && /SidebarAccountSwitcher/.test(sidebar) && /setCurrentSlot\(/.test(sidebar)) {
-  pass('a per-tab account switcher is reachable from the sidebar')
+// No switcher: a second tab signing in gets its own slot automatically.
+const login = read('app/(auth)/login/page.tsx')
+if (login && /claimSlotForNewLogin/.test(login)) {
+  pass('a second tab signing in claims its own slot automatically')
 } else {
-  fail('no account switcher is wired into the UI — the feature would be unreachable')
+  fail('login does not claim a slot — a second account would overwrite the first')
 }
 
 // ---------------------------------------------------------------------

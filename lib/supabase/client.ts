@@ -5,6 +5,7 @@ import {
   DEFAULT_SLOT,
   MAX_ACCOUNT_SLOTS,
   SLOT_STORAGE_KEY,
+  cookieNameForSlot,
   cookieOptionsForSlot,
   parseSlot,
   splitSlotPath,
@@ -62,6 +63,64 @@ export function slotUrl(slot: number, pathname?: string): string {
   const base =
     pathname ?? (typeof window === 'undefined' ? '/' : window.location.pathname)
   return withSlotPath(slot, base)
+}
+
+/** Whether a slot currently holds a session, judged by its cookie existing. */
+export function slotHasSession(slot: number): boolean {
+  if (typeof document === 'undefined') return false
+  const name = cookieNameForSlot(slot)
+  return document.cookie
+    .split('; ')
+    .some((c) => c.startsWith(`${name}=`) && c.length > name.length + 1)
+}
+
+/** Slots that currently hold a session. */
+export function occupiedSlots(): number[] {
+  return listSlots().filter(slotHasSession)
+}
+
+/**
+ * Pick the slot a NEW sign-in in this tab should use.
+ *
+ * This is what makes two accounts work with no UI at all. A tab that is
+ * already on an explicit slot keeps it. Otherwise:
+ *
+ *   - no session anywhere            -> slot 0 (the ordinary single-account
+ *                                      case; URL stays clean)
+ *   - some other slot already signed
+ *     in, and this tab is not one of
+ *     them                           -> the first FREE slot
+ *
+ * So signing in on a second tab automatically lands on its own slot and its
+ * own cookie, instead of overwriting the first tab's session. The user does
+ * nothing and clicks nothing.
+ *
+ * Returns null when every slot is taken, so the caller can reuse the current
+ * one rather than silently evicting someone.
+ */
+export function claimSlotForNewLogin(): number | null {
+  if (typeof window === 'undefined') return DEFAULT_SLOT
+
+  // A tab already pinned to a slot by its URL keeps that slot: the user is
+  // re-authenticating that account, not adding another.
+  const fromUrl = splitSlotPath(window.location.pathname).slot
+  if (fromUrl !== DEFAULT_SLOT) return fromUrl
+
+  const taken = occupiedSlots()
+
+  // Nothing signed in yet, or this tab's own slot is the one signed in.
+  if (taken.length === 0) return DEFAULT_SLOT
+
+  const mine = getCurrentSlot()
+  if (taken.includes(mine)) {
+    // This tab's slot is already in use. If the browser is signing in again
+    // here, treat it as a fresh login for a DIFFERENT account and move to a
+    // free slot, so the existing session in this slot is not destroyed.
+    const free = listSlots().find((s) => !taken.includes(s))
+    return free ?? null
+  }
+
+  return mine
 }
 
 /**
