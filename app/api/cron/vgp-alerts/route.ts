@@ -5,6 +5,19 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import * as Sentry from "@sentry/node";
+
+/**
+ * This route walks every organization, sends their digests, and then runs a
+ * second pass for client recalls. With no ceiling declared it inherited the
+ * platform default, and a single slow org could consume the whole invocation
+ * -- every org queued behind it lost its alerts for that day, silently.
+ *
+ * 300s is the current platform maximum. It is a backstop, not a target: the
+ * per-email timeout in lib/email/email-service.ts is what actually keeps a
+ * hung recipient from eating the run.
+ */
+export const maxDuration = 300;
 
 import type {
   VGPAlertType,

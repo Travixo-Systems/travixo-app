@@ -8,6 +8,7 @@
 // =============================================================================
 
 import { Resend } from 'resend';
+import * as Sentry from '@sentry/node';
 import { render } from '@react-email/render';
 import { createClient } from '@supabase/supabase-js';
 
@@ -45,6 +46,40 @@ const REPLY_TO = 'contact@travixosystems.com';
 
 // Resend free tier: 100 emails/day, 3,000/month
 const MAX_DAILY_EMAILS = 90; // Leave buffer below 100 limit
+
+/**
+ * How long any single Resend call may take before we give up on it.
+ *
+ * Without this there is no bound at all. The SDK builds its own fetch and
+ * exposes no way to pass an AbortSignal (checked against resend 6.x: the
+ * compiled client takes no request options), so a hung TCP connection blocks
+ * for as long as the platform allows. In the cron that means one unreachable
+ * recipient can consume the entire invocation and every org queued behind it
+ * silently loses its alerts for the day.
+ *
+ * Racing the promise does not cancel the underlying request -- nothing here
+ * can -- but it does return control, which is the part that matters.
+ */
+const EMAIL_TIMEOUT_MS = 10_000;
+
+/** Reject if `promise` has not settled within EMAIL_TIMEOUT_MS. */
+async function withEmailTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error(`${label} timed out after ${EMAIL_TIMEOUT_MS}ms`)),
+          EMAIL_TIMEOUT_MS
+        );
+      }),
+    ]);
+  } finally {
+    // Always clear, or the pending timer keeps the invocation alive.
+    if (timer) clearTimeout(timer);
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Clients
@@ -172,13 +207,13 @@ export async function sendVGPAlert(
   // Attempt to send with 1 retry
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      const { data, error } = await resend.emails.send({
+      const { data, error } = await withEmailTimeout(resend.emails.send({
         from: `${SENDER_NAME} <${SENDER_EMAIL}>`,
         to: recipientEmails,
         replyTo: REPLY_TO,
         subject,
         html,
-      });
+      }), 'vgp alert email');
 
       if (error) {
         console.log(
@@ -452,13 +487,13 @@ export async function sendClientRecallEmail(
 
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      const { data, error } = await resend.emails.send({
+      const { data, error } = await withEmailTimeout(resend.emails.send({
         from: `${SENDER_NAME} <${SENDER_EMAIL}>`,
         to: recipientEmails,
         replyTo: REPLY_TO,
         subject,
         html,
-      });
+      }), 'recall digest email');
 
       if (error) {
         console.log(`${logPrefix} Resend error (attempt ${attempt}): ${error.message}`);
@@ -534,13 +569,13 @@ export async function sendClientRecallNotice(params: {
 
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      const { data, error } = await resend.emails.send({
+      const { data, error } = await withEmailTimeout(resend.emails.send({
         from: `${organizationName} via TraviXO <${SENDER_EMAIL}>`,
         to: [clientEmail],
         replyTo: contactEmail || REPLY_TO,
         subject,
         html,
-      });
+      }), 'client recall notice');
 
       if (error) {
         console.log(`${logPrefix} Resend error (attempt ${attempt}): ${error.message}`);
