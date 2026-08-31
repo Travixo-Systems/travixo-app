@@ -113,4 +113,15 @@ applied. Applying them is gated on approval.
 - [x] G21: Only permitted files modified
   CHECK: node load/gates/check.mjs G21
   EXPECT: G21_PASS
-  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=G21_PASS files=7
+  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=G21_PASS files=1
+- [x] G22: Proxy change verified in a real browser (manual)
+  EVIDENCE: Playwright against `npm run start` (production build), 2026-09-01.
+    Anonymous GET /scan/qr-24035006 -> 200, no redirect, page rendered the real
+    asset: "Engin Kubota KX080-4 #003", serial ENG-2022-0003, status Disponible,
+    location Depot Rungis, plus the "Connexion requise pour modifier" prompt.
+    Logged-out GET /dashboard -> redirected to
+    /login?redirectTo=%2Fdashboard with the sign-in form rendered.
+    Three console errors on the scan page are pre-existing and correct for an
+    anonymous visitor: /api/subscriptions 401 (no session), a geolocation
+    permissions-policy warning from the security headers, and a vgp_schedules
+    401 from RLS refusing an anonymous read. None are caused by this change.
