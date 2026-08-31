@@ -448,8 +448,11 @@ export async function runVGPAlertsCron(): Promise<CronResult> {
           const todayStr = now.split("T")[0];
           const recipientEmails = recipients.map(r => r.email);
 
-          for (const item of items) {
-            const { error: insertError } = await supabase.from("vgp_alerts").insert({
+          // One insert for the whole batch. This was a per-item loop, so an
+          // org with 400 due schedules paid 400 sequential round trips just to
+          // record that it had been emailed once.
+          const { error: insertError } = await supabase.from("vgp_alerts").insert(
+            items.map((item) => ({
               schedule_id: item.schedule.id,
               asset_id: item.schedule.asset_id,
               organization_id: orgId,
@@ -461,11 +464,18 @@ export async function runVGPAlertsCron(): Promise<CronResult> {
               sent_at: now,
               email_sent_to: recipientEmails,
               resolved: false,
-            });
+            }))
+          );
 
-            if (insertError) {
-              console.log(`${LOG_PREFIX} Failed to log alert: ${insertError.message}`);
-            }
+          if (insertError) {
+            // These rows ARE the cooldown. Without them the same alert goes
+            // out again on the next run, so a silent failure here becomes
+            // duplicate mail to customers.
+            console.log(`${LOG_PREFIX} Failed to log alerts: ${insertError.message}`);
+            Sentry.captureException(insertError, {
+              tags: { area: "vgp_cron", step: "alert_dedup_insert" },
+              extra: { orgId, alertType, batchSize: items.length },
+            });
           }
 
           orgDetail.sent += items.length;
@@ -821,39 +831,76 @@ async function runClientRecallPass(): Promise<RecallResult> {
           if (sendResult.success) {
             result.recall_emails_sent++;
 
-            // Log dedup records
+            // Dedup records, written as ONE insert rather than one per item.
+            // A 400-item batch used to be 400 sequential round trips.
             const now = new Date().toISOString();
             const recipientEmails = recipients.map((r) => r.email);
 
-            for (const item of batch) {
-              await supabase.from("client_recall_alerts").insert({
-                organization_id: orgId,
-                rental_id: item.rental.id,
-                client_id: item.rental.client_id || null,
-                asset_id: item.rental.asset_id,
-                alert_type: alertType,
-                vgp_schedule_id: item.vgpScheduleId,
-                next_due_date: item.nextDueDate,
-                sent: true,
-                sent_at: now,
-                email_sent_to: recipientEmails,
+            const { error: dedupError } = await supabase
+              .from("client_recall_alerts")
+              .insert(
+                batch.map((item) => ({
+                  organization_id: orgId,
+                  rental_id: item.rental.id,
+                  client_id: item.rental.client_id || null,
+                  asset_id: item.rental.asset_id,
+                  alert_type: alertType,
+                  vgp_schedule_id: item.vgpScheduleId,
+                  next_due_date: item.nextDueDate,
+                  sent: true,
+                  sent_at: now,
+                  email_sent_to: recipientEmails,
+                }))
+              );
+
+            if (dedupError) {
+              // Not fatal, but it means the cooldown will not hold and this
+              // batch can be emailed again tomorrow. Worth knowing about.
+              console.log(
+                `${RECALL_PREFIX} Dedup insert failed for ${orgName}: ${dedupError.message}`
+              );
+              Sentry.captureException(dedupError, {
+                tags: { area: "vgp_cron", step: "recall_dedup_insert" },
+                extra: { orgId, alertType, batchSize: batch.length },
               });
             }
 
             console.log(
               `${RECALL_PREFIX} Sent ${alertType} for ${batch.length} items to ${orgName}`
             );
-
-            // Notify the clients themselves. The internal email above tells
-            // staff what to plan; this is what actually gets the equipment
-            // back before the VGP deadline.
-            const sent = await notifyClientsOfRecall(orgName, batch);
-            result.client_emails_sent += sent;
           } else {
             console.log(
               `${RECALL_PREFIX} Failed ${alertType} for ${orgName}: ${sendResult.error}`
             );
             result.errors.push(`Failed ${alertType} for ${orgName}: ${sendResult.error}`);
+            Sentry.captureMessage(
+              `Client recall staff digest failed: ${sendResult.error}`,
+              { level: "error", tags: { area: "vgp_cron", step: "recall_staff_email" } }
+            );
+          }
+
+          // Notify the clients themselves.
+          //
+          // This used to sit inside the success branch above, so a failure of
+          // the INTERNAL staff digest silently suppressed the notice to the
+          // people actually holding the equipment. Those are two different
+          // audiences and two different purposes: the staff email says what to
+          // plan, this one is what gets the machine back before its VGP
+          // deadline. One failing must not cancel the other.
+          try {
+            const sent = await notifyClientsOfRecall(orgName, batch);
+            result.client_emails_sent += sent;
+          } catch (clientErr: any) {
+            console.log(
+              `${RECALL_PREFIX} Client notice failed for ${orgName}: ${clientErr.message}`
+            );
+            result.errors.push(
+              `Client notice failed for ${orgName}: ${clientErr.message}`
+            );
+            Sentry.captureException(clientErr, {
+              tags: { area: "vgp_cron", step: "recall_client_notice" },
+              extra: { orgId, alertType },
+            });
           }
         } catch (e: any) {
           console.log(`${RECALL_PREFIX} Exception: ${e.message}`);
