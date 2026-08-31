@@ -184,8 +184,6 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
-
   // Define protected routes (all routes except public ones)
   const protectedRoutes = [
     '/dashboard',
@@ -201,6 +199,21 @@ export async function proxy(request: NextRequest) {
   const isProtectedRoute = protectedRoutes.some(route =>
     pathname.startsWith(route)
   )
+
+  // Auth pages need the session too, to bounce a signed-in visitor away from
+  // /login and /signup. Everything else matched here -- /scan/* above all --
+  // is public and must not pay for a session lookup.
+  const isAuthPage = pathname === '/login' || pathname === '/signup'
+
+  // getUser() is a NETWORK call to GoTrue, not a local token decode. Calling it
+  // unconditionally meant every anonymous QR scan blocked on Supabase Auth
+  // before any HTML was produced, on the one route most likely to be opened on
+  // a phone with bad signal. Only routes whose behaviour depends on identity
+  // resolve one.
+  const needsSession = isProtectedRoute || isAuthPage
+  const user = needsSession
+    ? (await supabase.auth.getUser()).data.user
+    : null
 
   // Redirect unauthenticated users trying to access protected routes.
   //
