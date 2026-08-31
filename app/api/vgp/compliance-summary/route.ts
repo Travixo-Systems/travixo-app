@@ -74,9 +74,6 @@ export async function GET(request: Request) {
     }
 
     const scheduleCount = allSchedules?.length || 0;
-    
-    // TODO: REMOVE before live demo - debug logging
-    console.log('[VGP] Loaded schedules:', scheduleCount);
 
     // Calculate dates
     const today = new Date();
@@ -121,14 +118,6 @@ export async function GET(request: Request) {
       compliance_rate
     };
 
-    // TODO: REMOVE before live demo - debug logging
-    console.log('[VGP] Summary breakdown:', {
-      total: summary.total_assets_with_vgp,
-      compliant: summary.compliant_assets,
-      overdue: summary.overdue_assets,
-      upcoming: summary.due_soon_assets,
-      rate: summary.compliance_rate + '%'
-    });
 
     return NextResponse.json({
       summary,
