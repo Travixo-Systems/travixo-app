@@ -220,6 +220,10 @@ export async function sendVGPAlert(
           `${logPrefix} Resend API error (attempt ${attempt}): ${error.message}`
         );
         if (attempt === 2) {
+          Sentry.captureMessage(`Email send failed after retries: ${error.message}`, {
+            level: 'error',
+            tags: { area: 'email', step: 'vgp_alert_send' },
+          });
           return { success: false, error: `Resend error: ${error.message}` };
         }
         // Wait 2 seconds before retry
@@ -497,7 +501,13 @@ export async function sendClientRecallEmail(
 
       if (error) {
         console.log(`${logPrefix} Resend error (attempt ${attempt}): ${error.message}`);
-        if (attempt === 2) return { success: false, error: `Resend error: ${error.message}` };
+        if (attempt === 2) {
+          Sentry.captureMessage(`Email send failed after retries: ${error.message}`, {
+            level: 'error',
+            tags: { area: 'email', step: 'recall_send' },
+          });
+          return { success: false, error: `Resend error: ${error.message}` };
+        }
         await new Promise((resolve) => setTimeout(resolve, 2000));
         continue;
       }
@@ -579,7 +589,13 @@ export async function sendClientRecallNotice(params: {
 
       if (error) {
         console.log(`${logPrefix} Resend error (attempt ${attempt}): ${error.message}`);
-        if (attempt === 2) return { success: false, error: `Resend error: ${error.message}` };
+        if (attempt === 2) {
+          Sentry.captureMessage(`Email send failed after retries: ${error.message}`, {
+            level: 'error',
+            tags: { area: 'email', step: 'recall_send' },
+          });
+          return { success: false, error: `Resend error: ${error.message}` };
+        }
         await new Promise((resolve) => setTimeout(resolve, 2000));
         continue;
       }
