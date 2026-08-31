@@ -16,6 +16,37 @@ const supabase = createClient(
 );
 
 // ======================
+// CREDENTIALS
+// ======================
+
+/**
+ * Password for every seeded account, from the environment.
+ *
+ * This was hardcoded as a literal in this file. Because the script also seeds
+ * against the live project, that put one known password on ten real accounts
+ * -- including two organizations holding 1,000 assets each, roughly 70% of
+ * every asset row -- and the email pattern (user0@<slug>.test) is derivable
+ * from the org slug, so the account names were guessable too.
+ *
+ * Failing when unset is deliberate. A default here, however obscure, would be
+ * committed and would recreate the same shared password on the next seed.
+ *
+ *   SEED_PASSWORD='...' npx tsx scripts/seed-complete-test-data.ts
+ */
+const SEED_PASSWORD = process.env.SEED_PASSWORD;
+
+if (!SEED_PASSWORD) {
+  console.error(
+    '\nSEED_PASSWORD is not set.\n\n' +
+      'This script creates real auth accounts, so it will not invent a\n' +
+      'password for them. Set one for this run:\n\n' +
+      "  SEED_PASSWORD='<a generated password>' npx tsx scripts/seed-complete-test-data.ts\n\n" +
+      'Store it wherever the team keeps secrets, not in this repository.\n'
+  );
+  process.exit(1);
+}
+
+// ======================
 // CONFIGURATION
 // ======================
 
@@ -173,7 +204,7 @@ async function seedCompleteData() {
         // Create auth user
         const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
           email,
-          password: 'TestPassword123!',
+          password: SEED_PASSWORD,
           email_confirm: true,
           user_metadata: { full_name: `User ${i} ${org.name}` }
         });
@@ -411,9 +442,9 @@ async function seedCompleteData() {
     console.log('🔑 Test Login Credentials:');
     createdOrgs.forEach((org, i) => {
       console.log(`\n   ${org.name}:`);
-      console.log(`   Owner:  user0@${org.slug}.test / TestPassword123!`);
-      console.log(`   Admin:  user1@${org.slug}.test / TestPassword123!`);
-      console.log(`   Member: user2@${org.slug}.test / TestPassword123!`);
+      console.log(`   Owner:  user0@${org.slug}.test`);
+      console.log(`   Admin:  user1@${org.slug}.test`);
+      console.log(`   Member: user2@${org.slug}.test`);
     });
 
   } catch (error: any) {
