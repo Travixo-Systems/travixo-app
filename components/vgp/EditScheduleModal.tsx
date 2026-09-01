@@ -10,7 +10,9 @@ interface EditScheduleModalProps {
   schedule: any;
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  /** Receives the fields that changed, so the caller can patch its list
+   * instead of refetching every page of the schedules API. */
+  onSuccess: (updated: { id: string; next_due_date: string; notes: string }) => void;
 }
 
 export function EditScheduleModal({ schedule, isOpen, onClose, onSuccess }: EditScheduleModalProps) {
@@ -46,7 +48,7 @@ export function EditScheduleModal({ schedule, isOpen, onClose, onSuccess }: Edit
 
       if (!response.ok) throw new Error(t('vgpEditModal.errorUpdateFailed'));
 
-      onSuccess();
+      onSuccess({ id: schedule.id, next_due_date: nextDueDate, notes });
       onClose();
     } catch (err: any) {
       setError(err.message);
