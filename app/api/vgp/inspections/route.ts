@@ -9,6 +9,7 @@ import { NextResponse } from 'next/server';
 import type { CookieOptions } from '@supabase/ssr';
 import { requireFeature, requireVGPWriteAccess } from '@/lib/server/require-feature';
 import { requireWriteAccess } from '@/lib/server/require-write-access';
+import { resolveIdentity } from '@/lib/server/request-identity';
 
 /**
  * Create authenticated Supabase client for server-side operations
@@ -156,11 +157,14 @@ export async function POST(request: Request) {
     const { denied, organizationId } = await requireVGPWriteAccess(supabase);
     if (denied) return denied;
 
-    // Need user.id for performed_by field
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    // Need user.id for performed_by. Both gates above already resolved the
+    // caller, so this reads the request-scoped memo rather than making a third
+    // round trip to GoTrue for an identity we have twice over.
+    const identity = await resolveIdentity(supabase);
+    if (!identity.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const user = { id: identity.userId };
 
     // Parse request body
     const body = await request.json();
