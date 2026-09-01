@@ -232,6 +232,10 @@ const checks = {
       /^next\.config\.ts$/, /^proxy\.ts$/, /^supabase\/migrations\//,
       /^app\//, /^lib\/email\//, /^lib\/server\//, /^lib\/supabase\//,
       /^components\//,
+      // Admin "record off-Stripe payment" work, added after the Phase 1 batch
+      // at the user's request: the plan allowlist, the RPC type declaration,
+      // and the load-test password rotation script.
+      /^lib\/admin\//, /^types\//, /^scripts\//,
     ]
     const bad = out.filter((f) => !allow.some((r) => r.test(f)))
     return bad.length === 0
