@@ -2,8 +2,6 @@
 
 import { useState } from 'react'
 import toast from 'react-hot-toast'
-import QRCode from 'qrcode'
-import { jsPDF } from 'jspdf'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
 
@@ -77,8 +75,20 @@ export default function BulkQRGenerator({ assets }: BulkQRGeneratorProps) {
     setIsGenerating(true)
 
     try {
+      // Load the PDF and QR libraries only now, on the click that needs them.
+      //
+      // jspdf and qrcode together are ~132 KB gzipped and were bundled into
+      // the QR codes page for every visitor, though they are used by exactly
+      // one action. This component renders as part of the page rather than
+      // behind a modal, so next/dynamic on the component would not have
+      // helped; deferring the imports themselves does.
+      const [{ jsPDF }, QRCode] = await Promise.all([
+        import('jspdf'),
+        import('qrcode').then((m) => m.default ?? m),
+      ])
+
       const selectedAssetList = assets.filter(a => selectedAssets.has(a.id))
-      
+
       // Generate QR codes
       const qrDataUrls = await Promise.all(
         selectedAssetList.map(async (asset) => {

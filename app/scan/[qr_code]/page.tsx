@@ -20,13 +20,56 @@ import {
   Loader2,
 } from 'lucide-react'
 import RentalStatusCard, { type ActiveRental } from '@/components/rental/RentalStatusCard'
-import CheckoutOverlay from '@/components/rental/CheckoutOverlay'
-import ReturnOverlay from '@/components/rental/ReturnOverlay'
+import dynamic from 'next/dynamic'
 import VGPComplianceBadge from '@/components/rental/VGPComplianceBadge'
 import RentalUpgradePrompt from '@/components/rental/RentalUpgradePrompt'
 import { useFeatureAccess } from '@/hooks/useSubscription'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
+
+/**
+ * Full-screen "fetching the form" state for a lazily loaded overlay.
+ *
+ * This is not decoration. The chunk arrives over whatever connection the
+ * depot tablet has, and on 4G that is not instant. Without a visible response
+ * to the tap, the operator sees a dead button and taps again -- which is one
+ * of the ways a duplicate checkout gets created. The backdrop also swallows
+ * those second taps while the chunk is in flight.
+ */
+function OverlayLoading() {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <div className="flex flex-col items-center gap-3 rounded-lg bg-white px-6 py-5 shadow-lg">
+        <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
+        <span className="text-sm text-gray-600">Chargement / Loading...</span>
+      </div>
+    </div>
+  )
+}
+
+// The rental overlays are the heaviest thing this page can pull in: both
+// import lib/validations/schemas, which brings zod (~86 KB gzipped) with it.
+// They render only after a deliberate tap, and most scans never open either,
+// so loading them on demand takes that weight off every anonymous QR scan --
+// the one route most likely to be opened on a phone with poor signal.
+//
+// ssr:false is correct rather than incidental: these are modal overlays that
+// only ever exist after a client-side interaction, so there is nothing for the
+// server to render.
+const CheckoutOverlay = dynamic(() => import('@/components/rental/CheckoutOverlay'), {
+  loading: () => <OverlayLoading />,
+  ssr: false,
+})
+
+const ReturnOverlay = dynamic(() => import('@/components/rental/ReturnOverlay'), {
+  loading: () => <OverlayLoading />,
+  ssr: false,
+})
 
 // Shape returned by the get_asset_by_qr RPC. Deliberately has no
 // purchase_price / current_value / organization_id: the public scan view
