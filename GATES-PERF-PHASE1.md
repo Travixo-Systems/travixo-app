@@ -58,7 +58,7 @@ applied. Applying them is gated on approval.
 - [x] G10: Pilot cap migration wired to plan limits, exempts nobody (item 10)
   CHECK: node load/gates/check.mjs G10
   EXPECT: G10_PASS
-  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=G10_PASS 20260831_enforce_pilot_asset_limit.sql
+  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=G10_PASS 20260831100000_enforce_pilot_asset_limit.sql
 
 - [x] G11: Load-test tenant hardening artifacts exist (item 11)
   CHECK: node load/gates/check.mjs G11
@@ -113,7 +113,7 @@ applied. Applying them is gated on approval.
 - [x] G21: Only permitted files modified
   CHECK: node load/gates/check.mjs G21
   EXPECT: G21_PASS
-  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=G21_PASS files=4
+  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=G21_PASS files=30
 - [x] G22: Proxy change verified in a real browser (manual)
   EVIDENCE: Playwright against `npm run start` (production build), 2026-09-01.
     Anonymous GET /scan/qr-24035006 -> 200, no redirect, page rendered the real
