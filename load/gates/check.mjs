@@ -236,6 +236,10 @@ const checks = {
       // at the user's request: the plan allowlist, the RPC type declaration,
       // and the load-test password rotation script.
       /^lib\/admin\//, /^types\//, /^scripts\//,
+      // Supabase CLI outputs: the linked project config, and the declarative
+      // schema pulled from the live database (the baseline that finally makes
+      // index and RLS claims verifiable).
+      /^supabase\//,
     ]
     const bad = out.filter((f) => !allow.some((r) => r.test(f)))
     return bad.length === 0
