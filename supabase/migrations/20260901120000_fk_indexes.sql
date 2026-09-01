@@ -35,15 +35,26 @@
 -- throughput and buys nothing measurable.
 --
 -- ---------------------------------------------------------------------------
--- CONCURRENTLY, AND WHY THERE IS NO TRANSACTION
+-- PLAIN CREATE INDEX, NOT CONCURRENTLY
 -- ---------------------------------------------------------------------------
--- CREATE INDEX CONCURRENTLY cannot run inside a transaction block, so this
--- file has no BEGIN/COMMIT. Each statement is independent: if one fails the
--- earlier ones stand, which is safe here because every statement is additive
--- and IF NOT EXISTS.
+-- An earlier draft of this file used CREATE INDEX CONCURRENTLY. That was
+-- wrong twice over:
 --
--- A failed CONCURRENTLY build leaves an INVALID index behind. Check for those
--- after running (query at the bottom) and DROP any that appear before retrying.
+--   1. CONCURRENTLY cannot run inside a transaction block, and the Supabase
+--      CLI wraps every migration in one. `supabase db push` would have failed
+--      outright with "CREATE INDEX CONCURRENTLY cannot run inside a
+--      transaction block", no matter that this file omitted BEGIN/COMMIT.
+--
+--   2. It bought nothing here. CONCURRENTLY exists to avoid holding a write
+--      lock on a large table for a long build. The biggest table touched is
+--      vgp_alerts at 20,358 rows; that index builds in well under a second.
+--      The lock is shorter than a typical request.
+--
+-- So these are plain CREATE INDEX statements in one transaction: either all
+-- five exist afterwards or none do, which is the behaviour worth having.
+-- IF NOT EXISTS keeps the file safe to re-run.
+
+BEGIN;
 
 -- ---------------------------------------------------------------------------
 -- 1. vgp_alerts.asset_id  -- the one that actually matters
@@ -51,7 +62,7 @@
 -- 20,358 rows and growing daily: the cron writes one row per alert per
 -- schedule. asset_id is a FK with no index, so every cascade from an asset
 -- delete, and every lookup of "alerts for this asset", scans the whole table.
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_vgp_alerts_asset
+CREATE INDEX IF NOT EXISTS idx_vgp_alerts_asset
   ON public.vgp_alerts (asset_id);
 
 -- ---------------------------------------------------------------------------
@@ -61,13 +72,13 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_vgp_alerts_asset
 -- cron run and read when deciding whether a client has already been told.
 -- It grows with rentals x alert types, which is the fastest-growing product of
 -- any table here. Indexing now is cheaper than indexing at 50,000 rows.
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_recall_alerts_asset
+CREATE INDEX IF NOT EXISTS idx_recall_alerts_asset
   ON public.client_recall_alerts (asset_id);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_recall_alerts_vgp_schedule
+CREATE INDEX IF NOT EXISTS idx_recall_alerts_vgp_schedule
   ON public.client_recall_alerts (vgp_schedule_id);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_recall_alerts_client
+CREATE INDEX IF NOT EXISTS idx_recall_alerts_client
   ON public.client_recall_alerts (client_id);
 
 -- ---------------------------------------------------------------------------
@@ -75,8 +86,10 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_recall_alerts_client
 -- ---------------------------------------------------------------------------
 -- 625 rows. Modest, but vgp_schedules is the most-joined table in the app and
 -- archived_by is a FK to users with no index, so deleting a user scans it.
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_vgp_schedules_archived_by
+CREATE INDEX IF NOT EXISTS idx_vgp_schedules_archived_by
   ON public.vgp_schedules (archived_by);
+
+COMMIT;
 
 -- ---------------------------------------------------------------------------
 -- DELIBERATELY NOT CREATED
@@ -128,22 +141,18 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_vgp_schedules_archived_by
 -- ---------------------------------------------------------------------------
 -- VERIFY AFTER APPLYING
 -- ---------------------------------------------------------------------------
--- 1. All five built successfully (indisvalid must be true for every row):
+-- 1. All five exist. Expect exactly five rows; because they were created in
+--    one transaction, a partial result is not possible -- either the migration
+--    committed or nothing was created:
 --
---   SELECT c.relname AS index_name, i.indisvalid
+--   SELECT c.relname AS index_name
 --   FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid
 --   WHERE c.relname IN ('idx_vgp_alerts_asset','idx_recall_alerts_asset',
 --                       'idx_recall_alerts_vgp_schedule','idx_recall_alerts_client',
---                       'idx_vgp_schedules_archived_by');
+--                       'idx_vgp_schedules_archived_by')
+--   ORDER BY 1;
 --
--- 2. Any INVALID index from a failed CONCURRENTLY build, which must be dropped
---    and rebuilt rather than left in place:
---
---   SELECT c.relname FROM pg_index i
---   JOIN pg_class c ON c.oid = i.indexrelid
---   WHERE NOT i.indisvalid;
---
--- 3. Whether they get used, after a few days of real traffic:
+-- 2. Whether they get used, after a few days of real traffic:
 --
 --   SELECT indexrelname, idx_scan FROM pg_stat_user_indexes
 --   WHERE indexrelname LIKE 'idx_recall_alerts%'
