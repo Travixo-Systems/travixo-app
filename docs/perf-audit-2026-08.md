@@ -210,7 +210,7 @@ indexes**.
 
 | # | Finding | file:line | Sev | Fix direction |
 | --- | --- | --- | --- | --- |
-| I.1 | **Core schema is absent from version control.** No DDL for the 7 hottest tables | no `CREATE TABLE assets\|users\|organizations` anywhere | **P0** | `supabase db pull` into a baseline migration. Until then no index claim about these tables is verifiable |
+| I.1 | **Core schema was absent from version control.** No DDL for the 7 hottest tables | no `CREATE TABLE assets\|users\|organizations` anywhere | ~~P0~~ **RESOLVED in part** | `supabase db pull --declarative` on 2026-09-01 wrote 51 files to `supabase/schemas/`. That baseline is authoritative for every index, policy and function claim, and settled I.4 and I.3 immediately. **Residual, P2:** the 8 dashboard-created core tables still have no genesis migration, so shadow replay (full `db pull`) and fresh-environment provisioning fail with `relation organizations does not exist` at the earliest migration. Generate a genesis migration from the declarative schema, timestamped before `20250101000000`. Deliberately deferred: it blocks neither the audit nor production |
 | I.2 | Two competing migration directories: `migrations/` (1 file, outside the CLI path) and `supabase/migrations/` (26 files) | `migrations/vgp-email-alerts-migration.sql` | P1 | Move it, or confirm it was hand-applied |
 | I.3 | `checkout_asset` is defined twice with different arity; `CREATE OR REPLACE` does not replace a different signature, so both remain callable | `supabase/migrations/20260211_rental_system.sql:81`; `20260211_client_recall_system.sql:105` | P1 | `DROP FUNCTION` the stale 10-arg overload. Same pattern for `extend_trial` and `create_organization_and_user` |
 | I.4 | Hot foreign keys almost certainly unindexed: `assets.organization_id`, `assets.category_id`, `vgp_inspections.asset_id`, `scans.asset_id`, `users.organization_id` | inferred from query shape | P1 **(inferred)** | Postgres does not auto-index FK columns. Verify with `load/sql/index-audit.sql` section 1 |
@@ -595,6 +595,40 @@ fully-loaded figure is approximately **8.50 USD / 7.90 EUR per 1,000 sessions**.
 
 ---
 
+## Results
+
+What has actually shipped, with measured deltas where a measurement exists.
+Anything not measured says so rather than carrying an estimate.
+
+### Applied to production
+
+| Change | Evidence |
+| --- | --- |
+| Asset-limit trigger (`enforce_pilot_asset_limit`) | Verified enforcing: an insert on the 1,010-asset org is refused with `Asset limit reached for this organization (1010 of 500 used)`. Metering had never fired before this - two orgs held 1,000 assets each against a 400 cap, because `check_pilot_asset_limit` was a reporting function wired to nothing |
+| `admin_mark_paid` RPC | Live, rejecting non-admins with `not_authorized` |
+| Stale `checkout_asset` overload dropped | Both call shapes now resolve to the single surviving 11-argument function. Before: `PGRST203 could not choose the best candidate`. A checkout can no longer silently write `client_id` NULL and vanish from the recall pass |
+| Migration history repaired | 25 files renamed to unique 14-digit timestamps (25 renames, 0 content changes), ledger repaired to 25 matched / 0 orphans |
+| Declarative schema baseline | 51 files in `supabase/schemas/`, pulled without touching remote history |
+
+### Measured code deltas
+
+| Change | Before | After | Delta |
+| --- | --- | --- | --- |
+| Assets list payload (1,010-asset tenant) | 827,119 B | 521,499 B | **-37%** on every visit |
+| `/api/subscriptions/plans` rendering | dynamic, `X-Vercel-Cache: MISS` | **static, 1h revalidate** | confirmed in build output |
+| Dashboard round trips after org resolution | 7 serial | 1 parallel | 7 -> 1 |
+| Scan page audit lookup | 1 query per audit item | 1 query total | N -> 1 |
+| VGP schedule edit | full multi-page API walk | single-row patch | whole list -> 1 row |
+
+### Not measured
+
+k6 has not been run. No preview deployment exists and production
+load-testing is out of scope, so every latency and saturation figure in area
+11 remains **UNMEASURED** rather than estimated. The harness is ready; it needs
+a preview URL and rotated load-test credentials.
+
+---
+
 ## Prioritised fix list
 
 Ordered by (severity x cost impact) / effort. Effort: S = under an hour,
@@ -632,8 +666,8 @@ security surface.
 | Item | Reason | How to settle |
 | --- | --- | --- |
 | `EXPLAIN ANALYZE` for the top 10 queries | No arbitrary-SQL RPC on the REST API (correctly); no `psql` on this machine | `load/sql/explain-top-queries.sql` |
-| Index existence on the 7 core tables | Their DDL is not in the repo; lives only in the dashboard | `load/sql/index-audit.sql` section 1 |
-| Live RLS policy cost (finding 02.4) | Same | `load/sql/index-audit.sql` section 6, run as an authenticated role |
+| ~~Index existence on the 7 core tables~~ | **CLOSED 2026-09-01.** The declarative baseline shows 47 live indexes against the 18 this repo declared. That settled I.4: 1 of 14 FK candidates was already covered, 5 were worth creating, 8 were not | `supabase/schemas/public/tables/` |
+| ~~Live RLS policy text (finding 02.4)~~ | **CLOSED 2026-09-01.** Confirmed from live DDL: `scans` has no `organization_id`, and isolation rests on a correlated `EXISTS` through `assets`. Also found what the audit missed - **two** overlapping SELECT policies (`scans_select_same_org` for authenticated, `users_view_org_scans` for PUBLIC) doing the same job differently. Postgres ORs permissive policies, so both evaluate per row. Severity revised to **P2**: 337 scan rows total, 2 in the last 7 days | `supabase/schemas/public/tables/scans.sql` |
 | Saturation point | Production load-testing is out of scope; no authenticated preview available | `PROFILE=target`, then fill in the README table |
 | Dependency degradation under load | Resend/Stripe base URLs are hardcoded; injecting latency would require app changes | `dep-degrade.js` with an external mock or proxy |
 | Cost model unit prices | List prices from training data, not the account's invoices | Reconcile against real invoices |
