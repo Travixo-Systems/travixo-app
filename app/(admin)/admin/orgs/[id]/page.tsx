@@ -338,6 +338,7 @@ export default async function AdminOrgDetailPage({
           canExtend={extendAllowed}
           extendReason={extendReason}
           canEnd={endAllowed}
+          alreadyPaid={o.converted_to_paid}
         />
       </section>
 

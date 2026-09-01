@@ -76,3 +76,22 @@ export const END_MODE_LABELS: Record<EndMode, { label: string; description: stri
       'Ends the pilot AND skips the grace period, locking the org out of everything except billing. For abuse or fraudulent signups.',
   },
 }
+
+// ---------------------------------------------------------------------------
+// Plans a platform admin may assign when recording an off-Stripe payment.
+//
+// Mirrors subscription_plans.slug. The DB re-checks against the live table, so
+// this list is the fast-fail copy, not the authority: if a plan is added there,
+// add it here too or the admin UI will refuse it while the RPC would allow it.
+// ---------------------------------------------------------------------------
+export const ALLOWED_PLAN_SLUGS = [
+  'starter',
+  'professional',
+  'business',
+  'enterprise',
+] as const
+export type PlanSlug = (typeof ALLOWED_PLAN_SLUGS)[number]
+
+export function isAllowedPlanSlug(slug: string): slug is PlanSlug {
+  return (ALLOWED_PLAN_SLUGS as readonly string[]).includes(slug)
+}

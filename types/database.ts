@@ -967,6 +967,14 @@ export type Database = {
         Args: { p_org_id: string; p_mode: string }
         Returns: Record<string, unknown>
       }
+      /**
+       * Record an off-Stripe payment. Super-admin only, reason required.
+       * See supabase/migrations/20260901_admin_mark_paid.sql.
+       */
+      admin_mark_paid: {
+        Args: { p_org_id: string; p_plan_slug: string; p_reason: string }
+        Returns: Record<string, unknown>
+      }
     }
   }
 }
