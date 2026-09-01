@@ -23,6 +23,8 @@ CREATE TABLE "public"."vgp_alerts" (
 ALTER TABLE "public"."vgp_alerts"
   ENABLE ROW LEVEL SECURITY;
 
+CREATE INDEX idx_vgp_alerts_asset ON public.vgp_alerts USING btree (asset_id);
+
 CREATE INDEX idx_vgp_alerts_daily_count ON public.vgp_alerts USING btree (alert_date, sent)
   WHERE (sent = true);
 

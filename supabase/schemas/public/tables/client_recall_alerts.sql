@@ -23,11 +23,17 @@ CREATE TABLE "public"."client_recall_alerts" (
 ALTER TABLE "public"."client_recall_alerts"
   ENABLE ROW LEVEL SECURITY;
 
+CREATE INDEX idx_recall_alerts_asset ON public.client_recall_alerts USING btree (asset_id);
+
+CREATE INDEX idx_recall_alerts_client ON public.client_recall_alerts USING btree (client_id);
+
 CREATE UNIQUE INDEX idx_recall_alerts_dedup ON public.client_recall_alerts USING btree (rental_id, alert_type, next_due_date);
 
 CREATE INDEX idx_recall_alerts_org ON public.client_recall_alerts USING btree (organization_id);
 
 CREATE INDEX idx_recall_alerts_rental ON public.client_recall_alerts USING btree (rental_id);
+
+CREATE INDEX idx_recall_alerts_vgp_schedule ON public.client_recall_alerts USING btree (vgp_schedule_id);
 
 CREATE POLICY "Users can view own org recall alerts" ON "public"."client_recall_alerts"
   FOR SELECT

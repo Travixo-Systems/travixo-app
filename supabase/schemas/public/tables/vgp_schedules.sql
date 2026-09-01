@@ -31,6 +31,8 @@ ALTER TABLE "public"."vgp_schedules"
 CREATE INDEX idx_vgp_schedules_active ON public.vgp_schedules USING btree (organization_id, next_due_date)
   WHERE (archived_at IS NULL);
 
+CREATE INDEX idx_vgp_schedules_archived_by ON public.vgp_schedules USING btree (archived_by);
+
 CREATE INDEX idx_vgp_schedules_archived ON public.vgp_schedules USING btree (archived_at)
   WHERE (archived_at IS NOT NULL);
 
