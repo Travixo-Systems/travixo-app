@@ -620,12 +620,70 @@ Anything not measured says so rather than carrying an estimate.
 | Scan page audit lookup | 1 query per audit item | 1 query total | N -> 1 |
 | VGP schedule edit | full multi-page API walk | single-row patch | whole list -> 1 row |
 
-### Not measured
+### Measured under load
 
-k6 has not been run. No preview deployment exists and production
-load-testing is out of scope, so every latency and saturation figure in area
-11 remains **UNMEASURED** rather than estimated. The harness is ready; it needs
-a preview URL and rotated load-test credentials.
+k6 against production, reads only. The owner elected to test production
+directly rather than a preview: zero paying customers, and the database was
+shared with preview regardless.
+
+**Before** is the pre-audit build; **after** is the same profile once the fixes
+were deployed.
+
+| 5 VUs, 5 min | Before | After | Change |
+| --- | --- | --- | --- |
+| Assets list avg | 98 ms | **61 ms** | **-38%** |
+| Assets list median | 91 ms | **37 ms** | **-59%** |
+| Read p99 | 1.21 s | **1.00 s** | -17% |
+| Read p95 | 957 ms | 818 ms | -15% |
+| Report avg | 512 ms | 487 ms | -5% |
+| Dashboard avg | 112 ms | 118 ms | flat |
+| Errors | 0.00% | 0.00% | - |
+
+The assets page is where the payload work lands: the median more than halved.
+
+**Read p95 still misses the 500 ms budget**, and the remainder is concentrated
+in the report path, which barely moved. That is consistent with the scaling
+curve below.
+
+### The latency is cold starts, not saturation
+
+The clearest single result of the whole exercise. On the pre-audit build,
+going from 5 to 50 concurrent users made every percentile **better**:
+
+| Pre-audit build | 5 VUs | 50 VUs |
+| --- | --- | --- |
+| Read p95 | 957 ms | **799 ms** |
+| Read p99 | 1.21 s | **939 ms** |
+| Report p95 | 851 ms | **709 ms** |
+
+That is the opposite of saturation. Five lonely users each pay Vercel function
+startup; fifty keep the functions warm and every request is cheaper.
+
+It matters commercially: today's real traffic looks far more like 5 users than
+50, so a prospect opening a demo link lands on a cold start. The fix category
+is warming and round-trip count, not query tuning - which is what the dashboard
+`Promise.all` and the report path's doubled auth preamble address.
+
+### Harness caveats worth knowing
+
+- **429s are not errors.** `proxy.ts` collapses every `/scan/<qr_code>` into one
+  bucket per IP (anti-enumeration, 30/60s). Fifty VUs from one machine share one
+  IP and therefore one bucket, which is exactly the traffic the limiter exists
+  to throttle. Real users arrive from many IPs. Counted on `travixo_rate_limited`
+  so the ceiling stays visible.
+- Four separate "findings" during load testing turned out to be bugs in the
+  harness, not the app: a cookie jar cleared between iterations, a login gated
+  on `__ITER === 0` that a ramping executor skips, a scenario still issuing the
+  pre-fix query, and a cache assertion that could never pass. Hence the rule in
+  `docs/working-agreements.md`.
+
+### Still not measured
+
+- Saturation point. Nothing above 50 VUs has been run, so the 1,000-user
+  envelope remains **UNVERIFIED**.
+- Write paths. Every run so far is reads-only (`ENABLE_WRITES` unset).
+- Dependency degradation. Resend and Stripe base URLs are hardcoded, so latency
+  cannot be injected without changing app code.
 
 ---
 
