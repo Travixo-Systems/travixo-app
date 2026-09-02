@@ -21,6 +21,10 @@ import { ClientRecall30Day } from './templates/client-recall-30day';
 import { ClientRecall14Day } from './templates/client-recall-14day';
 import { ClientRecallNotice } from './templates/client-recall-notice';
 import type { ClientRecallNoticeItem } from './templates/client-recall-notice';
+import { DemoShowcaseAlert } from './templates/demo-showcase-alert';
+import type { DemoShowcaseSpecimen } from './templates/demo-showcase-alert';
+
+import { isUndeliverableEmail } from '@/lib/vgp/demo-exclusion';
 
 import type {
   VGPAlertType,
@@ -247,6 +251,79 @@ export async function sendVGPAlert(
   }
 
   return { success: false, error: 'All send attempts failed' };
+}
+
+/**
+ * Send the one-time demo showcase alert to a newly registered organization.
+ *
+ * This exists because the cron no longer emails demo assets. Before that change
+ * a new customer saw the alert format for free -- the seeded Toyota is created
+ * ten days overdue, so the next cron run demonstrated an overdue alert and then
+ * kept demonstrating it every day forever. Suppressing the recurrence removed
+ * the nuisance and the demonstration together, so the demonstration is put back
+ * here deliberately: once, framed as a sample, at a moment when it is useful.
+ *
+ * Not routed through SUBJECT_LINES or getEmailTemplate. Those map VGPAlertType
+ * to real compliance mail, and a demo is not one of those types; adding it
+ * there would make it reachable from the cron by accident.
+ */
+export async function sendDemoShowcaseAlert(params: {
+  organizationName: string;
+  recipientEmail: string;
+  specimen: DemoShowcaseSpecimen;
+}): Promise<{ success: boolean; emailId?: string; error?: string }> {
+  const logPrefix = '[DEMO-SHOWCASE]';
+
+  if (isUndeliverableEmail(params.recipientEmail)) {
+    console.log(`${logPrefix} Refusing undeliverable recipient, skipping`);
+    return { success: false, error: 'Undeliverable recipient' };
+  }
+
+  const subject = `[TraviXO Démo] Exemple d'alerte VGP - ${params.organizationName}`;
+
+  let html: string;
+  try {
+    html = await render(
+      DemoShowcaseAlert({
+        organizationName: params.organizationName,
+        specimen: params.specimen,
+        appUrl: APP_URL,
+      })
+    );
+  } catch (renderError) {
+    const msg = renderError instanceof Error ? renderError.message : String(renderError);
+    console.log(`${logPrefix} Template render error: ${msg}`);
+    return { success: false, error: `Template render failed: ${msg}` };
+  }
+
+  try {
+    const resend = getResendClient();
+    const { data, error } = await withEmailTimeout(
+      resend.emails.send({
+        from: `${SENDER_NAME} <${SENDER_EMAIL}>`,
+        to: params.recipientEmail,
+        replyTo: REPLY_TO,
+        subject,
+        html,
+      }),
+      'demo showcase email'
+    );
+
+    if (error) {
+      console.log(`${logPrefix} Resend API error: ${error.message}`);
+      return { success: false, error: `Resend error: ${error.message}` };
+    }
+
+    console.log(`${logPrefix} Showcase alert sent to ${params.recipientEmail}: ${data?.id}`);
+    return { success: true, emailId: data?.id };
+  } catch (sendError) {
+    // Not retried. The claim in post-registration is consumed before the send,
+    // so a retry here cannot be paired with a second claim -- and this email is
+    // a convenience, not a compliance obligation. Failing quietly is correct.
+    const msg = sendError instanceof Error ? sendError.message : String(sendError);
+    console.log(`${logPrefix} Send exception: ${msg}`);
+    return { success: false, error: `Send exception: ${msg}` };
+  }
 }
 
 /**

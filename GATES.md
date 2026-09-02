@@ -1,70 +1,65 @@
-# Gates: admin end-pilot + conditional extend + org health signals
+# Gates: VGP alert bleeding — 3 fixes
 
-OWNS: supabase/migrations/20260827_admin_end_pilot.sql, lib/admin/featureFlags.ts, lib/admin/orgHealth.ts, app/(admin)/admin/**, scripts/verify-admin-end-pilot.mjs, scripts/verify-admin-extend-conditional.mjs, scripts/verify-admin-org-health.mjs
+OWNS: app/api/cron/vgp-alerts/**, app/api/internal/post-registration/**, app/(dashboard)/dashboard/page.tsx, lib/email/**, supabase/migrations/**, scripts/verify/**
 
-Scope: Give platform admins a guarded `end_pilot` action (read-only or locked),
-make the Extend control conditional on it being able to achieve anything, fix the
-`extend_trial` trial/pilot date desync, and surface last-connected plus pilot
-health signals on the admin screens.
+Scope: Stop recurring demo-asset VGP alerts, guarantee structural send dedup, and make the welcome email fire exactly once — delivered as three atomic commits.
 
-- [x] G1: end_pilot SQL exists with every guard (super-admin, mode allowlist, converted refusal, non-pilot refusal, both dates set together, same-transaction audit, grants)
-  CHECK: node --import ./scripts/ts-alias-loader.mjs scripts/verify-admin-end-pilot.mjs
-  EXPECT: admin end-pilot verification passed
-  EVIDENCE: exit 0, 45/45 checks, "admin end-pilot verification passed". Shell: Git Bash; CWD: d:/Dev/projects/travixo-app. This gate CAUGHT A REAL BUG: the first run failed 8 of 44 because the SQL wrote pilot_end_date = now(), but isPilotActive() tests now <= pilot_end_date INCLUSIVELY, so the org stayed at full access. Fixed to now() - INTERVAL 1 second. Positive control confirmed the buggy simulation yields full and the fixed one yields read_only.
+- [ ] G1: Cron never emails a demo asset — query filter AND post-fetch safety net both present, safety net counts and logs skips
+  CHECK: node scripts/verify/verify-fix1-cron.mjs
+  EXPECT: FIX1_CRON_VERIFIED
+  EVIDENCE: pending
 
-- [x] G2: extend_trial no longer desyncs trial_ends_at from pilot_end_date on the pilot branch
-  CHECK: node --import ./scripts/ts-alias-loader.mjs scripts/verify-admin-extend-conditional.mjs
-  EXPECT: admin extend conditional verification passed
-  EVIDENCE: exit 0, 32/32 checks, "admin extend conditional verification passed". Includes a negative control asserting the old desyncing line (v_new_trial := v_old_trial) is absent from the pilot branch.
+- [ ] G2: Demo-schedule exclusion is behaviourally correct — safety net drops is_demo_data true, KEEPS null/undefined (legacy real assets), keeps false
+  CHECK: node scripts/verify/verify-fix1-behaviour.mjs
+  EXPECT: FIX1_BEHAVIOUR_VERIFIED
+  EVIDENCE: pending
 
-- [x] G3: canExtendPilot() gates the Extend control — false for a locked pilot and for a converted org, true for a live pilot — and the UI consumes it
-  CHECK: node --import ./scripts/ts-alias-loader.mjs scripts/verify-admin-extend-conditional.mjs
-  EXPECT: admin extend conditional verification passed
-  EVIDENCE: exit 0, same run as G2. canExtendPilot verified against accessLevel() across all 120 pilot days with 0 disagreements, plus 9 named cases and UI/page wiring checks.
+- [ ] G3: .test recipients suppressed in getAlertRecipients, with filtered count logged
+  CHECK: node scripts/verify/verify-fix1-testfilter.mjs
+  EXPECT: FIX1_TESTFILTER_VERIFIED
+  EVIDENCE: pending
 
-- [x] G4: end_pilot outcomes agree with accessLevel() — read_only mode yields 'read_only', locked mode yields 'locked' — using the real access model, and neither mode alters normal day counting for untouched orgs
-  CHECK: node --import ./scripts/ts-alias-loader.mjs scripts/verify-admin-end-pilot.mjs
-  EXPECT: admin end-pilot verification passed
-  EVIDENCE: exit 0, same run as G1. Outcomes measured by running the REAL accessLevel() over the exact columns the SQL writes: read_only mode -> read_only (6 cases), locked mode -> locked. Also asserts an ended pilot is indistinguishable from a natural expiry, and an untouched org stays full.
+- [ ] G4: Showcase email sends once — exact subject/body/footer strings, atomic demo_alert_sent guard, migration adds the column
+  CHECK: node scripts/verify/verify-fix1-showcase.mjs
+  EXPECT: FIX1_SHOWCASE_VERIFIED
+  EVIDENCE: pending
 
-- [x] G5: org health module computes last-connected and pilot signals from confirmed columns only, with no invented fields
-  CHECK: node --import ./scripts/ts-alias-loader.mjs scripts/verify-admin-org-health.mjs
-  EXPECT: admin org health verification passed
-  EVIDENCE: exit 0, 55/55 checks, "admin org health verification passed". Every column the pages read was confirmed present in types/database.ts; asserts public.users still has NO last-login column, the premise for using the Auth admin API.
+- [ ] G5: Unique dedup index migration exists with duplicate cleanup ordered before index creation
+  CHECK: node scripts/verify/verify-fix2-migration.mjs
+  EXPECT: FIX2_MIGRATION_VERIFIED
+  EVIDENCE: pending
 
-- [x] G6: admin pages render the new signals and the end-pilot control, and summarizeAudit handles the end_pilot action
-  CHECK: node --import ./scripts/ts-alias-loader.mjs scripts/verify-admin-org-health.mjs
-  EXPECT: admin org health verification passed
-  EVIDENCE: exit 0, same run as G5. Confirms both admin pages render last-connected and access, the detail page renders conversion signals, and summarizeAudit handles the end_pilot action.
+- [ ] G6: Insert precedes send in cron — ON CONFLICT DO NOTHING RETURNING id, zero rows short-circuits the send
+  CHECK: node scripts/verify/verify-fix2-order.mjs
+  EXPECT: FIX2_ORDER_VERIFIED
+  EVIDENCE: pending
 
-- [x] G7: repository typechecks clean
-  CHECK: node -e "const r=require('child_process').spawnSync('npx tsc --noEmit',{shell:true,encoding:'utf8'}); const out=(r.stdout||'')+(r.stderr||''); if(r.status===0){console.log('TSC_CLEAN')}else{console.log(out.slice(0,2000));process.exit(1)}"
-  EXPECT: TSC_CLEAN
-  EVIDENCE: exit 0, printed TSC_CLEAN. Positive control: injecting a type error into lib/admin/orgHealth.ts made the gate fail with TS2322 at line 281; control removed and re-verified clean. The gate command needs shell:true because spawnSync on npx.cmd throws EINVAL on Windows.
+- [ ] G7: Welcome email guarded by atomic conditional UPDATE ... RETURNING, migration adds welcome_email_sent
+  CHECK: node scripts/verify/verify-fix3-guard.mjs
+  EXPECT: FIX3_GUARD_VERIFIED
+  EVIDENCE: pending
 
-- [x] G8: production build succeeds
-  CHECK: node scripts/verify-build-clean.mjs
-  EXPECT: build verification passed
-  EVIDENCE: exit 0, printed "build verification passed" via scripts/verify-build-clean.mjs (production next build).
+- [ ] G8: Dashboard no longer triggers post-registration; confirm page remains sole caller; Sentry warning replaces it
+  CHECK: node scripts/verify/verify-fix3-caller.mjs
+  EXPECT: FIX3_CALLER_VERIFIED
+  EVIDENCE: pending
 
-- [ ] G9: pre-existing access-model behaviour is unregressed
-  CHECK: node scripts/verify-access-model.mjs
-  EXPECT: access model verification passed
-  EVIDENCE: FLAKY AT BASELINE, NOT A REGRESSION. Measured: 10 pass / 2 fail
-    over 12 runs WITH these changes; 2 pass / 1 fail over 3 runs at clean
-    HEAD with every file of this change stashed. The failing case is always
-    the same one: "day 45, last grace day -> locked, expected read_only".
-    Cause: the fixture builds pilot_start_date as exactly now-45d and
-    daysSincePilotStart() uses Math.ceil, so the value lands exactly on the
-    `> PILOT_LOCKOUT_DAYS` boundary; sub-millisecond drift between building
-    the date and evaluating it flips the verdict. Neither
-    lib/billing/access-model.ts nor scripts/verify-access-model.mjs is
-    modified by this change (confirmed via git status).
-  ABANDON: G9 Pre-existing boundary flake in a script outside this change's
-    OWNS scope. Fixing it means editing scripts/verify-access-model.mjs
-    (e.g. day(-45.5)) or access-model.ts's rounding, which would silently
-    widen an admin-feature change into the billing lifecycle. Handoff: fix
-    the fixture separately, then un-abandon this gate.
+- [x] G9: Repository typechecks clean (tsc --noEmit, exit 0) after all three fixes
+  CHECK: node scripts/verify/verify-typecheck.mjs
+  EXPECT: TYPECHECK_CLEAN
+  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=(node:59192) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated. | (Use `node --trace-deprecation ...` to show where
 
-- [ ] G10: MANUAL — the new migration is deployed to the live Supabase project. This repo gitignores /supabase/migrations/ ("the live schema lives in the Supabase dashboard"), so a migration file on disk is NOT evidence that the function exists in the database.
+- [x] G10: ESLint reports no new errors in every touched file
+  CHECK: node scripts/verify/verify-lint.mjs
+  EXPECT: LINT_CLEAN
+  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=(node:60848) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated. | (Use `node --trace-deprecation ...` to show where
+
+- [x] G11: Out-of-scope invariants untouched — subject lines, FREQUENCY_RULES, notification prefs, and the seeded overdue Toyota are byte-identical to HEAD
+  CHECK: node scripts/verify/verify-scope.mjs
+  EXPECT: SCOPE_RESPECTED
+  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=ok: no new dev dependencies | SCOPE_RESPECTED
+
+- [ ] G12: Exactly three commits, correct messages, each self-contained
+  CHECK: node scripts/verify/verify-commits.mjs
+  EXPECT: COMMITS_VERIFIED
   EVIDENCE: pending

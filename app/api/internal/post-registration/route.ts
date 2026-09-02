@@ -3,9 +3,94 @@
 // Seeds demo data (Workstream B) and sends welcome email (Workstream C).
 
 import { NextResponse } from 'next/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { seedDemoData } from '@/lib/seed/demo-data';
 import { sendWelcomeEmail } from '@/lib/email/send-welcome-email';
+import { sendDemoShowcaseAlert } from '@/lib/email/email-service';
+
+/**
+ * Service-role client, used ONLY for the one-shot email claims below.
+ *
+ * The session client cannot be used for them. Claiming is an UPDATE on
+ * organizations, and the RLS policy on that table does not grant a member the
+ * right to write these columns -- the update would silently affect zero rows,
+ * which this code reads as "already sent" and would suppress every email.
+ */
+function getServiceSupabase() {
+  return createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } }
+  );
+}
+
+/**
+ * The seeded specimen shown in the showcase email.
+ *
+ * Mirrors the Toyota that lib/seed/demo-data.ts creates ten days overdue. Kept
+ * as a literal rather than read back from the database: the email is a worked
+ * example, so it must render identically even if the seed partly failed, and a
+ * query here would add a failure mode to a path that is already best-effort.
+ */
+const DEMO_SPECIMEN = {
+  assetName: 'Chariot elevateur Toyota 8FD25',
+  serialNumber: 'CHA-2021-0103',
+  daysOverdue: 10,
+  actionRequired:
+    "Planifier la VGP aupres d'un organisme agree et enregistrer le rapport dans TraviXO.",
+};
+
+/**
+ * Claim and send the demo showcase alert, at most once per organization.
+ *
+ * The claim is a conditional UPDATE rather than a read followed by a write.
+ * Two callers racing on the same org both see demo_alert_sent = false if they
+ * read first, and both send; with the condition inside the UPDATE, Postgres
+ * row-locks for the statement and exactly one caller gets a row back.
+ *
+ * Returns whether this call actually delivered an email.
+ */
+async function sendDemoShowcaseAlertOnce(
+  orgId: string,
+  orgName: string,
+  recipientEmail: string
+): Promise<boolean> {
+  const supabase = getServiceSupabase();
+
+  const { data: claimed, error: claimError } = await supabase
+    .from('organizations')
+    .update({ demo_alert_sent: true })
+    .eq('id', orgId)
+    .eq('demo_alert_sent', false)
+    .select('id');
+
+  if (claimError) {
+    console.error('[POST-REGISTRATION] Showcase claim failed:', claimError.message);
+    return false;
+  }
+
+  if (!claimed || claimed.length === 0) {
+    // Another caller already claimed it, or this org was backfilled as sent.
+    return false;
+  }
+
+  const result = await sendDemoShowcaseAlert({
+    organizationName: orgName,
+    recipientEmail,
+    specimen: DEMO_SPECIMEN,
+  });
+
+  if (!result.success) {
+    // The claim is intentionally NOT released. Releasing it would reopen the
+    // duplicate-send race this guard exists to close, and a missed sample email
+    // is a far smaller problem than a second one arriving days later, which
+    // reads as a genuine compliance alert.
+    console.error('[POST-REGISTRATION] Showcase send failed:', result.error);
+  }
+
+  return result.success;
+}
 
 export async function POST() {
   try {
@@ -52,6 +137,21 @@ export async function POST() {
       companyName: orgName,
     });
 
+    // 5. Send the one-time demo showcase alert.
+    //
+    // The cron no longer emails demo assets, so the seeded overdue Toyota no
+    // longer demonstrates the alert format on its own. This puts that
+    // demonstration back as a single deliberate send.
+    //
+    // Gated on the seed having succeeded. The email describes a specific piece
+    // of demo equipment and links into the app expecting it to be there; if the
+    // seed failed there is nothing to show, and the claim would be burned on an
+    // email that describes equipment the account does not have.
+    const demoDataPresent = alreadySeeded || seedResult.success;
+    const showcaseSent = demoDataPresent
+      ? await sendDemoShowcaseAlertOnce(orgId, orgName, user.email!)
+      : false;
+
     return NextResponse.json({
       success: true,
       seed: {
@@ -60,6 +160,9 @@ export async function POST() {
       },
       email: {
         sent: emailResult.success,
+      },
+      showcase: {
+        sent: showcaseSent,
       },
     });
   } catch (error: any) {

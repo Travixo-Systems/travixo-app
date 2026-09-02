@@ -25,6 +25,8 @@ import type {
   EmailRecipient,
 } from "@/types/vgp-alerts";
 
+import { isDemoSchedule, isUndeliverableEmail } from "@/lib/vgp/demo-exclusion";
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -82,6 +84,8 @@ interface ScheduleWithAsset {
     serial_number: string | null;
     category_id: string | null;
     current_location: string | null;
+    /** Nullable in the database, so NULL means "not marked demo", not "demo". */
+    is_demo_data: boolean | null;
     asset_categories: { name: string } | null;
   };
 }
@@ -176,7 +180,7 @@ async function getOrgNotificationPrefs(orgId: string): Promise<{
 async function getAlertRecipients(
   orgId: string,
   recipientsPref: "owner" | "admin" | "all"
-): Promise<EmailRecipient[]> {
+): Promise<{ recipients: EmailRecipient[]; filtered: number }> {
   let roles: string[];
   switch (recipientsPref) {
     case "all":
@@ -199,13 +203,33 @@ async function getAlertRecipients(
 
   if (error || !users) {
     console.log(`${LOG_PREFIX} Error fetching recipients for org ${orgId}:`, error?.message);
-    return [];
+    return { recipients: [], filtered: 0 };
   }
 
-  return users.map((u: { email: string; full_name: string | null }) => ({
+  const all = users.map((u: { email: string; full_name: string | null }) => ({
     email: u.email,
     full_name: u.full_name || "",
   }));
+
+  // Drop addresses that cannot possibly be delivered before they reach Resend.
+  //
+  // scripts/seed-complete-test-data.ts writes five accounts per seeded org as
+  // `user{i}@{slug}.test`, with i=0 owner and i=1 admin -- precisely the roles
+  // selected above. `.test` is reserved by RFC 2606 and never resolves, so each
+  // one is a guaranteed hard bounce, every day, charged against the sending
+  // domain's reputation. Nothing downstream can recover from that, so the
+  // filter belongs here rather than in the send path.
+  const recipients = all.filter((r) => !isUndeliverableEmail(r.email));
+  const filtered = all.length - recipients.length;
+
+  if (filtered > 0) {
+    console.log(
+      `${LOG_PREFIX} Filtered ${filtered} undeliverable recipient(s) for org ${orgId} ` +
+      `(reserved .test domain or blank address)`
+    );
+  }
+
+  return { recipients, filtered };
 }
 
 // ============================================================
@@ -219,6 +243,10 @@ export interface CronResult {
   emails_sent: number;
   skipped: number;
   cooldown: number;
+  /** Schedules dropped because their asset is seeded demo data. */
+  demo_schedules_skipped: number;
+  /** Recipient addresses dropped as undeliverable (RFC 2606 .test, blanks). */
+  recipients_filtered: number;
   errors: string[];
   details: Array<{
     organization_id: string;
@@ -239,6 +267,8 @@ export async function runVGPAlertsCron(): Promise<CronResult> {
     emails_sent: 0,
     skipped: 0,
     cooldown: 0,
+    demo_schedules_skipped: 0,
+    recipients_filtered: 0,
     errors: [],
     details: [],
   };
@@ -250,6 +280,11 @@ export async function runVGPAlertsCron(): Promise<CronResult> {
     const sixtyDaysOut = new Date(today);
     sixtyDaysOut.setDate(sixtyDaysOut.getDate() + 60);
 
+    // `assets!inner` is load-bearing. On a plain embed PostgREST applies a
+    // nested filter to the EMBEDDED row only -- the parent schedule still comes
+    // back, just with `assets: null` -- so `.eq("assets.is_demo_data", false)`
+    // would not remove a single demo schedule. !inner turns it into an inner
+    // join, which is what makes the filter drop the parent row.
     const { data: schedules, error: schedError } = await supabase
       .from("vgp_schedules")
       .select(`
@@ -260,17 +295,19 @@ export async function runVGPAlertsCron(): Promise<CronResult> {
         interval_months,
         inspector_name,
         inspector_company,
-        assets (
+        assets!inner (
           name,
           serial_number,
           category_id,
           current_location,
+          is_demo_data,
           asset_categories (
             name
           )
         )
       `)
       .eq("status", "active")
+      .eq("assets.is_demo_data", false)
       .lte("next_due_date", sixtyDaysOut.toISOString().split("T")[0])
       .is("archived_at", null) as { data: ScheduleWithAsset[] | null; error: any };
 
@@ -286,10 +323,38 @@ export async function runVGPAlertsCron(): Promise<CronResult> {
       return result;
     }
 
-    console.log(`${LOG_PREFIX} Found ${schedules.length} active schedules within 60-day window`);
+    // Safety net behind the query filter above.
+    //
+    // These are not redundant. `.eq("assets.is_demo_data", false)` is a SQL
+    // equality, and SQL equality never matches NULL -- assets.is_demo_data is
+    // `boolean DEFAULT false` with no NOT NULL, so any row written before that
+    // column existed is NULL and the query silently drops it. Those are real
+    // customer assets. This pass re-includes them by testing identity against
+    // `true` instead, so the only rows removed here are ones positively marked
+    // as demo.
+    //
+    // It also keeps the exclusion true if the embed shape is ever edited: the
+    // filter lives in one tested predicate rather than in a query string.
+    const eligibleSchedules = schedules.filter((s) => !isDemoSchedule(s));
+    const demoSchedulesSkipped = schedules.length - eligibleSchedules.length;
+
+    if (demoSchedulesSkipped > 0) {
+      console.log(
+        `${LOG_PREFIX} Skipped ${demoSchedulesSkipped} demo schedule(s) ` +
+        `(is_demo_data = true). Demo assets never generate recurring alerts.`
+      );
+    }
+    result.demo_schedules_skipped = demoSchedulesSkipped;
+
+    if (eligibleSchedules.length === 0) {
+      console.log(`${LOG_PREFIX} No non-demo schedules due within 60 days. Done.`);
+      return result;
+    }
+
+    console.log(`${LOG_PREFIX} Found ${eligibleSchedules.length} active schedules within 60-day window`);
 
     // 2. Get last unresolved alert for each schedule (for cooldown checking)
-    const scheduleIds = schedules.map((s) => s.id);
+    const scheduleIds = eligibleSchedules.map((s) => s.id);
     const { data: recentAlerts, error: alertsError } = await supabase
       .from("vgp_alerts")
       .select("schedule_id, sent_at")
@@ -315,7 +380,7 @@ export async function runVGPAlertsCron(): Promise<CronResult> {
 
     // 3. Group schedules by organization
     const orgSchedules = new Map<string, ScheduleWithAsset[]>();
-    for (const schedule of schedules) {
+    for (const schedule of eligibleSchedules) {
       const orgId = schedule.organization_id;
       if (!orgSchedules.has(orgId)) {
         orgSchedules.set(orgId, []);
@@ -337,7 +402,8 @@ export async function runVGPAlertsCron(): Promise<CronResult> {
       }
 
       // Get recipients
-      const recipients = await getAlertRecipients(orgId, prefs.recipients);
+      const { recipients, filtered } = await getAlertRecipients(orgId, prefs.recipients);
+      result.recipients_filtered += filtered;
       if (recipients.length === 0) {
         console.log(`${LOG_PREFIX} No recipients found for org: ${orgName}`);
         result.skipped += orgScheds.length;
@@ -643,6 +709,7 @@ async function runClientRecallPass(): Promise<RecallResult> {
           name,
           serial_number,
           category_id,
+          is_demo_data,
           asset_categories (
             name
           )
@@ -661,10 +728,30 @@ async function runClientRecallPass(): Promise<RecallResult> {
       return result;
     }
 
-    console.log(`${RECALL_PREFIX} Found ${rentalSchedules.length} active rentals`);
+    // Demo assets are excluded here for the same reason as the digest pass, but
+    // the stakes are higher: this pass emails the CLIENT holding the equipment,
+    // not internal staff. A recall notice naming a seeded demo machine is sent
+    // to a real customer of the org, which is worse than noise.
+    const eligibleRentals = rentalSchedules.filter(
+      (r: { assets?: { is_demo_data?: boolean | null } | null }) => !isDemoSchedule(r)
+    );
+    const demoRentalsSkipped = rentalSchedules.length - eligibleRentals.length;
+
+    if (demoRentalsSkipped > 0) {
+      console.log(
+        `${RECALL_PREFIX} Skipped ${demoRentalsSkipped} rental(s) on demo assets`
+      );
+    }
+
+    if (eligibleRentals.length === 0) {
+      console.log(`${RECALL_PREFIX} No active rentals on real assets. Done.`);
+      return result;
+    }
+
+    console.log(`${RECALL_PREFIX} Found ${eligibleRentals.length} active rentals`);
 
     // For each rental, check if its asset has a VGP schedule due within 30 days
-    const assetIds = rentalSchedules.map((r: any) => r.asset_id);
+    const assetIds = eligibleRentals.map((r: any) => r.asset_id);
 
     const { data: vgpSchedules, error: vgpError } = await supabase
       .from("vgp_schedules")
@@ -702,7 +789,7 @@ async function runClientRecallPass(): Promise<RecallResult> {
 
     const recallItems: RecallItem[] = [];
 
-    for (const rental of rentalSchedules) {
+    for (const rental of eligibleRentals) {
       const vgp = vgpMap.get(rental.asset_id);
       if (!vgp) continue;
 
@@ -778,7 +865,7 @@ async function runClientRecallPass(): Promise<RecallResult> {
         continue;
       }
 
-      const recipients = await getAlertRecipients(orgId, prefs.recipients);
+      const { recipients } = await getAlertRecipients(orgId, prefs.recipients);
       if (recipients.length === 0) {
         console.log(`${RECALL_PREFIX} No recipients for org: ${orgName}`);
         continue;
