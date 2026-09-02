@@ -205,7 +205,7 @@ export default function (data) {
   if (roll < 0.35) {
     dashboard()
   } else if (roll < 0.65) {
-    assetsList(session, orgId)
+    assetsList(session)
   } else if (roll < 0.8) {
     scanPage()
   } else if (roll < 0.88) {

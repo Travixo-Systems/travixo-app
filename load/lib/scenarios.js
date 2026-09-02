@@ -67,22 +67,50 @@ export function dashboard() {
 // The page shell is server-rendered, but the asset rows come from a direct
 // PostgREST call in the client component. Both are measured; the PostgREST
 // call is the one that carries the payload.
-export function assetsList(session, organizationId) {
+// organizationId is no longer a parameter: the RPCs resolve the org from the
+// session via get_my_organization_id(), so a caller cannot ask for another
+// tenant's rows by passing an id.
+export function assetsList(session) {
   group('assets_list', () => {
     appGet('/assets', 'page:assets', 'read', assetsListLatency)
 
-    if (session && organizationId && SUPABASE_URL) {
-      const q =
-        `${SUPABASE_URL}/rest/v1/assets` +
-        `?select=*,asset_categories(id,name),vgp_schedules(id,next_due_date,archived_at)` +
-        `&organization_id=eq.${organizationId}` +
-        `&order=created_at.desc`
-      const res = http.get(q, {
-        headers: { ...bearer(session), 'Accept-Encoding': 'gzip' },
-        tags: { name: 'db:assets_list_unpaginated' },
-      })
-      record(res, 'read', assetsListLatency)
-      check(res, { 'assets query ok': (r) => r.status === 200 })
+    if (session && SUPABASE_URL) {
+      // Mirror what the page ACTUALLY does.
+      //
+      // This used to issue the old unpaginated `select=*` with two embedded
+      // joins, which is the request the pagination work removed. Left as it
+      // was, the harness kept measuring code the app no longer runs, and the
+      // before/after comparison for this page was meaningless -- the numbers
+      // moved by a few percent because the same old query was being timed on
+      // both sides.
+      //
+      // The page now calls the assets_page RPC for one page of rows, plus two
+      // aggregate calls for the fleet-wide figures above the table. All three
+      // are reproduced here, because all three are on the critical path for a
+      // page load.
+      const rpcHeaders = { ...bearer(session), 'Content-Type': 'application/json' }
+
+      const page = http.post(
+        `${SUPABASE_URL}/rest/v1/rpc/assets_page`,
+        JSON.stringify({ p_limit: 50, p_offset: 0 }),
+        { headers: rpcHeaders, tags: { name: 'db:assets_page' } }
+      )
+      record(page, 'read', assetsListLatency)
+      check(page, { 'assets page ok': (r) => r.status === 200 })
+
+      const counts = http.post(
+        `${SUPABASE_URL}/rest/v1/rpc/assets_status_counts`,
+        '{}',
+        { headers: rpcHeaders, tags: { name: 'db:assets_status_counts' } }
+      )
+      record(counts, 'read', assetsListLatency)
+
+      const cats = http.post(
+        `${SUPABASE_URL}/rest/v1/rpc/assets_category_counts`,
+        '{}',
+        { headers: rpcHeaders, tags: { name: 'db:assets_category_counts' } }
+      )
+      record(cats, 'read', assetsListLatency)
     }
   })
 }
@@ -193,12 +221,25 @@ export function referenceData() {
   group('reference_data', () => {
     const plans = appGet('/api/subscriptions/plans', 'api:plans', 'read')
     const types = appGet('/api/vgp/equipment-types', 'api:equipment_types', 'read')
+    // Plans is PUBLIC reference data, so it belongs in the shared CDN and a
+    // HIT is the right assertion.
     check(plans, {
-      'plans cache hit': (r) => (r.headers['X-Vercel-Cache'] || '').includes('HIT'),
-    })
-    check(types, {
-      'equipment types cache hit': (r) =>
+      'plans served from CDN': (r) =>
         (r.headers['X-Vercel-Cache'] || '').includes('HIT'),
+    })
+
+    // Equipment types is NOT public: it sits behind the vgp_compliance gate,
+    // so it is deliberately `private` and must never enter a shared cache -- a
+    // CDN hit there would serve gated data to an org without the feature.
+    //
+    // Asserting a CDN HIT here was simply the wrong test, and it failed on
+    // every run (0/569) while the route was behaving exactly as designed. What
+    // matters is that the response carries a private cache directive, which is
+    // what lets the BROWSER stop re-fetching it and skip the three-call auth
+    // preamble each fetch drags along.
+    check(types, {
+      'equipment types privately cacheable': (r) =>
+        r.status !== 200 || (r.headers['Cache-Control'] || '').includes('private'),
     })
   })
 }
