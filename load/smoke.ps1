@@ -64,10 +64,28 @@ if (-not $supabaseUrl -or -not $anonKey) {
 
 $profileName = if ($args[0]) { $args[0] } else { 'smoke' }
 
+# Which accounts this run may use.
+#
+# EuroRent is a REAL tenant. It is permitted for the read-only smoke profile
+# only, where 5 VUs for 5 minutes is negligible. Every heavier profile drives
+# the two load-test organizations instead, so sustained traffic never lands on
+# a real customer's data.
+$loadTestUsers = "user0@promachinery-france.test:TestPassword123!,user0@techlift-solutions.test:TestPassword123!"
+$smokeUser     = "user2@eurorent-equipment.test:TestPassword123!"
+
+if ($profileName -eq 'smoke') {
+  $testUsers = $smokeUser
+  $userNote  = "EuroRent (read-only smoke only)"
+} else {
+  $testUsers = $loadTestUsers
+  $userNote  = "ZZ-LOADTEST owners (never a real tenant)"
+}
+
 Write-Host ""
 Write-Host "Profile      : $profileName"
 Write-Host "Target       : https://app.travixosystems.com  (PRODUCTION)"
 Write-Host "Writes       : disabled"
+Write-Host "Accounts     : $userNote"
 Write-Host "k6           : $k6"
 Write-Host ""
 
@@ -77,7 +95,7 @@ Write-Host ""
   -e SUPABASE_URL="$supabaseUrl" `
   -e SUPABASE_ANON_KEY="$anonKey" `
   -e AUTH_COOKIE_NAME="travixo-auth" `
-  -e TEST_USERS="user2@eurorent-equipment.test:TestPassword123!" `
+  -e TEST_USERS="$testUsers" `
   -e SCAN_QR_CODE="qr-24035006" `
   -e PROFILE="$profileName" `
   load/scenarios/journey.js
