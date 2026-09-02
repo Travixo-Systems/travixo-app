@@ -14,8 +14,30 @@
 
 $ErrorActionPreference = 'Stop'
 
-if (-not (Get-Command k6 -ErrorAction SilentlyContinue)) {
-  Write-Host "k6 is not installed. Run:  winget install k6" -ForegroundColor Red
+# Find k6.
+#
+# winget installs it to C:\Program Files\k6 but does not always add that to
+# PATH, and an already-open terminal keeps the old PATH even when it does. So
+# check PATH first, then the known install locations, rather than telling
+# someone to install software they already have.
+$k6 = $null
+if (Get-Command k6 -ErrorAction SilentlyContinue) {
+  $k6 = (Get-Command k6).Source
+} else {
+  $candidates = @(
+    "$env:ProgramFiles\k6\k6.exe",
+    "${env:ProgramFiles(x86)}\k6\k6.exe",
+    "$env:ProgramData\chocolatey\bin\k6.exe"
+  )
+  foreach ($c in $candidates) {
+    if (Test-Path $c) { $k6 = $c; break }
+  }
+}
+
+if (-not $k6) {
+  Write-Host "k6 not found. Install it with:  winget install k6" -ForegroundColor Red
+  Write-Host "If winget says it is already installed, it is not on PATH:" -ForegroundColor Yellow
+  Write-Host "  Get-ChildItem 'C:\Program Files\k6' -Filter k6.exe -Recurse" -ForegroundColor Yellow
   exit 1
 }
 
@@ -46,9 +68,10 @@ Write-Host ""
 Write-Host "Profile      : $profileName"
 Write-Host "Target       : https://app.travixosystems.com  (PRODUCTION)"
 Write-Host "Writes       : disabled"
+Write-Host "k6           : $k6"
 Write-Host ""
 
-k6 run `
+& $k6 run `
   -e BASE_URL="https://app.travixosystems.com" `
   -e ALLOW_PROD_HOST=true `
   -e SUPABASE_URL="$supabaseUrl" `
