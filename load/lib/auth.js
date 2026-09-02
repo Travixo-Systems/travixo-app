@@ -21,7 +21,7 @@
 
 import http from 'k6/http'
 import encoding from 'k6/encoding'
-import { check } from 'k6'
+import { check, sleep } from 'k6'
 import { BASE_URL, SUPABASE_URL, SUPABASE_ANON_KEY, authCookieName, DEBUG } from './config.js'
 
 /** Matches MAX_CHUNK_SIZE in @supabase/ssr. */
@@ -53,18 +53,39 @@ export function signIn(email, password) {
     )
   }
 
-  const res = http.post(
-    `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
-    JSON.stringify({ email, password }),
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-      tags: { name: 'auth:signin' },
-    }
-  )
+  // Retry a failed sign-in a couple of times before giving up.
+  //
+  // A 50-VU run died a minute in when a single sign-in hit a TCP timeout
+  // reaching GoTrue. One transient network blip during ramp-up should not
+  // invalidate a ten-minute run, and a real client would retry too. GoTrue
+  // was verified healthy immediately afterwards (15 concurrent sign-ins, all
+  // 200), so this is packet loss rather than a service limit.
+  //
+  // Bounded at three attempts with a short backoff: enough to ride out a
+  // blip, not enough to paper over a genuinely unreachable auth service,
+  // which should still fail the run loudly.
+  let res = null
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    res = http.post(
+      `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
+      JSON.stringify({ email, password }),
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        tags: { name: 'auth:signin' },
+        timeout: '30s',
+      }
+    )
+    // status 0 is a transport failure (timeout, connection refused), which is
+    // exactly the case worth retrying. A 400 means bad credentials and will
+    // never succeed, so stop.
+    if (res.status === 200) break
+    if (res.status >= 400 && res.status < 500) break
+    if (attempt < 3) sleep(1)
+  }
 
   const ok = check(res, {
     'signin returned 200': (r) => r.status === 200,
