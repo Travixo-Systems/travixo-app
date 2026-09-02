@@ -67,6 +67,22 @@ See `supabase/schemas/README.md` for the same rule beside the files.
 - **Measure, do not estimate.** Payload sizes, row counts and bundle figures in
   the audit are measured against the live project or the real build. Anything
   that could not be measured is marked UNVERIFIED with the reason.
+- **A non-zero error rate in a load run is the harness's fault until the
+  failing requests are named.** Two consecutive runs produced plausible
+  "the app is buckling" numbers that were both bugs in `load/`:
+
+  1. 49% failures: k6 clears its cookie jar between iterations by default, so
+     a VU that signed in once at `__ITER === 0` lost its session immediately
+     after (`noCookiesReset`).
+  2. 1.61% failures: login was gated on `__ITER === 0`, but a ramping executor
+     starts and recycles VUs, so some began life at a non-zero `__ITER` and
+     never authenticated at all.
+
+  Both showed sign-in succeeding and `travixo_auth_failures` at zero while
+  authenticated routes 401'd -- a signature that reads exactly like a broken
+  app. `DEBUG=true` prints which request failed; use it before drawing any
+  conclusion about the application.
+
 - **A typecheck is not a test of a dynamic import.** Lazily loaded components
   fail at click time. The rental overlays on the public scan page gate real
   mutations (VGP compliance, rental state), so changes there are exercised in a
