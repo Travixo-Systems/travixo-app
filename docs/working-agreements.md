@@ -122,3 +122,28 @@ distinguishable from a real conversion.
 
 If an organization only needs more evaluation time, extend the pilot. Do not
 mark it paid.
+
+---
+
+## Deleting test data from a demo org
+
+A VGP inspection is not one row. Recording one writes to three places, so
+removing one has to undo all three or the compliance dashboard starts lying:
+
+1. the vgp_inspections row itself
+2. vgp_schedules.next_due_date, .last_inspection_date and .status, which the
+   inspection advanced
+3. assets.status, but only when the result was failed
+
+Delete the inspection FIRST, then revert the schedule. That order means a
+failure part-way leaves a schedule pointing at an inspection that still
+exists, rather than one that does not.
+
+To find what to revert to, read the seeded pattern rather than inventing
+values: vgp_alerts rows carry the due_date the schedule had when the alert
+fired, and the other schedules in the org show the shape (status active,
+last_inspection_date roughly next_due minus interval_months).
+
+Afterwards, confirm the org is uniform again -- one schedule left at status
+completed among hundreds of active ones is exactly the kind of residue a
+prospect notices.
