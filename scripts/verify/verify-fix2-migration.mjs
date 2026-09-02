@@ -8,8 +8,13 @@ assert(hits.length === 1, `exactly one migration creates idx_vgp_alerts_dedup_un
 if (!hits.length) done('FIX2_MIGRATION_VERIFIED');
 
 const f = hits[0];
-const t = read(`supabase/migrations/${f}`);
+const raw = read(`supabase/migrations/${f}`);
 assert(/^\d{14}_/.test(f), `timestamp prefix (${f})`);
+
+// Strip `--` comments before reasoning about statement ORDER. These migrations
+// carry long rationale headers that quote the very SQL being checked, so
+// searching the raw text finds the commentary, not the executed statement.
+const t = raw.split('\n').filter((line) => !/^\s*--/.test(line)).join('\n');
 
 const delAt = t.search(/DELETE\s+FROM\s+(public\.)?vgp_alerts/i);
 const idxAt = t.search(/CREATE\s+UNIQUE\s+INDEX/i);

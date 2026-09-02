@@ -487,67 +487,129 @@ export async function runVGPAlertsCron(): Promise<CronResult> {
       for (const [level, items] of byUrgency) {
         const alertType = items[0].rule.alertType;
 
-        // Transform to ScheduleTableRow shape
-        const scheduleRows: ScheduleTableRow[] = items.map((i) =>
-          toScheduleTableRow(i.schedule, i.daysUntilDue)
-        );
-
         try {
           const { sendVGPAlert } = await import("@/lib/email/email-service");
+
+          const now = new Date().toISOString();
+          const todayStr = now.split("T")[0];
+          const recipientEmails = recipients.map(r => r.email);
+
+          // CLAIM BEFORE SEND.
+          //
+          // These rows are the dedup record, so writing them after the email
+          // meant a failed write left the send unrecorded -- and the same alert
+          // went out again on the next run. The old code caught that case and
+          // logged it, which is all it could do: the mail was already gone.
+          //
+          // Inverting the order makes the database the arbiter. Paired with the
+          // unique index from 20260902140000, an insert that collides with an
+          // existing (schedule_id, alert_type, alert_date) row is dropped by
+          // ignoreDuplicates rather than raising, and the returned rows tell us
+          // exactly which schedules THIS run is responsible for emailing. A
+          // concurrent run -- the 07:00 cron overlapping a manual admin trigger
+          // -- claims the remainder or nothing at all, and cannot re-send what
+          // this one already holds.
+          //
+          // upsert(..., { ignoreDuplicates: true }) is how supabase-js spells
+          // INSERT ... ON CONFLICT DO NOTHING. onConflict names the index's
+          // columns so the partial unique index is the arbiter.
+          const { data: claimedRows, error: claimError } = await supabase
+            .from("vgp_alerts")
+            .upsert(
+              items.map((item) => ({
+                schedule_id: item.schedule.id,
+                asset_id: item.schedule.asset_id,
+                organization_id: orgId,
+                alert_type: alertType,
+                urgency_level: item.rule.level,
+                alert_date: todayStr,
+                due_date: item.schedule.next_due_date,
+                sent: true,
+                sent_at: now,
+                email_sent_to: recipientEmails,
+                resolved: false,
+              })),
+              { onConflict: "schedule_id,alert_type,alert_date", ignoreDuplicates: true }
+            )
+            .select("id, schedule_id");
+
+          if (claimError) {
+            // Nothing was claimed, so nothing is sent. This is the safe
+            // direction to fail: the alert is retried on the next run rather
+            // than delivered twice.
+            console.log(`${LOG_PREFIX} Failed to claim alerts: ${claimError.message}`);
+            Sentry.captureException(claimError, {
+              tags: { area: "vgp_cron", step: "alert_dedup_claim" },
+              extra: { orgId, alertType, batchSize: items.length },
+            });
+            result.errors.push(`Claim failed ${alertType} for ${orgName}: ${claimError.message}`);
+            orgDetail.skipped += items.length;
+            continue;
+          }
+
+          const claimedIds = new Set((claimedRows || []).map((r) => r.schedule_id));
+
+          if (claimedIds.size === 0) {
+            // Every schedule in this batch was already claimed -- another run
+            // holds them. Sending now would duplicate that run's email.
+            console.log(
+              `${LOG_PREFIX} ${orgName}: ${level} (${alertType}) already claimed elsewhere, skipping send`
+            );
+            orgDetail.cooldown += items.length;
+            continue;
+          }
+
+          // Send for exactly what was claimed, so a partially-claimed batch
+          // does not re-list schedules another run is already reporting.
+          const claimedItems = items.filter((i) => claimedIds.has(i.schedule.id));
+          const claimedRowsForEmail: ScheduleTableRow[] = claimedItems.map((i) =>
+            toScheduleTableRow(i.schedule, i.daysUntilDue)
+          );
+
+          if (claimedItems.length < items.length) {
+            console.log(
+              `${LOG_PREFIX} ${orgName}: claimed ${claimedItems.length}/${items.length} ` +
+              `${alertType} schedules, remainder held by a concurrent run`
+            );
+          }
 
           const sendResult = await sendVGPAlert(
             alertType,
             orgName,
             recipients,
-            scheduleRows
+            claimedRowsForEmail
           );
 
           if (!sendResult.success) {
+            // Release the claim so the next run retries. Safe because the mail
+            // did NOT go out: sendVGPAlert only reports success on a Resend
+            // acknowledgement, and it has already exhausted its own retry.
             console.log(`${LOG_PREFIX} Failed to send ${level} alert for ${orgName}: ${sendResult.error}`);
             result.errors.push(`Failed ${alertType} for ${orgName}: ${sendResult.error}`);
+
+            const { error: releaseError } = await supabase
+              .from("vgp_alerts")
+              .delete()
+              .in("id", (claimedRows || []).map((r) => r.id));
+
+            if (releaseError) {
+              // The claim stands and this alert is suppressed until the next
+              // urgency band. Worth knowing about; not worth re-sending over.
+              console.log(`${LOG_PREFIX} Failed to release claim: ${releaseError.message}`);
+              Sentry.captureException(releaseError, {
+                tags: { area: "vgp_cron", step: "alert_claim_release" },
+                extra: { orgId, alertType, batchSize: claimedItems.length },
+              });
+            }
+
             orgDetail.skipped += items.length;
             continue;
           }
 
-          // Log alerts with urgency_level and resolved fields
-          const now = new Date().toISOString();
-          const todayStr = now.split("T")[0];
-          const recipientEmails = recipients.map(r => r.email);
-
-          // One insert for the whole batch. This was a per-item loop, so an
-          // org with 400 due schedules paid 400 sequential round trips just to
-          // record that it had been emailed once.
-          const { error: insertError } = await supabase.from("vgp_alerts").insert(
-            items.map((item) => ({
-              schedule_id: item.schedule.id,
-              asset_id: item.schedule.asset_id,
-              organization_id: orgId,
-              alert_type: alertType,
-              urgency_level: item.rule.level,
-              alert_date: todayStr,
-              due_date: item.schedule.next_due_date,
-              sent: true,
-              sent_at: now,
-              email_sent_to: recipientEmails,
-              resolved: false,
-            }))
-          );
-
-          if (insertError) {
-            // These rows ARE the cooldown. Without them the same alert goes
-            // out again on the next run, so a silent failure here becomes
-            // duplicate mail to customers.
-            console.log(`${LOG_PREFIX} Failed to log alerts: ${insertError.message}`);
-            Sentry.captureException(insertError, {
-              tags: { area: "vgp_cron", step: "alert_dedup_insert" },
-              extra: { orgId, alertType, batchSize: items.length },
-            });
-          }
-
-          orgDetail.sent += items.length;
+          orgDetail.sent += claimedItems.length;
           result.emails_sent++;
           console.log(
-            `${LOG_PREFIX} Sent ${level} (${alertType}) alert for ${items.length} schedules to ${orgName}`
+            `${LOG_PREFIX} Sent ${level} (${alertType}) alert for ${claimedItems.length} schedules to ${orgName}`
           );
         } catch (emailError: any) {
           console.log(
