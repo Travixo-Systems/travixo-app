@@ -58,6 +58,46 @@ for (const host of PROD_HOSTS) {
 export const SUPABASE_URL = optional('SUPABASE_URL', '').replace(/\/+$/, '')
 export const SUPABASE_ANON_KEY = optional('SUPABASE_ANON_KEY', '')
 
+// ---------------------------------------------------------------------------
+// Vercel deployment protection
+// ---------------------------------------------------------------------------
+
+/**
+ * Bypass token for a protected preview deployment.
+ *
+ * A Vercel preview sits behind SSO by default: every request, including
+ * /login, answers 302 to vercel.com/sso-api. k6 cannot complete that OAuth
+ * flow, so without this the harness measures the redirect rather than the app.
+ *
+ * Generate one at Project Settings -> Deployment Protection -> Protection
+ * Bypass for Automation, and pass it in the environment. It is a credential:
+ * never commit it, and never put it in a shell history you keep.
+ *
+ *   k6 run -e VERCEL_BYPASS_TOKEN=... load/scenarios/journey.js
+ *
+ * Vercel accepts it as the header below, and also as a query parameter. The
+ * header is used here so the token stays out of request URLs, which is where
+ * it would otherwise show up in logs and in k6's own per-URL metric tags.
+ */
+export const VERCEL_BYPASS_TOKEN = optional('VERCEL_BYPASS_TOKEN', '')
+
+/**
+ * Headers every request to the app must carry.
+ *
+ * Empty when no bypass token is set, so a local or unprotected target is
+ * unaffected.
+ */
+export function appHeaders(extra) {
+  const h = { ...(extra || {}) }
+  if (VERCEL_BYPASS_TOKEN) {
+    h['x-vercel-protection-bypass'] = VERCEL_BYPASS_TOKEN
+    // Ask Vercel to set the bypass cookie too, so redirects within a VU's
+    // session stay authorised without re-sending the token on every hop.
+    h['x-vercel-set-bypass-cookie'] = 'samesitenone'
+  }
+  return h
+}
+
 /**
  * The auth cookie name.
  *

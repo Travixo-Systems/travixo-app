@@ -74,7 +74,32 @@ vercel deploy                           # use the preview URL it prints
 | `CONTENTION_ASSET_ID` | write-contention | Asset every VU fights over. |
 | `INSPECTION_ASSET_ID` | write scenarios | Asset to record inspections against. |
 | `DEGRADE_MODE` | dep-degrade | `none` \| `resend` \| `stripe`. |
+| `VERCEL_BYPASS_TOKEN` | for protected previews | Bypasses Vercel deployment protection. See below. |
 | `DEBUG` | no | Verbose auth logging. |
+
+### `VERCEL_BYPASS_TOKEN` - required for a protected preview
+
+A Vercel preview is behind SSO by default. Every request, `/login` included,
+answers `302` to `vercel.com/sso-api`, and k6 cannot complete that OAuth flow.
+Without a bypass token the harness measures the redirect, not the app.
+
+Generate one at **Project Settings -> Deployment Protection -> Protection
+Bypass for Automation**, then pass it per run:
+
+```bash
+k6 run -e VERCEL_BYPASS_TOKEN="$VERCEL_BYPASS_TOKEN" -e PROFILE=smoke load/scenarios/journey.js
+```
+
+It is a credential. Keep it in your shell environment or a secrets manager,
+never in this repository.
+
+Only requests to the app carry it. Calls that go straight to Supabase
+(sign-in, and the direct PostgREST reads the browser itself makes) deliberately
+do not, since Vercel is not in that path.
+
+**Symptom of a missing or wrong token:** every check fails and the responses are
+`302` to `vercel.com`, rather than the `401`s you would see from an auth
+problem.
 
 ### `AUTH_COOKIE_NAME` - read this before your first run
 

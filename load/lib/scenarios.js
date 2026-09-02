@@ -22,6 +22,7 @@ import {
   CONTENTION_ASSET_ID,
   slotPath,
   TARGET_ORG_ID,
+  appHeaders,
 } from './config.js'
 import {
   record,
@@ -33,13 +34,15 @@ import {
 } from './metrics.js'
 import { bearer } from './auth.js'
 
-const jsonHeaders = { 'Content-Type': 'application/json' }
+// App requests carry the Vercel bypass header when one is configured;
+// requests straight to Supabase deliberately do not.
+const jsonHeaders = () => appHeaders({ 'Content-Type': 'application/json' })
 
 /** GET an app route, following the account slot prefix if one is configured. */
 function appGet(path, name, kind, trend) {
   const res = http.get(`${BASE_URL}${slotPath(path)}`, {
     tags: { name },
-    headers: { 'Accept-Encoding': 'br, gzip' },
+    headers: appHeaders({ 'Accept-Encoding': 'br, gzip' }),
   })
   return record(res, kind || 'read', trend)
 }
@@ -94,7 +97,7 @@ export function scanPage(qrCode) {
   group('scan_page', () => {
     const res = http.get(`${BASE_URL}/scan/${code}`, {
       tags: { name: 'page:scan' },
-      headers: { 'Accept-Encoding': 'br, gzip' },
+      headers: appHeaders({ 'Accept-Encoding': 'br, gzip' }),
     })
     record(res, 'read', scanLatency)
     check(res, { 'scan page 200': (r) => r.status === 200 })
@@ -115,7 +118,7 @@ export function checkoutReturn(assetId, clientId) {
     const co = http.post(
       `${BASE_URL}${slotPath('/api/rentals/checkout')}`,
       JSON.stringify({ asset_id: id, client_id: clientId || undefined }),
-      { headers: jsonHeaders, tags: { name: 'api:checkout' } }
+      { headers: jsonHeaders(), tags: { name: 'api:checkout' } }
     )
     record(co, 'mutation', scanLatency)
     check(co, {
@@ -127,7 +130,7 @@ export function checkoutReturn(assetId, clientId) {
       const ret = http.post(
         `${BASE_URL}${slotPath('/api/rentals/return')}`,
         JSON.stringify({ asset_id: id }),
-        { headers: jsonHeaders, tags: { name: 'api:return' } }
+        { headers: jsonHeaders(), tags: { name: 'api:return' } }
       )
       record(ret, 'mutation', scanLatency)
     }
@@ -153,7 +156,7 @@ export function recordInspection(assetId, scheduleId) {
     const res = http.post(
       `${BASE_URL}${slotPath('/api/vgp/inspections')}`,
       JSON.stringify(body),
-      { headers: jsonHeaders, tags: { name: 'api:inspection_create' } }
+      { headers: jsonHeaders(), tags: { name: 'api:inspection_create' } }
     )
     record(res, 'mutation', inspectionLatency)
     check(res, {
