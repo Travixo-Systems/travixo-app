@@ -645,6 +645,31 @@ The assets page is where the payload work lands: the median more than halved.
 in the report path, which barely moved. That is consistent with the scaling
 curve below.
 
+| 50 VUs, 10 min | Before | After | Change |
+| --- | --- | --- | --- |
+| Read median | 158 ms | **97 ms** | **-38%** |
+| Read avg | 335 ms | **272 ms** | -19% |
+| Report avg | 457 ms | **460 ms** | flat |
+| Report median | 572 ms | 578 ms | flat |
+| Dashboard avg | 105 ms | 103 ms | flat |
+| Read p95 | 799 ms | 791 ms | flat |
+| Requests | 16,592 | **20,814** | +25% throughput |
+| Application errors | 1.49%* | **0.00%** | - |
+
+\* the earlier 1.49% was rate limiting counted as failure; it is classified
+correctly now, and `travixo_rate_limited` reports 1.46% separately.
+
+The **median** is the honest number here: 158 ms to 97 ms at the same
+concurrency, with 25% more requests served in the same ten minutes. The mean
+and p95 barely move because they are dominated by the report path, which the
+work so far does not fix.
+
+**The dashboard is flat at both 5 and 50 VUs.** The `Promise.all` change is
+correct - seven serial round trips became one - but it is evidently not where
+that page's time was going. Worth knowing rather than glossing: the next pass
+on dashboard latency should measure before assuming, rather than optimising the
+next-most-obvious thing.
+
 ### The latency is cold starts, not saturation
 
 The clearest single result of the whole exercise. On the pre-audit build,
