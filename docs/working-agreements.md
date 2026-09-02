@@ -41,6 +41,20 @@ Practical consequences:
   `relation organizations does not exist`. `--declarative` reads the live schema
   directly and does not touch remote migration history.
 
+- **Granting a new function to `authenticated` is not enough.** Supabase
+  default privileges (`supabase/schemas/public/default_privileges.sql`) grant
+  `EXECUTE` on every new function in `public` to `anon` automatically, and
+  `REVOKE ... FROM PUBLIC` does not undo it: PUBLIC and `anon` are different
+  grantees. Every new function must also do
+  `REVOKE EXECUTE ON FUNCTION ... FROM anon`.
+
+  Verify against the refreshed mirror afterwards rather than trusting the
+  migration text. This was missed once, on the assets-page functions: they were
+  granted only to `authenticated`, and the live schema still showed
+  `TO "anon", "authenticated", ...`. No data leaked, because they scope through
+  `get_my_organization_id()` which is NULL without a session, but that is
+  defence by predicate rather than by permission.
+
 - Migration filenames must match `<14-digit timestamp>_name.sql`. Eight-digit
   date prefixes collide and make the remote ledger unmatchable.
 

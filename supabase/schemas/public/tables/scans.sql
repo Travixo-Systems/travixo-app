@@ -36,13 +36,4 @@ CREATE POLICY "scans_select_same_org" ON "public"."scans"
            FROM public.users u
           WHERE (u.id = auth.uid())))))));
 
-CREATE POLICY "users_view_org_scans" ON "public"."scans"
-  FOR SELECT
-  TO PUBLIC
-  USING (((auth.uid() IS NOT NULL) AND (asset_id IN ( SELECT assets.id
-   FROM public.assets
-  WHERE (assets.organization_id IN ( SELECT users.organization_id
-           FROM public.users
-          WHERE (users.id = auth.uid())))))));
-
 GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."scans" TO "anon", "authenticated", "postgres", "service_role";
