@@ -16,11 +16,20 @@ const FILES = [
   'app/api/cron/vgp-alerts/route.ts',
   'app/api/internal/post-registration/route.ts',
   'app/(dashboard)/dashboard/page.tsx',
+  'app/(dashboard)/settings/notifications/page.tsx',
+  'app/api/settings/notifications/route.ts',
   'lib/email/email-service.ts',
+  'lib/email/templates/components/email-footer.tsx',
+  'lib/i18n.ts',
 ];
 const NEW_FILES = [
   'lib/vgp/demo-exclusion.ts',
+  'lib/vgp/notification-routing.ts',
   'lib/email/templates/demo-showcase-alert.tsx',
+  'lib/email/templates/vgp-digest.tsx',
+  'app/api/cron/vgp-weekly-digest/route.ts',
+  'app/api/settings/notifications/preferences/route.ts',
+  'components/settings/MyVGPAlertPreferences.tsx',
 ];
 
 function lintJson(paths, cwd) {

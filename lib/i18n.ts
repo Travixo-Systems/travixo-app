@@ -2306,6 +2306,106 @@ export const translations = {
         en: "Reset notification preferences?",
         fr: "Réinitialiser les préférences de notifications ?",
       },
+
+      // --- Per-user VGP alert preferences -----------------------------------
+      // These control the signed-in user's OWN mail and are separate from the
+      // vgp* keys above, which describe the organization-wide defaults.
+      myVgpTitle: {
+        en: "VGP Alerts",
+        fr: "Alertes VGP",
+      },
+      myVgpSubtitle: {
+        en: "Control how often you personally receive VGP alerts",
+        fr: "Choisissez la fréquence à laquelle vous recevez personnellement les alertes VGP",
+      },
+      myVgpInheriting: {
+        en: "You are currently using your organization's defaults",
+        fr: "Vous utilisez actuellement les paramètres par défaut de votre organisation",
+      },
+      myVgpFrequencyTitle: {
+        en: "Frequency",
+        fr: "Fréquence",
+      },
+      myVgpFreqImmediate: {
+        en: "Immediate",
+        fr: "Immédiat",
+      },
+      myVgpFreqImmediateHelp: {
+        en: "One email per alert type, as soon as it applies",
+        fr: "Un email par type d'alerte, dès qu'elle s'applique",
+      },
+      myVgpFreqDaily: {
+        en: "Daily summary",
+        fr: "Résumé quotidien",
+      },
+      myVgpFreqDailyHelp: {
+        en: "A single email each morning covering everything due",
+        fr: "Un seul email chaque matin regroupant toutes les échéances",
+      },
+      myVgpFreqWeekly: {
+        en: "Weekly summary",
+        fr: "Résumé hebdomadaire",
+      },
+      myVgpFreqWeeklyHelp: {
+        en: "A single email every Monday",
+        fr: "Un seul email chaque lundi",
+      },
+      myVgpFreqOff: {
+        en: "Disabled",
+        fr: "Désactivé",
+      },
+      myVgpFreqOffHelp: {
+        en: "Receive no VGP alerts at all",
+        fr: "Ne recevoir aucune alerte VGP",
+      },
+      myVgpThresholdsTitle: {
+        en: "Alert thresholds",
+        fr: "Seuils d'alerte",
+      },
+      myVgpThresholdsHelp: {
+        en: "Which deadlines you want to hear about",
+        fr: "Les échéances dont vous souhaitez être informé",
+      },
+      myVgpThreshold30: {
+        en: "30 days",
+        fr: "30 jours",
+      },
+      myVgpThreshold15: {
+        en: "15 days",
+        fr: "15 jours",
+      },
+      myVgpThreshold7: {
+        en: "7 days",
+        fr: "7 jours",
+      },
+      myVgpThreshold1: {
+        en: "1 day",
+        fr: "1 jour",
+      },
+      myVgpThreshold0: {
+        en: "Overdue",
+        fr: "En retard",
+      },
+      myVgpThresholdsEmpty: {
+        en: "No threshold selected - you will not receive VGP alerts",
+        fr: "Aucun seuil sélectionné - vous ne recevrez aucune alerte VGP",
+      },
+      myVgpSave: {
+        en: "Save my preferences",
+        fr: "Enregistrer mes préférences",
+      },
+      myVgpSaved: {
+        en: "Your notification preferences have been saved",
+        fr: "Vos préférences de notification ont été enregistrées",
+      },
+      myVgpSaveError: {
+        en: "Could not save your notification preferences",
+        fr: "Impossible d'enregistrer vos préférences de notification",
+      },
+      myVgpOrgDisabled: {
+        en: "Your organization has turned VGP alerts off, so no alerts are sent regardless of this setting.",
+        fr: "Votre organisation a désactivé les alertes VGP : aucune alerte n'est envoyée, quel que soit ce réglage.",
+      },
     },
 
     // Common
