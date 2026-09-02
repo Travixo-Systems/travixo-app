@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+// @sentry/browser, matching sentry.client.config.ts. @sentry/node is the
+// server build and pulls Node built-ins into the client bundle.
+import * as Sentry from "@sentry/browser"
 import { AlertTriangle, ArrowRight, Package, QrCode, TrendingUp } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { useLanguage } from "@/lib/LanguageContext"
@@ -76,9 +79,24 @@ export default function DashboardPage() {
     const onboardingCompleted = orgInfo?.onboarding_completed ?? true
     const firstName = (profile as any)?.first_name || ''
 
-    // Auto-trigger onboarding for existing orgs
+    // Unseeded org: report it, do NOT re-trigger onboarding.
+    //
+    // This used to POST /api/internal/post-registration. That made the
+    // dashboard a second caller of a route the confirm page already invokes,
+    // and the two raced: the confirm page drops its fetch promise and navigates
+    // immediately, while demo_data_seeded is only written at the END of
+    // seeding. The user arrived here mid-flight, read false, and fired a
+    // duplicate -- which is how one signup produced two welcome emails.
+    //
+    // Reaching this branch now means seeding genuinely did not complete, which
+    // is a backend problem a page load cannot fix by retrying. Surface it
+    // instead; the confirm page is the sole caller.
     if (orgId && orgInfo && !orgInfo.demo_data_seeded) {
-      fetch('/api/internal/post-registration', { method: 'POST' }).catch(() => {})
+      Sentry.captureMessage('Organization reached dashboard with demo_data_seeded = false', {
+        level: 'warning',
+        tags: { area: 'onboarding', step: 'demo_seed_missing' },
+        extra: { organizationId: orgId },
+      })
     }
 
     // Scans (7d)

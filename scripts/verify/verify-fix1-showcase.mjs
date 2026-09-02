@@ -54,11 +54,25 @@ assert(/daysOverdue/.test(tpl), 'template consumes daysOverdue');
 assert(/actionRequired/.test(tpl), 'template consumes actionRequired');
 
 // One send, never repeated: atomic conditional UPDATE guard.
+//
+// The claim goes through the shared claimOneShotEmail() helper, whose
+// atomicity is proven by execution in verify-fix3-guard.mjs (single
+// conditional UPDATE, no preceding SELECT, both negative controls). This gate
+// asserts the showcase path actually routes through that helper and that the
+// send is gated on winning.
 assert(/demo_alert_sent/.test(route), 'route references demo_alert_sent');
-assert(/\.eq\(\s*['"]demo_alert_sent['"]\s*,\s*false\s*\)/.test(route),
-  'guard filters on demo_alert_sent=false (atomic claim, not read-then-write)');
-assert(/demo_alert_sent[\s\S]{0,400}?\.select\(/.test(route),
-  'claim uses .select() to detect whether this caller won the row');
+assert(/claimOneShotEmail\(\s*orgId,\s*'demo_alert_sent'\s*\)/.test(route),
+  'showcase send is gated by the shared atomic claim helper');
+
+const showcaseFn = route.match(/async function sendDemoShowcaseAlertOnce\([\s\S]*?\n\}/);
+assert(showcaseFn !== null, 'sendDemoShowcaseAlertOnce located');
+const fnBody = showcaseFn ? showcaseFn[0] : '';
+const guardAt = fnBody.search(/claimOneShotEmail/);
+const sendCallAt = fnBody.search(/await sendDemoShowcaseAlert\(/);
+assert(guardAt !== -1 && sendCallAt !== -1 && guardAt < sendCallAt,
+  'the claim is taken BEFORE the showcase send');
+assert(/if\s*\(\s*!\s*\(await claimOneShotEmail/.test(fnBody),
+  'losing the claim returns early without sending');
 
 // Migration adds the column.
 const migs = readdirSync('supabase/migrations').filter((f) => f.endsWith('.sql'));
