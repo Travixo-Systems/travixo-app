@@ -15,6 +15,7 @@
 import { NextResponse } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { accessLevel, writeDenialReason } from '@/lib/billing/access-model'
+import { resolveIdentity } from '@/lib/server/request-identity'
 
 export interface WriteAccessResult {
   /** null when the write may proceed; a 401/403/423 response otherwise */
@@ -31,28 +32,28 @@ export interface WriteAccessResult {
 export async function requireWriteAccess(
   supabase: SupabaseClient
 ): Promise<WriteAccessResult> {
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  if (authError || !user) {
+  // Shared with requireFeature() through a request-scoped memo: a route that
+  // calls both gates (recording an inspection calls both) resolves the caller
+  // once instead of twice. Only identity is shared -- the organizations read
+  // below still happens every time, because that is the authorisation decision
+  // and caching it is how a lapsed pilot keeps writing.
+  const identity = await resolveIdentity(supabase)
+
+  if (identity.reason === 'unauthenticated') {
     return {
       denied: NextResponse.json({ error: 'unauthorized' }, { status: 401 }),
       organizationId: null,
     }
   }
 
-  const { data: userData, error: userError } = await supabase
-    .from('users')
-    .select('organization_id')
-    .eq('id', user.id)
-    .single()
-
-  if (userError || !userData?.organization_id) {
+  if (identity.reason === 'no_organization' || !identity.organizationId) {
     return {
       denied: NextResponse.json({ error: 'no_organization' }, { status: 403 }),
       organizationId: null,
     }
   }
 
-  const orgId = userData.organization_id
+  const orgId = identity.organizationId
 
   const { data: org, error: orgError } = await supabase
     .from('organizations')

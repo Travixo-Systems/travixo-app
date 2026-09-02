@@ -23,11 +23,13 @@ interface Asset {
     description: string | null
     status: string
     current_location: string | null
+    category_id: string | null
+    // Not shown in the table, but the row modals need them: ViewQRModal
+    // reads qr_code, EditAssetModal reads the purchase fields.
+    qr_code: string
     purchase_date: string | null
     purchase_price: number | null
     current_value: number | null
-    qr_code: string
-    category_id: string | null
     vgp_status?: VGPStatus | null
     archived_at?: string | null
     archive_reason?: string | null

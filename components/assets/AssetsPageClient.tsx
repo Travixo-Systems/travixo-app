@@ -19,11 +19,13 @@ interface Asset {
     description: string | null
     status: string
     current_location: string | null
+    category_id: string | null
+    // Not shown in the table, but the row modals need them: ViewQRModal
+    // reads qr_code, EditAssetModal reads the purchase fields.
+    qr_code: string
     purchase_date: string | null
     purchase_price: number | null
     current_value: number | null
-    qr_code: string
-    category_id: string | null
     vgp_status?: 'overdue' | 'upcoming' | 'compliant' | 'unknown' | null
     archived_at?: string | null
     archive_reason?: string | null
@@ -52,9 +54,27 @@ export default function AssetsPageClient() {
 
     const [assets, setAssets] = useState<Asset[]>([])
     const [loading, setLoading] = useState(true)
-    
+
+    // Total matching the CURRENT filters, from the server. The pager needs it,
+    // and it can no longer be derived from `assets` because `assets` is one
+    // page rather than the whole fleet.
+    const [totalMatching, setTotalMatching] = useState(0)
+
+    // Fleet-wide figures, fetched separately from the page of rows.
+    //
+    // These describe the whole organization, not the visible page, which is
+    // exactly why they cannot be computed from `assets` any more. Deriving them
+    // client-side is what forced the list to stay unpaginated.
+    const [statusCounts, setStatusCounts] = useState<Record<string, number>>({
+        all: 0, available: 0, in_use: 0, maintenance: 0, retired: 0,
+    })
+    const [categories, setCategories] = useState<{ id: string; name: string; count: number }[]>([])
+
     // Search and filter states
     const [searchQuery, setSearchQuery] = useState('')
+    // Debounced copy of searchQuery. The search now hits the server, so firing
+    // on every keystroke would be a request per character.
+    const [debouncedSearch, setDebouncedSearch] = useState('')
     // Seeded from ?status= so links like "view rentals" land on a real filtered
     // list instead of an unfiltered page the user has to re-filter by hand.
     const [statusFilter, setStatusFilter] = useState<string>(initialStatus)
@@ -64,168 +84,148 @@ export default function AssetsPageClient() {
     const itemsPerPage = 50
 
     useEffect(() => {
+        const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300)
+        return () => clearTimeout(timer)
+    }, [searchQuery])
+
+    // Re-fetch the page whenever anything that defines it changes. The server
+    // does the filtering, searching and slicing now, so every one of these is
+    // a query parameter rather than an in-memory filter.
+    useEffect(() => {
         loadAssets()
+    }, [debouncedSearch, statusFilter, categoryFilter, showArchived, currentPage])
+
+    // Fleet-wide aggregates change only when rows are added, removed or
+    // archived, so they are refreshed on mount and after a mutation rather
+    // than on every filter change.
+    useEffect(() => {
+        loadAggregates()
     }, [])
 
     async function loadAssets() {
         try {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) {
-                router.push('/login')
+            // One call: the server filters, searches, computes vgp_status and
+            // slices. Everything the table needs arrives already reduced to the
+            // visible page, instead of the whole fleet arriving so the browser
+            // can throw most of it away.
+            const { data, error } = await supabase.rpc('assets_page', {
+                p_search: debouncedSearch.trim() || null,
+                p_status: statusFilter,
+                p_category_id: categoryFilter === 'all' ? null : categoryFilter,
+                p_show_archived: showArchived,
+                p_limit: itemsPerPage,
+                p_offset: (currentPage - 1) * itemsPerPage,
+            })
+
+            if (error) {
+                // A 42501 here means the session is gone: the function is
+                // granted to authenticated only, so an expired token reads as
+                // a permission failure rather than a 401.
+                if (error.code === '42501') {
+                    router.push('/login')
+                    return
+                }
+                console.error('Failed to load assets:', error)
+                setAssets([])
+                setTotalMatching(0)
                 return
             }
 
-            const { data: userData } = await supabase
-                .from('users')
-                .select('organization_id')
-                .eq('id', user.id)
-                .single()
+            const rows = data || []
 
-            if (!userData?.organization_id) return
+            // total_count is a window function on every row, so it is the same
+            // value repeated. An empty page legitimately means zero matches.
+            setTotalMatching(rows.length > 0 ? Number(rows[0].total_count) : 0)
 
-            const { data, error } = await supabase
-                .from('assets')
-                .select(`
-                    *,
-                    asset_categories (
-                        id,
-                        name
-                    ),
-                    vgp_schedules (
-                        id,
-                        next_due_date,
-                        archived_at
-                    )
-                `)
-                .eq('organization_id', userData.organization_id)
-                .order('created_at', { ascending: false })
-
-            if (error) {
-                console.error('Failed to load assets with VGP schedules:', error)
-            }
-
-            // Compute vgp_status from the most urgent active schedule
-            const today = new Date()
-            today.setHours(0, 0, 0, 0)
-
-            const enriched = (data || []).map((asset: any) => {
-                const allSchedules = asset.vgp_schedules as { id: string; next_due_date: string; archived_at: string | null }[] | null
-                const schedules = allSchedules?.filter(s => !s.archived_at) ?? []
-                if (schedules.length === 0) {
-                    return { ...asset, vgp_status: 'unknown' as const }
-                }
-                // Find the most urgent (nearest) schedule
-                let worstStatus: 'overdue' | 'upcoming' | 'compliant' = 'compliant'
-                for (const s of schedules) {
-                    const due = new Date(s.next_due_date)
-                    due.setHours(0, 0, 0, 0)
-                    const daysUntil = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-                    if (daysUntil < 0) {
-                        worstStatus = 'overdue'
-                        break // can't get worse
-                    } else if (daysUntil <= 30) {
-                        worstStatus = 'upcoming'
-                    }
-                }
-                return { ...asset, vgp_status: worstStatus }
-            })
-
-            setAssets(enriched as Asset[])
+            setAssets(rows.map((r) => ({
+                id: r.id,
+                name: r.name,
+                serial_number: r.serial_number,
+                description: r.description,
+                status: r.status,
+                current_location: r.current_location,
+                category_id: r.category_id,
+                qr_code: r.qr_code,
+                purchase_date: r.purchase_date,
+                purchase_price: r.purchase_price,
+                current_value: r.current_value,
+                archived_at: r.archived_at,
+                archive_reason: r.archive_reason,
+                vgp_status: r.vgp_status,
+                // The table reads asset_categories?.name; the RPC returns it
+                // flattened, so it is reshaped here rather than changing the
+                // table's contract.
+                asset_categories: r.category_id
+                    ? { id: r.category_id, name: r.category_name }
+                    : null,
+            })) as Asset[])
         } finally {
             setLoading(false)
         }
     }
 
+    // After a mutation the visible page AND the fleet-wide figures both need
+    // to change: adding an asset moves the status chips and the category
+    // counts, not just the rows on screen. Refreshing only the page would
+    // leave those numbers quietly wrong until the next full load.
+    async function refreshAll() {
+        await Promise.all([loadAssets(), loadAggregates()])
+    }
+
+    async function loadAggregates() {
+        // Fleet-wide, deliberately independent of the current filters.
+        const [countsRes, catsRes] = await Promise.all([
+            supabase.rpc('assets_status_counts'),
+            supabase.rpc('assets_category_counts'),
+        ])
+
+        if (!countsRes.error && countsRes.data) {
+            const next: Record<string, number> = {
+                all: 0, available: 0, in_use: 0, maintenance: 0, retired: 0,
+            }
+            for (const row of countsRes.data) {
+                const n = Number(row.count)
+                if (next[row.status] !== undefined) next[row.status] = n
+                // 'all' is every non-archived asset, matching what the chip
+                // meant when it was computed client-side.
+                next.all += n
+            }
+            setStatusCounts(next)
+        }
+
+        if (!catsRes.error && catsRes.data) {
+            setCategories(catsRes.data.map((c) => ({
+                id: c.id, name: c.name, count: Number(c.count),
+            })))
+        }
+    }
+
     // Filter and search logic
-    const filteredAssets = useMemo(() => {
-        let filtered = assets
+    // Pagination is server-side now:  IS the page, and totalMatching
+    // is the count for the current filters. Nothing is sliced here.
+    const totalPages = Math.max(1, Math.ceil(totalMatching / itemsPerPage))
 
-        // Archived filter: hide archived unless toggle is on
-        if (!showArchived) {
-            filtered = filtered.filter(asset => !asset.archived_at)
-        }
-
-        // Status filter
-        if (statusFilter !== 'all') {
-            filtered = filtered.filter(asset => asset.status === statusFilter)
-        }
-
-        // Category filter
-        if (categoryFilter !== 'all') {
-            filtered = filtered.filter(asset => asset.category_id === categoryFilter)
-        }
-
-        // Search filter
-        if (searchQuery.trim()) {
-            const query = searchQuery.toLowerCase()
-            filtered = filtered.filter(asset =>
-                asset.name?.toLowerCase().includes(query) ||
-                asset.serial_number?.toLowerCase().includes(query) ||
-                asset.description?.toLowerCase().includes(query) ||
-                asset.current_location?.toLowerCase().includes(query)
-            )
-        }
-
-        return filtered
-    }, [assets, searchQuery, statusFilter, categoryFilter, showArchived])
-
-    // Pagination
-    const totalPages = Math.ceil(filteredAssets.length / itemsPerPage)
-    const paginatedAssets = filteredAssets.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    )
-
-    // Reset to page 1 when filters change
+    // Reset to page 1 when filters change, or a filter narrowing the result set
+    // would leave the user on a page that no longer exists.
     useEffect(() => {
         setCurrentPage(1)
-    }, [searchQuery, statusFilter, categoryFilter])
-
-    const statusCounts = useMemo(() => {
-        const activeAssets = assets.filter(a => !a.archived_at)
-        const counts: Record<string, number> = {
-            all: activeAssets.length,
-            available: 0,
-            in_use: 0,
-            maintenance: 0,
-            retired: 0
-        }
-        activeAssets.forEach(asset => {
-            if (counts[asset.status] !== undefined) {
-                counts[asset.status]++
-            }
-        })
-        return counts
-    }, [assets])
-
-    const categories = useMemo(() => {
-        const catMap = new Map<string, { id: string, name: string, count: number }>()
-        assets.forEach(asset => {
-            if (asset.category_id) {
-                const existing = catMap.get(asset.category_id)
-                if (existing) {
-                    existing.count++
-                } else {
-                    catMap.set(asset.category_id, {
-                        id: asset.category_id,
-                        name: asset.asset_categories?.name || 'Unknown',
-                        count: 1
-                    })
-                }
-            }
-        })
-        return Array.from(catMap.values()).sort((a, b) => a.name.localeCompare(b.name))
-    }, [assets])
+    }, [debouncedSearch, statusFilter, categoryFilter, showArchived])
 
     // A ?category= id that matches nothing (deleted category, stale bookmark)
     // would otherwise render an empty table with no visible filter selected.
     // Fall back to "all" once the real category list is known.
+    //
+    // Keyed on the CATEGORY list, not on assets.length. It used to wait for
+    // rows to arrive, which worked while the client held the whole fleet: a
+    // bogus category still left assets populated. Now a bogus category returns
+    // an empty page, so waiting for rows would mean the fallback never fires
+    // and the user is stranded on a blank table.
     useEffect(() => {
-        if (categoryFilter === 'all' || assets.length === 0) return
+        if (categoryFilter === 'all' || categories.length === 0) return
         if (!categories.some(c => c.id === categoryFilter)) {
             setCategoryFilter('all')
         }
-    }, [categories, categoryFilter, assets.length])
+    }, [categories, categoryFilter])
 
     if (loading) {
         return (
@@ -246,9 +246,9 @@ export default function AssetsPageClient() {
                 </div>
                 <div className="flex gap-2 sm:gap-3 flex-wrap ml-auto sm:ml-0">
                     <div className="hidden min-[1026px]:block">
-                        <ImportAssetsButton onSuccess={loadAssets} />
+                        <ImportAssetsButton onSuccess={refreshAll} />
                     </div>
-                    <AddAssetButton onSuccess={loadAssets} />
+                    <AddAssetButton onSuccess={refreshAll} />
                     <Link
                         href="/qr-codes"
                         className="hidden sm:flex items-center gap-2 px-4 py-2 text-white rounded-lg font-semibold transition-colors hover:opacity-90"
@@ -360,20 +360,20 @@ export default function AssetsPageClient() {
                     </div>
 
                     {/* Assets Table */}
-                    {filteredAssets.length === 0 ? (
+                    {totalMatching === 0 ? (
                         <div className="text-center py-12 rounded-lg" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
                             <h3 className="text-[15px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('assets.noAssetsFound')}</h3>
                             <p className="mt-1 text-[15px]" style={{ color: 'var(--text-muted, #777777)' }}>{t('assets.adjustFilters')}</p>
                         </div>
                     ) : (
                         <>
-                            <AssetsTableClient assets={paginatedAssets} onRefresh={loadAssets} />
+                            <AssetsTableClient assets={assets} onRefresh={refreshAll} />
 
                             {/* Pagination */}
                             {totalPages > 1 && (
                                 <div className="mt-4 flex items-center justify-between px-4 py-3 rounded-lg" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
                                     <div className="text-[15px]" style={{ color: 'var(--text-secondary, #444444)' }}>
-                                        {t('assets.showing')} {((currentPage - 1) * itemsPerPage) + 1} {t('assets.to')} {Math.min(currentPage * itemsPerPage, filteredAssets.length)} {t('assets.of')} {filteredAssets.length} {t('assets.results')}
+                                        {t('assets.showing')} {((currentPage - 1) * itemsPerPage) + 1} {t('assets.to')} {Math.min(currentPage * itemsPerPage, totalMatching)} {t('assets.of')} {totalMatching} {t('assets.results')}
                                     </div>
                                     <div className="flex gap-2">
                                         <button

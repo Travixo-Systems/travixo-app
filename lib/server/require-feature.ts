@@ -6,6 +6,7 @@
 import { NextResponse } from 'next/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { FeatureKey } from '@/lib/subscription';
+import { resolveIdentity } from '@/lib/server/request-identity';
 
 interface FeatureCheckResult {
   /** null when access is granted; a 403 NextResponse when denied */
@@ -27,29 +28,28 @@ export async function requireFeature(
   supabase: SupabaseClient,
   feature: FeatureKey,
 ): Promise<FeatureCheckResult> {
-  // 1. Authenticate
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
+  // 1-2. Authenticate and resolve organization.
+  //
+  // Shared with requireWriteAccess() through a request-scoped memo, so a route
+  // that calls both gates resolves identity once rather than twice. Each
+  // getUser() is a network call to GoTrue, not a local decode.
+  const identity = await resolveIdentity(supabase);
+
+  if (identity.reason === 'unauthenticated') {
     return {
       denied: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
       organizationId: null,
     };
   }
 
-  // 2. Resolve organization
-  const { data: userData } = await supabase
-    .from('users')
-    .select('organization_id')
-    .eq('id', user.id)
-    .single();
-
-  const orgId = userData?.organization_id;
-  if (!orgId) {
+  if (identity.reason === 'no_organization' || !identity.organizationId) {
     return {
       denied: NextResponse.json({ error: 'No organization found' }, { status: 403 }),
       organizationId: null,
     };
   }
+
+  const orgId = identity.organizationId;
 
   // 3. Single RPC call, checks pilot period + subscription status + feature flag
   const { data: hasAccess, error: rpcError } = await supabase.rpc('has_feature_access', {

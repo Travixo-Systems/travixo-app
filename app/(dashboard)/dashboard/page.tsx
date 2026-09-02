@@ -81,47 +81,86 @@ export default function DashboardPage() {
       fetch('/api/internal/post-registration', { method: 'POST' }).catch(() => {})
     }
 
-    // Asset counts
-    const { count: totalAssets } = await supabase
-      .from('assets')
-      .select('*', { count: 'exact', head: true })
-      .eq('organization_id', orgId!)
-      .is('archived_at', null)
-
-    // Must exclude archived assets exactly like totalAssets above: archiving a
-    // rented-out machine would otherwise push utilization above 100%.
-    const { count: inUseAssets } = await supabase
-      .from('assets')
-      .select('*', { count: 'exact', head: true })
-      .eq('organization_id', orgId!)
-      .is('archived_at', null)
-      .eq('status', 'in_use')
-
-    const utilizationRate = totalAssets && inUseAssets
-      ? Math.round((inUseAssets / totalAssets) * 100)
-      : 0
-
     // Scans (7d)
     const sevenDaysAgo = new Date()
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-    const { count: recentScans } = await supabase
-      .from('scans')
-      .select('*', { count: 'exact', head: true })
-      .gte('scanned_at', sevenDaysAgo.toISOString())
 
     // VGP schedules
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
-    // Completed schedules are excluded: a finished inspection must not keep
-    // counting toward "overdue".
-    const { data: vgpSchedules } = await supabase
-      .from('vgp_schedules')
-      .select('id, next_due_date, assets(id, name)')
-      .eq('organization_id', orgId!)
-      .is('archived_at', null)
-      .neq('status', 'completed')
-      .order('next_due_date', { ascending: true })
+    // These seven reads depend only on orgId, which is resolved above. Issuing
+    // them together turns seven serial round trips into one wall-clock wait.
+    // Nothing below reads another's result -- every derived figure is computed
+    // from the settled values, so ordering here carries no meaning.
+    const [
+      { count: totalAssets },
+      { count: inUseAssets },
+      { count: recentScans },
+      { data: vgpSchedules },
+      { data: allActiveRentals },
+      { data: rentals },
+      { data: assetsWithCat },
+    ] = await Promise.all([
+      supabase
+        .from('assets')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', orgId!)
+        .is('archived_at', null),
+
+      // Must exclude archived assets exactly like totalAssets above: archiving a
+      // rented-out machine would otherwise push utilization above 100%.
+      supabase
+        .from('assets')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', orgId!)
+        .is('archived_at', null)
+        .eq('status', 'in_use'),
+
+      supabase
+        .from('scans')
+        .select('*', { count: 'exact', head: true })
+        .gte('scanned_at', sevenDaysAgo.toISOString()),
+
+      // Completed schedules are excluded: a finished inspection must not keep
+      // counting toward "overdue".
+      supabase
+        .from('vgp_schedules')
+        .select('id, next_due_date, assets(id, name)')
+        .eq('organization_id', orgId!)
+        .is('archived_at', null)
+        .neq('status', 'completed')
+        .order('next_due_date', { ascending: true }),
+
+      // Rental returns. Fetched in full (not just the 3 shown) so the widget can
+      // report how many are outstanding and how many are already late, rather
+      // than silently implying there are only three.
+      supabase
+        .from('rentals')
+        .select('expected_return_date')
+        .eq('organization_id', orgId!)
+        .eq('status', 'active'),
+
+      supabase
+        .from('rentals')
+        .select('id, asset_id, client_name, expected_return_date, assets(name)')
+        .eq('organization_id', orgId!)
+        .eq('status', 'active')
+        .order('expected_return_date', { ascending: true })
+        .limit(3),
+
+      // Per-category utilization. category_id is carried through so each bar can
+      // link to the matching filter on the assets page.
+      supabase
+        .from('assets')
+        .select('status, category_id, asset_categories(name)')
+        .eq('organization_id', orgId!)
+        .is('archived_at', null),
+    ])
+
+    const utilizationRate = totalAssets && inUseAssets
+      ? Math.round((inUseAssets / totalAssets) * 100)
+      : 0
 
     let vgpOverdue = 0
     let vgpUpcoming = 0
@@ -147,27 +186,10 @@ export default function DashboardPage() {
       }
     })
 
-    // Rental returns. Fetched in full (not just the 3 shown) so the widget can
-    // report how many are outstanding and how many are already late, rather
-    // than silently implying there are only three.
-    const { data: allActiveRentals } = await supabase
-      .from('rentals')
-      .select('expected_return_date')
-      .eq('organization_id', orgId!)
-      .eq('status', 'active')
-
     const activeRentalCount = (allActiveRentals || []).length
     const overdueReturns = (allActiveRentals || []).filter(
       (r) => r.expected_return_date && new Date(r.expected_return_date) < today
     ).length
-
-    const { data: rentals } = await supabase
-      .from('rentals')
-      .select('id, asset_id, client_name, expected_return_date, assets(name)')
-      .eq('organization_id', orgId!)
-      .eq('status', 'active')
-      .order('expected_return_date', { ascending: true })
-      .limit(3)
 
     const upcomingReturns = (rentals || []).map((r: any) => {
       const days = r.expected_return_date
@@ -181,14 +203,6 @@ export default function DashboardPage() {
         daysUntil: days,
       }
     })
-
-    // Per-category utilization. category_id is carried through so each bar can
-    // link to the matching filter on the assets page.
-    const { data: assetsWithCat } = await supabase
-      .from('assets')
-      .select('status, category_id, asset_categories(name)')
-      .eq('organization_id', orgId!)
-      .is('archived_at', null)
 
     const catMap = new Map<string, { categoryId: string | null; inUse: number; total: number }>()
     ;(assetsWithCat || []).forEach((a: any) => {

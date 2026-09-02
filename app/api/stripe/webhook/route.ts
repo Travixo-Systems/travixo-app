@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import * as Sentry from '@sentry/node';
 import { markOrganizationConverted, isPayingStatus, billingStatusFromStripe } from '@/lib/billing/mark-converted';
 
 export const runtime = 'nodejs';
+
+/**
+ * How long a claim may sit at status 'processing' before it is treated as a
+ * crashed attempt rather than an in-flight one. Comfortably longer than any
+ * handler here should take, and shorter than Stripe's retry window, so a
+ * stuck event is surfaced while retries are still arriving.
+ */
+const STALE_CLAIM_MS = 10 * 60 * 1000;
 
 // Lazy-init to catch env var issues at request time, not module load
 function getStripe() {
@@ -86,16 +95,44 @@ export async function POST(request: NextRequest) {
     step = 'get_supabase';
     const supabase = getSupabaseAdmin();
 
-    step = 'idempotency_check';
-    const { data: existing } = await supabase
-      .from('billing_events')
-      .select('id')
-      .eq('stripe_event_id', event.id)
-      .single();
+    // Claim the event BEFORE applying it.
+    //
+    // This used to be a SELECT here and the matching INSERT at the very end,
+    // after every mutation had already run. Anything that killed the
+    // invocation in between -- a timeout, a crash, a deploy -- left no marker,
+    // so Stripe's retry re-ran the whole handler and re-applied the writes.
+    //
+    // The claim is an INSERT on stripe_event_id, which carries a UNIQUE
+    // constraint (20260207_stripe_billing.sql). A duplicate therefore loses
+    // the race in Postgres rather than in application logic, which also closes
+    // the window where two concurrent deliveries of the same event both read
+    // "not seen yet" and both proceeded.
+    step = 'claim_event';
+    const claim = await claimBillingEvent(supabase, event);
 
-    if (existing) {
+    if (claim === 'duplicate') {
       console.log(`[Webhook] Duplicate event ${event.id}, skipping`);
       return NextResponse.json({ received: true, duplicate: true });
+    }
+
+    if (claim === 'stale') {
+      // An earlier attempt claimed this event and never finished. Refusing it
+      // keeps Stripe retrying, which is the only path back to the event being
+      // applied at all -- acking here would lose it silently. Already reported
+      // to Sentry by claimBillingEvent().
+      console.error(`[Webhook] Stale claim for ${event.type} (${event.id}), refusing so Stripe retries`);
+      return NextResponse.json(
+        { error: 'previous attempt did not complete', stripeEventId: event.id },
+        { status: 500 }
+      );
+    }
+
+    if (claim === 'unresolved_org') {
+      // No organization to attribute this to. Ack rather than 500: retrying
+      // will not make the org appear, and a permanent 500 makes Stripe retry
+      // for days and eventually disable the endpoint.
+      console.warn(`[Webhook] No organization for ${event.type} (${event.id}), acking`);
+      return NextResponse.json({ received: true, unattributed: true });
     }
 
     console.log(`[Webhook] Processing ${event.type} (${event.id})`);
@@ -127,6 +164,29 @@ export async function POST(request: NextRequest) {
         console.log(`[Webhook] Unhandled event type: ${event.type}`);
     }
 
+    // Settle the claim.
+    //
+    // Handlers normally do this via logBillingEvent(), but several return early
+    // (no organization on the object, no price id) and the default case never
+    // calls it at all. Any of those would leave the row at 'processing'
+    // forever, and a later redelivery would then be misread as a crashed
+    // attempt and refused. Clearing it here means 'processing' survives only
+    // where it should: an invocation that genuinely died mid-handler.
+    step = 'settle_claim';
+    const { error: settleError } = await supabase
+      .from('billing_events')
+      .update({ status: 'processed' })
+      .eq('stripe_event_id', event.id)
+      .eq('status', 'processing');
+
+    if (settleError) {
+      console.error('[Webhook] settle claim error:', settleError.message);
+      Sentry.captureException(settleError, {
+        tags: { area: 'stripe_webhook', step: 'settle_claim' },
+        extra: { stripeEventId: event.id, eventType: event.type },
+      });
+    }
+
     return NextResponse.json({ received: true });
   } catch (error: any) {
     console.error(`[Webhook] FATAL step=${step}:`, error.message, error.stack);
@@ -137,8 +197,20 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET endpoint for testing if the route loads
-export async function GET() {
+// Deploy diagnostic. Reports the SHAPE of the Stripe configuration -- key mode
+// and whether price ids are well formed -- never a value.
+//
+// Even so it is not public: knowing whether an endpoint is in test mode, or
+// which price variables are unset, is reconnaissance. It now requires the same
+// bearer secret the cron routes use, and answers 404 rather than 401 without
+// it, so an unauthenticated caller cannot even confirm the endpoint exists.
+export async function GET(request: NextRequest) {
+  const expected = process.env.CRON_SECRET;
+  const provided = request.headers.get('authorization');
+  if (!expected || provided !== `Bearer ${expected}`) {
+    return new NextResponse(null, { status: 404 });
+  }
+
   try {
     // Presence alone cannot catch the failure that actually bites: a test key
     // deployed to production. `!!` reads true for sk_test_ and sk_live_ alike,
@@ -212,6 +284,100 @@ async function findOrgByCustomerId(supabase: any, customerId: string): Promise<s
   return data?.id || null;
 }
 
+/**
+ * Resolve the organization an event belongs to, the same way the individual
+ * handlers do: metadata first, then the customer id.
+ */
+async function resolveEventOrganization(supabase: any, event: any): Promise<string | null> {
+  const object = event?.data?.object ?? {};
+
+  const fromMetadata = object?.metadata?.organization_id;
+  if (fromMetadata) return fromMetadata;
+
+  const rawCustomer = object?.customer;
+  const customerId = typeof rawCustomer === 'string' ? rawCustomer : rawCustomer?.id;
+  if (customerId) return await findOrgByCustomerId(supabase, customerId);
+
+  return null;
+}
+
+/**
+ * Take exclusive ownership of a Stripe event before its writes are applied.
+ *
+ * Returns:
+ *   'claimed'        - this invocation owns the event and must process it
+ *   'duplicate'      - already processed (or being processed); do nothing
+ *   'unresolved_org' - cannot attribute the event to an organization
+ *   'stale'          - a previous attempt claimed it and never finished
+ *
+ * The UNIQUE constraint on billing_events.stripe_event_id is what makes this
+ * safe under concurrent delivery: the second INSERT fails with 23505 rather
+ * than both callers deciding they are first.
+ */
+async function claimBillingEvent(
+  supabase: any,
+  event: any
+): Promise<'claimed' | 'duplicate' | 'unresolved_org' | 'stale'> {
+  const organizationId = await resolveEventOrganization(supabase, event);
+  if (!organizationId) return 'unresolved_org';
+
+  const { error } = await supabase.from('billing_events').insert({
+    organization_id: organizationId,
+    event_type: event.type,
+    stripe_event_id: event.id,
+    status: 'processing',
+    metadata: { claimed_at: new Date().toISOString() },
+  });
+
+  if (!error) return 'claimed';
+
+  // 23505 = unique_violation: someone already claimed this event id.
+  //
+  // Usually that is a genuine duplicate delivery and there is nothing to do.
+  // But it is also what a CRASHED earlier attempt looks like: the claim row was
+  // written, the handler died before finishing, and the row is still sitting at
+  // status 'processing'. Treating that as a duplicate would swallow every
+  // subsequent Stripe retry, and the event would be lost rather than applied.
+  //
+  // Lost is better than double-applied for money, but only if someone can see
+  // it. So a claim that is still 'processing' well past any plausible handler
+  // runtime is reported and refused, which keeps Stripe retrying instead of
+  // giving up.
+  if (error.code === '23505') {
+    const { data: existing } = await supabase
+      .from('billing_events')
+      .select('status, created_at')
+      .eq('stripe_event_id', event.id)
+      .single();
+
+    const ageMs = existing?.created_at
+      ? Date.now() - new Date(existing.created_at).getTime()
+      : 0;
+
+    if (existing?.status === 'processing' && ageMs > STALE_CLAIM_MS) {
+      Sentry.captureException(
+        new Error(`Stripe event stuck in processing: ${event.id} (${event.type})`),
+        {
+          tags: { area: 'stripe_webhook', step: 'stale_claim' },
+          extra: {
+            stripeEventId: event.id,
+            eventType: event.type,
+            ageMinutes: Math.round(ageMs / 60_000),
+          },
+        }
+      );
+      return 'stale';
+    }
+
+    return 'duplicate';
+  }
+
+  // Any other failure means we cannot guarantee exactly-once. Refusing the
+  // event lets Stripe retry, which is safer than applying writes we might
+  // apply again later.
+  throw new Error(`claimBillingEvent failed: ${error.message}`);
+}
+
 async function logBillingEvent(supabase: any, params: {
   organizationId: string;
   eventType: string;
@@ -222,19 +388,28 @@ async function logBillingEvent(supabase: any, params: {
   status?: string | null;
   metadata?: Record<string, any>;
 }) {
-  const { error } = await supabase.from('billing_events').insert({
-    organization_id: params.organizationId,
-    event_type: params.eventType,
-    stripe_event_id: params.stripeEventId,
-    stripe_subscription_id: params.stripeSubscriptionId || null,
-    stripe_invoice_id: params.stripeInvoiceId || null,
-    amount: params.amount ? params.amount / 100 : null,
-    status: params.status || null,
-    metadata: params.metadata || {},
-  });
+  // The row already exists: claimBillingEvent() inserted it before the handler
+  // ran. Filling in the details is an UPDATE now, not an INSERT -- an INSERT
+  // would collide with the UNIQUE constraint on stripe_event_id and log a
+  // spurious error on every successful event.
+  const { error } = await supabase
+    .from('billing_events')
+    .update({
+      event_type: params.eventType,
+      stripe_subscription_id: params.stripeSubscriptionId || null,
+      stripe_invoice_id: params.stripeInvoiceId || null,
+      amount: params.amount ? params.amount / 100 : null,
+      status: params.status || 'processed',
+      metadata: params.metadata || {},
+    })
+    .eq('stripe_event_id', params.stripeEventId);
 
   if (error) {
     console.error('[Webhook] logBillingEvent error:', error.message);
+    Sentry.captureException(error, {
+      tags: { area: 'stripe_webhook', step: 'log_billing_event' },
+      extra: { stripeEventId: params.stripeEventId, eventType: params.eventType },
+    });
   }
 }
 
@@ -263,7 +438,7 @@ async function handleCheckoutCompleted(supabase: any, session: any, eventId: str
   const { error: convErr } = await markOrganizationConverted(supabase, organizationId, {
     status: 'active',
   });
-  if (convErr) console.error('[Webhook] checkout: mark converted error:', convErr);
+  if (convErr) { console.error('[Webhook] checkout: mark converted error:', convErr); Sentry.captureException(convErr, { tags: { area: 'stripe_webhook', step: 'checkout_mark_converted' } }); }
   else console.log(`[Webhook] org ${organizationId} converted to paid`);
 
   await logBillingEvent(supabase, {
@@ -365,13 +540,13 @@ async function handleSubscriptionChange(supabase: any, subscription: any, eventI
       .from('subscriptions')
       .update(subscriptionData)
       .eq('organization_id', organizationId);
-    if (updateErr) console.error('[Webhook] subscription update error:', updateErr.message);
+    if (updateErr) { console.error('[Webhook] subscription update error:', updateErr.message); Sentry.captureException(updateErr, { tags: { area: 'stripe_webhook', step: 'subscription_update' } }); }
     else console.log('[Webhook] subscription updated successfully');
   } else {
     const { error: insertErr } = await supabase
       .from('subscriptions')
       .insert(subscriptionData);
-    if (insertErr) console.error('[Webhook] subscription insert error:', insertErr.message);
+    if (insertErr) { console.error('[Webhook] subscription insert error:', insertErr.message); Sentry.captureException(insertErr, { tags: { area: 'stripe_webhook', step: 'subscription_insert' } }); }
     else console.log('[Webhook] subscription inserted successfully');
   }
 
@@ -388,14 +563,14 @@ async function handleSubscriptionChange(supabase: any, subscription: any, eventI
       planSlug: planInfo?.slug || null,
       status,
     });
-    if (convErr) console.error('[Webhook] subscription: mark converted error:', convErr);
+    if (convErr) { console.error('[Webhook] subscription: mark converted error:', convErr); Sentry.captureException(convErr, { tags: { area: 'stripe_webhook', step: 'subscription_mark_converted' } }); }
     else console.log(`[Webhook] org ${organizationId} converted (${subscription.status})`);
   } else {
     const { error: orgErr } = await supabase
       .from('organizations')
       .update({ subscription_status: status })
       .eq('id', organizationId);
-    if (orgErr) console.error('[Webhook] org status update error:', orgErr.message);
+    if (orgErr) { console.error('[Webhook] org status update error:', orgErr.message); Sentry.captureException(orgErr, { tags: { area: 'stripe_webhook', step: 'org_status_update' } }); }
   }
 
   await logBillingEvent(supabase, {

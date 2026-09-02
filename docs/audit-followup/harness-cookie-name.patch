@@ -1,0 +1,133 @@
+Fix the k6 harness for the pinned auth cookie name and account slots.
+
+Apply on branch claude/travixo-perf-audit-cszced:
+
+    git checkout claude/travixo-perf-audit-cszced
+    git apply docs/audit-followup/harness-cookie-name.patch
+
+Why: load/lib/auth.js derives the cookie name as `sb-<ref>-auth-token`, which
+is the @supabase/supabase-js default and is correct for origin/main. The
+feature branch feat/multi-account-sessions-and-admin-pilot-controls pins it to
+`travixo-auth` (lib/supabase/cookie-name.ts:55) and appends `-<slot>` for
+slots above 0 (lib/supabase/account-slot.ts:188-190). Without this patch the
+harness authenticates at GoTrue and then gets 401 from every app route.
+
+--- a/load/config.js
++++ b/load/config.js
+@@
+ export const SUPABASE_ANON_KEY = env('SUPABASE_ANON_KEY', '');
+
++// --- Auth cookie shape -----------------------------------------------------
++//
++// The name of the cookie the app reads the session from. Leave unset to derive
++// `sb-<project-ref>-auth-token`, which is the @supabase/supabase-js default
++// (dist/index.mjs:206) and what origin/main uses, since it passes no
++// cookieOptions.
++//
++// Set it when the app pins its own name. On
++// feat/multi-account-sessions-and-admin-pilot-controls that is `travixo-auth`
++// (lib/supabase/cookie-name.ts:55), with `-<slot>` appended for slots above 0
++// (lib/supabase/account-slot.ts:188-190):
++//
++//   -e AUTH_COOKIE_NAME=travixo-auth      slot 0
++//   -e AUTH_COOKIE_NAME=travixo-auth-1    slot 1
++//
++// Getting this wrong is quiet: sign-in succeeds at GoTrue and every app route
++// then answers 401, because the app is reading a cookie the harness never set.
++export const AUTH_COOKIE_NAME = env('AUTH_COOKIE_NAME', '');
++
++// Account-slot URL prefix. That branch serves /u/1/dashboard and rewrites it
++// to /dashboard in the proxy (proxy.ts, splitSlotPath). Slot 0 uses no prefix,
++// so the default leaves every URL untouched and main is unaffected.
++export const ACCOUNT_SLOT = int('ACCOUNT_SLOT', 0);
++
++// Header the branch reads for fetch() calls that carry no URL prefix
++// (lib/supabase/account-slot.ts:76). Harmless on main, which ignores it.
++export const ACCOUNT_SLOT_HEADER = 'x-travixo-account';
++
+ // Guard rail: this harness must never be pointed at production. Add the
+ // production hostname to PROD_HOSTS (comma separated) in CI so a mistyped
+ // BASE_URL fails loudly instead of load-testing paying customers.
+
+--- a/load/lib/auth.js
++++ b/load/lib/auth.js
+@@
+ import {
+   SUPABASE_URL,
+   SUPABASE_ANON_KEY,
+   USER_EMAIL_PATTERN,
+   USER_PASSWORD,
+   USER_COUNT,
+   DEBUG,
++  AUTH_COOKIE_NAME,
++  ACCOUNT_SLOT,
++  ACCOUNT_SLOT_HEADER,
+ } from '../config.js';
+
+ const MAX_CHUNK_SIZE = 3180;
+@@
+ export function storageKey(supabaseUrl) {
+-  return `sb-${projectRef(supabaseUrl)}-auth-token`;
++  // An explicit name wins: the app may pin its own (see config.js).
++  if (AUTH_COOKIE_NAME) return AUTH_COOKIE_NAME;
++  return `sb-${projectRef(supabaseUrl)}-auth-token`;
+ }
+
+--- a/load/lib/auth.js
++++ b/load/lib/auth.js
+@@
+ export function appHeaders(session, extra) {
+   const base = {
+     Cookie: session ? session.cookie : '',
+     'Accept-Encoding': 'gzip, br',
+     Accept: 'application/json',
+   };
++  // Declare the tab's account slot for fetch()-style calls that carry no URL
++  // prefix. The proxy validates it through parseSlot(), so an out-of-range
++  // value falls back to slot 0 rather than widening the reachable cookie set.
++  if (ACCOUNT_SLOT > 0) {
++    base[ACCOUNT_SLOT_HEADER] = String(ACCOUNT_SLOT);
++  }
+   return Object.assign(base, extra || {});
+ }
++
++/**
++ * Prefix an app path with this run's account slot.
++ *
++ * Mirrors withSlotPath() in lib/supabase/account-slot.ts:151. Slot 0 returns
++ * the path unchanged, so main and slot-0 runs are byte-identical to before.
++ */
++export function slotPath(pathname) {
++  if (!ACCOUNT_SLOT || ACCOUNT_SLOT < 1) return pathname;
++  const clean = pathname.startsWith('/') ? pathname : `/${pathname}`;
++  return clean === '/' ? `/u/${ACCOUNT_SLOT}` : `/u/${ACCOUNT_SLOT}${clean}`;
++}
+
+--- a/load/README.md
++++ b/load/README.md
+@@
+ | `USER_COUNT` | `50` | How many distinct accounts exist |
++| `AUTH_COOKIE_NAME` | derived | Cookie the app reads the session from. Unset derives `sb-<ref>-auth-token` (correct for `main`). Set to `travixo-auth` on the multi-account branch |
++| `ACCOUNT_SLOT` | `0` | Account slot to drive on the multi-account branch. Slot 0 adds no URL prefix and no header |
+ | `ASSET_ID` / `ASSET_QR_CODE` | empty | Fixture asset for scan and checkout |
+@@
+ If Supabase changes that encoding, `authenticate()` will start returning 401s
+ from the app while the GoTrue sign-in still succeeds. That is the symptom to
+ look for.
++
++The same symptom appears when the **app** pins its own cookie name rather than
++inheriting the library default. `origin/main` passes no `cookieOptions`, so the
++derived name is right. The branch
++`feat/multi-account-sessions-and-admin-pilot-controls` pins `travixo-auth`
++(`lib/supabase/cookie-name.ts:55`) and appends `-<slot>` above slot 0
++(`lib/supabase/account-slot.ts:188-190`). Against that branch, run with:
++
++```
++-e AUTH_COOKIE_NAME=travixo-auth -e ACCOUNT_SLOT=0
++```
++
++Check which applies before a run:
++
++```
++grep -n cookieOptions lib/supabase/server.ts    # no match -> derived name
++```

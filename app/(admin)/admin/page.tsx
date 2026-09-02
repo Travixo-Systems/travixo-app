@@ -4,6 +4,14 @@
 
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { fetchSignInIndex } from '@/lib/admin/lastConnected'
+import {
+  engagementLevel,
+  formatLastConnected,
+  mostRecentSignIn,
+  type LastConnected,
+} from '@/lib/admin/orgHealth'
+import { accessLevel } from '@/lib/billing/access-model'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,7 +52,9 @@ interface OrgRow {
   subscription_status: string | null
   is_pilot: boolean
   trial_ends_at: string | null
+  pilot_start_date: string | null
   pilot_end_date: string | null
+  converted_to_paid: boolean
   created_at: string
 }
 
@@ -65,7 +75,7 @@ export default async function AdminDashboardPage() {
   const { data: orgsData } = await supabase
     .from('organizations')
     .select(
-      'id, name, slug, subscription_tier, subscription_status, is_pilot, trial_ends_at, pilot_end_date, created_at'
+      'id, name, slug, subscription_tier, subscription_status, is_pilot, trial_ends_at, pilot_start_date, pilot_end_date, converted_to_paid, created_at'
     )
     .order('created_at', { ascending: false })
 
@@ -78,10 +88,30 @@ export default async function AdminDashboardPage() {
     .from('users')
     .select('id, organization_id')
 
+  const userRows =
+    (allUsers as { id: string; organization_id: string | null }[] | null) ?? []
+
   const userCountByOrg = new Map<string, number>()
-  for (const u of (allUsers as { id: string; organization_id: string | null }[] | null) ?? []) {
+  const userIdsByOrg = new Map<string, string[]>()
+  for (const u of userRows) {
     if (!u.organization_id) continue
     userCountByOrg.set(u.organization_id, (userCountByOrg.get(u.organization_id) ?? 0) + 1)
+    const list = userIdsByOrg.get(u.organization_id)
+    if (list) list.push(u.id)
+    else userIdsByOrg.set(u.organization_id, [u.id])
+  }
+
+  // --- Last connected, per org -----------------------------------------
+  // auth.users.last_sign_in_at is not reachable through PostgREST, so it
+  // comes from the Auth admin API. On failure signIns.known is false and
+  // every cell renders "unknown" rather than a misleading "never".
+  const signIns = await fetchSignInIndex()
+  const lastConnectedByOrg = new Map<string, LastConnected>()
+  for (const [orgId, ids] of userIdsByOrg) {
+    lastConnectedByOrg.set(
+      orgId,
+      mostRecentSignIn(ids.map((uid) => signIns.byUserId.get(uid) ?? null))
+    )
   }
 
   // --- Per-org asset counts --------------------------------------------
@@ -128,7 +158,8 @@ export default async function AdminDashboardPage() {
                 <th className="px-4 py-3 font-medium">Tier</th>
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium">Pilot</th>
-                <th className="px-4 py-3 font-medium">Trial ends</th>
+                <th className="px-4 py-3 font-medium">Access</th>
+                <th className="px-4 py-3 font-medium">Last connected</th>
                 <th className="px-4 py-3 font-medium">Pilot ends</th>
                 <th className="px-4 py-3 text-right font-medium">Users</th>
                 <th className="px-4 py-3 text-right font-medium">Assets</th>
@@ -157,7 +188,40 @@ export default async function AdminDashboardPage() {
                     <td className="px-4 py-3 text-gray-600">{org.subscription_tier ?? '-'}</td>
                     <td className="px-4 py-3 text-gray-600">{org.subscription_status ?? '-'}</td>
                     <td className="px-4 py-3 text-gray-600">{org.is_pilot ? 'Yes' : 'No'}</td>
-                    <td className="px-4 py-3 text-gray-600">{formatDate(org.trial_ends_at)}</td>
+                    <td className="px-4 py-3">
+                      {(() => {
+                        const lvl = accessLevel(org)
+                        const cls =
+                          lvl === 'full'
+                            ? 'bg-green-100 text-green-800'
+                            : lvl === 'read_only'
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-red-100 text-red-800'
+                        return (
+                          <span
+                            className={`inline-block rounded px-1.5 py-0.5 text-xs font-medium ${cls}`}
+                          >
+                            {lvl}
+                          </span>
+                        )
+                      })()}
+                    </td>
+                    <td className="px-4 py-3">
+                      {(() => {
+                        const lc =
+                          lastConnectedByOrg.get(org.id) ?? { at: null, daysAgo: null }
+                        const label = formatLastConnected(lc, signIns.known)
+                        const lvl = engagementLevel(lc)
+                        const cls = !signIns.known
+                          ? 'text-gray-400'
+                          : lvl === 'active'
+                            ? 'text-green-700'
+                            : lvl === 'idle'
+                              ? 'text-amber-700'
+                              : 'text-red-700'
+                        return <span className={cls}>{label}</span>
+                      })()}
+                    </td>
                     <td className="px-4 py-3 text-gray-600">{formatDate(org.pilot_end_date)}</td>
                     <td className="px-4 py-3 text-right text-gray-900">
                       {userCountByOrg.get(org.id) ?? 0}

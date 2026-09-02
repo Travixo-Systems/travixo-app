@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter, Roboto_Mono } from "next/font/google";
 import { Providers } from './providers';
+import AccountSlotBootstrap from '@/components/AccountSlotBootstrap';
 import "./globals.css";
 
 const inter = Inter({
@@ -41,6 +42,11 @@ export default function RootLayout({
         <meta name="color-scheme" content="light" />
       </head>
       <body className={`${inter.variable} ${robotoMono.variable}`}>
+        {/* Installs the per-tab account slot: wraps fetch() so every
+            same-origin request carries this tab's slot, and keeps the
+            navigation hint cookie pointing at the active tab. Renders
+            nothing. See lib/supabase/account-slot.ts. */}
+        <AccountSlotBootstrap />
         <Providers>
           {children}
         </Providers>

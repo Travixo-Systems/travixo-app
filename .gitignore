@@ -72,11 +72,15 @@ supabase/functions/
 # Personal study / introspection docs (not part of the product)
 /docs/deep-dive/
 
-# Database migrations and Supabase local state
-# Kept out of the public repo: these describe schema and RLS policy internals.
-# The live schema lives in the Supabase dashboard; migrations are archived
-# separately (see the team's private backup, not this repo).
-/supabase/migrations/
+# Supabase local state
+#
+# Migrations are NOT ignored. They were, on the reasoning that schema and RLS
+# internals should stay out of the repo, and the cost of that was concrete:
+# 24 migration files existed only on one machine, the core tables had no
+# committed DDL at all, and nobody could tell which indexes or policies were
+# actually live. `supabase db pull` output would have been ignored too.
+#
+# This repo is private. Schema belongs in it.
 /supabase/.temp/
 
 # Test/debug artifacts

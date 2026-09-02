@@ -20,7 +20,10 @@ import { createClient } from '@/lib/supabase/server'
 import { requireSuperAdmin } from '@/lib/auth/requireSuperAdmin'
 import {
   isAllowedExtendDays,
+  isAllowedEndMode,
   isAllowedFlag,
+  isAllowedPlanSlug,
+  type EndMode,
   type ExtendDays,
 } from '@/lib/admin/featureFlags'
 
@@ -68,6 +71,47 @@ export async function extendTrial(
 }
 
 // ---------------------------------------------------------------------------
+// endPilot(orgId, mode)
+//   Ends a running pilot immediately.
+//
+//   mode 'read_only' drops the org into the natural day-30 grace window
+//   (reads everything it built, writes nothing). mode 'locked' also skips
+//   the grace period, for abuse.
+//
+//   The DB refuses a converted (paying) org and a non-pilot org. Both are
+//   re-checked there, not only here: a paying customer must never lose
+//   access to a misclick on this screen.
+// ---------------------------------------------------------------------------
+export async function endPilot(
+  orgId: string,
+  mode: string
+): Promise<ActionResult> {
+  await requireSuperAdmin()
+
+  if (!UUID_RE.test(orgId)) {
+    return { ok: false, error: 'Invalid organization id.' }
+  }
+  if (!isAllowedEndMode(mode)) {
+    return { ok: false, error: 'Unknown end-pilot mode.' }
+  }
+  const safeMode: EndMode = mode
+
+  const supabase = await createClient()
+  const { error } = await supabase.rpc('end_pilot', {
+    p_org_id: orgId,
+    p_mode: safeMode,
+  })
+
+  if (error) {
+    return { ok: false, error: mapRpcError(error.message) }
+  }
+
+  revalidatePath(`/admin/orgs/${orgId}`)
+  revalidatePath('/admin')
+  return { ok: true }
+}
+
+// ---------------------------------------------------------------------------
 // toggleFeatureFlag(orgId, flag, enabled)
 //   flag must be in ALLOWED_FLAGS. Flips exactly one jsonb key.
 // ---------------------------------------------------------------------------
@@ -100,11 +144,73 @@ export async function toggleFeatureFlag(
   return { ok: true }
 }
 
+// ---------------------------------------------------------------------------
+// markPaid(orgId, planSlug, reason)
+//   Records a payment that happened OUTSIDE Stripe (bank transfer, invoice).
+//
+//   This is the only path other than the Stripe webhook that can set
+//   converted_to_paid, so it is deliberately the most demanding action in this
+//   file: it requires a written reason, and the RPC logs the actor, the before
+//   state and that reason with source='admin_manual'. A manual grant therefore
+//   stays distinguishable from a real Stripe conversion forever after.
+//
+//   If the org just needs more evaluation time, use extendTrial() instead --
+//   that restores access without asserting that anyone paid.
+// ---------------------------------------------------------------------------
+export async function markPaid(
+  orgId: string,
+  planSlug: string,
+  reason: string
+): Promise<ActionResult> {
+  await requireSuperAdmin()
+
+  if (!UUID_RE.test(orgId)) {
+    return { ok: false, error: 'Invalid organization id.' }
+  }
+  if (!isAllowedPlanSlug(planSlug)) {
+    return { ok: false, error: 'Unknown plan.' }
+  }
+
+  const trimmed = (reason || '').trim()
+  if (trimmed.length < 10) {
+    return {
+      ok: false,
+      error: 'Give a reason of at least 10 characters (for example the invoice or transfer reference).',
+    }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.rpc('admin_mark_paid', {
+    p_org_id: orgId,
+    p_plan_slug: planSlug,
+    p_reason: trimmed,
+  })
+
+  if (error) {
+    return { ok: false, error: mapRpcError(error.message) }
+  }
+
+  revalidatePath(`/admin/orgs/${orgId}`)
+  revalidatePath('/admin')
+  return { ok: true }
+}
+
 // Translate raised SQL exceptions into stable, user-facing messages.
 function mapRpcError(message: string): string {
+  if (message.includes('reason_required')) {
+    return 'A reason of at least 10 characters is required.'
+  }
+  if (message.includes('invalid_plan')) return 'Unknown plan.'
   if (message.includes('not_authorized')) return 'Not authorized.'
   if (message.includes('invalid_days')) return 'Extension length not allowed.'
   if (message.includes('invalid_flag')) return 'Feature flag not allowed.'
+  if (message.includes('invalid_mode')) return 'End-pilot mode not allowed.'
+  if (message.includes('already_converted')) {
+    return 'This organization has converted to paid. Ending its pilot is not allowed.'
+  }
+  if (message.includes('not_a_pilot')) {
+    return 'This organization is not on a pilot.'
+  }
   if (message.includes('org_not_found')) return 'Organization not found.'
   return 'Action failed.'
 }

@@ -26,6 +26,21 @@ const nextConfig: NextConfig = {
       },
     ]
   },
+  async redirects() {
+    return [
+      {
+        // "/" was a Server Component whose entire body was redirect('/login').
+        // That meant a function invocation, and a cold start when the instance
+        // was cold, to produce a redirect the platform can serve on its own.
+        //
+        // Not permanent: the root is intended to become a real landing page,
+        // and a 308 would be cached by browsers long after that ships.
+        source: '/',
+        destination: '/login',
+        permanent: false,
+      },
+    ]
+  },
 }
 
 export default nextConfig

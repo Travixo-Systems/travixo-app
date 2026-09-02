@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as XLSX from 'xlsx'
+import { createClient } from '@/lib/supabase/server'
+import { requireWriteAccess } from '@/lib/server/require-write-access'
 
 function detectColumns(firstRow: any): Record<string, string> {
   const mapping: Record<string, string> = {}
@@ -74,13 +76,54 @@ function cleanAssetData(row: any, mapping: Record<string, string>) {
   return asset
 }
 
+/**
+ * Largest spreadsheet this endpoint will parse.
+ *
+ * XLSX.read is synchronous and CPU-bound, and a zip-based format can expand to
+ * far more than its transfer size. Without a ceiling, a single upload can hold
+ * the event loop for as long as it takes to decompress. 5 MB is far above a
+ * real equipment list (the 400-row pilot cap is a few hundred KB) and far
+ * below what would hurt.
+ */
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024
+
 export async function POST(request: NextRequest) {
   try {
+    // This route had NO authentication at all. It went from formData() straight
+    // into a synchronous spreadsheet parse, so any anonymous caller could spend
+    // server CPU at will -- and the rate limiter it sat behind is per-instance,
+    // so it does not hold under exactly the concurrency that would matter.
+    //
+    // It is gated like every other mutating route now. It does not write, but
+    // it does the same expensive work as the import it previews, so it belongs
+    // behind the same door.
+    const supabase = await createClient()
+    const writeGate = await requireWriteAccess(supabase)
+    if (writeGate.denied) return writeGate.denied
+
+    // Reject oversized uploads on the declared length first, before reading the
+    // body into memory. A lying or absent header is caught by the real check
+    // after buffering.
+    const declaredLength = Number(request.headers.get('content-length') || 0)
+    if (declaredLength > MAX_UPLOAD_BYTES) {
+      return NextResponse.json(
+        { error: 'File too large. Maximum size is 5 MB.' },
+        { status: 413 }
+      )
+    }
+
     const formData = await request.formData()
     const file = formData.get('file') as File
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+    }
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json(
+        { error: 'File too large. Maximum size is 5 MB.' },
+        { status: 413 }
+      )
     }
 
     const buffer = Buffer.from(await file.arrayBuffer())

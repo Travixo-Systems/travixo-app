@@ -339,16 +339,41 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
     setShowEdit(true);
   };
 
-  const handleEditSuccess = async () => {
+  const handleEditSuccess = (updated: {
+    id: string;
+    next_due_date: string;
+    notes: string;
+  }) => {
     setShowEdit(false);
     setEditingSchedule(null);
     setToast({ message: t('vgpSchedules.success.updated'), type: 'success' });
-    
-    try {
-      setSchedules(await fetchAllSchedules());
-    } catch (e) {
-      console.error('Refetch error:', e);
-    }
+
+    // Patch the one row that changed.
+    //
+    // This used to call fetchAllSchedules(), which walks EVERY page of
+    // /api/vgp/schedules -- and each page pays the three-call auth preamble in
+    // require-feature.ts. Editing a single date on a large fleet therefore cost
+    // a full multi-page re-read of the list. handleArchive above already does
+    // it this way; this is the same idea for an update instead of a removal.
+    //
+    // The status counts above the table are derived from `schedules`, so they
+    // recompute from the patched row without a refetch.
+    setSchedules(prev => {
+      const patched = prev.map(s =>
+        s.id === updated.id
+          ? { ...s, next_due_date: updated.next_due_date, notes: updated.notes }
+          : s
+      );
+      // The API returns rows ordered by next_due_date, then id
+      // (api/vgp/schedules/route.ts:107-108). Editing a due date changes where
+      // the row belongs, so re-sort to match what a refetch would have given.
+      // Without this the edited row stays where it was and the list is subtly
+      // wrong until the next full load.
+      return patched.sort((a, b) => {
+        if (a.next_due_date === b.next_due_date) return a.id < b.id ? -1 : 1;
+        return a.next_due_date < b.next_due_date ? -1 : 1;
+      });
+    });
   };
 
   return (

@@ -29,6 +29,7 @@ import { LanguageToggle } from './LanguageToggle';
 import { useTheme } from '@/lib/ThemeContext';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
+import { SIGN_OUT_SCOPE_LOCAL } from '@/lib/supabase/cookie-name'
 
 const MOBILE_BREAKPOINT = 1026;
 const SIDEBAR_BG = '#0a2730';
@@ -111,7 +112,7 @@ export default function Sidebar() {
 
   const handleLogout = async () => {
     setLoggingOut(true);
-    await supabase.auth.signOut();
+    await supabase.auth.signOut(SIGN_OUT_SCOPE_LOCAL);
   };
 
   const getInitials = () => {

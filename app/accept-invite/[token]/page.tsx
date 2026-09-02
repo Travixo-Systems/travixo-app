@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { CheckCircle, XCircle, Clock, Loader2, UserPlus, LogIn, LogOut, Mail } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { SIGN_OUT_SCOPE_LOCAL } from '@/lib/supabase/cookie-name'
 
 const BRAND = {
   primary: '#00252b',
@@ -233,7 +234,7 @@ export default function AcceptInvitePage() {
               <button
                 onClick={async () => {
                   const supabase = createClient();
-                  await supabase.auth.signOut();
+                  await supabase.auth.signOut(SIGN_OUT_SCOPE_LOCAL);
                   router.push(`/login?redirect=/accept-invite/${token}`);
                 }}
                 className="w-full px-6 py-3 text-white rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors hover:opacity-90"

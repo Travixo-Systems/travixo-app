@@ -4,9 +4,10 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import { randomUUID, createHash } from 'crypto';
 import { Resend } from 'resend';
+import * as Sentry from '@sentry/node';
 import { render } from '@react-email/render';
 import { TeamInvitationEmail } from '@/lib/email/templates/team-invitation';
 import { validateRequest, inviteTeamMemberSchema } from '@/lib/validations/schemas';
@@ -198,33 +199,47 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create invitation' }, { status: 500 });
     }
 
-    // Send invitation email via Resend
+    // Send the invitation email AFTER responding.
+    //
+    // The invitation row is already committed at this point, and the catch
+    // below has always said the request must not fail if the email does. So
+    // the person clicking "invite" was waiting on Resend for no reason: a slow
+    // provider became a slow button, and an unreachable one became a hung
+    // request. after() runs this once the response is on its way.
     if (RESEND_API_KEY) {
-      try {
-        const resend = new Resend(RESEND_API_KEY);
-        const acceptUrl = `${APP_URL}/accept-invite/${plainToken}`;
+      after(async () => {
+        try {
+          const resend = new Resend(RESEND_API_KEY);
+          const acceptUrl = `${APP_URL}/accept-invite/${plainToken}`;
 
-        const emailHtml = await render(
-          TeamInvitationEmail({
-            organizationName: orgName,
-            inviterEmail: userData.email,
-            role,
-            acceptUrl,
-            appUrl: APP_URL,
-          })
-        );
+          const emailHtml = await render(
+            TeamInvitationEmail({
+              organizationName: orgName,
+              inviterEmail: userData.email,
+              role,
+              acceptUrl,
+              appUrl: APP_URL,
+            })
+          );
 
-        await resend.emails.send({
-          from: 'TraviXO Systems <noreply@travixosystems.com>',
-          replyTo: 'contact@travixosystems.com',
-          to: normalizedEmail,
-          subject: `Invitation a rejoindre ${orgName} sur TraviXO`,
-          html: emailHtml,
-        });
-      } catch (emailError) {
-        console.error('Error sending invitation email:', emailError);
-        // Don't fail the request - invitation is created, email can be resent
-      }
+          await resend.emails.send({
+            from: 'TraviXO Systems <noreply@travixosystems.com>',
+            replyTo: 'contact@travixosystems.com',
+            to: normalizedEmail,
+            subject: `Invitation a rejoindre ${orgName} sur TraviXO`,
+            html: emailHtml,
+          });
+        } catch (emailError) {
+          // Invitation is created; the email can be resent from the team page.
+          // Reported rather than only logged, because a silent failure here
+          // looks to the inviter exactly like success.
+          console.error('Error sending invitation email:', emailError);
+          Sentry.captureException(emailError, {
+            tags: { area: 'team_invitations', step: 'send_invite_email' },
+            extra: { organizationName: orgName },
+          });
+        }
+      });
     }
 
     return NextResponse.json(

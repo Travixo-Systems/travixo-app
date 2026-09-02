@@ -6,6 +6,16 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { fetchSignInIndex } from '@/lib/admin/lastConnected'
+import {
+  canEndPilot,
+  canExtendPilot,
+  extendUnavailableReason,
+  formatLastConnected,
+  mostRecentSignIn,
+  orgHealth,
+  daysAgo,
+} from '@/lib/admin/orgHealth'
 import AdminOrgActions from './AdminOrgActions'
 
 export const dynamic = 'force-dynamic'
@@ -29,6 +39,7 @@ interface OrgDetail {
   subscription_status: string | null
   is_pilot: boolean
   trial_ends_at: string | null
+  pilot_start_date: string | null
   pilot_end_date: string | null
   converted_to_paid: boolean
   feature_flags: Record<string, boolean> | null
@@ -70,6 +81,12 @@ function summarizeAudit(row: AuditRow): string {
     const enabled = (after as { enabled?: boolean }).enabled
     return `${flag} -> ${enabled ? 'enabled' : 'disabled'}`
   }
+  if (row.action === 'end_pilot') {
+    const mode = (after as { mode?: string }).mode ?? '?'
+    const b = (before as Record<string, string | null>).pilot_end_date
+    const a = (after as Record<string, string | null>).pilot_end_date
+    return `ended (${mode}) ${formatDate(b ?? null)} -> ${formatDate(a ?? null)}`
+  }
   return '-'
 }
 
@@ -86,7 +103,7 @@ export default async function AdminOrgDetailPage({
   const { data: org } = await supabase
     .from('organizations')
     .select(
-      'id, name, slug, subscription_tier, subscription_status, is_pilot, trial_ends_at, pilot_end_date, converted_to_paid, feature_flags, created_at'
+      'id, name, slug, subscription_tier, subscription_status, is_pilot, trial_ends_at, pilot_start_date, pilot_end_date, converted_to_paid, feature_flags, created_at'
     )
     .eq('id', id)
     .single()
@@ -106,6 +123,47 @@ export default async function AdminOrgDetailPage({
     .order('created_at', { ascending: false })
 
   const users: OrgUser[] = (usersData as OrgUser[] | null) ?? []
+
+  // --- Engagement inputs -------------------------------------------------
+  // last_sign_in_at lives in auth.users, which PostgREST does not expose,
+  // so it comes from the Auth admin API. A failure yields known:false and
+  // the UI renders "unknown" rather than a misleading "never".
+  const signIns = await fetchSignInIndex()
+  const lastConnected = mostRecentSignIn(
+    users.map((u) => signIns.byUserId.get(u.id) ?? null)
+  )
+
+  // Real vs demo assets: demo rows are seeded by us, so they say nothing
+  // about whether the customer adopted the product.
+  const { data: assetRows } = await supabase
+    .from('assets')
+    .select('id, is_demo_data')
+    .eq('organization_id', id)
+
+  const assets = (assetRows as { id: string; is_demo_data: boolean }[] | null) ?? []
+  const demoAssets = assets.filter((a) => a.is_demo_data).length
+  const realAssets = assets.length - demoAssets
+
+  const { count: inspectionCount } = await supabase
+    .from('vgp_inspections')
+    .select('id', { count: 'exact', head: true })
+    .eq('organization_id', id)
+
+  const health = orgHealth({
+    is_pilot: o.is_pilot,
+    pilot_start_date: o.pilot_start_date,
+    pilot_end_date: o.pilot_end_date,
+    converted_to_paid: o.converted_to_paid,
+    realAssets,
+    demoAssets,
+    userCount: users.length,
+    inspectionCount: inspectionCount ?? 0,
+    lastConnected,
+  })
+
+  const extendAllowed = canExtendPilot(o)
+  const extendReason = extendUnavailableReason(o)
+  const endAllowed = canEndPilot(o)
 
   // --- Recent admin audit log for THIS org ------------------------------
   // target_org_id is captured explicitly by the Phase 2 functions (the
@@ -143,9 +201,27 @@ export default async function AdminOrgDetailPage({
     { label: 'Trial ends', value: formatDate(o.trial_ends_at) },
     { label: 'Pilot ends', value: formatDate(o.pilot_end_date) },
     { label: 'Converted to paid', value: o.converted_to_paid ? 'Yes' : 'No' },
+    { label: 'Access level', value: health.access },
+    {
+      label: 'Last connected',
+      value: formatLastConnected(lastConnected, signIns.known),
+    },
     { label: 'Created', value: formatDate(o.created_at) },
     { label: 'Org ID', value: o.id },
   ]
+
+  const engagementClass: Record<string, string> = {
+    active: 'bg-green-100 text-green-800',
+    idle: 'bg-amber-100 text-amber-800',
+    dormant: 'bg-red-100 text-red-800',
+    never: 'bg-gray-200 text-gray-700',
+  }
+
+  const accessClass: Record<string, string> = {
+    full: 'bg-green-100 text-green-800',
+    read_only: 'bg-amber-100 text-amber-800',
+    locked: 'bg-red-100 text-red-800',
+  }
 
   return (
     <div className="space-y-10">
@@ -170,10 +246,100 @@ export default async function AdminOrgDetailPage({
         </div>
       </section>
 
+      {/* ============================ Pilot health ====================== */}
+      <section>
+        <h2 className="mb-4 text-xl font-semibold">Engagement</h2>
+        <div className="rounded-lg border border-gray-200 bg-white p-4">
+          <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div>
+              <div className="text-xs uppercase tracking-wide text-gray-500">
+                Last connected
+              </div>
+              <div className="mt-1 text-lg font-semibold text-gray-900">
+                {formatLastConnected(lastConnected, signIns.known)}
+              </div>
+              <span
+                className={`mt-1 inline-block rounded px-1.5 py-0.5 text-xs font-medium ${
+                  engagementClass[health.engagement] ?? 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                {health.engagement}
+              </span>
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-gray-500">
+                Real assets
+              </div>
+              <div className="mt-1 text-lg font-semibold text-gray-900">
+                {realAssets}
+              </div>
+              <div className="text-xs text-gray-500">{demoAssets} demo</div>
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-gray-500">
+                VGP inspections
+              </div>
+              <div className="mt-1 text-lg font-semibold text-gray-900">
+                {inspectionCount ?? 0}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-gray-500">
+                Access
+              </div>
+              <div className="mt-1">
+                <span
+                  className={`inline-block rounded px-2 py-0.5 text-sm font-medium ${
+                    accessClass[health.access] ?? 'bg-gray-200 text-gray-700'
+                  }`}
+                >
+                  {health.access}
+                </span>
+              </div>
+              {health.daysLeft !== null && (
+                <div className="mt-1 text-xs text-gray-500">
+                  {health.daysLeft >= 0
+                    ? `${health.daysLeft}d left`
+                    : `ended ${Math.abs(health.daysLeft)}d ago`}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="border-t border-gray-100 pt-3">
+            <div className="mb-2 flex items-center gap-2">
+              <span className="text-xs uppercase tracking-wide text-gray-500">
+                Conversion signals
+              </span>
+              <span className="rounded bg-gray-900 px-1.5 py-0.5 text-xs font-medium text-white">
+                score {health.score}
+              </span>
+            </div>
+            <ul className="list-inside list-disc space-y-0.5 text-sm text-gray-700">
+              {health.signals.map((s) => (
+                <li key={s}>{s}</li>
+              ))}
+            </ul>
+            <p className="mt-2 text-xs text-gray-400">
+              Triage hint only — never used for billing or access decisions.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* ============================ Actions =========================== */}
       <section>
         <h2 className="mb-4 text-xl font-semibold">Actions</h2>
-        <AdminOrgActions orgId={o.id} isPilot={o.is_pilot} flags={flags} />
+        <AdminOrgActions
+          orgId={o.id}
+          orgName={o.name}
+          isPilot={o.is_pilot}
+          flags={flags}
+          canExtend={extendAllowed}
+          extendReason={extendReason}
+          canEnd={endAllowed}
+          alreadyPaid={o.converted_to_paid}
+        />
       </section>
 
       {/* ============================ Users ============================= */}
@@ -191,13 +357,14 @@ export default async function AdminOrgDetailPage({
                 <th className="px-4 py-3 font-medium">Name</th>
                 <th className="px-4 py-3 font-medium">Role</th>
                 <th className="px-4 py-3 font-medium">Language</th>
+                <th className="px-4 py-3 font-medium">Last connected</th>
                 <th className="px-4 py-3 font-medium">Created</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
                     No users in this organization.
                   </td>
                 </tr>
@@ -208,6 +375,18 @@ export default async function AdminOrgDetailPage({
                     <td className="px-4 py-3 text-gray-600">{u.full_name ?? '-'}</td>
                     <td className="px-4 py-3 text-gray-600">{u.role}</td>
                     <td className="px-4 py-3 text-gray-600">{u.language ?? '-'}</td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {(() => {
+                        if (!signIns.known) return 'unknown'
+                        const iso = signIns.byUserId.get(u.id) ?? null
+                        if (!iso) return 'never'
+                        const d = daysAgo(iso)
+                        if (d === null) return 'unknown'
+                        if (d <= 0) return 'today'
+                        if (d === 1) return 'yesterday'
+                        return `${d}d ago`
+                      })()}
+                    </td>
                     <td className="px-4 py-3 text-gray-600">{formatDate(u.created_at)}</td>
                   </tr>
                 ))

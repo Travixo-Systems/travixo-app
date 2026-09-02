@@ -128,17 +128,49 @@ export default function ThemeSettingsPage() {
       return;
     }
     
+    // Paint the new colours immediately, then persist.
+    //
+    // The old code reloaded the whole page to apply a colour change, which
+    // threw away the JS bundle, re-authenticated, and re-ran every query on
+    // the page. It was never necessary: ThemeProvider reads its colours from
+    // the ['organization'] query, and useUpdateBranding already invalidates
+    // that key on success, so the new palette propagates on its own.
+    //
+    // Applying them here first just removes the wait. Every value written is
+    // captured beforehand so a failed save can put back exactly what was
+    // there, rather than leaving the user looking at colours that were never
+    // saved.
+    const root = document.documentElement;
+    const CSS_VARS: Array<[string, keyof BrandingColors]> = [
+      ['--color-primary', 'primary'],
+      ['--color-secondary', 'secondary'],
+      ['--color-accent', 'accent'],
+      ['--color-success', 'success'],
+      ['--color-warning', 'warning'],
+      ['--color-danger', 'danger'],
+    ];
+    const previous = CSS_VARS.map(
+      ([cssVar]) => [cssVar, root.style.getPropertyValue(cssVar)] as const
+    );
+
+    for (const [cssVar, key] of CSS_VARS) {
+      const value = colors[key];
+      if (value) root.style.setProperty(cssVar, value);
+    }
+
     try {
       // Hook expects BrandingColors directly, it wraps in { colors: ... } internally
       await updateBranding(colors);
       toast.success(labels.saveSuccess[language]);
       setIsEditing(false);
-      
-      // Reload page to apply new theme
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
     } catch (error: any) {
+      // Roll back to the exact previous values. Removing the property rather
+      // than writing an empty string matters: an empty inline value would
+      // shadow the stylesheet default instead of falling through to it.
+      for (const [cssVar, value] of previous) {
+        if (value) root.style.setProperty(cssVar, value);
+        else root.style.removeProperty(cssVar);
+      }
       toast.error(error.message || labels.saveError[language]);
       console.error('Branding update error:', error);
     }

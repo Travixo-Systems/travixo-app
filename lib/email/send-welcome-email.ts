@@ -3,7 +3,7 @@
 
 import { Resend } from 'resend';
 import { render } from '@react-email/render';
-import * as fs from 'fs';
+import * as fs from 'fs/promises';
 import * as path from 'path';
 
 import { WelcomeOnboardingEmail } from './templates/welcome-onboarding';
@@ -41,7 +41,9 @@ export async function sendWelcomeEmail(
     let excelBuffer: Buffer;
 
     try {
-      excelBuffer = fs.readFileSync(excelPath);
+      // Async read: readFileSync blocked the event loop for every signup,
+      // stalling unrelated requests sharing the instance.
+      excelBuffer = await fs.readFile(excelPath);
     } catch (fileError) {
       console.error(`${logPrefix} Could not read demo Excel file at ${excelPath}:`, fileError);
       // Send email without attachment rather than failing entirely
