@@ -170,9 +170,18 @@ export default function (data) {
   // One user per VU, round-robin across the pool.
   const creds = users[(__VU - 1) % users.length]
 
-  // Sign in once per VU iteration cycle, then reuse the cookie jar.
-  // __ITER === 0 keeps login cost out of the steady-state latency numbers.
-  if (__ITER === 0) {
+  // Sign in when this VU has no session, then reuse the cookie jar.
+  //
+  // This used to key on __ITER === 0, which is wrong under a ramping
+  // executor: VUs are started progressively and recycled, so a VU can begin
+  // its life at a non-zero __ITER, never sign in, and spend the whole run
+  // getting 401s from every authenticated route. At 5 constant VUs that never
+  // showed; at 50 ramping VUs it produced a 1.6% failure rate that looked like
+  // the app buckling under load and was nothing of the sort.
+  //
+  // Keying on the session itself is also simply the right question: "am I
+  // signed in?" rather than "is this my first iteration?".
+  if (!globalThis.__session) {
     const start = Date.now()
     const auth = login(creds.email, creds.password)
     loginLatency.add(Date.now() - start)
