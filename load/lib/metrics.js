@@ -24,6 +24,15 @@ export const reportLatency = new Trend('travixo_report_latency', true)
 export const errorRate = new Rate('travixo_errors')
 export const authFailures = new Counter('travixo_auth_failures')
 
+/**
+ * Share of requests throttled by the app's own rate limiter.
+ *
+ * Not an error, but not nothing either: it is the ceiling this rig can
+ * reach against /scan, and a run where it climbs is measuring the limiter
+ * rather than the application.
+ */
+export const rateLimitedRate = new Rate('travixo_rate_limited')
+
 /** Bytes actually received, to size Supabase/Vercel egress from a real run. */
 export const bytesReceived = new Trend('travixo_bytes_received')
 
@@ -63,11 +72,32 @@ export function record(res, kind, trend) {
   else readLatency.add(d)
   if (trend) trend.add(d)
 
-  // 4xx from a deliberate business rule (409 already_rented, 403 vgp_blocked)
-  // is a CORRECT response under load, not an error. Counting it as failure
-  // would make the write-contention scenario report a false collapse.
+  // 4xx from a deliberate rule is a CORRECT response, not an error. Counting
+  // it as failure would make the write-contention scenario report a false
+  // collapse, and did make a 50-VU run look like a 1.5% failure rate when the
+  // app was behaving exactly as designed.
+  //
+  //   409 already_rented / 403 vgp_blocked / 422  - business rules
+  //   429 rate limited                            - a security control
+  //
+  // The 429s are worth understanding rather than just excusing. proxy.ts:49-51
+  // collapses every /scan/<qr_code> into ONE bucket per IP, deliberately, so
+  // an attacker cannot enumerate assets by cycling QR codes. The limit is
+  // 30/60s (lib/security/rate-limit.ts:77). Fifty VUs scanning from a single
+  // machine share one IP and therefore one bucket, which is traffic the
+  // limiter exists to throttle. Real depot users arrive from many IPs and
+  // never pool like this, so the throttling is a property of the test rig,
+  // not of production behaviour.
+  //
+  // They are counted separately below so the ceiling stays visible rather
+  // than silently discarded.
   const expected = res.status >= 200 && res.status < 400
-  const businessRule = res.status === 409 || res.status === 403 || res.status === 422
+  const rateLimited = res.status === 429
+  const businessRule =
+    res.status === 409 || res.status === 403 || res.status === 422 || rateLimited
+
+  if (rateLimited) rateLimitedRate.add(1)
+  else rateLimitedRate.add(0)
   errorRate.add(!expected && !businessRule)
 
   if (res.body) bytesReceived.add(res.body.length)
