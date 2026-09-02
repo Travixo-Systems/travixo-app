@@ -81,7 +81,7 @@ CREATE OR REPLACE FUNCTION public.assets_page (
   OFFSET GREATEST(0, COALESCE(p_offset, 0));
 $function$;
 
-GRANT EXECUTE ON FUNCTION "public"."assets_page"(text, text, uuid, boolean, integer, integer) TO "anon", "authenticated", "postgres", "service_role";
+GRANT EXECUTE ON FUNCTION "public"."assets_page"(text, text, uuid, boolean, integer, integer) TO "authenticated", "postgres", "service_role";
 
 COMMENT ON FUNCTION "public"."assets_page"(text, text, uuid, boolean, integer, integer) IS 'One filtered, searched, paginated page of assets for the calling user''s organization, with vgp_status computed server-side and total_count for the pager. Limit is clamped to 200.';
 

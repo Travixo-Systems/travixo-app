@@ -15,7 +15,7 @@ CREATE OR REPLACE FUNCTION public.assets_status_counts()
   GROUP BY a.status;
 $function$;
 
-GRANT EXECUTE ON FUNCTION "public"."assets_status_counts"() TO "anon", "authenticated", "postgres", "service_role";
+GRANT EXECUTE ON FUNCTION "public"."assets_status_counts"() TO "authenticated", "postgres", "service_role";
 
 COMMENT ON FUNCTION "public"."assets_status_counts"() IS 'Per-status asset counts for the calling user''s organization, excluding archived. Backs the filter chips on the assets page.';
 

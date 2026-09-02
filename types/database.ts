@@ -975,6 +975,46 @@ export type Database = {
         Args: { p_org_id: string; p_plan_slug: string; p_reason: string }
         Returns: Record<string, unknown>
       }
+      /**
+       * Assets-page reads, org-scoped through get_my_organization_id().
+       * See supabase/migrations/20260902100000_assets_page_aggregates.sql.
+       */
+      assets_page: {
+        Args: {
+          p_search?: string | null
+          p_status?: string | null
+          p_category_id?: string | null
+          p_show_archived?: boolean
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: {
+          id: string
+          name: string
+          serial_number: string | null
+          description: string | null
+          status: string
+          current_location: string | null
+          category_id: string | null
+          category_name: string | null
+          qr_code: string
+          purchase_date: string | null
+          purchase_price: number | null
+          current_value: number | null
+          archived_at: string | null
+          archive_reason: string | null
+          vgp_status: string
+          total_count: number
+        }[]
+      }
+      assets_status_counts: {
+        Args: Record<string, never>
+        Returns: { status: string; count: number }[]
+      }
+      assets_category_counts: {
+        Args: Record<string, never>
+        Returns: { id: string; name: string; count: number }[]
+      }
     }
   }
 }

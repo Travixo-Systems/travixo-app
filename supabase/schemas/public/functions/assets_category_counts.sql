@@ -20,7 +20,7 @@ CREATE OR REPLACE FUNCTION public.assets_category_counts()
   ORDER BY 2;
 $function$;
 
-GRANT EXECUTE ON FUNCTION "public"."assets_category_counts"() TO "anon", "authenticated", "postgres", "service_role";
+GRANT EXECUTE ON FUNCTION "public"."assets_category_counts"() TO "authenticated", "postgres", "service_role";
 
 COMMENT ON FUNCTION "public"."assets_category_counts"() IS 'Category filter list with per-category asset counts for the calling user''s organization. Includes archived assets, matching the current UI.';
 
