@@ -22,7 +22,7 @@
 import http from 'k6/http'
 import encoding from 'k6/encoding'
 import { check } from 'k6'
-import { SUPABASE_URL, SUPABASE_ANON_KEY, authCookieName, DEBUG } from './config.js'
+import { BASE_URL, SUPABASE_URL, SUPABASE_ANON_KEY, authCookieName, DEBUG } from './config.js'
 
 /** Matches MAX_CHUNK_SIZE in @supabase/ssr. */
 const MAX_CHUNK_SIZE = 3180
@@ -140,7 +140,14 @@ export function login(email, password) {
   const jar = http.cookieJar()
   for (const [name, value] of Object.entries(cookies)) {
     // Set on the app origin, not the Supabase origin: the app reads them.
-    jar.set(__ENV.BASE_URL, name, value, { path: '/' })
+    // BASE_URL from config rather than __ENV directly: config has already
+    // stripped a trailing slash, and the jar matches on the URL it is handed.
+    //
+    // The jar itself is verified to work: a cookie set this way IS returned by
+    // cookiesForURL() for both the origin and /api/* paths. What made every
+    // authenticated route 401 was the jar being CLEARED between iterations --
+    // see noCookiesReset in scenarios/journey.js.
+    jar.set(BASE_URL, name, value, { path: '/' })
   }
   return { session, cookies }
 }

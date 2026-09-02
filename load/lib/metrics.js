@@ -71,5 +71,11 @@ export function record(res, kind, trend) {
   errorRate.add(!expected && !businessRule)
 
   if (res.body) bytesReceived.add(res.body.length)
+
+  // Diagnostic: surface WHICH request failed, not just how many. A bare
+  // failure percentage says something is wrong; this says what.
+  if (!expected && !businessRule && __ENV.DEBUG === 'true') {
+    console.error('[fail] ' + res.status + ' ' + res.request.method + ' ' + res.request.url)
+  }
   return res
 }

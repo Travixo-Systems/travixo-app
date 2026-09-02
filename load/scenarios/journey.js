@@ -122,6 +122,18 @@ export const options = {
   summaryTrendStats: ['avg', 'min', 'med', 'p(95)', 'p(99)', 'max'],
   noConnectionReuse: false,
   discardResponseBodies: false,
+
+  // Keep the cookie jar across iterations.
+  //
+  // k6 clears it between iterations by default. This VU signs in once, on
+  // __ITER === 0, so without this the session survives exactly one iteration
+  // and every one after it answers 401 on authenticated routes -- while
+  // sign-in itself keeps reporting success and travixo_auth_failures stays at
+  // zero. That combination reads like a broken app and is a broken harness.
+  //
+  // A real user does not re-authenticate every few seconds either, so holding
+  // the session is also the more faithful model.
+  noCookiesReset: true,
 }
 
 // ---------------------------------------------------------------------------
