@@ -10,6 +10,7 @@ import type { CookieOptions } from '@supabase/ssr';
 import { requireFeature, requireVGPWriteAccess } from '@/lib/server/require-feature';
 import { requireWriteAccess } from '@/lib/server/require-write-access';
 import { resolveIdentity } from '@/lib/server/request-identity';
+import * as Sentry from '@sentry/node';
 
 /**
  * Create authenticated Supabase client for server-side operations
@@ -231,90 +232,53 @@ export async function POST(request: Request) {
       nextInspectionDate.setMonth(nextInspectionDate.getMonth() + monthsToAdd);
     }
 
-    // Create inspection record
-    const { data: inspection, error: insertError } = await supabase
-      .from('vgp_inspections')
-      .insert({
-        asset_id,
-        schedule_id: schedule_id || null,
-        organization_id: organizationId!,
-        inspection_date,
-        inspector_name,
-        inspector_company: inspector_company || null,
-        certification_number: certification_number || null,
-        result,
-        observations: findings || '',
-        verification_type: verification_type || 'PERIODIQUE',
-        next_inspection_date: nextInspectionDate.toISOString().split('T')[0],
-        certificate_url: certificate_url || null,          // UploadThing URL
-        certificate_file_name: certificate_file_name || null, // Original filename
-        performed_by: user.id,
-      })
-      .select(`
-        *,
-        assets (
-          id,
-          name,
-          serial_number,
-          current_location
-        )
-      `)
-      .single();
+    // ONE call, ONE transaction.
+    //
+    // This replaced three sequential writes -- the inspection, the schedule
+    // advance, and out_of_service on a failed result -- where the last two
+    // logged their errors and carried on. The dangerous combination was the
+    // first succeeding and the third failing: a FAILED inspection on record
+    // while the machine still read available, so checkout would let it out to
+    // a customer while the inspector believed the system had acted.
+    //
+    // record_inspection() does all three or none. See
+    // supabase/migrations/20260903100000_record_inspection_rpc.sql.
+    const { data: rpcResult, error: rpcError } = await supabase.rpc(
+      'record_inspection',
+      {
+        p_asset_id: asset_id,
+        p_inspection_date: inspection_date,
+        p_inspector_name: inspector_name,
+        p_result: result,
+        p_certificate_url: certificate_url,
+        p_schedule_id: schedule_id || null,
+        p_inspector_company: inspector_company || null,
+        p_certification_number: certification_number || null,
+        p_findings: findings || null,
+        p_verification_type: verification_type || 'PERIODIQUE',
+        p_interval_months: Number(interval_months) || 12,
+        p_certificate_file_name: certificate_file_name || null,
+      }
+    );
 
-    if (insertError) {
-      console.error('VGP Inspections POST: Insert error', insertError);
-      return NextResponse.json({ error: insertError.message }, { status: 500 });
+    if (rpcError) {
+      // Nothing was written: the function is one transaction, so a failure
+      // here means the inspection does NOT exist. Say so plainly rather than
+      // returning a 500 the inspector cannot act on.
+      console.error('VGP Inspections POST: record_inspection failed', rpcError);
+      Sentry.captureException(rpcError, {
+        tags: { area: 'vgp_inspections', step: 'record_inspection' },
+        extra: { asset_id, schedule_id, result },
+      });
+      return NextResponse.json(
+        { error: mapInspectionError(rpcError.message) },
+        { status: inspectionErrorStatus(rpcError.message) }
+      );
     }
 
-    console.log('VGP Inspections POST: Inspection created', inspection.id);
-
-    // Update related VGP schedule if provided
-    if (schedule_id) {
-      const scheduleUpdate: any = {
-        last_inspection_date: inspection_date,
-        next_due_date: nextInspectionDate.toISOString().split('T')[0],
-        updated_at: new Date().toISOString(),
-      };
-
-      // Update schedule status based on result
-      if (result === 'passed' || result === 'conditional') {
-        scheduleUpdate.status = 'completed';
-      } else if (result === 'failed') {
-        scheduleUpdate.status = 'failed';
-      }
-
-      const { error: updateError } = await supabase
-        .from('vgp_schedules')
-        .update(scheduleUpdate)
-        .eq('id', schedule_id)
-        .eq('organization_id', organizationId!);
-
-      if (updateError) {
-        console.error('VGP Inspections POST: Schedule update error', updateError);
-        // Don't fail entire request if schedule update fails
-      } else {
-        console.log('VGP Inspections POST: Schedule updated', schedule_id);
-      }
-    }
-
-    // If inspection failed, mark asset as out of service
-    if (result === 'failed') {
-      const { error: assetError } = await supabase
-        .from('assets')
-        .update({ 
-          status: 'out_of_service',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', asset_id)
-        .eq('organization_id', organizationId!);
-
-      if (assetError) {
-        console.error('VGP Inspections POST: Asset status update error', assetError);
-        // Don't fail entire request if asset update fails
-      } else {
-        console.log('VGP Inspections POST: Asset marked out_of_service', asset_id);
-      }
-    }
+    const inspection = (rpcResult as any)?.inspection;
+    console.log('VGP Inspections POST: recorded', inspection?.id,
+      'asset_blocked=' + ((rpcResult as any)?.asset_blocked === true));
 
     return NextResponse.json(
       {
@@ -332,6 +296,43 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+}
+
+/**
+ * Turn a record_inspection() error into something the inspector can act on.
+ *
+ * The RPC raises these with distinct codes precisely so the UI can say what
+ * went wrong. A generic 500 tells the person standing next to the machine
+ * nothing, and the whole point of the atomic version is that a failure means
+ * the inspection was NOT saved. They need to know that, because otherwise they
+ * will assume it was and walk away.
+ */
+function mapInspectionError(message: string): string {
+  if (message.includes('certificate_required')) {
+    return 'Le rapport de verification est obligatoire pour la conformite DREETS.'
+  }
+  if (message.includes('asset_not_found')) {
+    return 'Cet equipement est introuvable dans votre organisation.'
+  }
+  if (message.includes('schedule_not_found')) {
+    return 'L\'echeancier VGP est introuvable dans votre organisation.'
+  }
+  if (message.includes('invalid_result')) {
+    return 'Resultat invalide. Utilisez conforme, conditionnel ou non conforme.'
+  }
+  if (message.includes('no_organization')) {
+    return 'Aucune organisation associee a votre compte.'
+  }
+  // Anything else is genuinely unexpected. Still lead with the fact that
+  // changes what they do next: it was not saved.
+  return 'L\'inspection n\'a pas ete enregistree. Reessayez ou contactez le support.'
+}
+
+function inspectionErrorStatus(message: string): number {
+  if (message.includes('no_organization')) return 403
+  if (message.includes('asset_not_found') || message.includes('schedule_not_found')) return 404
+  if (message.includes('certificate_required') || message.includes('invalid_result')) return 400
+  return 500
 }
 
 /**
