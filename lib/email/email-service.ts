@@ -21,6 +21,12 @@ import { ClientRecall30Day } from './templates/client-recall-30day';
 import { ClientRecall14Day } from './templates/client-recall-14day';
 import { ClientRecallNotice } from './templates/client-recall-notice';
 import type { ClientRecallNoticeItem } from './templates/client-recall-notice';
+import { DemoShowcaseAlert } from './templates/demo-showcase-alert';
+import type { DemoShowcaseSpecimen } from './templates/demo-showcase-alert';
+import { VGPDigest } from './templates/vgp-digest';
+import type { DigestSection } from './templates/vgp-digest';
+
+import { isUndeliverableEmail } from '@/lib/vgp/demo-exclusion';
 
 import type {
   VGPAlertType,
@@ -107,18 +113,50 @@ function getAdminSupabase() {
 // Subject Lines (bilingual)
 // ---------------------------------------------------------------------------
 
-const SUBJECT_LINES: Record<VGPAlertType, (count: number, orgName: string) => string> = {
+/**
+ * When the soonest item in a batch is actually due, in French.
+ *
+ * The bands do not line up with their names. reminder_1day covers days 0-6 and
+ * reminder_7day covers 7-14, so the old fixed wording told a recipient their
+ * inspection was due "demain" when it was four days out, and "dans 7 jours"
+ * when it was fourteen. For compliance mail that is not a cosmetic problem:
+ * someone planning around the subject line plans around the wrong date.
+ *
+ * `days` is the SOONEST daysUntilDue in the batch, so the subject describes the
+ * most urgent item rather than an average.
+ */
+function duePhrase(days: number): string {
+  if (days <= 0) return "aujourd'hui";
+  if (days === 1) return 'demain';
+  return `dans ${days} jours`;
+}
+
+/**
+ * Subject builders. `days` is the soonest daysUntilDue in the batch; callers
+ * that do not have it fall back to the band's nominal figure.
+ */
+const SUBJECT_LINES: Record<VGPAlertType, (count: number, orgName: string, days?: number) => string> = {
   reminder_30day: (count, orgName) =>
     `[TraviXO] ${count} inspection${count > 1 ? 's' : ''} VGP a planifier - ${orgName}`,
-  reminder_15day: (count, orgName) =>
-    `[TraviXO] ${count} inspection${count > 1 ? 's' : ''} VGP dans 15 jours - ${orgName}`,
-  reminder_7day: (count, orgName) =>
-    `[TraviXO] URGENT : ${count} inspection${count > 1 ? 's' : ''} VGP dans 7 jours - ${orgName}`,
-  reminder_1day: (count, orgName) =>
-    `[TraviXO] CRITIQUE : ${count} inspection${count > 1 ? 's' : ''} VGP due${count > 1 ? 's' : ''} demain - ${orgName}`,
+  reminder_15day: (count, orgName, days) =>
+    `[TraviXO] ${count} inspection${count > 1 ? 's' : ''} VGP ${duePhrase(days ?? 15)} - ${orgName}`,
+  reminder_7day: (count, orgName, days) =>
+    `[TraviXO] URGENT : ${count} inspection${count > 1 ? 's' : ''} VGP ${duePhrase(days ?? 7)} - ${orgName}`,
+  reminder_1day: (count, orgName, days) =>
+    `[TraviXO] CRITIQUE : ${count} inspection${count > 1 ? 's' : ''} VGP due${count > 1 ? 's' : ''} ${duePhrase(days ?? 1)} - ${orgName}`,
   overdue: (count, orgName) =>
     `[TraviXO] EN RETARD : ${count} inspection${count > 1 ? 's' : ''} VGP - Risque d'amende - ${orgName}`,
 };
+
+/** Subject for the merged daily digest. */
+export function dailyDigestSubject(count: number, orgName: string): string {
+  return `[TraviXO] Résumé VGP quotidien - ${count} inspection${count > 1 ? 's' : ''} - ${orgName}`;
+}
+
+/** Subject for the Monday weekly digest. */
+export function weeklyDigestSubject(count: number, orgName: string): string {
+  return `[TraviXO] Résumé VGP hebdomadaire - ${count} inspection${count > 1 ? 's' : ''} - ${orgName}`;
+}
 
 // ---------------------------------------------------------------------------
 // Template Rendering
@@ -161,7 +199,13 @@ export async function sendVGPAlert(
   alertType: VGPAlertType,
   organizationName: string,
   recipients: EmailRecipient[],
-  schedules: ScheduleTableRow[]
+  schedules: ScheduleTableRow[],
+  /**
+   * Soonest daysUntilDue in this batch. Drives the subject's due phrase, since
+   * the band names do not match their spans (reminder_1day covers 0-6 days,
+   * reminder_7day covers 7-14). Omitted callers keep the nominal wording.
+   */
+  soonestDaysUntilDue?: number
 ): Promise<{ success: boolean; emailId?: string; error?: string }> {
   const logPrefix = '[EMAIL]';
 
@@ -184,7 +228,11 @@ export async function sendVGPAlert(
     appUrl: APP_URL,
   };
 
-  const subject = SUBJECT_LINES[alertType](schedules.length, organizationName);
+  const subject = SUBJECT_LINES[alertType](
+    schedules.length,
+    organizationName,
+    soonestDaysUntilDue
+  );
   const recipientEmails = recipients.map((r) => r.email);
 
   console.log(
@@ -247,6 +295,197 @@ export async function sendVGPAlert(
   }
 
   return { success: false, error: 'All send attempts failed' };
+}
+
+/**
+ * Send a merged VGP digest to ONE recipient.
+ *
+ * The distinction from sendVGPAlert is the whole point of the digest modes:
+ * that function sends one email per urgency band to a shared recipient list,
+ * so a member facing four bands received four emails. This sends exactly one,
+ * with the bands as sections inside it.
+ *
+ * Addressed to a single recipient rather than a list because the content is
+ * shaped by that person's own thresholds -- putting two people on one message
+ * would leak whichever bands the other had disabled.
+ */
+async function sendDigest(params: {
+  organizationName: string;
+  recipient: EmailRecipient;
+  sections: DigestSection[];
+  totalCount: number;
+  period: 'daily' | 'weekly';
+}): Promise<{ success: boolean; emailId?: string; error?: string }> {
+  const logPrefix = params.period === 'daily' ? '[DAILY-DIGEST]' : '[WEEKLY-DIGEST]';
+
+  if (params.sections.length === 0 || params.totalCount === 0) {
+    return { success: false, error: 'Nothing to send' };
+  }
+
+  if (isUndeliverableEmail(params.recipient.email)) {
+    console.log(`${logPrefix} Refusing undeliverable recipient, skipping`);
+    return { success: false, error: 'Undeliverable recipient' };
+  }
+
+  const subject =
+    params.period === 'daily'
+      ? dailyDigestSubject(params.totalCount, params.organizationName)
+      : weeklyDigestSubject(params.totalCount, params.organizationName);
+
+  let html: string;
+  try {
+    html = await render(
+      VGPDigest({
+        organizationName: params.organizationName,
+        sections: params.sections,
+        totalCount: params.totalCount,
+        appUrl: APP_URL,
+        period: params.period,
+      })
+    );
+  } catch (renderError) {
+    const msg = renderError instanceof Error ? renderError.message : String(renderError);
+    console.log(`${logPrefix} Template render error: ${msg}`);
+    return { success: false, error: `Template render failed: ${msg}` };
+  }
+
+  const resend = getResendClient();
+
+  // Same one-retry policy as sendVGPAlert: a digest that fails is a whole
+  // day's or week's alerts for that person, so it is worth a second attempt.
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const { data, error } = await withEmailTimeout(
+        resend.emails.send({
+          from: `${SENDER_NAME} <${SENDER_EMAIL}>`,
+          to: params.recipient.email,
+          replyTo: REPLY_TO,
+          subject,
+          html,
+        }),
+        `${params.period} digest email`
+      );
+
+      if (error) {
+        console.log(`${logPrefix} Resend API error (attempt ${attempt}): ${error.message}`);
+        if (attempt === 2) {
+          Sentry.captureMessage(`Digest send failed after retries: ${error.message}`, {
+            level: 'error',
+            tags: { area: 'email', step: `${params.period}_digest_send` },
+          });
+          return { success: false, error: `Resend error: ${error.message}` };
+        }
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        continue;
+      }
+
+      console.log(
+        `${logPrefix} Sent to ${params.recipient.email}: ${data?.id} ` +
+        `(${params.totalCount} item(s), attempt ${attempt})`
+      );
+      return { success: true, emailId: data?.id };
+    } catch (sendError) {
+      const msg = sendError instanceof Error ? sendError.message : String(sendError);
+      console.log(`${logPrefix} Send exception (attempt ${attempt}): ${msg}`);
+      if (attempt === 2) return { success: false, error: `Send exception: ${msg}` };
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+  }
+
+  return { success: false, error: 'All send attempts failed' };
+}
+
+/** One merged email covering today's enabled bands for a single recipient. */
+export async function sendVGPDailyDigest(params: {
+  organizationName: string;
+  recipient: EmailRecipient;
+  sections: DigestSection[];
+  totalCount: number;
+}): Promise<{ success: boolean; emailId?: string; error?: string }> {
+  return sendDigest({ ...params, period: 'daily' });
+}
+
+/** One merged email covering the week's queued bands for a single recipient. */
+export async function sendVGPWeeklyDigest(params: {
+  organizationName: string;
+  recipient: EmailRecipient;
+  sections: DigestSection[];
+  totalCount: number;
+}): Promise<{ success: boolean; emailId?: string; error?: string }> {
+  return sendDigest({ ...params, period: 'weekly' });
+}
+
+/**
+ * Send the one-time demo showcase alert to a newly registered organization.
+ *
+ * This exists because the cron no longer emails demo assets. Before that change
+ * a new customer saw the alert format for free -- the seeded Toyota is created
+ * ten days overdue, so the next cron run demonstrated an overdue alert and then
+ * kept demonstrating it every day forever. Suppressing the recurrence removed
+ * the nuisance and the demonstration together, so the demonstration is put back
+ * here deliberately: once, framed as a sample, at a moment when it is useful.
+ *
+ * Not routed through SUBJECT_LINES or getEmailTemplate. Those map VGPAlertType
+ * to real compliance mail, and a demo is not one of those types; adding it
+ * there would make it reachable from the cron by accident.
+ */
+export async function sendDemoShowcaseAlert(params: {
+  organizationName: string;
+  recipientEmail: string;
+  specimen: DemoShowcaseSpecimen;
+}): Promise<{ success: boolean; emailId?: string; error?: string }> {
+  const logPrefix = '[DEMO-SHOWCASE]';
+
+  if (isUndeliverableEmail(params.recipientEmail)) {
+    console.log(`${logPrefix} Refusing undeliverable recipient, skipping`);
+    return { success: false, error: 'Undeliverable recipient' };
+  }
+
+  const subject = `[TraviXO Démo] Exemple d'alerte VGP - ${params.organizationName}`;
+
+  let html: string;
+  try {
+    html = await render(
+      DemoShowcaseAlert({
+        organizationName: params.organizationName,
+        specimen: params.specimen,
+        appUrl: APP_URL,
+      })
+    );
+  } catch (renderError) {
+    const msg = renderError instanceof Error ? renderError.message : String(renderError);
+    console.log(`${logPrefix} Template render error: ${msg}`);
+    return { success: false, error: `Template render failed: ${msg}` };
+  }
+
+  try {
+    const resend = getResendClient();
+    const { data, error } = await withEmailTimeout(
+      resend.emails.send({
+        from: `${SENDER_NAME} <${SENDER_EMAIL}>`,
+        to: params.recipientEmail,
+        replyTo: REPLY_TO,
+        subject,
+        html,
+      }),
+      'demo showcase email'
+    );
+
+    if (error) {
+      console.log(`${logPrefix} Resend API error: ${error.message}`);
+      return { success: false, error: `Resend error: ${error.message}` };
+    }
+
+    console.log(`${logPrefix} Showcase alert sent to ${params.recipientEmail}: ${data?.id}`);
+    return { success: true, emailId: data?.id };
+  } catch (sendError) {
+    // Not retried. The claim in post-registration is consumed before the send,
+    // so a retry here cannot be paired with a second claim -- and this email is
+    // a convenience, not a compliance obligation. Failing quietly is correct.
+    const msg = sendError instanceof Error ? sendError.message : String(sendError);
+    console.log(`${logPrefix} Send exception: ${msg}`);
+    return { success: false, error: `Send exception: ${msg}` };
+  }
 }
 
 /**

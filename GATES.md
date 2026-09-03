@@ -1,70 +1,80 @@
-# Gates: admin end-pilot + conditional extend + org health signals
+# Gates: per-user notification preferences layer
 
-OWNS: supabase/migrations/20260827_admin_end_pilot.sql, lib/admin/featureFlags.ts, lib/admin/orgHealth.ts, app/(admin)/admin/**, scripts/verify-admin-end-pilot.mjs, scripts/verify-admin-extend-conditional.mjs, scripts/verify-admin-org-health.mjs
+OWNS: app/api/cron/vgp-alerts/**, app/api/cron/vgp-weekly-digest/**, app/api/settings/notifications/**, app/(dashboard)/settings/notifications/**, lib/email/**, lib/vgp/**, lib/i18n.ts, supabase/migrations/**, scripts/verify/**, vercel.json
 
-Scope: Give platform admins a guarded `end_pilot` action (read-only or locked),
-make the Extend control conditional on it being able to achieve anything, fix the
-`extend_trial` trial/pilot date desync, and surface last-connected plus pilot
-health signals on the admin screens.
+Scope: Per-user VGP alert frequency and thresholds overriding org defaults, with immediate / daily-digest / weekly-digest / off delivery modes, accurate subject lines, a recipients-type normalisation fix, a preferences link in every alert footer, and a settings UI.
 
-- [x] G1: end_pilot SQL exists with every guard (super-admin, mode allowlist, converted refusal, non-pilot refusal, both dates set together, same-transaction audit, grants)
-  CHECK: node --import ./scripts/ts-alias-loader.mjs scripts/verify-admin-end-pilot.mjs
-  EXPECT: admin end-pilot verification passed
-  EVIDENCE: exit 0, 45/45 checks, "admin end-pilot verification passed". Shell: Git Bash; CWD: d:/Dev/projects/travixo-app. This gate CAUGHT A REAL BUG: the first run failed 8 of 44 because the SQL wrote pilot_end_date = now(), but isPilotActive() tests now <= pilot_end_date INCLUSIVELY, so the org stayed at full access. Fixed to now() - INTERVAL 1 second. Positive control confirmed the buggy simulation yields full and the fixed one yields read_only.
+- [x] N1: user_notification_preferences migration — table, CHECK, UNIQUE, FK cascade, RLS (own-row SELECT/UPDATE, INSERT gated on org membership)
+  CHECK: node scripts/verify/verify-n1-schema.mjs
+  EXPECT: N1_SCHEMA_VERIFIED
+  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=ok: authenticated is granted | N1_SCHEMA_VERIFIED
 
-- [x] G2: extend_trial no longer desyncs trial_ends_at from pilot_end_date on the pilot branch
-  CHECK: node --import ./scripts/ts-alias-loader.mjs scripts/verify-admin-extend-conditional.mjs
-  EXPECT: admin extend conditional verification passed
-  EVIDENCE: exit 0, 32/32 checks, "admin extend conditional verification passed". Includes a negative control asserting the old desyncing line (v_new_trial := v_old_trial) is absent from the pilot branch.
+- [x] N2: Preference resolution — user row wins, absent row falls back to org defaults, invalid values fall back rather than throw
+  CHECK: node scripts/verify/verify-n2-resolution.mjs
+  EXPECT: N2_RESOLUTION_VERIFIED
+  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=ok: unusable org timing falls back to the full default set | N2_RESOLUTION_VERIFIED
 
-- [x] G3: canExtendPilot() gates the Extend control — false for a locked pilot and for a converted org, true for a live pilot — and the UI consumes it
-  CHECK: node --import ./scripts/ts-alias-loader.mjs scripts/verify-admin-extend-conditional.mjs
-  EXPECT: admin extend conditional verification passed
-  EVIDENCE: exit 0, same run as G2. canExtendPilot verified against accessLevel() across all 120 pilot days with 0 disagreements, plus 9 named cases and UI/page wiring checks.
+- [x] N3: Threshold filtering — a band whose preferenceDay is absent from the user array is skipped; overdue (0) is honoured as a real threshold
+  CHECK: node scripts/verify/verify-n3-thresholds.mjs
+  EXPECT: N3_THRESHOLDS_VERIFIED
+  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=ok: a band with zero items does not generate an email | N3_THRESHOLDS_VERIFIED
 
-- [x] G4: end_pilot outcomes agree with accessLevel() — read_only mode yields 'read_only', locked mode yields 'locked' — using the real access model, and neither mode alters normal day counting for untouched orgs
-  CHECK: node --import ./scripts/ts-alias-loader.mjs scripts/verify-admin-end-pilot.mjs
-  EXPECT: admin end-pilot verification passed
-  EVIDENCE: exit 0, same run as G1. Outcomes measured by running the REAL accessLevel() over the exact columns the SQL writes: read_only mode -> read_only (6 cases), locked mode -> locked. Also asserts an ended pilot is indistinguishable from a natural expiry, and an untouched org stays full.
+- [x] N4: Delivery routing end to end — daily_digest recipient gets ONE merged email not per-threshold, off gets zero, no-row gets org defaults, immediate keeps per-band sends
+  CHECK: node scripts/verify/verify-n4-routing.mjs
+  EXPECT: N4_ROUTING_VERIFIED
+  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=ok: a mixed org sends 6 emails across 5 recipients, not 20 (got 6) | N4_ROUTING_VERIFIED
 
-- [x] G5: org health module computes last-connected and pilot signals from confirmed columns only, with no invented fields
-  CHECK: node --import ./scripts/ts-alias-loader.mjs scripts/verify-admin-org-health.mjs
-  EXPECT: admin org health verification passed
-  EVIDENCE: exit 0, 55/55 checks, "admin org health verification passed". Every column the pages read was confirmed present in types/database.ts; asserts public.users still has NO last-login column, the premise for using the Auth admin API.
+- [x] N5: Subject-line accuracy — reminder_1day says aujourd'hui/demain/dans n jours by actual days; reminder_7day uses the real count; other subjects unchanged
+  CHECK: node scripts/verify/verify-n5-subjects.mjs
+  EXPECT: N5_SUBJECTS_VERIFIED
+  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=ok: weekly digest subject builder exists | N5_SUBJECTS_VERIFIED
 
-- [x] G6: admin pages render the new signals and the end-pilot control, and summarizeAudit handles the end_pilot action
-  CHECK: node --import ./scripts/ts-alias-loader.mjs scripts/verify-admin-org-health.mjs
-  EXPECT: admin org health verification passed
-  EVIDENCE: exit 0, same run as G5. Confirms both admin pages render last-connected and access, the detail page renders conversion signals, and summarizeAudit handles the end_pilot action.
+- [x] N6: Recipients normalisation — array or string both resolve to a scalar role; migration rewrites array rows in place
+  CHECK: node scripts/verify/verify-n6-recipients.mjs
+  EXPECT: N6_RECIPIENTS_VERIFIED
+  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=ok: unknown values are normalised to a valid role | N6_RECIPIENTS_VERIFIED
 
-- [x] G7: repository typechecks clean
-  CHECK: node -e "const r=require('child_process').spawnSync('npx tsc --noEmit',{shell:true,encoding:'utf8'}); const out=(r.stdout||'')+(r.stderr||''); if(r.status===0){console.log('TSC_CLEAN')}else{console.log(out.slice(0,2000));process.exit(1)}"
-  EXPECT: TSC_CLEAN
-  EVIDENCE: exit 0, printed TSC_CLEAN. Positive control: injecting a type error into lib/admin/orgHealth.ts made the gate fail with TS2322 at line 281; control removed and re-verified clean. The gate command needs shell:true because spawnSync on npx.cmd throws EINVAL on Windows.
+- [x] N7: Preferences link present in the rendered HTML of every alert email family, pointing at /settings/notifications
+  CHECK: node scripts/verify/verify-n7-footer.mjs
+  EXPECT: N7_FOOTER_VERIFIED
+  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=ok: negative control: an absent phrase is correctly reported as absent | N7_FOOTER_VERIFIED
 
-- [x] G8: production build succeeds
-  CHECK: node scripts/verify-build-clean.mjs
-  EXPECT: build verification passed
-  EVIDENCE: exit 0, printed "build verification passed" via scripts/verify-build-clean.mjs (production next build).
+- [x] N8: Weekly digest — pending table, Monday self-gating, one email per user, pending rows cleared only after a successful send
+  CHECK: node scripts/verify/verify-n8-weekly.mjs
+  EXPECT: N8_WEEKLY_VERIFIED
+  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=ok: daily cron queues weekly rows with ignoreDuplicates (once per week, not once per day) | N8_WEEKLY_VERIFIED
 
-- [ ] G9: pre-existing access-model behaviour is unregressed
-  CHECK: node scripts/verify-access-model.mjs
-  EXPECT: access model verification passed
-  EVIDENCE: FLAKY AT BASELINE, NOT A REGRESSION. Measured: 10 pass / 2 fail
-    over 12 runs WITH these changes; 2 pass / 1 fail over 3 runs at clean
-    HEAD with every file of this change stashed. The failing case is always
-    the same one: "day 45, last grace day -> locked, expected read_only".
-    Cause: the fixture builds pilot_start_date as exactly now-45d and
-    daysSincePilotStart() uses Math.ceil, so the value lands exactly on the
-    `> PILOT_LOCKOUT_DAYS` boundary; sub-millisecond drift between building
-    the date and evaluating it flips the verdict. Neither
-    lib/billing/access-model.ts nor scripts/verify-access-model.mjs is
-    modified by this change (confirmed via git status).
-  ABANDON: G9 Pre-existing boundary flake in a script outside this change's
-    OWNS scope. Fixing it means editing scripts/verify-access-model.mjs
-    (e.g. day(-45.5)) or access-model.ts's rounding, which would silently
-    widen an admin-feature change into the billing lifecycle. Handoff: fix
-    the fixture separately, then un-abandon this gate.
+- [x] N9: PATCH /api/settings/notifications/preferences — authenticated, validates frequency and thresholds, upserts the caller's own row only
+  CHECK: node scripts/verify/verify-n9-api.mjs
+  EXPECT: N9_API_VERIFIED
+  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=ok: org-level route keeps its write gate | N9_API_VERIFIED
 
-- [ ] G10: MANUAL — the new migration is deployed to the live Supabase project. This repo gitignores /supabase/migrations/ ("the live schema lives in the Supabase dashboard"), so a migration file on disk is NOT evidence that the function exists in the database.
-  EVIDENCE: pending
+- [x] N10: Settings UI — VGP alerts section, 4 frequency radios, 5 threshold checkboxes, saves via the new endpoint, all labels resolve in fr AND en
+  CHECK: node scripts/verify/verify-n10-ui.mjs
+  EXPECT: N10_UI_VERIFIED
+  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=N10_UI_VERIFIED | Translation key not found: notifications.thisKeyDoesNotExist
+
+- [x] N11: Session 1 work untouched — demo exclusion, dedup claim-then-send, welcome guard and FREQUENCY_RULES all still verified
+  CHECK: node scripts/verify/verify-n11-session1.mjs
+  EXPECT: N11_SESSION1_INTACT
+  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=ok: atomic conditional UPDATE retained | N11_SESSION1_INTACT
+
+- [x] N12: Repository typechecks clean (tsc --noEmit, exit 0)
+  CHECK: node scripts/verify/verify-typecheck.mjs
+  EXPECT: TYPECHECK_CLEAN
+  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=(node:57392) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated. | (Use `node --trace-deprecation ...` to show where
+
+- [x] N13: No new eslint errors in any touched file, measured against the pinned baseline
+  CHECK: node scripts/verify/verify-lint.mjs
+  EXPECT: LINT_CLEAN
+  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=(node:12952) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated. | (Use `node --trace-deprecation ...` to show where
+
+- [x] N14: No new npm dependencies
+  CHECK: node scripts/verify/verify-n14-deps.mjs
+  EXPECT: DEPS_UNCHANGED
+  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=ok: no new dev dependencies | DEPS_UNCHANGED
+
+- [x] N15: Working tree clean, every commit atomic and conventionally named
+  CHECK: node scripts/verify/verify-n15-commits.mjs
+  EXPECT: COMMITS_VERIFIED
+  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=ok: working tree clean (uncommitted: "") | COMMITS_VERIFIED

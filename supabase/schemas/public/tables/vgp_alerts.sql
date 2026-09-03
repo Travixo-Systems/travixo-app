@@ -28,6 +28,9 @@ CREATE INDEX idx_vgp_alerts_asset ON public.vgp_alerts USING btree (asset_id);
 CREATE INDEX idx_vgp_alerts_daily_count ON public.vgp_alerts USING btree (alert_date, sent)
   WHERE (sent = true);
 
+CREATE UNIQUE INDEX idx_vgp_alerts_dedup_unique ON public.vgp_alerts USING btree (schedule_id, alert_type, alert_date)
+  WHERE (sent = true);
+
 CREATE INDEX idx_vgp_alerts_dedup ON public.vgp_alerts USING btree (schedule_id, alert_type, alert_date, sent)
   WHERE (sent = true);
 

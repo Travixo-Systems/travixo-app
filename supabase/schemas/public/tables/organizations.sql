@@ -34,6 +34,8 @@ CREATE TABLE "public"."organizations" (
   "onboarding_completed"     boolean                  DEFAULT false,
   "demo_data_seeded"         boolean                  DEFAULT false,
   "feature_flags"            jsonb                    NOT NULL DEFAULT '{}'::jsonb,
+  "demo_alert_sent"          boolean                  NOT NULL DEFAULT false,
+  "welcome_email_sent"       boolean                  NOT NULL DEFAULT false,
   CONSTRAINT "organizations_pkey" PRIMARY KEY (id),
   CONSTRAINT "organizations_slug_key" UNIQUE (slug),
   CONSTRAINT "organizations_stripe_customer_id_key" UNIQUE (stripe_customer_id)
@@ -113,6 +115,10 @@ CREATE POLICY "super_admin_all_access" ON "public"."organizations"
 
 GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."organizations" TO "anon", "authenticated", "postgres", "service_role";
 
+COMMENT ON COLUMN "public"."organizations"."demo_alert_sent" IS 'True once the one-time demo showcase alert email has been claimed for this org. Claimed via a conditional UPDATE before the send, so it is a one-shot guard rather than a delivery receipt.';
+
 COMMENT ON COLUMN "public"."organizations"."vgp_alert_days" IS 'Array of day values for enabled alert types. 30=30-day reminder, 7=7-day, 1=1-day, 0=overdue';
 
 COMMENT ON COLUMN "public"."organizations"."vgp_alerts_enabled" IS 'Whether VGP email alerts are enabled for this organization';
+
+COMMENT ON COLUMN "public"."organizations"."welcome_email_sent" IS 'True once the welcome onboarding email has been claimed for this org. Claimed via a conditional UPDATE before the send, so it is a one-shot guard rather than a delivery receipt.';
