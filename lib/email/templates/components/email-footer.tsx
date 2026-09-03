@@ -45,6 +45,17 @@ export function EmailFooter({ appUrl }: EmailFooterProps) {
         </Link>
       </Text>
 
+      {/* Per-user preference link.
+          Lives in the shared footer rather than in each template so that every
+          alert family -- immediate, daily digest, weekly digest, recall --
+          carries it by construction, and a template added later cannot ship
+          without it. */}
+      <Text style={preferencesLinkStyle}>
+        <Link href={`${appUrl}/settings/notifications`} style={preferencesLinkAnchorStyle}>
+          Gérer vos préférences de notification →
+        </Link>
+      </Text>
+
       <Text style={unsubscribeStyle}>
         Vous recevez cet email car les alertes VGP sont activées pour votre organisation.{' '}
         <Link href={`${appUrl}/settings/notifications`} style={unsubscribeLinkStyle}>
@@ -92,6 +103,18 @@ const footerLinksStyle: React.CSSProperties = {
 
 const linkStyle: React.CSSProperties = {
   color: BRAND.orange,
+  textDecoration: 'none',
+};
+
+const preferencesLinkStyle: React.CSSProperties = {
+  fontSize: '12px',
+  fontFamily: 'Inter, Arial, Helvetica, sans-serif',
+  margin: '0 0 10px 0',
+  textAlign: 'center' as const,
+};
+
+const preferencesLinkAnchorStyle: React.CSSProperties = {
+  color: BRAND.mediumGray,
   textDecoration: 'none',
 };
 

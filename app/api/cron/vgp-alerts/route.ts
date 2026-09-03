@@ -26,6 +26,14 @@ import type {
 } from "@/types/vgp-alerts";
 
 import { isDemoSchedule, isUndeliverableEmail } from "@/lib/vgp/demo-exclusion";
+import {
+  resolveRecipientPreference,
+  planDelivery,
+  countItems,
+  normalizeRecipientsPref,
+  type PendingAlertGroup,
+  type UserNotificationPreferenceRow,
+} from "@/lib/vgp/notification-routing";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -161,7 +169,14 @@ async function getOrgNotificationPrefs(orgId: string): Promise<{
   const emailEnabled = np.email_enabled ?? true;
   const vgpEnabled = np.vgp_alerts?.enabled ?? true;
   const timing = Array.isArray(np.vgp_alerts?.timing) ? np.vgp_alerts.timing : [30, 15, 7, 1];
-  const recipients = np.vgp_alerts?.recipients || "owner";
+
+  // The column stores this key as an array when written by the database default
+  // and as a string when written by the settings API. Reading it as a scalar
+  // meant array rows matched no case in getAlertRecipients' switch and fell
+  // through to owner-only -- correct by accident for ["owner"], and a silent
+  // narrowing for ["admin"] and ["all"]. Migration 20260902170000 repairs the
+  // stored data; this keeps the read correct regardless.
+  const recipients = normalizeRecipientsPref(np.vgp_alerts?.recipients);
 
   return {
     orgName: org.name,
@@ -233,6 +248,263 @@ async function getAlertRecipients(
 }
 
 // ============================================================
+// Helper: per-user notification preferences for one organization
+// ============================================================
+
+/**
+ * Load every user preference row for an org, keyed by email.
+ *
+ * One query per org rather than one per recipient: an org with "all" selected
+ * can have dozens of members, and this runs inside a loop over every org in the
+ * system. Missing rows are simply absent from the map -- resolveRecipientPreference
+ * treats that as "use org defaults", which is the intended meaning.
+ *
+ * A query failure returns an empty map, so every recipient falls back to org
+ * defaults. That is the safe direction: alerts still go out, at the frequency
+ * the org configured, rather than being silently suppressed by an unrelated
+ * database problem.
+ */
+async function getUserPreferencesByEmail(
+  orgId: string
+): Promise<Map<string, UserNotificationPreferenceRow>> {
+  const byEmail = new Map<string, UserNotificationPreferenceRow>();
+
+  const { data, error } = await supabase
+    .from("user_notification_preferences")
+    .select("user_id, organization_id, vgp_frequency, vgp_thresholds, users!inner(email)")
+    .eq("organization_id", orgId);
+
+  if (error) {
+    console.log(
+      `${LOG_PREFIX} Could not load user preferences for org ${orgId}: ${error.message}. ` +
+      `Falling back to org defaults for every recipient.`
+    );
+    Sentry.captureException(error, {
+      tags: { area: "vgp_cron", step: "user_prefs_load" },
+      extra: { orgId },
+    });
+    return byEmail;
+  }
+
+  type PrefRowWithUser = UserNotificationPreferenceRow & {
+    users: { email: string } | null;
+  };
+
+  for (const row of (data || []) as unknown as PrefRowWithUser[]) {
+    const email: string | undefined = row.users?.email;
+    if (!email) continue;
+    byEmail.set(email.toLowerCase(), {
+      user_id: row.user_id,
+      organization_id: row.organization_id,
+      vgp_frequency: row.vgp_frequency,
+      vgp_thresholds: row.vgp_thresholds,
+    });
+  }
+
+  return byEmail;
+}
+
+// ============================================================
+// Per-recipient delivery
+// ============================================================
+
+type ClaimedItem = {
+  schedule: ScheduleWithAsset;
+  rule: FrequencyRule;
+  daysUntilDue: number;
+};
+
+interface DeliveryOutcome {
+  emailsSent: number;
+  weeklyQueued: number;
+  recipientsOff: number;
+  errors: string[];
+}
+
+/**
+ * Deliver a set of claimed alert bands to each recipient according to their own
+ * preferences.
+ *
+ * Each recipient is handled independently: one person's failure does not
+ * suppress anyone else's mail, and one person's 'off' does not affect the rest.
+ * This is the behavioural centre of the feature, and the reason planDelivery()
+ * is a pure function -- the routing decisions are unit-tested in
+ * scripts/verify/verify-n4-routing.mjs, leaving this function responsible only
+ * for I/O.
+ */
+async function deliverToRecipients(params: {
+  orgId: string;
+  orgName: string;
+  recipients: EmailRecipient[];
+  userPrefs: Map<string, UserNotificationPreferenceRow>;
+  orgDefaults: { timing: number[]; enabled: boolean };
+  groups: PendingAlertGroup<ClaimedItem>[];
+  allClaimedRowIds: string[];
+}): Promise<DeliveryOutcome> {
+  const { orgId, orgName, recipients, userPrefs, orgDefaults, groups } = params;
+  const outcome: DeliveryOutcome = {
+    emailsSent: 0,
+    weeklyQueued: 0,
+    recipientsOff: 0,
+    errors: [],
+  };
+
+  const { sendVGPAlert, sendVGPDailyDigest } = await import("@/lib/email/email-service");
+
+  let anyoneReceivedSomething = false;
+
+  for (const recipient of recipients) {
+    const prefRow = userPrefs.get(recipient.email.toLowerCase());
+    const preference = resolveRecipientPreference(prefRow, orgDefaults);
+    const plan = planDelivery(groups, preference);
+
+    if (preference.frequency === "off") {
+      outcome.recipientsOff++;
+      console.log(`${LOG_PREFIX} ${orgName}: ${recipient.email} has alerts off, skipping`);
+      continue;
+    }
+
+    if (plan.silent) {
+      console.log(
+        `${LOG_PREFIX} ${orgName}: ${recipient.email} matched no enabled threshold ` +
+        `(${plan.skippedByThreshold.length} band(s) filtered out)`
+      );
+      continue;
+    }
+
+    // --- immediate: one email per band, the pre-feature behaviour ---
+    for (const group of plan.immediate) {
+      const rows: ScheduleTableRow[] = group.items.map((i) =>
+        toScheduleTableRow(i.schedule, i.daysUntilDue)
+      );
+      // Subject wording depends on how far out the soonest item actually is,
+      // not on the band's nominal name. See SUBJECT_LINES in email-service.
+      const soonest = Math.min(...group.items.map((i) => i.daysUntilDue));
+
+      try {
+        const res = await sendVGPAlert(
+          group.alertType as VGPAlertType,
+          orgName,
+          [recipient],
+          rows,
+          soonest
+        );
+        if (res.success) {
+          outcome.emailsSent++;
+          anyoneReceivedSomething = true;
+        } else {
+          outcome.errors.push(
+            `Immediate ${group.alertType} to ${recipient.email} failed: ${res.error}`
+          );
+        }
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        outcome.errors.push(
+          `Immediate ${group.alertType} to ${recipient.email} threw: ${msg}`
+        );
+      }
+    }
+
+    // --- daily_digest: exactly one email covering every enabled band ---
+    if (plan.dailyDigest.length > 0) {
+      const sections = plan.dailyDigest.map((group) => ({
+        alertType: group.alertType,
+        urgencyLevel: group.urgencyLevel,
+        schedules: group.items.map((i) => toScheduleTableRow(i.schedule, i.daysUntilDue)),
+      }));
+
+      try {
+        const res = await sendVGPDailyDigest({
+          organizationName: orgName,
+          recipient,
+          sections,
+          totalCount: countItems(plan.dailyDigest),
+        });
+        if (res.success) {
+          outcome.emailsSent++;
+          anyoneReceivedSomething = true;
+        } else {
+          outcome.errors.push(`Daily digest to ${recipient.email} failed: ${res.error}`);
+        }
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        outcome.errors.push(`Daily digest to ${recipient.email} threw: ${msg}`);
+      }
+    }
+
+    // --- weekly_digest: defer to Monday rather than sending now ---
+    if (plan.weeklyPending.length > 0 && prefRow) {
+      const rows = plan.weeklyPending.flatMap((group) =>
+        group.items.map((i) => ({
+          user_id: prefRow.user_id,
+          organization_id: orgId,
+          schedule_id: i.schedule.id,
+          asset_id: i.schedule.asset_id,
+          alert_type: group.alertType,
+          urgency_level: group.urgencyLevel,
+          due_date: i.schedule.next_due_date,
+          days_until_due: i.daysUntilDue,
+        }))
+      );
+
+      // ignoreDuplicates so a schedule sitting in the same band all week is
+      // queued once, not once per day. The UNIQUE (user_id, schedule_id,
+      // alert_type) constraint is what makes that hold.
+      const { error: queueError } = await supabase
+        .from("pending_weekly_digests")
+        .upsert(rows, {
+          onConflict: "user_id,schedule_id,alert_type",
+          ignoreDuplicates: true,
+        });
+
+      if (queueError) {
+        console.log(
+          `${LOG_PREFIX} Failed to queue weekly digest for ${recipient.email}: ${queueError.message}`
+        );
+        Sentry.captureException(queueError, {
+          tags: { area: "vgp_cron", step: "weekly_queue" },
+          extra: { orgId, userId: prefRow.user_id, rowCount: rows.length },
+        });
+        outcome.errors.push(`Weekly queue for ${recipient.email} failed: ${queueError.message}`);
+      } else {
+        outcome.weeklyQueued += rows.length;
+        // Queued counts as handled: the alert is not lost, just deferred.
+        anyoneReceivedSomething = true;
+      }
+    }
+  }
+
+  // If the whole org's claim reached nobody -- every send failed -- hand the
+  // claim back so tomorrow's run can retry. A claim with no delivery behind it
+  // would otherwise suppress these alerts for a full day.
+  //
+  // Deliberately NOT released when recipients simply chose 'off' or filtered
+  // the bands out: that is a delivered decision, not a failure, and re-offering
+  // those schedules tomorrow would just repeat the same no-op.
+  if (!anyoneReceivedSomething && outcome.errors.length > 0 && params.allClaimedRowIds.length > 0) {
+    const { error: releaseError } = await supabase
+      .from("vgp_alerts")
+      .delete()
+      .in("id", params.allClaimedRowIds);
+
+    if (releaseError) {
+      console.log(`${LOG_PREFIX} Failed to release claim for ${orgName}: ${releaseError.message}`);
+      Sentry.captureException(releaseError, {
+        tags: { area: "vgp_cron", step: "alert_claim_release" },
+        extra: { orgId, rowCount: params.allClaimedRowIds.length },
+      });
+    } else {
+      console.log(
+        `${LOG_PREFIX} ${orgName}: every delivery failed, released ` +
+        `${params.allClaimedRowIds.length} claim(s) for retry`
+      );
+    }
+  }
+
+  return outcome;
+}
+
+// ============================================================
 // Core logic - exported so manual trigger can call it directly
 // ============================================================
 
@@ -247,6 +519,10 @@ export interface CronResult {
   demo_schedules_skipped: number;
   /** Recipient addresses dropped as undeliverable (RFC 2606 .test, blanks). */
   recipients_filtered: number;
+  /** Alert rows deferred to the Monday weekly digest run. */
+  weekly_queued: number;
+  /** Recipients who have set vgp_frequency = 'off'. */
+  recipients_off: number;
   errors: string[];
   details: Array<{
     organization_id: string;
@@ -269,6 +545,8 @@ export async function runVGPAlertsCron(): Promise<CronResult> {
     cooldown: 0,
     demo_schedules_skipped: 0,
     recipients_filtered: 0,
+    weekly_queued: 0,
+    recipients_off: 0,
     errors: [],
     details: [],
   };
@@ -438,13 +716,14 @@ export async function runVGPAlertsCron(): Promise<CronResult> {
           continue;
         }
 
-        // Check if org has this alert type enabled via timing preferences
-        // Overdue alerts (preferenceDay: 0) are always sent
-        if (rule.preferenceDay !== 0 && !prefs.timing.includes(rule.preferenceDay)) {
-          console.log(`${LOG_PREFIX} ${orgName}: ${rule.level} alerts disabled in preferences`);
-          orgDetail.skipped++;
-          continue;
-        }
+        // NOTE: threshold filtering no longer happens here.
+        //
+        // It used to be an org-wide decision applied before the cooldown, which
+        // made it impossible for two members of the same org to want different
+        // bands. It now runs per recipient in planDelivery(), so a schedule is
+        // collected here if ANY recipient might want it and filtered per person
+        // below. Overdue is no longer unconditional either -- it is threshold 0,
+        // which a user may switch off like any other band.
 
         // Check cooldown
         const lastAlertDate = lastAlertMap.get(schedule.id);
@@ -484,12 +763,24 @@ export async function runVGPAlertsCron(): Promise<CronResult> {
         byUrgency.get(level)!.push(item);
       }
 
+      // Per-user preferences for this org, loaded once rather than per band.
+      const userPrefs = await getUserPreferencesByEmail(orgId);
+
+      // Bands that survived the claim, ready to be routed per recipient.
+      const claimedGroups: PendingAlertGroup<{
+        schedule: ScheduleWithAsset;
+        rule: FrequencyRule;
+        daysUntilDue: number;
+      }>[] = [];
+
+      // Every vgp_alerts row id this org claimed this run. Kept so a delivery
+      // that reaches nobody at all can hand the claim back.
+      const allClaimedRowIds: string[] = [];
+
       for (const [level, items] of byUrgency) {
         const alertType = items[0].rule.alertType;
 
         try {
-          const { sendVGPAlert } = await import("@/lib/email/email-service");
-
           const now = new Date().toISOString();
           const todayStr = now.split("T")[0];
           const recipientEmails = recipients.map(r => r.email);
@@ -548,6 +839,7 @@ export async function runVGPAlertsCron(): Promise<CronResult> {
           }
 
           const claimedIds = new Set((claimedRows || []).map((r) => r.schedule_id));
+          allClaimedRowIds.push(...(claimedRows || []).map((r) => r.id));
 
           if (claimedIds.size === 0) {
             // Every schedule in this batch was already claimed -- another run
@@ -559,12 +851,9 @@ export async function runVGPAlertsCron(): Promise<CronResult> {
             continue;
           }
 
-          // Send for exactly what was claimed, so a partially-claimed batch
-          // does not re-list schedules another run is already reporting.
+          // Route exactly what was claimed, so a partially-claimed batch does
+          // not re-list schedules another run is already reporting.
           const claimedItems = items.filter((i) => claimedIds.has(i.schedule.id));
-          const claimedRowsForEmail: ScheduleTableRow[] = claimedItems.map((i) =>
-            toScheduleTableRow(i.schedule, i.daysUntilDue)
-          );
 
           if (claimedItems.length < items.length) {
             console.log(
@@ -573,51 +862,52 @@ export async function runVGPAlertsCron(): Promise<CronResult> {
             );
           }
 
-          const sendResult = await sendVGPAlert(
+          claimedGroups.push({
+            preferenceDay: items[0].rule.preferenceDay,
             alertType,
-            orgName,
-            recipients,
-            claimedRowsForEmail
-          );
-
-          if (!sendResult.success) {
-            // Release the claim so the next run retries. Safe because the mail
-            // did NOT go out: sendVGPAlert only reports success on a Resend
-            // acknowledgement, and it has already exhausted its own retry.
-            console.log(`${LOG_PREFIX} Failed to send ${level} alert for ${orgName}: ${sendResult.error}`);
-            result.errors.push(`Failed ${alertType} for ${orgName}: ${sendResult.error}`);
-
-            const { error: releaseError } = await supabase
-              .from("vgp_alerts")
-              .delete()
-              .in("id", (claimedRows || []).map((r) => r.id));
-
-            if (releaseError) {
-              // The claim stands and this alert is suppressed until the next
-              // urgency band. Worth knowing about; not worth re-sending over.
-              console.log(`${LOG_PREFIX} Failed to release claim: ${releaseError.message}`);
-              Sentry.captureException(releaseError, {
-                tags: { area: "vgp_cron", step: "alert_claim_release" },
-                extra: { orgId, alertType, batchSize: claimedItems.length },
-              });
-            }
-
-            orgDetail.skipped += items.length;
-            continue;
-          }
-
-          orgDetail.sent += claimedItems.length;
-          result.emails_sent++;
+            urgencyLevel: level,
+            items: claimedItems,
+          });
+        } catch (claimException: unknown) {
+          const msg = claimException instanceof Error ? claimException.message : String(claimException);
           console.log(
-            `${LOG_PREFIX} Sent ${level} (${alertType}) alert for ${claimedItems.length} schedules to ${orgName}`
+            `${LOG_PREFIX} Exception claiming ${level} alerts for ${orgName}: ${msg}`
           );
-        } catch (emailError: any) {
-          console.log(
-            `${LOG_PREFIX} Exception sending ${level} alert for ${orgName}: ${emailError.message}`
-          );
-          result.errors.push(`Exception ${alertType} for ${orgName}: ${emailError.message}`);
+          result.errors.push(`Exception ${alertType} for ${orgName}: ${msg}`);
           orgDetail.skipped += items.length;
         }
+      }
+
+      // --------------------------------------------------------------
+      // Per-recipient delivery
+      //
+      // The claim above is org-wide: one row per (schedule, alert_type, date),
+      // which is what the unique index arbitrates. Delivery is per person,
+      // because two members of the same org can now want different bands at
+      // different cadences.
+      //
+      // Consequence worth stating plainly: the claim is taken once for the org,
+      // so if every recipient turns out to want nothing, the schedules stay
+      // claimed for today and are not re-offered until tomorrow. That is the
+      // correct outcome -- nobody wanted them -- but it does mean a claim is
+      // not evidence that mail was sent.
+      // --------------------------------------------------------------
+      if (claimedGroups.length > 0) {
+        const deliveries = await deliverToRecipients({
+          orgId,
+          orgName,
+          recipients,
+          userPrefs,
+          orgDefaults: { timing: prefs.timing, enabled: prefs.enabled },
+          groups: claimedGroups,
+          allClaimedRowIds,
+        });
+
+        orgDetail.sent += deliveries.emailsSent;
+        result.emails_sent += deliveries.emailsSent;
+        result.weekly_queued += deliveries.weeklyQueued;
+        result.recipients_off += deliveries.recipientsOff;
+        result.errors.push(...deliveries.errors);
       }
 
       result.skipped += orgDetail.skipped;

@@ -12,6 +12,7 @@ import {
 import { useLanguage } from '@/lib/LanguageContext';
 import { createTranslator } from '@/lib/i18n';
 import { useOrganization, useUpdateNotifications, type NotificationPreferences } from '@/hooks/useOrganization';
+import MyVGPAlertPreferences from '@/components/settings/MyVGPAlertPreferences';
 import toast from 'react-hot-toast';
 
 export default function NotificationsSettingsPage() {
@@ -170,6 +171,15 @@ export default function NotificationsSettingsPage() {
               <span>{t('notifications.edit')}</span>
             </button>
           )}
+        </div>
+
+        {/* The signed-in user's own alert settings.
+            Outside the isEditing branches on purpose: those gate the
+            ORGANIZATION's defaults, which only owners and admins may change.
+            This block is every member's control over their own mail and has its
+            own save button, so it must not be hidden behind that edit mode. */}
+        <div className="mb-6">
+          <MyVGPAlertPreferences />
         </div>
 
         {/* VIEW MODE */}
