@@ -314,6 +314,15 @@ type ClaimedItem = {
   daysUntilDue: number;
 };
 
+/**
+ * One row returned by the claim_vgp_alerts RPC.
+ *
+ * out_* rather than id/schedule_id because every RETURNS TABLE column is an
+ * in-scope PL/pgSQL variable, and a bare `sent` in the ON CONFLICT predicate
+ * would be ambiguous against the table column.
+ */
+type ClaimedAlertRow = { out_id: string; out_schedule_id: string };
+
 interface DeliveryOutcome {
   emailsSent: number;
   weeklyQueued: number;
@@ -801,13 +810,28 @@ export async function runVGPAlertsCron(): Promise<CronResult> {
           // -- claims the remainder or nothing at all, and cannot re-send what
           // this one already holds.
           //
-          // upsert(..., { ignoreDuplicates: true }) is how supabase-js spells
-          // INSERT ... ON CONFLICT DO NOTHING. onConflict names the index's
-          // columns so the partial unique index is the arbiter.
-          const { data: claimedRows, error: claimError } = await supabase
-            .from("vgp_alerts")
-            .upsert(
-              items.map((item) => ({
+          // Claimed through an RPC, not supabase-js .upsert().
+          //
+          // idx_vgp_alerts_dedup_unique is a PARTIAL index (WHERE sent = true),
+          // and Postgres only accepts a partial index as the ON CONFLICT
+          // arbiter when the statement repeats its predicate. PostgREST's
+          // on_conflict parameter takes a bare column list with no way to
+          // express one, so the client call could only ever emit the form
+          // Postgres rejects:
+          //
+          //   42P10  there is no unique or exclusion constraint matching the
+          //          ON CONFLICT specification
+          //
+          // That failed on every claim, and because the handler continues past
+          // a claim error the run completed while sending nothing. The fix is
+          // not expressible in the client; the statement has to live in SQL.
+          // See supabase/migrations/20260904100000_claim_vgp_alerts_rpc.sql.
+          // Cast rather than .returns<T>(): types/database.ts is generated and
+          // does not yet know this function, so the generic would resolve
+          // against an absent signature.
+          const { data: claimedRows, error: claimError } = (await supabase
+            .rpc("claim_vgp_alerts", {
+              p_rows: items.map((item) => ({
                 schedule_id: item.schedule.id,
                 asset_id: item.schedule.asset_id,
                 organization_id: orgId,
@@ -815,14 +839,13 @@ export async function runVGPAlertsCron(): Promise<CronResult> {
                 urgency_level: item.rule.level,
                 alert_date: todayStr,
                 due_date: item.schedule.next_due_date,
-                sent: true,
                 sent_at: now,
                 email_sent_to: recipientEmails,
-                resolved: false,
               })),
-              { onConflict: "schedule_id,alert_type,alert_date", ignoreDuplicates: true }
-            )
-            .select("id, schedule_id");
+            })) as unknown as {
+              data: ClaimedAlertRow[] | null;
+              error: { message: string } | null;
+            };
 
           if (claimError) {
             // Nothing was claimed, so nothing is sent. This is the safe
@@ -838,8 +861,11 @@ export async function runVGPAlertsCron(): Promise<CronResult> {
             continue;
           }
 
-          const claimedIds = new Set((claimedRows || []).map((r) => r.schedule_id));
-          allClaimedRowIds.push(...(claimedRows || []).map((r) => r.id));
+          // out_* names: every RETURNS TABLE column is an in-scope PL/pgSQL
+          // variable, so plain `schedule_id`/`sent` would be ambiguous against
+          // the table columns inside the function.
+          const claimedIds = new Set((claimedRows || []).map((r) => r.out_schedule_id));
+          allClaimedRowIds.push(...(claimedRows || []).map((r) => r.out_id));
 
           if (claimedIds.size === 0) {
             // Every schedule in this batch was already claimed -- another run
