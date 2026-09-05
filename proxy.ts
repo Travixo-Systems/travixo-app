@@ -6,7 +6,9 @@ import { rateLimit, RATE_LIMITS } from '@/lib/security/rate-limit'
 import { validateCsrf } from '@/lib/security/csrf'
 import {
   ACCOUNT_SLOT_HEADER,
+  MAX_ACCOUNT_SLOTS,
   RESOLVED_SLOT_HEADER,
+  cookieNameForSlot,
   cookieOptionsForSlot,
   parseSlot,
   splitSlotPath,
@@ -19,6 +21,26 @@ function getClientIp(request: NextRequest): string {
     request.headers.get('x-real-ip') ||
     'unknown'
   )
+}
+
+/**
+ * The lowest account slot with no session cookie on this request, or null
+ * when every slot is occupied.
+ *
+ * Used to answer "where should a signed-in visitor who opened /login go?".
+ * The honest answer is a FREE slot: they are asking for a login form, and
+ * they already have a session, so they want a different account. Sending
+ * them to the slot they are already signed into just bounces them away.
+ *
+ * Reads only cookie PRESENCE, never the token, so it costs nothing and
+ * cannot leak anything.
+ */
+function firstFreeSlot(request: NextRequest): number | null {
+  for (let s = 0; s < MAX_ACCOUNT_SLOTS; s++) {
+    const value = request.cookies.get(cookieNameForSlot(s))?.value
+    if (!value) return s
+  }
+  return null
 }
 
 function getRateLimitConfig(pathname: string) {
@@ -271,10 +293,41 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  // Redirect authenticated users away from auth pages. Platform admins
-  // (members of platform_admins, checked via is_super_admin()) go to /admin
-  // instead of the tenant dashboard.
-  if (user && (pathname === '/login' || pathname === '/signup')) {
+  // Redirect authenticated users away from auth pages, so someone who is
+  // already signed in does not land on a login form by accident.
+  //
+  // This must NOT be absolute. Reaching /login while signed in is exactly how
+  // a second account is added, and it is the only way back to a login form at
+  // all. Bouncing it unconditionally meant a signed-in admin could never open
+  // /login, and every new tab -- which starts on slot 0, where that session
+  // lives -- was thrown to /admin.
+  //
+  // So the bounce is skipped when the user is deliberately asking for the
+  // login page:
+  //
+  //   ?add    -> "I want to sign in as someone else"
+  //   ?force  -> same, kept short for hand-typing
+  //
+  // and when every slot is already occupied there is nothing to add, so the
+  // ordinary bounce still applies.
+  const wantsAnotherAccount =
+    request.nextUrl.searchParams.has('add') ||
+    request.nextUrl.searchParams.has('force')
+
+  if (user && (pathname === '/login' || pathname === '/signup') && !wantsAnotherAccount) {
+    // If a FREE slot exists, opening /login means "sign in as someone else".
+    // Send the tab to that slot's login instead of bouncing it: bouncing is
+    // why a new tab always inherited the first account and could never reach
+    // a login form.
+    const freeSlot = firstFreeSlot(request)
+    if (freeSlot !== null) {
+      return NextResponse.redirect(
+        new URL(withSlotPath(freeSlot, pathname), request.url)
+      )
+    }
+
+    // Every slot is occupied: there is no account to add, so the ordinary
+    // "you are already signed in" bounce applies.
     let destination = '/dashboard'
     const { data: isAdmin } = await supabase.rpc('is_super_admin')
     if (isAdmin === true) destination = '/admin'

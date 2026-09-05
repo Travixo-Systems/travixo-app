@@ -309,6 +309,36 @@ if (notCleared.length === 0) {
 }
 
 // ---------------------------------------------------------------------
+// 7. A signed-in user must still be able to REACH a login form
+// ---------------------------------------------------------------------
+// The auth-page bounce used to be absolute: /login always redirected a
+// signed-in user away. That made adding a second account impossible, and
+// every new tab -- slot 0, where the first session lives -- was thrown to
+// /admin instead of showing a login page.
+if (/const freeSlot = firstFreeSlot\(request\)/.test(proxy)) {
+  pass('/login on a signed-in browser is sent to a FREE slot, not bounced')
+} else {
+  fail('/login still bounces unconditionally — a second account is unreachable')
+}
+if (/function firstFreeSlot\(/.test(proxy)) {
+  pass('firstFreeSlot() reads cookie presence to find an open slot')
+} else {
+  fail('firstFreeSlot() is missing')
+}
+if (/searchParams\.has\('add'\)/.test(proxy)) {
+  pass('an explicit ?add always reaches the login form')
+} else {
+  fail('no explicit escape hatch to the login form')
+}
+// The bounce must still happen when there is genuinely nothing to add,
+// otherwise a signed-in user lands on a pointless login form.
+if (/Every slot is occupied[\s\S]*?is_super_admin/.test(proxy)) {
+  pass('the ordinary bounce still applies when every slot is occupied')
+} else {
+  fail('the all-slots-full case no longer bounces')
+}
+
+// ---------------------------------------------------------------------
 console.log('')
 console.log(`${checks - failures}/${checks} checks passed`)
 if (failures > 0) {
