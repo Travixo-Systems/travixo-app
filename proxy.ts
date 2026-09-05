@@ -355,8 +355,19 @@ export const config = {
     // slot 0 and showed the first account regardless of the tab.
     '/admin',
     '/admin/:path*',
+    // EVERY route that can create or consume a session must run through the
+    // proxy, or it resolves no slot and lib/supabase/server.ts falls back to
+    // slot 0 -- silently writing over whichever account is already there.
+    // /auth/callback (email confirmation, OAuth) and /confirm both call
+    // exchangeCodeForSession / verifyOtp, so this is not cosmetic.
     '/login',
     '/signup',
+    '/confirm',
+    '/check-email',
+    '/forgot-password',
+    '/reset-password',
+    '/auth/:path*',
+    '/accept-invite/:path*',
     // Account-slot URLs (/u/1/dashboard, ...). The proxy MUST run for these:
     // it is what strips the prefix and rewrites to the real route. Without
     // this entry the prefixed URLs would bypass the proxy entirely and 404.

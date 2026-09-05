@@ -25,8 +25,23 @@
  */
 
 import { pathToFileURL } from 'url'
-import { readFileSync, existsSync } from 'fs'
-import { resolve } from 'path'
+import { readFileSync, existsSync, readdirSync, statSync } from 'fs'
+import { resolve, join } from 'path'
+
+/** Every .ts/.tsx file under a directory. */
+function walkApp(dir, out = []) {
+  let entries
+  try { entries = readdirSync(dir) } catch { return out }
+  for (const e of entries) {
+    if (e === 'node_modules' || e === '.next') continue
+    const p = join(dir, e)
+    let st
+    try { st = statSync(p) } catch { continue }
+    if (st.isDirectory()) walkApp(p, out)
+    else if (/\.(ts|tsx)$/.test(e)) out.push(p)
+  }
+  return out
+}
 
 let failures = 0
 let checks = 0
@@ -336,6 +351,69 @@ if (/Every slot is occupied[\s\S]*?is_super_admin/.test(proxy)) {
   pass('the ordinary bounce still applies when every slot is occupied')
 } else {
   fail('the all-slots-full case no longer bounces')
+}
+
+// ---------------------------------------------------------------------
+// 8. EVERY session-creating route must run through the proxy
+// ---------------------------------------------------------------------
+// This is the class of bug that keeps recurring: a route that skips the
+// matcher resolves no slot, so server.ts falls back to slot 0 and the
+// session is written over whichever account is already there. /admin did
+// it, and so did /auth/callback and /confirm, which call
+// exchangeCodeForSession and verifyOtp.
+//
+// Rather than list routes by hand, find every file that creates a session
+// and check its route is reachable by the matcher.
+const SESSION_CALLS = /signInWithPassword|\.signUp\(|verifyOtp|exchangeCodeForSession|setSession/
+
+function routeOf(file) {
+  // app/(group)/a/b/page.tsx -> /a/b ; app/x/route.ts -> /x
+  let r = file
+    .replace(/^app/, '')
+    .replace(/\/(page|route)\.tsx?$/, '')
+    .replace(/\/\([^)]+\)/g, '')
+  return r === '' ? '/' : r
+}
+
+const matcherPatterns = [...matcherBlock.matchAll(/'([^']+)'/g)].map(m => m[1])
+const matcherRes = matcherPatterns.map(
+  p => new RegExp('^' + p.replace(/\/:\w+\*/g, '(?:/.*)?').replace(/\/:\w+/g, '/[^/]+') + '$')
+)
+const reachable = u => matcherRes.some(re => re.test(u))
+
+const sessionFiles = walkApp('app').filter(f => SESSION_CALLS.test(readFileSync(f, 'utf8')))
+const bypassing = sessionFiles
+  .map(f => ({ f, route: routeOf(f.replace(/\\/g, '/')) }))
+  .filter(({ route }) => !reachable(route))
+
+if (sessionFiles.length > 0) {
+  pass(`found ${sessionFiles.length} file(s) that create a session`)
+} else {
+  fail('found no session-creating files — the scan is broken, not the code')
+}
+if (bypassing.length === 0) {
+  pass('every session-creating route runs through the proxy (resolves a slot)')
+} else {
+  fail(
+    'session-creating route(s) skip the proxy and would write to slot 0',
+    bypassing.map(b => `${b.route}  (${b.f})`).join('\n      ')
+  )
+}
+
+// Negative control: a route the matcher does not list must be reported.
+if (!reachable('/definitely-not-listed')) {
+  pass('reachability check rejects an unlisted route (negative control)')
+} else {
+  fail('reachability check is vacuous')
+}
+
+// Signup must claim a slot the way login does, or creating a second account
+// overwrites the first.
+const signup = read('app/(auth)/signup/page.tsx')
+if (signup && /claimSlotForNewLogin\(\)/.test(signup)) {
+  pass('signup claims a slot (a new account cannot evict an existing one)')
+} else {
+  fail('signup does not claim a slot — it would overwrite slot 0')
 }
 
 // ---------------------------------------------------------------------
