@@ -42,7 +42,22 @@ export async function proxy(request: NextRequest) {
   const ip = getClientIp(request)
 
   // --- Rate Limiting ---
-  const rlConfig = getRateLimitConfig(pathname)
+  //
+  // The auth limit exists to stop PASSWORD GUESSING, which is a POST. It was
+  // being charged for plain GETs of /login and /signup as well -- page loads,
+  // post-logout redirects, RSC prefetches -- so ten navigations locked a
+  // legitimate user out of their own login page with a raw JSON 429. Signing
+  // out of /admin hit it immediately, because the redirect plus the render
+  // spend several in a row.
+  //
+  // GETs of the auth pages are therefore exempt. Nothing is weakened: a
+  // credential attempt is a POST and still counts, and every other bucket
+  // (api, scan, password, cron, webhook) is unchanged.
+  const isAuthPageGet =
+    (pathname === '/login' || pathname === '/signup') &&
+    (request.method === 'GET' || request.method === 'HEAD')
+
+  const rlConfig = isAuthPageGet ? null : getRateLimitConfig(pathname)
   if (rlConfig) {
     // Collapse all /scan/<qr_code> variants into one bucket per IP so
     // attackers can't enumerate assets by cycling through unique QR codes
@@ -52,17 +67,39 @@ export async function proxy(request: NextRequest) {
     const result = rateLimit(key, rlConfig)
     if (!result.allowed) {
       const retryAfter = Math.ceil((result.resetAt - Date.now()) / 1000)
+      const headers = {
+        'Retry-After': String(retryAfter),
+        'X-RateLimit-Limit': String(result.limit),
+        'X-RateLimit-Remaining': '0',
+        'X-RateLimit-Reset': String(result.resetAt),
+      }
+
+      // A browser navigating to a PAGE must get a page, not raw JSON in the
+      // address bar. Only API callers get the JSON body.
+      const wantsHtml =
+        !pathname.startsWith('/api/') &&
+        (request.headers.get('accept') ?? '').includes('text/html')
+
+      if (wantsHtml) {
+        return new NextResponse(
+          `<!doctype html><html lang="en"><head><meta charset="utf-8">` +
+            `<meta name="viewport" content="width=device-width,initial-scale=1">` +
+            `<title>Trop de requêtes / Too many requests</title></head>` +
+            `<body style="font-family:system-ui,sans-serif;max-width:34rem;margin:15vh auto;padding:0 1.5rem;color:#0a2730">` +
+            `<h1 style="font-size:1.25rem;margin:0 0 .5rem">Trop de requêtes / Too many requests</h1>` +
+            `<p style="color:#556;line-height:1.5;margin:0 0 1.25rem">` +
+            `Merci de patienter ${retryAfter} seconde(s), puis réessayez.<br>` +
+            `Please wait ${retryAfter} second(s) and try again.</p>` +
+            `<a href="${pathname}" style="display:inline-block;background:#e8600a;color:#fff;` +
+            `padding:.6rem 1.1rem;border-radius:.375rem;text-decoration:none;font-weight:600">` +
+            `Réessayer / Retry</a></body></html>`,
+          { status: 429, headers: { ...headers, 'Content-Type': 'text/html; charset=utf-8' } }
+        )
+      }
+
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
-        {
-          status: 429,
-          headers: {
-            'Retry-After': String(retryAfter),
-            'X-RateLimit-Limit': String(result.limit),
-            'X-RateLimit-Remaining': '0',
-            'X-RateLimit-Reset': String(result.resetAt),
-          },
-        }
+        { status: 429, headers }
       )
     }
   }

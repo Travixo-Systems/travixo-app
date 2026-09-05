@@ -28,7 +28,7 @@ import { createTranslator } from '@/lib/i18n';
 import { LanguageToggle } from './LanguageToggle';
 import { useTheme } from '@/lib/ThemeContext';
 import { cn } from '@/lib/utils';
-import { createClient } from '@/lib/supabase/client';
+import { clearSlotCookie, createClient, getCurrentSlot, slotUrl } from '@/lib/supabase/client';
 import { SIGN_OUT_SCOPE_LOCAL } from '@/lib/supabase/cookie-name'
 
 const MOBILE_BREAKPOINT = 1026;
@@ -112,7 +112,18 @@ export default function Sidebar() {
 
   const handleLogout = async () => {
     setLoggingOut(true);
-    await supabase.auth.signOut(SIGN_OUT_SCOPE_LOCAL);
+    const slot = getCurrentSlot();
+    // signOut() resolves with an { error } instead of throwing, so a failed
+    // call would otherwise leave this slot's cookie in place and the user
+    // still signed in. Clear it locally too. Only this slot is touched, so a
+    // second account in another tab is unaffected.
+    try {
+      await supabase.auth.signOut(SIGN_OUT_SCOPE_LOCAL);
+    } catch {
+      // fall through to the local clear
+    }
+    clearSlotCookie(slot);
+    window.location.assign(slotUrl(slot, '/login'));
   };
 
   const getInitials = () => {

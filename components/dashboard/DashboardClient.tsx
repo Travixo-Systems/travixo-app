@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useLanguage } from "@/lib/LanguageContext"
 import { createTranslator } from "@/lib/i18n"
-import { createClient } from "@/lib/supabase/client"
+import { clearSlotCookie, createClient, getCurrentSlot, slotUrl } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { SIGN_OUT_SCOPE_LOCAL } from '@/lib/supabase/cookie-name'
 
@@ -27,9 +27,18 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
   const router = useRouter()
 
   const handleLogout = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut(SIGN_OUT_SCOPE_LOCAL)
-    router.push('/login')
+    const slot = getCurrentSlot()
+    // signOut() resolves with an { error } rather than throwing, so clear this
+    // slot's cookie locally too; otherwise a failed call leaves the user
+    // signed in. router.push would also drop the /u/<slot> prefix.
+    try {
+      const supabase = createClient()
+      await supabase.auth.signOut(SIGN_OUT_SCOPE_LOCAL)
+    } catch {
+      // fall through to the local clear
+    }
+    clearSlotCookie(slot)
+    window.location.assign(slotUrl(slot, '/login'))
   }
 
   const {

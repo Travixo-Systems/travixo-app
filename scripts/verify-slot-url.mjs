@@ -283,10 +283,29 @@ if (/const protectedRoutes = \[[\s\S]*?'\/admin',[\s\S]*?\]/.test(proxy)) {
 }
 
 const adminLogout = read('app/(admin)/admin/AdminLogoutButton.tsx')
-if (adminLogout && /slotUrl\(getCurrentSlot\(\), '\/login'\)/.test(adminLogout)) {
+if (adminLogout && /slotUrl\(slot, '\/login'\)/.test(adminLogout)) {
   pass('admin sign-out keeps this tab’s slot')
 } else {
   fail('admin sign-out drops the slot and would land on the first account’s login')
+}
+
+// Every sign-out must ALSO clear the cookie locally. signOut() resolves with
+// an { error } rather than throwing, so a failed call would leave the session
+// alive -- and since the proxy bounces a signed-in admin from /login back to
+// /admin, that reads as "it logged me back in by itself".
+const LOGOUT_SITES = [
+  'app/(admin)/admin/AdminLogoutButton.tsx',
+  'components/Sidebar.tsx',
+  'components/dashboard/DashboardClient.tsx',
+]
+const notCleared = LOGOUT_SITES.filter(f => {
+  const src = read(f)
+  return !src || !/clearSlotCookie\(/.test(src)
+})
+if (notCleared.length === 0) {
+  pass(`all ${LOGOUT_SITES.length} sign-out sites clear the slot cookie locally`)
+} else {
+  fail('sign-out site(s) rely on signOut() alone', notCleared.join(', '))
 }
 
 // ---------------------------------------------------------------------
