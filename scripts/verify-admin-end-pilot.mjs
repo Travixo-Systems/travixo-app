@@ -21,7 +21,8 @@
  */
 
 import { pathToFileURL } from 'url'
-import { readFileSync, existsSync } from 'fs'
+import { readFileSync, existsSync, readdirSync } from 'fs'
+const fs_readdir = d => { try { return readdirSync(d) } catch { return [] } }
 import { resolve } from 'path'
 
 let failures = 0
@@ -38,7 +39,13 @@ const read = p => (existsSync(p) ? readFileSync(p, 'utf8') : null)
 // ---------------------------------------------------------------------
 // 1. The migration and its guards
 // ---------------------------------------------------------------------
-const MIG = 'supabase/migrations/20260827_admin_end_pilot.sql'
+// Located by glob, not a hardcoded name: the file was renamed to match the
+// repo's yyyymmddHHMMSS convention and the old literal broke these checks.
+const MIG_DIR = 'supabase/migrations'
+const MIG_FILE = fs_readdir(MIG_DIR).find(f => f.endsWith('_admin_end_pilot.sql'))
+const MIG = MIG_FILE
+  ? `${MIG_DIR}/${MIG_FILE}`
+  : `${MIG_DIR}/(no file matching *_admin_end_pilot.sql)`
 const sql = read(MIG)
 if (!sql) {
   console.log(`FAIL  ${MIG} missing`)

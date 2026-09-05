@@ -185,6 +185,13 @@ export async function proxy(request: NextRequest) {
   )
 
   // Define protected routes (all routes except public ones)
+  //
+  // /admin is here for TWO reasons. It is gated server-side by
+  // requireSuperAdmin() in the admin layout, so it was never open -- but a
+  // route that skips the proxy also skips slot resolution, and
+  // lib/supabase/server.ts then falls back to slot 0. That made /admin always
+  // read the FIRST account's cookie no matter which tab it was opened in,
+  // overriding the tab's real session.
   const protectedRoutes = [
     '/dashboard',
     '/assets',
@@ -193,6 +200,7 @@ export async function proxy(request: NextRequest) {
     '/settings',
     '/team',
     '/audits',
+    '/admin',
   ]
 
   // Check if current path is protected
@@ -252,6 +260,11 @@ export const config = {
     '/subscription/:path*',
     '/api/:path*',
     '/scan/:path*',
+    // /admin must run through the proxy like every other authenticated route.
+    // Omitting it meant no slot was resolved for it, so it always fell back to
+    // slot 0 and showed the first account regardless of the tab.
+    '/admin',
+    '/admin/:path*',
     '/login',
     '/signup',
     // Account-slot URLs (/u/1/dashboard, ...). The proxy MUST run for these:
