@@ -6,7 +6,9 @@ import { rateLimit, RATE_LIMITS } from '@/lib/security/rate-limit'
 import { validateCsrf } from '@/lib/security/csrf'
 import {
   ACCOUNT_SLOT_HEADER,
+  MAX_ACCOUNT_SLOTS,
   RESOLVED_SLOT_HEADER,
+  cookieNameForSlot,
   cookieOptionsForSlot,
   parseSlot,
   splitSlotPath,
@@ -19,6 +21,26 @@ function getClientIp(request: NextRequest): string {
     request.headers.get('x-real-ip') ||
     'unknown'
   )
+}
+
+/**
+ * The lowest account slot with no session cookie on this request, or null
+ * when every slot is occupied.
+ *
+ * Used to answer "where should a signed-in visitor who opened /login go?".
+ * The honest answer is a FREE slot: they are asking for a login form, and
+ * they already have a session, so they want a different account. Sending
+ * them to the slot they are already signed into just bounces them away.
+ *
+ * Reads only cookie PRESENCE, never the token, so it costs nothing and
+ * cannot leak anything.
+ */
+function firstFreeSlot(request: NextRequest): number | null {
+  for (let s = 0; s < MAX_ACCOUNT_SLOTS; s++) {
+    const value = request.cookies.get(cookieNameForSlot(s))?.value
+    if (!value) return s
+  }
+  return null
 }
 
 function getRateLimitConfig(pathname: string) {
@@ -42,7 +64,22 @@ export async function proxy(request: NextRequest) {
   const ip = getClientIp(request)
 
   // --- Rate Limiting ---
-  const rlConfig = getRateLimitConfig(pathname)
+  //
+  // The auth limit exists to stop PASSWORD GUESSING, which is a POST. It was
+  // being charged for plain GETs of /login and /signup as well -- page loads,
+  // post-logout redirects, RSC prefetches -- so ten navigations locked a
+  // legitimate user out of their own login page with a raw JSON 429. Signing
+  // out of /admin hit it immediately, because the redirect plus the render
+  // spend several in a row.
+  //
+  // GETs of the auth pages are therefore exempt. Nothing is weakened: a
+  // credential attempt is a POST and still counts, and every other bucket
+  // (api, scan, password, cron, webhook) is unchanged.
+  const isAuthPageGet =
+    (pathname === '/login' || pathname === '/signup') &&
+    (request.method === 'GET' || request.method === 'HEAD')
+
+  const rlConfig = isAuthPageGet ? null : getRateLimitConfig(pathname)
   if (rlConfig) {
     // Collapse all /scan/<qr_code> variants into one bucket per IP so
     // attackers can't enumerate assets by cycling through unique QR codes
@@ -52,17 +89,39 @@ export async function proxy(request: NextRequest) {
     const result = rateLimit(key, rlConfig)
     if (!result.allowed) {
       const retryAfter = Math.ceil((result.resetAt - Date.now()) / 1000)
+      const headers = {
+        'Retry-After': String(retryAfter),
+        'X-RateLimit-Limit': String(result.limit),
+        'X-RateLimit-Remaining': '0',
+        'X-RateLimit-Reset': String(result.resetAt),
+      }
+
+      // A browser navigating to a PAGE must get a page, not raw JSON in the
+      // address bar. Only API callers get the JSON body.
+      const wantsHtml =
+        !pathname.startsWith('/api/') &&
+        (request.headers.get('accept') ?? '').includes('text/html')
+
+      if (wantsHtml) {
+        return new NextResponse(
+          `<!doctype html><html lang="en"><head><meta charset="utf-8">` +
+            `<meta name="viewport" content="width=device-width,initial-scale=1">` +
+            `<title>Trop de requêtes / Too many requests</title></head>` +
+            `<body style="font-family:system-ui,sans-serif;max-width:34rem;margin:15vh auto;padding:0 1.5rem;color:#0a2730">` +
+            `<h1 style="font-size:1.25rem;margin:0 0 .5rem">Trop de requêtes / Too many requests</h1>` +
+            `<p style="color:#556;line-height:1.5;margin:0 0 1.25rem">` +
+            `Merci de patienter ${retryAfter} seconde(s), puis réessayez.<br>` +
+            `Please wait ${retryAfter} second(s) and try again.</p>` +
+            `<a href="${pathname}" style="display:inline-block;background:#e8600a;color:#fff;` +
+            `padding:.6rem 1.1rem;border-radius:.375rem;text-decoration:none;font-weight:600">` +
+            `Réessayer / Retry</a></body></html>`,
+          { status: 429, headers: { ...headers, 'Content-Type': 'text/html; charset=utf-8' } }
+        )
+      }
+
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
-        {
-          status: 429,
-          headers: {
-            'Retry-After': String(retryAfter),
-            'X-RateLimit-Limit': String(result.limit),
-            'X-RateLimit-Remaining': '0',
-            'X-RateLimit-Reset': String(result.resetAt),
-          },
-        }
+        { status: 429, headers }
       )
     }
   }
@@ -234,10 +293,41 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  // Redirect authenticated users away from auth pages. Platform admins
-  // (members of platform_admins, checked via is_super_admin()) go to /admin
-  // instead of the tenant dashboard.
-  if (user && (pathname === '/login' || pathname === '/signup')) {
+  // Redirect authenticated users away from auth pages, so someone who is
+  // already signed in does not land on a login form by accident.
+  //
+  // This must NOT be absolute. Reaching /login while signed in is exactly how
+  // a second account is added, and it is the only way back to a login form at
+  // all. Bouncing it unconditionally meant a signed-in admin could never open
+  // /login, and every new tab -- which starts on slot 0, where that session
+  // lives -- was thrown to /admin.
+  //
+  // So the bounce is skipped when the user is deliberately asking for the
+  // login page:
+  //
+  //   ?add    -> "I want to sign in as someone else"
+  //   ?force  -> same, kept short for hand-typing
+  //
+  // and when every slot is already occupied there is nothing to add, so the
+  // ordinary bounce still applies.
+  const wantsAnotherAccount =
+    request.nextUrl.searchParams.has('add') ||
+    request.nextUrl.searchParams.has('force')
+
+  if (user && (pathname === '/login' || pathname === '/signup') && !wantsAnotherAccount) {
+    // If a FREE slot exists, opening /login means "sign in as someone else".
+    // Send the tab to that slot's login instead of bouncing it: bouncing is
+    // why a new tab always inherited the first account and could never reach
+    // a login form.
+    const freeSlot = firstFreeSlot(request)
+    if (freeSlot !== null) {
+      return NextResponse.redirect(
+        new URL(withSlotPath(freeSlot, pathname), request.url)
+      )
+    }
+
+    // Every slot is occupied: there is no account to add, so the ordinary
+    // "you are already signed in" bounce applies.
     let destination = '/dashboard'
     const { data: isAdmin } = await supabase.rpc('is_super_admin')
     if (isAdmin === true) destination = '/admin'
@@ -265,8 +355,19 @@ export const config = {
     // slot 0 and showed the first account regardless of the tab.
     '/admin',
     '/admin/:path*',
+    // EVERY route that can create or consume a session must run through the
+    // proxy, or it resolves no slot and lib/supabase/server.ts falls back to
+    // slot 0 -- silently writing over whichever account is already there.
+    // /auth/callback (email confirmation, OAuth) and /confirm both call
+    // exchangeCodeForSession / verifyOtp, so this is not cosmetic.
     '/login',
     '/signup',
+    '/confirm',
+    '/check-email',
+    '/forgot-password',
+    '/reset-password',
+    '/auth/:path*',
+    '/accept-invite/:path*',
     // Account-slot URLs (/u/1/dashboard, ...). The proxy MUST run for these:
     // it is what strips the prefix and rewrites to the real route. Without
     // this entry the prefixed URLs would bypass the proxy entirely and 404.

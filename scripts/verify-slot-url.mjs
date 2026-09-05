@@ -25,8 +25,23 @@
  */
 
 import { pathToFileURL } from 'url'
-import { readFileSync, existsSync } from 'fs'
-import { resolve } from 'path'
+import { readFileSync, existsSync, readdirSync, statSync } from 'fs'
+import { resolve, join } from 'path'
+
+/** Every .ts/.tsx file under a directory. */
+function walkApp(dir, out = []) {
+  let entries
+  try { entries = readdirSync(dir) } catch { return out }
+  for (const e of entries) {
+    if (e === 'node_modules' || e === '.next') continue
+    const p = join(dir, e)
+    let st
+    try { st = statSync(p) } catch { continue }
+    if (st.isDirectory()) walkApp(p, out)
+    else if (/\.(ts|tsx)$/.test(e)) out.push(p)
+  }
+  return out
+}
 
 let failures = 0
 let checks = 0
@@ -283,10 +298,122 @@ if (/const protectedRoutes = \[[\s\S]*?'\/admin',[\s\S]*?\]/.test(proxy)) {
 }
 
 const adminLogout = read('app/(admin)/admin/AdminLogoutButton.tsx')
-if (adminLogout && /slotUrl\(getCurrentSlot\(\), '\/login'\)/.test(adminLogout)) {
+if (adminLogout && /slotUrl\(slot, '\/login'\)/.test(adminLogout)) {
   pass('admin sign-out keeps this tab’s slot')
 } else {
   fail('admin sign-out drops the slot and would land on the first account’s login')
+}
+
+// Every sign-out must ALSO clear the cookie locally. signOut() resolves with
+// an { error } rather than throwing, so a failed call would leave the session
+// alive -- and since the proxy bounces a signed-in admin from /login back to
+// /admin, that reads as "it logged me back in by itself".
+const LOGOUT_SITES = [
+  'app/(admin)/admin/AdminLogoutButton.tsx',
+  'components/Sidebar.tsx',
+  'components/dashboard/DashboardClient.tsx',
+]
+const notCleared = LOGOUT_SITES.filter(f => {
+  const src = read(f)
+  return !src || !/clearSlotCookie\(/.test(src)
+})
+if (notCleared.length === 0) {
+  pass(`all ${LOGOUT_SITES.length} sign-out sites clear the slot cookie locally`)
+} else {
+  fail('sign-out site(s) rely on signOut() alone', notCleared.join(', '))
+}
+
+// ---------------------------------------------------------------------
+// 7. A signed-in user must still be able to REACH a login form
+// ---------------------------------------------------------------------
+// The auth-page bounce used to be absolute: /login always redirected a
+// signed-in user away. That made adding a second account impossible, and
+// every new tab -- slot 0, where the first session lives -- was thrown to
+// /admin instead of showing a login page.
+if (/const freeSlot = firstFreeSlot\(request\)/.test(proxy)) {
+  pass('/login on a signed-in browser is sent to a FREE slot, not bounced')
+} else {
+  fail('/login still bounces unconditionally — a second account is unreachable')
+}
+if (/function firstFreeSlot\(/.test(proxy)) {
+  pass('firstFreeSlot() reads cookie presence to find an open slot')
+} else {
+  fail('firstFreeSlot() is missing')
+}
+if (/searchParams\.has\('add'\)/.test(proxy)) {
+  pass('an explicit ?add always reaches the login form')
+} else {
+  fail('no explicit escape hatch to the login form')
+}
+// The bounce must still happen when there is genuinely nothing to add,
+// otherwise a signed-in user lands on a pointless login form.
+if (/Every slot is occupied[\s\S]*?is_super_admin/.test(proxy)) {
+  pass('the ordinary bounce still applies when every slot is occupied')
+} else {
+  fail('the all-slots-full case no longer bounces')
+}
+
+// ---------------------------------------------------------------------
+// 8. EVERY session-creating route must run through the proxy
+// ---------------------------------------------------------------------
+// This is the class of bug that keeps recurring: a route that skips the
+// matcher resolves no slot, so server.ts falls back to slot 0 and the
+// session is written over whichever account is already there. /admin did
+// it, and so did /auth/callback and /confirm, which call
+// exchangeCodeForSession and verifyOtp.
+//
+// Rather than list routes by hand, find every file that creates a session
+// and check its route is reachable by the matcher.
+const SESSION_CALLS = /signInWithPassword|\.signUp\(|verifyOtp|exchangeCodeForSession|setSession/
+
+function routeOf(file) {
+  // app/(group)/a/b/page.tsx -> /a/b ; app/x/route.ts -> /x
+  let r = file
+    .replace(/^app/, '')
+    .replace(/\/(page|route)\.tsx?$/, '')
+    .replace(/\/\([^)]+\)/g, '')
+  return r === '' ? '/' : r
+}
+
+const matcherPatterns = [...matcherBlock.matchAll(/'([^']+)'/g)].map(m => m[1])
+const matcherRes = matcherPatterns.map(
+  p => new RegExp('^' + p.replace(/\/:\w+\*/g, '(?:/.*)?').replace(/\/:\w+/g, '/[^/]+') + '$')
+)
+const reachable = u => matcherRes.some(re => re.test(u))
+
+const sessionFiles = walkApp('app').filter(f => SESSION_CALLS.test(readFileSync(f, 'utf8')))
+const bypassing = sessionFiles
+  .map(f => ({ f, route: routeOf(f.replace(/\\/g, '/')) }))
+  .filter(({ route }) => !reachable(route))
+
+if (sessionFiles.length > 0) {
+  pass(`found ${sessionFiles.length} file(s) that create a session`)
+} else {
+  fail('found no session-creating files — the scan is broken, not the code')
+}
+if (bypassing.length === 0) {
+  pass('every session-creating route runs through the proxy (resolves a slot)')
+} else {
+  fail(
+    'session-creating route(s) skip the proxy and would write to slot 0',
+    bypassing.map(b => `${b.route}  (${b.f})`).join('\n      ')
+  )
+}
+
+// Negative control: a route the matcher does not list must be reported.
+if (!reachable('/definitely-not-listed')) {
+  pass('reachability check rejects an unlisted route (negative control)')
+} else {
+  fail('reachability check is vacuous')
+}
+
+// Signup must claim a slot the way login does, or creating a second account
+// overwrites the first.
+const signup = read('app/(auth)/signup/page.tsx')
+if (signup && /claimSlotForNewLogin\(\)/.test(signup)) {
+  pass('signup claims a slot (a new account cannot evict an existing one)')
+} else {
+  fail('signup does not claim a slot — it would overwrite slot 0')
 }
 
 // ---------------------------------------------------------------------

@@ -3,7 +3,7 @@
 import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { claimSlotForNewLogin, createClient, getCurrentSlot, setCurrentSlot, slotUrl } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
 import { UserPlus, Loader2, Mail, Lock, User, Building2, Users, ClipboardCheck, Shield } from 'lucide-react'
 import { useLanguage } from '@/lib/LanguageContext'
@@ -50,6 +50,17 @@ function SignUpContent() {
     e.preventDefault()
     setIsLoading(true)
 
+    // Claim a slot BEFORE signing up, exactly as the login page does. Without
+    // this a signup in a second tab writes its session over whichever account
+    // is already in slot 0 -- so creating a new account while evaluating would
+    // silently disconnect the first one.
+    const signupSlot = claimSlotForNewLogin()
+    if (signupSlot !== null && signupSlot !== getCurrentSlot()) {
+      setCurrentSlot(signupSlot)
+    }
+
+    // createClient() reads the slot we just set, so the new session is written
+    // to that slot's cookie.
     const supabase = createClient()
 
     try {
@@ -101,20 +112,20 @@ function SignUpContent() {
 
           if (acceptData.success) {
             toast.success('Compte créé et invitation acceptée ! / Account created & invitation accepted!')
-            router.push('/dashboard')
+            window.location.assign(slotUrl(signupSlot ?? getCurrentSlot(), '/dashboard')); return
             router.refresh()
             return
           } else {
             console.error('Accept invitation failed after signup:', acceptData)
             toast.success('Compte créé ! Finalisation... / Account created! Finalizing...')
-            router.push(redirectTo)
+            window.location.assign(slotUrl(signupSlot ?? getCurrentSlot(), redirectTo)); return
             router.refresh()
             return
           }
         }
 
         toast.success('Compte créé ! / Account created!')
-        router.push('/dashboard')
+        window.location.assign(slotUrl(signupSlot ?? getCurrentSlot(), '/dashboard')); return
         router.refresh()
       } else {
         // Normal signup: auth user created, email confirmation required.

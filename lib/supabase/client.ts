@@ -65,6 +65,37 @@ export function slotUrl(slot: number, pathname?: string): string {
   return withSlotPath(slot, base)
 }
 
+/**
+ * Delete a slot's auth cookie in this browser.
+ *
+ * A belt-and-braces companion to signOut(): that call can fail (network, an
+ * already-expired token) and it RESOLVES with an { error } rather than
+ * throwing, so a caller that only awaits it may navigate away believing the
+ * session is gone while the cookie is still there. Since the proxy sends a
+ * signed-in admin from /login straight back to /admin, a half-completed
+ * sign-out reads as "it logged me back in by itself".
+ *
+ * Only touches the ONE slot passed in, so signing out of a second account
+ * never disturbs the first. Best-effort: the cookie may be Secure or
+ * path-scoped in ways document.cookie cannot reach, which is why this
+ * supplements signOut() rather than replacing it.
+ */
+export function clearSlotCookie(slot: number): void {
+  if (typeof document === 'undefined') return
+  const name = cookieNameForSlot(parseSlot(slot))
+  const expiry = 'Thu, 01 Jan 1970 00:00:00 GMT'
+  try {
+    const secure = window.location.protocol === 'https:' ? '; Secure' : ''
+    // @supabase/ssr may shard a large token across name.0, name.1, ...
+    // Clear the base name and a few shards; missing ones are harmless no-ops.
+    for (const n of [name, `${name}.0`, `${name}.1`, `${name}.2`]) {
+      document.cookie = `${n}=; path=/; expires=${expiry}; SameSite=Lax${secure}`
+    }
+  } catch {
+    // Cookies blocked: signOut() above was the real attempt anyway.
+  }
+}
+
 /** Whether a slot currently holds a session, judged by its cookie existing. */
 export function slotHasSession(slot: number): boolean {
   if (typeof document === 'undefined') return false
