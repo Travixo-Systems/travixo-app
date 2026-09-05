@@ -12,7 +12,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
-import { createClient } from '@/lib/supabase/client'
+import { createClient, getCurrentSlot, slotUrl } from '@/lib/supabase/client'
 import { SIGN_OUT_SCOPE_LOCAL } from '@/lib/supabase/cookie-name'
 
 export default function AdminLogoutButton() {
@@ -24,8 +24,11 @@ export default function AdminLogoutButton() {
     setLoggingOut(true)
     const supabase = createClient()
     await supabase.auth.signOut(SIGN_OUT_SCOPE_LOCAL)
-    router.push('/login')
-    router.refresh()
+    // Keep this tab's account slot. router.push('/login') would drop the
+    // /u/<slot> prefix and send a second-account tab to the FIRST account's
+    // login, which is how /admin ended up overriding other tabs' sessions.
+    // A full load also guarantees every Server Component re-renders signed out.
+    window.location.assign(slotUrl(getCurrentSlot(), '/login'))
   }
 
   return (

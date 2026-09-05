@@ -55,6 +55,6 @@ Verified by executing SQL against a real Postgres, not by simulating logic.
   EXPECT: DEPS_UNCHANGED
   EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=ok: no new dev dependencies | DEPS_UNCHANGED
 
-- [ ] R9: Manual — migration applied to production and the cron confirmed
+- [x] R9: Manual — migration applied to production and the cron confirmed
       producing vgp_alerts rows again for the current date.
-  EVIDENCE: pending
+  EVIDENCE: Fired production cron 2026-09-04T08:35:31Z against deploy dd49ecb. Response HTTP 200, errors:[], emails_sent=1, organizations_processed=2. vgp_alerts rows for CURRENT_DATE went 0 -> 7 across 2 orgs (writes 08:35:34-08:35:36Z). Resend shows "[TraviXO] Resume VGP quotidien - 1 inspection - Ariane" to lombaril93@gmail.com at 08:35:36Z, status=delivered. Second run: emails_sent=0, errors:[], row count still 7 - dedup holds, no duplicate mail.

@@ -245,6 +245,51 @@ if (sidebar && !/SidebarAccountSwitcher/.test(sidebar)) {
 }
 
 // ---------------------------------------------------------------------
+// 6. Every authenticated route must REACH the proxy
+// ---------------------------------------------------------------------
+// A route missing from the matcher never resolves a slot, so
+// lib/supabase/server.ts falls back to slot 0 and that route shows the FIRST
+// account regardless of the tab. /admin was missing and did exactly that:
+// it read the slot-0 cookie in every tab, overriding their real sessions.
+const matcherBlock = proxy.slice(proxy.indexOf('matcher: ['))
+const AUTHENTICATED_PREFIXES = [
+  '/dashboard', '/assets', '/audits', '/team', '/settings',
+  '/vgp', '/subscription', '/admin', '/api',
+]
+const unmatched = AUTHENTICATED_PREFIXES.filter(
+  p => !new RegExp(`'${p}(/:path\\*)?'`).test(matcherBlock)
+)
+if (unmatched.length === 0) {
+  pass(`all ${AUTHENTICATED_PREFIXES.length} authenticated route prefixes are in the matcher`)
+} else {
+  fail(
+    `route prefix(es) skip the proxy and would fall back to slot 0: ${unmatched.join(', ')}`
+  )
+}
+
+// Negative control: the check must be able to SPOT a missing prefix.
+if (!/'\/definitely-not-a-route(\/:path\*)?'/.test(matcherBlock)) {
+  pass('matcher check detects an absent prefix (negative control)')
+} else {
+  fail('matcher check is vacuous')
+}
+
+// /admin must also be treated as protected, so an unauthenticated visitor is
+// redirected rather than reaching it.
+if (/const protectedRoutes = \[[\s\S]*?'\/admin',[\s\S]*?\]/.test(proxy)) {
+  pass('/admin is in protectedRoutes')
+} else {
+  fail('/admin is not in protectedRoutes')
+}
+
+const adminLogout = read('app/(admin)/admin/AdminLogoutButton.tsx')
+if (adminLogout && /slotUrl\(getCurrentSlot\(\), '\/login'\)/.test(adminLogout)) {
+  pass('admin sign-out keeps this tab’s slot')
+} else {
+  fail('admin sign-out drops the slot and would land on the first account’s login')
+}
+
+// ---------------------------------------------------------------------
 console.log('')
 console.log(`${checks - failures}/${checks} checks passed`)
 if (failures > 0) {
