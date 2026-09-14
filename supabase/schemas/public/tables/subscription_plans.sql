@@ -28,3 +28,5 @@ CREATE POLICY "Anyone can view subscription plans" ON "public"."subscription_pla
   USING ((is_active = true));
 
 GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."subscription_plans" TO "anon", "authenticated", "postgres", "service_role";
+
+COMMENT ON COLUMN "public"."subscription_plans"."max_assets" IS 'SENTINEL on the travixo row (int4 max), not a limit. Licensed capacity is per-subscription (subscriptions.licensed_capacity), because two customers on the same plan license different amounts. Retired tier rows keep their original values.';

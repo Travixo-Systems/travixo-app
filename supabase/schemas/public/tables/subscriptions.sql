@@ -15,6 +15,8 @@ CREATE TABLE "public"."subscriptions" (
   "updated_at"             timestamp with time zone DEFAULT now(),
   "stripe_subscription_id" text,
   "stripe_price_id"        text,
+  "licensed_capacity"      integer,
+  CONSTRAINT "subscriptions_licensed_capacity_check" CHECK (((licensed_capacity IS NULL) OR (licensed_capacity > 0))),
   CONSTRAINT "subscriptions_organization_id_fkey" FOREIGN KEY (organization_id) REFERENCES public.organizations(id) ON DELETE CASCADE,
   CONSTRAINT "subscriptions_organization_id_key" UNIQUE (organization_id),
   CONSTRAINT "subscriptions_pkey" PRIMARY KEY (id),
@@ -55,3 +57,5 @@ CREATE POLICY "Users can view own organization subscription" ON "public"."subscr
   WHERE (users.id = auth.uid()))));
 
 GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."subscriptions" TO "anon", "authenticated", "postgres", "service_role";
+
+COMMENT ON COLUMN "public"."subscriptions"."licensed_capacity" IS 'Licensed asset capacity = the Stripe subscription item quantity. NULL when there is no Stripe subscription (pilot/trial). Never derived from the live asset count: capacity is what was purchased, not what is in use.';
