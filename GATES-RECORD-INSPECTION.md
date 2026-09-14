@@ -56,18 +56,27 @@ against the refreshed mirror and a real Postgres, not against migration text.
 - [x] I7: Manual - REVOKE EXECUTE ... FROM anon applied to production, and the
       refreshed mirror shows anon absent from the live grant. Verified against
       the mirror rather than the migration text, per working-agreements.md:52.
-  EVIDENCE: User ran the REVOKE in the Supabase SQL editor 2026-09-14. Mirror refreshed via `npx supabase db pull --declarative` (remoteHistoryUpdated:false). Live grant now reads TO "authenticated","postgres","service_role"; no `anon` anywhere in record_inspection.sql. POSITIVE CONTROL PASSED: the mirror does render anon grants where they exist - get_asset_by_qr.sql:49 and end_pilot.sql:107 both show TO "anon", so absence here is real signal, not a blind spot. CAVEAT, recorded rather than hidden: the pre-revoke committed mirror ALSO showed no anon (0 matches), and the refresh produced zero substantive change - CRLF-only across all 7 files. So this gate confirms the END STATE is correct but does NOT prove the REVOKE changed anything; the live anon grant was inferred from default_privileges.sql (GRANT EXECUTE ON FUNCTIONS TO "anon") rather than ever observed on this function. See I7-note below.
+  EVIDENCE: User ran the REVOKE in the Supabase SQL editor 2026-09-14. Mirror refreshed via `npx supabase db pull --declarative` (remoteHistoryUpdated:false); live grant reads TO "authenticated","postgres","service_role", no `anon`. CONFIRMED DIRECTLY AGAINST PRODUCTION, not only the mirror: an anon-key PostgREST call with the real signature returns 42501 permission denied. Both controls fired, so the oracle is calibrated: get_asset_by_qr(p_qr_code) -> REACHED BODY (anon can call it, matching its mirror grant TO "anon"), assets_page(...) -> 42501 (anon cannot, matching its mirror). record_inspection -> 42501. anon has NO EXECUTE. The earlier caveat is retracted: the mirror alone could not have shown this, but the behavioural probe can and did. First-round probes returning PGRST202 were signature misses, not verdicts - resolved by reading real parameter names from the mirror.
 
 - [x] I8: Manual - PR opened against main carrying the migration, the route
       rewrite and the refreshed mirror, and handed to the user to merge. Not
       self-merged.
   EVIDENCE: PR #43 OPEN, fix/vgp-atomic-inspection -> main, mergeable=MERGEABLE, https://github.com/Travixo-Systems/travixo-app/pull/43. Carries all 3 commits (0231733, 4507113, c7fcc6b) and 13 files including supabase/migrations/20260903100000_record_inspection_rpc.sql, app/api/vgp/inspections/route.ts and both function mirrors. Local and remote tips match at c7fcc6b. Left OPEN for the user to merge; not self-merged.
 
-I7-note: the mirror cannot distinguish an explicit anon grant from the schema-wide
-default at supabase/schemas/public/default_privileges.sql ("GRANT EXECUTE ON
-FUNCTIONS TO anon"), which applies to every new public function and is not
-re-rendered per function. assets_page.sql - the case working-agreements.md:52-56
-records as having been caught with a LIVE anon grant - likewise shows no anon in
-its mirror text today. Confirming the revoke actually changed a privilege needs a
-direct production read of information_schema.routine_privileges / aclexplain,
-which this session was not permitted to run.
+I7-note: the mirror alone cannot distinguish an explicit anon grant from the
+schema-wide default at supabase/schemas/public/default_privileges.sql ("GRANT
+EXECUTE ON FUNCTIONS TO anon"), which applies to every new public function and is
+not re-rendered per function. That is why I7 was verified behaviourally instead.
+
+information_schema.routine_privileges is NOT reachable from this repo's tooling:
+PostgREST exposes only the public schema's tables and functions, and no
+arbitrary-SQL RPC (exec_sql / run_sql / execute_sql) exists in the mirror - a
+deliberate and correct absence. The equivalent evidence is the calibrated anon
+PostgREST probe recorded in I7, which distinguishes 42501 (no EXECUTE) from a
+call that reaches the function body, with a positive and a negative control.
+
+Standing lesson for docs/working-agreements.md:52 - "verify against the refreshed
+mirror afterwards rather than trusting the migration text" is necessary but NOT
+sufficient for EXECUTE grants, because the mirror renders no per-function line for
+a privilege held via schema-wide default. Verifying a revoke needs a behavioural
+probe as the anon role, with controls.
