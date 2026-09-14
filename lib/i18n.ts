@@ -1073,9 +1073,15 @@ export const translations = {
       en: "24 months (Biennial)",
       fr: "24 mois (Biennal)",
     },
+    // Says what the field IS, not where the value came from. The previous copy
+    // ("selon la reglementation DREETS" / "according to DREETS regulations")
+    // told the user the interval followed regulation, while the value is a
+    // fixed default of 12 months that they set by hand -- the app holds no
+    // category-to-interval regulatory mapping. Claiming otherwise on a
+    // compliance screen is the one thing this form must not do.
     intervalHelp: {
-      en: "Inspection frequency according to DREETS regulations",
-      fr: "Fréquence des inspections selon la réglementation DREETS",
+      en: "Choose the inspection frequency that applies to this equipment",
+      fr: "Choisissez la fréquence d'inspection applicable à cet équipement",
     },
     lastInspectionDate: {
       en: "Last Inspection Date",
