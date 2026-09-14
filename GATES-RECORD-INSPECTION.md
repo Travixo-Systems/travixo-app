@@ -40,25 +40,34 @@ against the refreshed mirror and a real Postgres, not against migration text.
 - [x] I5: Repository typechecks clean (tsc --noEmit, exit 0)
   CHECK: node scripts/verify/verify-typecheck.mjs
   EXPECT: TYPECHECK_CLEAN
-  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=466f2ec7daee/43 entries; output=(node:5176) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated. | (Use `node --trace-deprecation ...` to show where 
+  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=466f2ec7daee/43 entries; output=(node:20100) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated. | (Use `node --trace-deprecation ...` to show where
 
 - [x] I5b: The rewritten route introduces no NEW lint problems, measured against
       the baseline commit rather than demanding a clean file it never was
   CHECK: node scripts/verify/verify-i5-lint.mjs
   EXPECT: I5_LINT_NO_REGRESSION
-  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=466f2ec7daee/43 entries; output=(node:56836) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated. | (Use `node --trace-deprecation ...` to show where
+  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=466f2ec7daee/43 entries; output=(node:28728) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated. | (Use `node --trace-deprecation ...` to show where
 
 - [x] I6: No new npm dependencies - @sentry/node was already present
   CHECK: node scripts/verify/verify-i6-deps.mjs
   EXPECT: I6_DEPS_UNCHANGED
   EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=466f2ec7daee/43 entries; output=ok: @sentry/node was already a dependency at baseline (the route rewrite imports it) | I6_DEPS_UNCHANGED
 
-- [ ] I7: Manual - REVOKE EXECUTE ... FROM anon applied to production, and the
+- [x] I7: Manual - REVOKE EXECUTE ... FROM anon applied to production, and the
       refreshed mirror shows anon absent from the live grant. Verified against
       the mirror rather than the migration text, per working-agreements.md:52.
-  EVIDENCE: pending
+  EVIDENCE: User ran the REVOKE in the Supabase SQL editor 2026-09-14. Mirror refreshed via `npx supabase db pull --declarative` (remoteHistoryUpdated:false). Live grant now reads TO "authenticated","postgres","service_role"; no `anon` anywhere in record_inspection.sql. POSITIVE CONTROL PASSED: the mirror does render anon grants where they exist - get_asset_by_qr.sql:49 and end_pilot.sql:107 both show TO "anon", so absence here is real signal, not a blind spot. CAVEAT, recorded rather than hidden: the pre-revoke committed mirror ALSO showed no anon (0 matches), and the refresh produced zero substantive change - CRLF-only across all 7 files. So this gate confirms the END STATE is correct but does NOT prove the REVOKE changed anything; the live anon grant was inferred from default_privileges.sql (GRANT EXECUTE ON FUNCTIONS TO "anon") rather than ever observed on this function. See I7-note below.
 
-- [ ] I8: Manual - PR opened against main carrying the migration, the route
+- [x] I8: Manual - PR opened against main carrying the migration, the route
       rewrite and the refreshed mirror, and handed to the user to merge. Not
       self-merged.
-  EVIDENCE: pending
+  EVIDENCE: PR #43 OPEN, fix/vgp-atomic-inspection -> main, mergeable=MERGEABLE, https://github.com/Travixo-Systems/travixo-app/pull/43. Carries all 3 commits (0231733, 4507113, c7fcc6b) and 13 files including supabase/migrations/20260903100000_record_inspection_rpc.sql, app/api/vgp/inspections/route.ts and both function mirrors. Local and remote tips match at c7fcc6b. Left OPEN for the user to merge; not self-merged.
+
+I7-note: the mirror cannot distinguish an explicit anon grant from the schema-wide
+default at supabase/schemas/public/default_privileges.sql ("GRANT EXECUTE ON
+FUNCTIONS TO anon"), which applies to every new public function and is not
+re-rendered per function. assets_page.sql - the case working-agreements.md:52-56
+records as having been caught with a LIVE anon grant - likewise shows no anon in
+its mirror text today. Confirming the revoke actually changed a privilege needs a
+direct production read of information_schema.routine_privileges / aclexplain,
+which this session was not permitted to run.
