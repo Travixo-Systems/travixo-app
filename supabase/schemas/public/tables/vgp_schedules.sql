@@ -1,28 +1,33 @@
 CREATE TABLE "public"."vgp_schedules" (
-  "id"                   uuid                     NOT NULL DEFAULT gen_random_uuid(),
-  "asset_id"             uuid,
-  "organization_id"      uuid,
-  "interval_months"      integer                  NOT NULL,
-  "last_inspection_date" date,
-  "next_due_date"        date                     NOT NULL,
-  "inspector_name"       text,
-  "inspector_company"    text,
-  "certification_number" text,
-  "status"               text                     DEFAULT 'active'::text,
-  "notes"                text,
-  "created_at"           timestamp with time zone DEFAULT now(),
-  "updated_at"           timestamp with time zone DEFAULT now(),
-  "archived_at"          timestamp with time zone,
-  "archived_by"          uuid,
-  "archive_reason"       text,
-  "edit_history"         jsonb                    DEFAULT '[]'::jsonb,
-  "created_by"           text,
-  "rapport_url"          text,
-  "inspection_location"  text                     DEFAULT 'depot'::text,
+  "id"                               uuid                     NOT NULL DEFAULT gen_random_uuid(),
+  "asset_id"                         uuid,
+  "organization_id"                  uuid,
+  "interval_months"                  integer                  NOT NULL,
+  "last_inspection_date"             date,
+  "next_due_date"                    date                     NOT NULL,
+  "inspector_name"                   text,
+  "inspector_company"                text,
+  "certification_number"             text,
+  "status"                           text                     DEFAULT 'active'::text,
+  "notes"                            text,
+  "created_at"                       timestamp with time zone DEFAULT now(),
+  "updated_at"                       timestamp with time zone DEFAULT now(),
+  "archived_at"                      timestamp with time zone,
+  "archived_by"                      uuid,
+  "archive_reason"                   text,
+  "edit_history"                     jsonb                    DEFAULT '[]'::jsonb,
+  "created_by"                       text,
+  "rapport_url"                      text,
+  "inspection_location"              text                     DEFAULT 'depot'::text,
+  "regulatory_profile_id"            uuid,
+  "regulatory_interval_months"       integer,
+  "regulatory_reference_snapshot"    text,
+  "regulatory_profile_name_snapshot" text,
   CONSTRAINT "vgp_schedules_archived_by_fkey" FOREIGN KEY (archived_by) REFERENCES public.users(id),
   CONSTRAINT "vgp_schedules_asset_id_fkey" FOREIGN KEY (asset_id) REFERENCES public.assets(id) ON DELETE CASCADE,
   CONSTRAINT "vgp_schedules_organization_id_fkey" FOREIGN KEY (organization_id) REFERENCES public.organizations(id) ON DELETE CASCADE,
-  CONSTRAINT "vgp_schedules_pkey" PRIMARY KEY (id)
+  CONSTRAINT "vgp_schedules_pkey" PRIMARY KEY (id),
+  CONSTRAINT "vgp_schedules_regulatory_profile_id_fkey" FOREIGN KEY (regulatory_profile_id) REFERENCES public.vgp_regulatory_profiles(id)
 );
 
 ALTER TABLE "public"."vgp_schedules"
@@ -116,3 +121,7 @@ COMMENT ON COLUMN "public"."vgp_schedules"."created_by" IS 'Name of the person w
 COMMENT ON COLUMN "public"."vgp_schedules"."edit_history" IS 'Audit trail: [{edited_at, edited_by, field_changed, old_value, new_value, reason}]';
 
 COMMENT ON COLUMN "public"."vgp_schedules"."inspector_name" IS 'Name of the inspector who performs the physical VGP inspection';
+
+COMMENT ON COLUMN "public"."vgp_schedules"."regulatory_interval_months" IS 'The catalogue interval AS IT STOOD when this schedule was saved. Kept separate from interval_months, which is what the user actually chose: the gap between them is the audit-relevant fact.';
+
+COMMENT ON COLUMN "public"."vgp_schedules"."regulatory_reference_snapshot" IS 'Regulatory citation captured at save time. Catalogue updates never backfill this -- a compliance record must not retroactively claim a basis nobody asserted when it was created.';

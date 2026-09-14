@@ -29,8 +29,8 @@
     "public/tables/user_notification_preferences.sql",
     "public/tables/users.sql",
     "public/tables/vgp_alerts.sql",
-    "public/tables/vgp_equipment_types.sql",
     "public/tables/vgp_inspections.sql",
+    "public/tables/vgp_regulatory_profiles.sql",
     "public/tables/vgp_schedules.sql",
     "public/functions/admin_mark_paid.sql",
     "public/functions/assets_category_counts.sql",
@@ -118,8 +118,8 @@
     "public/tables/user_notification_preferences.sql",
     "public/tables/users.sql",
     "public/tables/vgp_alerts.sql",
-    "public/tables/vgp_equipment_types.sql",
     "public/tables/vgp_inspections.sql",
+    "public/tables/vgp_regulatory_profiles.sql",
     "public/tables/vgp_schedules.sql"
   ]
 }
