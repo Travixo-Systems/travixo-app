@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { stripe, PRICE_MAP, getOrCreateStripeCustomer, type PlanSlug, type BillingCycle } from '@/lib/stripe';
-import { trialPeriodDays, serviceMonths } from '@/lib/billing/service-term';
+import {
+  stripe,
+  PRICE_MAP,
+  getOrCreateStripeCustomer,
+  licensedCapacityFor,
+  MAX_SELF_SERVE_CAPACITY,
+  type BillingCycle,
+} from '@/lib/stripe';
 
 export async function POST(request: NextRequest) {
   let step = 'init';
@@ -19,25 +25,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 2: Parse body
+    //
+    // There is no plan to choose any more -- only how often you are billed.
     step = 'parse_body';
     const body = await request.json();
-    const { planSlug, billingCycle = 'yearly' } = body as {
-      planSlug: string;
-      billingCycle: BillingCycle;
-    };
+    const { billingCycle = 'annual' } = body as { billingCycle: BillingCycle };
 
-    // Validate plan
-    if (!PRICE_MAP[planSlug]) {
+    if (billingCycle !== 'monthly' && billingCycle !== 'annual') {
       return NextResponse.json(
-        { error: `Invalid plan: "${planSlug}". Valid plans: ${Object.keys(PRICE_MAP).join(', ')}` },
-        { status: 400 }
-      );
-    }
-
-    // Enterprise requires sales contact
-    if (planSlug === 'enterprise') {
-      return NextResponse.json(
-        { error: 'Veuillez contacter les ventes pour le forfait Enterprise : contact@travixosystems.com' },
+        { error: `Invalid billing cycle: "${billingCycle}". Expected 'monthly' or 'annual'.` },
         { status: 400 }
       );
     }
@@ -87,7 +83,46 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Step 6: Get or create Stripe customer
+    // Step 6: Work out the capacity being licensed.
+    //
+    // Billable excludes demo data. is_demo_data is nullable with a default of
+    // false, so rows written before the column existed hold NULL -- an
+    // .eq('is_demo_data', false) would silently drop them and under-license the
+    // customer. Archived assets are excluded to match how every other count in
+    // the app treats them.
+    step = 'count_assets';
+    const { count: billableCount, error: countError } = await supabase
+      .from('assets')
+      .select('id', { count: 'exact', head: true })
+      .eq('organization_id', org.id)
+      .is('archived_at', null)
+      .or('is_demo_data.eq.false,is_demo_data.is.null');
+
+    if (countError) {
+      return NextResponse.json(
+        { error: `Unable to count assets (${countError.message})` },
+        { status: 500 }
+      );
+    }
+
+    const licensedCapacity = licensedCapacityFor(billableCount || 0);
+
+    // Above the self-serve ceiling this stops being a checkout and becomes a
+    // conversation. No Stripe session is created.
+    if (licensedCapacity > MAX_SELF_SERVE_CAPACITY) {
+      return NextResponse.json(
+        {
+          error: `Veuillez contacter les ventes pour plus de ${MAX_SELF_SERVE_CAPACITY} equipements : contact@travixosystems.com`,
+          code: 'contact_sales',
+          billable_assets: billableCount || 0,
+          licensed_capacity: licensedCapacity,
+          max_self_serve_capacity: MAX_SELF_SERVE_CAPACITY,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Step 7: Get or create Stripe customer
     step = 'create_customer';
     const customerId = await getOrCreateStripeCustomer(
       org.id,
@@ -105,47 +140,48 @@ export async function POST(request: NextRequest) {
         .eq('id', org.id);
     }
 
-    // Step 7: Resolve price ID
+    // Step 8: Resolve price ID
     step = 'resolve_price';
-    const priceId = PRICE_MAP[planSlug]?.[billingCycle];
+    const priceId = PRICE_MAP[billingCycle];
     if (!priceId) {
       return NextResponse.json(
-        { error: `Price not configured for ${planSlug}/${billingCycle}. Check STRIPE_PRICE_* env vars.` },
+        { error: `Price not configured for ${billingCycle}. Check STRIPE_PRICE_TRAVIXO_* env vars.` },
         { status: 400 }
       );
     }
 
-    // Step 8: Create Stripe Checkout session
+    // Step 9: Create Stripe Checkout session.
+    //
+    // quantity is the licensed capacity. adjustable_quantity is deliberately
+    // absent: capacity is derived from the fleet and changed through
+    // /api/stripe/subscription/capacity, never edited by the customer at the
+    // till, where a lower number would buy less than they already use.
+    //
+    // No trial. The annual discount lives in the price itself -- the annual
+    // price is ten months of the monthly rate for twelve months of service --
+    // so bonus months on top would apply it twice.
     step = 'create_session';
-    // undefined for every plan/cycle without a bonus term
-    const trialDays = trialPeriodDays(planSlug, billingCycle);
     const origin = request.headers.get('origin') || 'https://app.travixosystems.com';
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items: [{ price: priceId, quantity: licensedCapacity }],
       success_url: `${origin}/settings/subscription?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/settings/subscription?checkout=canceled`,
       subscription_data: {
         metadata: {
           organization_id: org.id,
-          // Recorded so the term a customer actually bought is visible on the
-          // Stripe subscription, not only inferable from the trial length.
-          service_months: String(serviceMonths(planSlug, billingCycle)),
+          // The capacity sold, visible on the Stripe subscription itself rather
+          // than only inferable from the item quantity.
+          licensed_capacity: String(licensedCapacity),
         },
-        // Professional annual is sold as 15 months of service for the price of
-        // 12. Stripe has no 15-month interval, so the bonus is a trial that
-        // defers the first renewal. trialDays is undefined for every other
-        // plan/cycle, and spreading undefined omits the key rather than
-        // sending trial_period_days: 0, which Stripe rejects.
-        ...(trialDays ? { trial_period_days: trialDays } : {}),
       },
       metadata: { organization_id: org.id },
       locale: 'fr',
       allow_promotion_codes: true,
     });
 
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json({ url: session.url, licensed_capacity: licensedCapacity });
   } catch (error: any) {
     console.error(`[Stripe Checkout Error] step=${step}`, error.message, error.stack);
     return NextResponse.json(
