@@ -116,6 +116,11 @@ Failing step: **`proxy.ts` matcher omits these five paths.**
 
 ### 2. CSRF validation runs ahead of auth on every mutation (correction to v1)
 
+> **Superseded 2026-09-14 for the inspection stubs specifically.** The PATCH and
+> DELETE handlers discussed below were removed; inspections are append-only and
+> those methods now fall through to 405. The CSRF-ordering finding itself still
+> holds for every other mutation route and is why this section is kept.
+
 **v1 claimed the inspection PATCH/DELETE stubs "are exported, so they answer
 rather than 405." They do not.**
 
@@ -266,7 +271,7 @@ WORKS-TRACED = code path to a named live table, not executed - reason given.
 | QR generation | `/assets`, `/qr-codes` | client `uuidv4` | `assets.qr_code` | Yes | Yes | **WORKS-TRACED** | - |
 | VGP schedule CRUD | `/vgp/schedules` | `vgp/schedules[/id]` | `vgp_schedules` (625) | Yes (8 pol) | Yes | **WORKS-TRACED** | 401 gated; 625 live rows |
 | Inspection record | `/vgp/inspection/[id]` | `vgp/inspections` POST | `vgp_inspections` (733) | Yes | Yes | **WORKS-TRACED, non-atomic** | finding 3 |
-| Inspection edit/delete | - | `vgp/inspections` PATCH/DELETE | - | - | Gated | **STUB** (unreachable) | `route.ts:343,354`; 403 CSRF live |
+| Inspection edit/delete | - | removed 2026-09-14 | - | - | - | **NOT A FEATURE** (by design) | append-only; `docs/future/amend-inspection.md` |
 | Certificate upload | `/vgp/inspection/[id]` | `uploadthing` | `vgp_inspections.certificate_url` | Yes | Yes | **WORKS-TRACED** | `core.ts:50` getUser |
 | Alert cron | - | `cron/vgp-alerts` | `vgp_alerts` (20694) | Yes | 07:00 daily | **WORKS-TRACED** | `claim_vgp_alerts` at `route.ts:833` |
 | Weekly digest | - | `cron/vgp-weekly-digest` | `pending_weekly_digests` (0) | Yes | 08:00 daily, Monday-gated | **WORKS-TRACED** | queue drained = normal |

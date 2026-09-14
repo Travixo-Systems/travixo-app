@@ -1,6 +1,9 @@
 // app/api/vgp/inspections/route.ts
-// VGP Inspection Recording API - Handles inspection CRUD operations
-// Supports UploadThing certificate uploads via certificate_url field
+// VGP Inspection Recording API - GET (history) and POST (record) only.
+// Supports UploadThing certificate uploads via certificate_url field.
+//
+// Inspections are append-only. There is no PATCH and no DELETE, deliberately;
+// the reasoning is at the foot of this file and in docs/future/amend-inspection.md.
 
 import { createServerClient } from '@supabase/ssr';
 import { RESOLVED_SLOT_HEADER, cookieOptionsForSlot } from '@/lib/supabase/account-slot';
@@ -345,24 +348,21 @@ function inspectionErrorStatus(message: string): number {
   return 500
 }
 
-/**
- * PATCH /api/vgp/inspections/[id]
- * Update an existing inspection (not yet implemented)
- */
-export async function PATCH() {
-  return NextResponse.json(
-    { error: 'PATCH not implemented yet' },
-    { status: 501 }
-  );
-}
-
-/**
- * DELETE /api/vgp/inspections/[id]
- * Delete an inspection (not yet implemented)
- */
-export async function DELETE() {
-  return NextResponse.json(
-    { error: 'DELETE not implemented yet' },
-    { status: 501 }
-  );
-}
+// Inspections are APPEND-ONLY. There is deliberately no PATCH and no DELETE.
+//
+// Two 501 stubs used to sit here, with doc comments advertising
+// /api/vgp/inspections/[id]. No such route ever existed -- this directory holds
+// only route.ts, export/ and history/ -- so that URL 404s, and the stubs could
+// only ever be reached at the collection URL, where updating or deleting "the
+// inspection" has no referent. Nothing called them: no UI control, no fetch, no
+// translation key.
+//
+// They are gone rather than implemented because correcting an inspection is not
+// a CRUD operation. Recording one writes three tables (vgp_inspections, the
+// schedule's next_due_date/status, and assets.status on a failed result), so
+// undoing or amending one has to unwind all three or the compliance dashboard
+// starts lying -- and a deleted `failed` inspection would silently return a
+// machine to bookable.
+//
+// The replacement is a designed feature, not a verb: amend by superseding,
+// never by erasing. See docs/future/amend-inspection.md.
