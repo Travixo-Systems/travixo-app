@@ -3,6 +3,18 @@
 // Auto-synced with production Supabase schema, 2026-04-02
 // =============================================================================
 
+/**
+ * How a regulatory profile may drive the interval field.
+ *   automatic              prefill, still editable
+ *   requires_confirmation  prefill, but the user must confirm before save
+ *   manual_only            no prefill; the fitted configuration picks the regime
+ * Mirrors the CHECK constraint in 20260914120000_vgp_regulatory_profiles.sql.
+ */
+export type VGPClassificationStatus =
+  | 'automatic'
+  | 'requires_confirmation'
+  | 'manual_only'
+
 export type Database = {
   public: {
     Tables: {
@@ -371,6 +383,13 @@ export type Database = {
           archive_reason: string | null
           edit_history: unknown[]
           inspection_location: string
+          // Written at schedule create only. A catalogue correction never
+          // backfills these: a compliance record must not retroactively claim
+          // a regulatory basis nobody asserted when it was saved.
+          regulatory_profile_id: string | null
+          regulatory_interval_months: number | null
+          regulatory_reference_snapshot: string | null
+          regulatory_profile_name_snapshot: string | null
           created_at: string
           updated_at: string
         }
@@ -393,6 +412,10 @@ export type Database = {
           archive_reason?: string | null
           edit_history?: unknown[]
           inspection_location?: string
+          regulatory_profile_id?: string | null
+          regulatory_interval_months?: number | null
+          regulatory_reference_snapshot?: string | null
+          regulatory_profile_name_snapshot?: string | null
         }
         Update: {
           interval_months?: number
@@ -410,6 +433,10 @@ export type Database = {
           archive_reason?: string | null
           edit_history?: unknown[]
           inspection_location?: string
+          regulatory_profile_id?: string | null
+          regulatory_interval_months?: number | null
+          regulatory_reference_snapshot?: string | null
+          regulatory_profile_name_snapshot?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -588,29 +615,56 @@ export type Database = {
         }
         Relationships: []
       }
-      vgp_equipment_types: {
+      // Global regulatory catalogue. Renamed from vgp_equipment_types by
+      // 20260914120000. Deliberately has NO relationship to asset_categories:
+      // the fitted configuration decides the regime, not the equipment's
+      // category, so a profile is chosen by the user and never inferred.
+      vgp_regulatory_profiles: {
         Row: {
           id: string
+          code: string
           name: string
-          category: string
           default_interval_months: number
           regulatory_reference: string | null
+          usage_condition: string | null
+          classification_status: VGPClassificationStatus
+          source_url: string | null
+          source_checked_at: string | null
+          effective_from: string | null
+          effective_to: string | null
+          active: boolean
           description: string | null
+          /** LEGACY from vgp_equipment_types. Never written again. */
+          category: string | null
           created_at: string
         }
         Insert: {
           id?: string
+          code: string
           name: string
-          category: string
           default_interval_months: number
           regulatory_reference?: string | null
+          usage_condition?: string | null
+          classification_status?: VGPClassificationStatus
+          source_url?: string | null
+          source_checked_at?: string | null
+          effective_from?: string | null
+          effective_to?: string | null
+          active?: boolean
           description?: string | null
         }
         Update: {
+          code?: string
           name?: string
-          category?: string
           default_interval_months?: number
           regulatory_reference?: string | null
+          usage_condition?: string | null
+          classification_status?: VGPClassificationStatus
+          source_url?: string | null
+          source_checked_at?: string | null
+          effective_from?: string | null
+          effective_to?: string | null
+          active?: boolean
           description?: string | null
         }
         Relationships: []

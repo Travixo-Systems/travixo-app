@@ -88,6 +88,10 @@ export async function GET(request: Request) {
         notes,
         archived_at,
         inspection_location,
+        regulatory_profile_id,
+        regulatory_interval_months,
+        regulatory_reference_snapshot,
+        regulatory_profile_name_snapshot,
         created_at,
         updated_at,
         assets (
@@ -163,6 +167,8 @@ export async function POST(request: Request) {
     const created_by = (body?.created_by as string | undefined) || null;
     const rapport_url = (body?.rapport_url as string | undefined) || null;
     const inspection_location = (body?.inspection_location as string | undefined) || 'depot';
+    const regulatory_profile_id =
+      (body?.regulatory_profile_id as string | undefined) || null;
 
     if (!asset_id || !months || months < 1)
       return json(
@@ -184,6 +190,42 @@ export async function POST(request: Request) {
     nextDue.setHours(12, 0, 0, 0);
     nextDue.setMonth(nextDue.getMonth() + months);
 
+    // Resolve the regulatory snapshot from the CATALOGUE, not from the request.
+    // The client sends only a profile id; the interval, citation and name are
+    // read server-side. A client that could post its own regulatory_reference
+    // could write a compliance record citing an article that never applied.
+    let regulatorySnapshot: {
+      regulatory_profile_id: string | null;
+      regulatory_interval_months: number | null;
+      regulatory_reference_snapshot: string | null;
+      regulatory_profile_name_snapshot: string | null;
+    } = {
+      regulatory_profile_id: null,
+      regulatory_interval_months: null,
+      regulatory_reference_snapshot: null,
+      regulatory_profile_name_snapshot: null,
+    };
+
+    if (regulatory_profile_id) {
+      const { data: profile, error: profileError } = await supabase
+        .from("vgp_regulatory_profiles")
+        .select("id, name, default_interval_months, regulatory_reference")
+        .eq("id", regulatory_profile_id)
+        .eq("active", true)
+        .maybeSingle();
+
+      if (profileError) throw profileError;
+      if (!profile)
+        return json({ error: "Unknown or inactive regulatory_profile_id" }, 400);
+
+      regulatorySnapshot = {
+        regulatory_profile_id: profile.id,
+        regulatory_interval_months: profile.default_interval_months,
+        regulatory_reference_snapshot: profile.regulatory_reference,
+        regulatory_profile_name_snapshot: profile.name,
+      };
+    }
+
     // Archive any existing active schedules for this asset
     await supabase
       .from("vgp_schedules")
@@ -204,6 +246,7 @@ export async function POST(request: Request) {
         created_by,
         rapport_url,
         inspection_location,
+        ...regulatorySnapshot,
       })
       .select(
         `

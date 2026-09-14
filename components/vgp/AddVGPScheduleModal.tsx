@@ -22,6 +22,22 @@ interface AddVGPScheduleModalProps {
   onSuccess: () => void;
 }
 
+/**
+ * A row of the global regulatory catalogue, as returned by
+ * GET /api/vgp/regulatory-profiles.
+ */
+interface RegulatoryProfile {
+  id: string;
+  code: string;
+  name: string;
+  default_interval_months: number;
+  regulatory_reference: string | null;
+  usage_condition: string | null;
+  classification_status: 'automatic' | 'requires_confirmation' | 'manual_only';
+  source_url: string | null;
+  description: string | null;
+}
+
 type Step = 'form' | 'summary';
 
 interface ActiveRental {
@@ -45,8 +61,20 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
     interval_months: 12,
     last_inspection_date: '',
     created_by: '',
-    notes: ''
+    notes: '',
+    // Sent to POST /api/vgp/schedules via the ...formData spread. The server
+    // resolves the interval, citation and name from the catalogue itself -- a
+    // client that could post its own regulatory_reference could write a
+    // compliance record citing an article that never applied.
+    regulatory_profile_id: '' as string,
   });
+
+  // Regulatory catalogue. Profiles are CHOSEN, never inferred from the asset's
+  // category: the fitted configuration decides the regime, so the same machine
+  // can fall under different rules depending on what is attached to it.
+  const [profiles, setProfiles] = useState<RegulatoryProfile[]>([]);
+  const [profilesError, setProfilesError] = useState(false);
+  const [regimeConfirmed, setRegimeConfirmed] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,9 +97,41 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
   });
 
   useEffect(() => {
+    fetchRegulatoryProfiles();
     fetchExistingSchedule();
     fetchActiveRental();
   }, []);
+
+  const selectedProfile =
+    profiles.find(p => p.id === formData.regulatory_profile_id) ?? null;
+
+  // manual_only proposes nothing at all; the others prefill but stay editable.
+  const proposedInterval =
+    selectedProfile && selectedProfile.classification_status !== 'manual_only'
+      ? selectedProfile.default_interval_months
+      : null;
+
+  const needsRegimeConfirmation =
+    selectedProfile?.classification_status === 'requires_confirmation';
+
+  const intervalOverridden =
+    proposedInterval !== null && formData.interval_months !== proposedInterval;
+
+  const handleProfileChange = (profileId: string) => {
+    const profile = profiles.find(p => p.id === profileId) ?? null;
+    setRegimeConfirmed(false);
+    setValidationErrors([]);
+    setFormData(prev => ({
+      ...prev,
+      regulatory_profile_id: profileId,
+      // Prefill only when the catalogue actually proposes an interval.
+      // manual_only leaves whatever the user already had.
+      interval_months:
+        profile && profile.classification_status !== 'manual_only'
+          ? profile.default_interval_months
+          : prev.interval_months,
+    }));
+  };
 
   const fetchExistingSchedule = async () => {
     try {
@@ -100,26 +160,32 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
     }
   };
 
-// The interval auto-fill used to live here. It fetched /api/vgp/equipment-types
-// and overwrote interval_months when a row's name matched the asset's category.
-//
-// It was removed because vgp_equipment_types has always had zero rows and the
-// repo carries no seed for it, so .find() always returned undefined and the
-// call was a silent no-op on every mount -- one gated request, three auth
-// round trips, nothing to show for it. The catch also swallowed the feature
-// gate's rejection, so a non-entitled org logged nothing.
-//
-// Two latent bugs went with it: the matcher fell back to includes('') when
-// asset.category was absent, which matches the FIRST row unconditionally, and
-// asset.category is an optional prop while the assets table stores only
-// category_id -- so the field is populated only when a caller happens to pass
-// the joined name.
-//
-// To restore this, seed the table (category -> default_interval_months ->
-// regulatory_reference) and match on category_id rather than a name substring.
-// The route at app/api/vgp/equipment-types/route.ts is deliberately left in
-// place: it is load-tested (load/lib/scenarios.js:195) and gated
-// (load/gates/check.mjs:57), and it is the seam a real implementation reuses.
+  // Loads the catalogue for the selector. It deliberately does NOT try to
+  // guess a profile from asset.category: categories are per-tenant and the
+  // applicable regime follows the fitted configuration, not the equipment's
+  // label. A telescopic handler is a forklift with forks, a PEMP with a
+  // basket, a crane with a jib and an earthmoving machine with a bucket.
+  //
+  // This replaces the old auto-fill, which fetched /api/vgp/equipment-types and
+  // overwrote interval_months when a row's name contained the asset's category.
+  // That table always had zero rows, so the call was a silent no-op on every
+  // mount, and the matcher fell back to includes('') when asset.category was
+  // absent -- which would have matched the FIRST row unconditionally the moment
+  // anyone seeded it.
+  const fetchRegulatoryProfiles = async () => {
+    try {
+      const res = await fetch('/api/vgp/regulatory-profiles');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setProfiles(data.regulatory_profiles ?? []);
+      setProfilesError(false);
+    } catch (err) {
+      // Surfaced in the form rather than swallowed: without the catalogue the
+      // user must set the interval by hand, and they need to be told that.
+      console.error('Failed to fetch regulatory profiles:', err);
+      setProfilesError(true);
+    }
+  };
 
   const fetchActiveRental = async () => {
     try {
@@ -198,6 +264,14 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
 
     if (!formData.created_by || formData.created_by.trim().length === 0) {
       errors.push(t('vgpScheduleModal.errorCreatedByRequired'));
+    }
+
+    // requires_confirmation: the regime depends on how the machine is equipped
+    // and used, so the interval is prefilled but must be actively confirmed.
+    // Earthmoving plant is the standard case: 6 months under the lifting rules
+    // only when equipped and used for lifting, otherwise a different regime.
+    if (needsRegimeConfirmation && !regimeConfirmed) {
+      errors.push(t('vgpRegulatoryProfile.confirmRequired'));
     }
 
     setValidationErrors(errors);
@@ -462,6 +536,99 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
         {/* ================================================================ */}
         {step === 'form' && (
           <div className="p-6 space-y-6">
+            {/* Regulatory profile. Chosen by the user -- never derived from the
+                asset's category, because the fitted configuration decides the
+                regime, not the equipment's label. */}
+            <div>
+              <label className="block text-[14px] font-semibold mb-2" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                {t('vgpRegulatoryProfile.label')}
+              </label>
+              <select
+                value={formData.regulatory_profile_id}
+                onChange={(e) => handleProfileChange(e.target.value)}
+                disabled={profilesError || profiles.length === 0}
+                className="w-full px-3 py-2 rounded-lg text-[14px] border-none focus:outline-none focus:ring-2 focus:ring-[#e8600a] disabled:opacity-60"
+                style={{ backgroundColor: 'var(--input-bg, #e3e5e9)', color: 'var(--text-primary, #1a1a1a)' }}
+              >
+                <option value="">{t('vgpRegulatoryProfile.none')}</option>
+                {profiles.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+              <p className="text-[12px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>
+                {profilesError
+                  ? t('vgpRegulatoryProfile.loadError')
+                  : t('vgpRegulatoryProfile.help')}
+              </p>
+            </div>
+
+            {/* What the catalogue proposes, and on what basis. */}
+            {selectedProfile && (
+              <div
+                className="p-4 rounded-lg space-y-2"
+                style={{ backgroundColor: 'rgba(232,96,10,0.06)', borderLeft: '3px solid #e8600a', borderRadius: '8px' }}
+              >
+                {selectedProfile.classification_status === 'manual_only' ? (
+                  <p className="text-[13px]" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                    {t('vgpRegulatoryProfile.manualOnlyNotice')}
+                  </p>
+                ) : (
+                  <>
+                    <p className="text-[14px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                      {t('vgpRegulatoryProfile.proposedInterval')}: {proposedInterval} {t('vgpRegulatoryProfile.months')}
+                    </p>
+                    {selectedProfile.regulatory_reference && (
+                      <p className="text-[13px]" style={{ color: 'var(--text-muted, #777)' }}>
+                        {t('vgpRegulatoryProfile.basedOn')}: {selectedProfile.regulatory_reference}
+                      </p>
+                    )}
+                  </>
+                )}
+
+                {selectedProfile.usage_condition && (
+                  <p className="text-[13px]" style={{ color: 'var(--text-muted, #777)' }}>
+                    {t('vgpRegulatoryProfile.usageCondition')}: {selectedProfile.usage_condition}
+                  </p>
+                )}
+
+                {selectedProfile.source_url && (
+                  <a
+                    href={selectedProfile.source_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[13px] underline inline-block"
+                    style={{ color: '#a84605' }}
+                  >
+                    {t('vgpRegulatoryProfile.sourceLink')}
+                  </a>
+                )}
+
+                {/* The catalogue proposes a default/maximum statutory interval.
+                    Conditions of use, or the Labour Inspectorate, can require a
+                    shorter one -- so this must never read as a guarantee. */}
+                <p className="text-[12px] pt-1" style={{ color: 'var(--text-muted, #777)' }}>
+                  {t('vgpRegulatoryProfile.disclaimer')}
+                </p>
+
+                {needsRegimeConfirmation && (
+                  <label className="flex items-start gap-2 pt-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={regimeConfirmed}
+                      onChange={(e) => {
+                        setRegimeConfirmed(e.target.checked);
+                        setValidationErrors([]);
+                      }}
+                      className="mt-0.5 accent-[#e8600a]"
+                    />
+                    <span className="text-[13px]" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                      {t('vgpRegulatoryProfile.confirmCheckbox')}
+                    </span>
+                  </label>
+                )}
+              </div>
+            )}
+
             {/* Interval */}
             <div>
               <label className="block text-[14px] font-semibold mb-2" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
@@ -483,6 +650,14 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
               <p className="text-[12px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>
                 {t('vgpScheduleModal.intervalHelp')}
               </p>
+              {/* The chosen interval and the proposed one are both persisted.
+                  The gap between them is the audit-relevant fact, so it is
+                  shown rather than silently reconciled. */}
+              {intervalOverridden && (
+                <p className="text-[12px] mt-1" style={{ color: '#a84605' }}>
+                  {t('vgpRegulatoryProfile.overriddenNotice')}
+                </p>
+              )}
             </div>
 
             {/* Last Inspection Date */}
@@ -705,9 +880,24 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
                   value={asset.serial_number}
                 />
               )}
+              {/* The last screen before a compliance record is written, so it
+                  states the regulatory basis being recorded -- and, when the
+                  chosen interval differs from the proposed one, says so rather
+                  than showing only the number that was kept. */}
+              {selectedProfile && (
+                <SummaryRow
+                  label={t('vgpRegulatoryProfile.label')}
+                  value={selectedProfile.name}
+                  extra={selectedProfile.regulatory_reference ?? undefined}
+                />
+              )}
               <SummaryRow
                 label={t('vgpScheduleModal.intervalLabel')}
                 value={intervalLabel}
+                extra={intervalOverridden
+                  ? `${t('vgpRegulatoryProfile.proposedInterval')}: ${proposedInterval} ${t('vgpRegulatoryProfile.months')}`
+                  : undefined}
+                extraColor={intervalOverridden ? '#a84605' : undefined}
               />
               <SummaryRow
                 label={t('vgpScheduleModal.lastInspectionDate')}

@@ -1073,12 +1073,11 @@ export const translations = {
       en: "24 months (Biennial)",
       fr: "24 mois (Biennal)",
     },
-    // Says what the field IS, not where the value came from. The previous copy
-    // ("selon la reglementation DREETS" / "according to DREETS regulations")
-    // told the user the interval followed regulation, while the value is a
-    // fixed default of 12 months that they set by hand -- the app holds no
-    // category-to-interval regulatory mapping. Claiming otherwise on a
-    // compliance screen is the one thing this form must not do.
+    // Says what the field IS, not where the value came from. The old copy
+    // ("selon la reglementation DREETS") asserted the interval followed
+    // regulation even when no profile was selected and the value was simply
+    // the default of 12. The regulatory citation now lives in the profile
+    // panel above, where it is backed by an actual catalogue row.
     intervalHelp: {
       en: "Choose the inspection frequency that applies to this equipment",
       fr: "Choisissez la fréquence d'inspection applicable à cet équipement",
@@ -1180,6 +1179,82 @@ export const translations = {
   // ============================================================================
   // VGP EDIT MODAL (Edit Schedule)
   // ============================================================================
+  // Regulatory profile selector. The catalogue is a PROPOSAL, never a ruling:
+  // statutory periodicities are the default/maximum interval for an identified
+  // case, and conditions of use or the Labour Inspectorate can require a
+  // shorter one. Every string here is worded to propose, not to mandate.
+  vgpRegulatoryProfile: {
+    label: {
+      en: "Regulatory profile",
+      fr: "Profil réglementaire",
+    },
+    placeholder: {
+      en: "Select the applicable equipment type",
+      fr: "Sélectionnez le type d'équipement applicable",
+    },
+    help: {
+      en: "Determines the proposed statutory interval. Choose the configuration the equipment is actually used in.",
+      fr: "Détermine la périodicité réglementaire proposée. Choisissez la configuration dans laquelle l'équipement est réellement utilisé.",
+    },
+    none: {
+      en: "No profile - set the interval manually",
+      fr: "Aucun profil - définir la périodicité manuellement",
+    },
+    proposedInterval: {
+      en: "Proposed statutory interval",
+      fr: "Périodicité réglementaire proposée",
+    },
+    months: {
+      en: "months",
+      fr: "mois",
+    },
+    basedOn: {
+      en: "Based on",
+      fr: "D'après",
+    },
+    usageCondition: {
+      en: "Condition",
+      fr: "Condition",
+    },
+    sourceLink: {
+      en: "View the source",
+      fr: "Consulter la source",
+    },
+    // requires_confirmation: the interval is prefilled but the user must
+    // actively confirm, because the regime depends on how the machine is
+    // equipped or used (earthmoving plant being the standard case).
+    confirmTitle: {
+      en: "Confirm the applicable regime",
+      fr: "Confirmez le régime applicable",
+    },
+    confirmCheckbox: {
+      en: "I confirm this profile matches how the equipment is configured and used",
+      fr: "Je confirme que ce profil correspond à la configuration et à l'usage réels de l'équipement",
+    },
+    confirmRequired: {
+      en: "Confirm the applicable regime before saving",
+      fr: "Confirmez le régime applicable avant d'enregistrer",
+    },
+    // manual_only: interchangeable equipment. The fitted attachment decides
+    // the regime, so no interval is proposed at all.
+    manualOnlyNotice: {
+      en: "This equipment is interchangeable. The fitted attachment determines the applicable regime, so no interval is proposed - set it according to the current configuration.",
+      fr: "Cet équipement est interchangeable. L'accessoire monté détermine le régime applicable, aucune périodicité n'est donc proposée - définissez-la selon la configuration actuelle.",
+    },
+    overriddenNotice: {
+      en: "You have set an interval different from the one proposed. Both are recorded.",
+      fr: "Vous avez défini une périodicité différente de celle proposée. Les deux sont enregistrées.",
+    },
+    disclaimer: {
+      en: "Default statutory interval for the identified case. Conditions of use may require more frequent verification, and the Labour Inspectorate may impose a shorter interval.",
+      fr: "Périodicité réglementaire par défaut pour le cas identifié. Les conditions d'utilisation peuvent imposer des vérifications plus fréquentes, et l'inspection du travail peut exiger une périodicité plus courte.",
+    },
+    loadError: {
+      en: "Could not load the regulatory catalogue. Set the interval manually.",
+      fr: "Impossible de charger le catalogue réglementaire. Définissez la périodicité manuellement.",
+    },
+  },
+
   vgpEditModal: {
     title: {
       en: "Edit Schedule",

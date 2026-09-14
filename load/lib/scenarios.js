@@ -192,12 +192,12 @@ export function dreetsReport() {
 export function referenceData() {
   group('reference_data', () => {
     const plans = appGet('/api/subscriptions/plans', 'api:plans', 'read')
-    const types = appGet('/api/vgp/equipment-types', 'api:equipment_types', 'read')
+    const types = appGet('/api/vgp/regulatory-profiles', 'api:regulatory_profiles', 'read')
     check(plans, {
       'plans cache hit': (r) => (r.headers['X-Vercel-Cache'] || '').includes('HIT'),
     })
     check(types, {
-      'equipment types cache hit': (r) =>
+      'regulatory profiles cache hit': (r) =>
         (r.headers['X-Vercel-Cache'] || '').includes('HIT'),
     })
   })
