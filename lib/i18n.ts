@@ -1308,6 +1308,170 @@ export const translations = {
       en: "Update failed",
       fr: "Échec de la mise à jour",
     },
+
+    // --- Licensed capacity -------------------------------------------------
+    licensedCapacity: {
+      en: "Licensed capacity",
+      fr: "Capacité sous licence",
+    },
+    licensedCapacityDescription: {
+      en: "The number of assets your subscription covers. Not the number you currently have.",
+      fr: "Le nombre d'équipements couverts par votre abonnement. Pas le nombre que vous possédez actuellement.",
+    },
+    assetsLicensed: {
+      en: "assets licensed",
+      fr: "équipements sous licence",
+    },
+    capacityUsed: {
+      en: "{used} of {licensed} used",
+      fr: "{used} sur {licensed} utilisés",
+    },
+    capacityRemaining: {
+      en: "{count} remaining",
+      fr: "{count} restants",
+    },
+    increaseCapacity: {
+      en: "Increase capacity",
+      fr: "Augmenter la capacité",
+    },
+    decreaseCapacity: {
+      en: "Decrease capacity",
+      fr: "Réduire la capacité",
+    },
+    capacityIncreaseImmediate: {
+      en: "Additional capacity is available immediately and billed pro rata for the rest of this period.",
+      fr: "La capacité supplémentaire est disponible immédiatement et facturée au prorata pour le reste de la période.",
+    },
+    capacityDecreaseAtPeriodEnd: {
+      en: "A reduction takes effect at the end of the current period. You keep what you have paid for until then.",
+      fr: "Une réduction prend effet à la fin de la période en cours. Vous conservez ce que vous avez payé jusque-là.",
+    },
+    capacityPendingChange: {
+      en: "Scheduled: {capacity} assets from {date}",
+      fr: "Programmé : {capacity} équipements à partir du {date}",
+    },
+    capacityReached: {
+      en: "Licensed capacity reached",
+      fr: "Capacité sous licence atteinte",
+    },
+    capacityReachedDescription: {
+      en: "You have used all the capacity your subscription covers. Increase it to add more assets.",
+      fr: "Vous avez utilisé toute la capacité couverte par votre abonnement. Augmentez-la pour ajouter des équipements.",
+    },
+    capacityUpdated: {
+      en: "Capacity updated",
+      fr: "Capacité mise à jour",
+    },
+    capacityUpdateFailed: {
+      en: "Could not change capacity",
+      fr: "Impossible de modifier la capacité",
+    },
+    billingAnnual: {
+      en: "Annual",
+      fr: "Annuel",
+    },
+  },
+
+  // ============================================================================
+  // PRICING
+  // ============================================================================
+  pricing: {
+    pageTitle: {
+      en: "Pricing",
+      fr: "Tarifs",
+    },
+    pageSubtitle: {
+      en: "One plan. Every feature. You pay for the capacity you license.",
+      fr: "Un seul plan. Toutes les fonctionnalités. Vous payez la capacité que vous licenciez.",
+    },
+    planName: {
+      en: "TraviXO",
+      fr: "TraviXO",
+    },
+    allFeaturesIncluded: {
+      en: "Every feature included at every fleet size, VGP compliance included.",
+      fr: "Toutes les fonctionnalités incluses quelle que soit la taille du parc, conformité VGP comprise.",
+    },
+    fromPerMonth: {
+      en: "From {amount} / month",
+      fr: "À partir de {amount} / mois",
+    },
+    fromPerYear: {
+      en: "From {amount} / year",
+      fr: "À partir de {amount} / an",
+    },
+    baseIncludes: {
+      en: "Includes the first 100 assets",
+      fr: "Comprend les 100 premiers équipements",
+    },
+    thenPerAsset: {
+      en: "then {amount} per additional asset",
+      fr: "puis {amount} par équipement supplémentaire",
+    },
+    tierHeading: {
+      en: "Price per asset",
+      fr: "Prix par équipement",
+    },
+    tierFirst100: {
+      en: "First 100 assets",
+      fr: "100 premiers équipements",
+    },
+    tier101to500: {
+      en: "101 to 500",
+      fr: "101 à 500",
+    },
+    tier501to1000: {
+      en: "501 to 1000",
+      fr: "501 à 1000",
+    },
+    tier1001plus: {
+      en: "1001 and above",
+      fr: "1001 et plus",
+    },
+    included: {
+      en: "Included",
+      fr: "Inclus",
+    },
+    perAssetPerMonth: {
+      en: "{amount} / asset / month",
+      fr: "{amount} / équipement / mois",
+    },
+    annualSavings: {
+      en: "Pay annually: twelve months of service for the price of ten.",
+      fr: "Paiement annuel : douze mois de service au prix de dix.",
+    },
+    pricesExcludeTax: {
+      en: "All prices exclude VAT.",
+      fr: "Tous les prix sont hors taxes.",
+    },
+    estimateHeading: {
+      en: "Estimate your price",
+      fr: "Estimez votre tarif",
+    },
+    estimateAssetCount: {
+      en: "Number of assets",
+      fr: "Nombre d'équipements",
+    },
+    estimateResult: {
+      en: "{amount} per {period}",
+      fr: "{amount} par {period}",
+    },
+    contactSalesHeading: {
+      en: "More than 2000 assets?",
+      fr: "Plus de 2000 équipements ?",
+    },
+    contactSalesBody: {
+      en: "Above 2000 assets we will price it with you directly.",
+      fr: "Au-delà de 2000 équipements, nous établissons le tarif avec vous directement.",
+    },
+    contactSalesCta: {
+      en: "Contact sales",
+      fr: "Contacter les ventes",
+    },
+    startNow: {
+      en: "Get started",
+      fr: "Commencer",
+    },
   },
 
   // ============================================================================

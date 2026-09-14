@@ -137,7 +137,7 @@ export async function GET() {
       vgp_access = 'blocked';
     } else if (isPilotActive) {
       vgp_access = 'full';
-    } else if (['professional', 'business', 'enterprise'].includes(subscription?.plan?.slug || '')) {
+    } else if (['travixo', 'professional', 'business', 'enterprise'].includes(subscription?.plan?.slug || '')) {
       vgp_access = 'full';
     } else if (isPilot && !isPilotActive) {
       // Expired pilot inside the read-only grace window, read-only VGP
@@ -154,11 +154,9 @@ export async function GET() {
       },
       days_remaining: daysRemaining,
       // Only an unpaid org is on a trial. A Stripe subscription exists solely
-      // because someone paid, and a `trialing` status on one is our 90-day
-      // service-term deferral, not a free trial -- showing "Essai, 90 jours"
-      // to a customer who just paid EUR 14 400 reads as a billing error.
-      // Defended here as well as in the webhook so a row written before that
-      // fix, or by a future path, still cannot surface as a trial.
+      // because someone paid, so a row carrying one must never surface as a
+      // trial regardless of the Stripe status on it. No trial is offered at
+      // checkout, so in practice this guards rows written by earlier paths.
       is_trial:
         subscription?.status === 'trialing' &&
         !subscription?.stripe_subscription_id &&

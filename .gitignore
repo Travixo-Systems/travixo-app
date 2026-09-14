@@ -96,3 +96,9 @@ CLAUDE.md
 .unlazy-lint-baseline/
 .unlazy-baseline
 .unlazy-baseline
+
+# Live Stripe credentials — never committed. Pointed at explicitly, never auto-loaded.
+.env.live
+
+# Untracked local verification scripts
+.scratch/

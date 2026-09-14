@@ -95,6 +95,16 @@ export interface OrgAccessInput {
   pilot_start_date?: string | null
   pilot_end_date?: string | null
   converted_to_paid?: boolean | null
+  /**
+   * subscriptions.licensed_capacity for this org: the Stripe subscription item
+   * quantity, NULL when there is no Stripe subscription.
+   *
+   * Optional because most callers gate admin controls and pass an
+   * organizations row alone. A caller that AUTHORISES A WRITE must supply it,
+   * or a paying customer computes as though they had never subscribed. See
+   * lib/server/require-write-access.ts, which joins it for exactly that reason.
+   */
+  licensed_capacity?: number | null
 }
 
 /** Whole days elapsed since the pilot began; 0 when unknown. */
@@ -123,14 +133,43 @@ export function isPilotActive(org: OrgAccessInput): boolean {
 /**
  * The org's access level.
  *
- * A non-pilot org is 'full': paying customers and any account that was never
- * a pilot are unaffected by this model. Only an unconverted pilot degrades.
+ * `is_pilot = false` used to short-circuit to 'full', on the assumption that a
+ * non-pilot was either a paying customer or an account this model never
+ * governed. Under capacity pricing that assumption broke: an org whose pilot
+ * was ended administratively carries is_pilot = false with no subscription
+ * behind it, and so computed as a paying customer forever. Measured on live
+ * data, three organizations were in exactly that state, with no asset ceiling
+ * and no write gate.
+ *
+ * So evidence of payment is now what grants 'full', not the absence of a pilot
+ * flag. Two things count, and both are things that only exist once money has
+ * moved:
+ *
+ *   converted_to_paid    set by the Stripe webhook on a real payment event
+ *   licensed_capacity    the Stripe subscription item quantity
+ *
+ * Everything else -- an expired pilot that never converted, a non-pilot with
+ * no subscription -- takes the SAME read_only/locked path an expired pilot has
+ * always taken. No fourth level, no new vocabulary.
+ *
+ * A caller that omits licensed_capacity (most admin screens pass an
+ * organizations row alone) still gets the right answer for a converted org,
+ * because converted_to_paid is checked independently.
  */
 export function accessLevel(org: OrgAccessInput): AccessLevel {
-  if (!org?.is_pilot) return 'full'
-  if (org.converted_to_paid) return 'full'
+  // Proof of payment, in either form. Checked before the pilot flag so it
+  // holds for a converted pilot and a non-pilot subscriber alike.
+  if (org?.converted_to_paid) return 'full'
+  if (org?.licensed_capacity != null) return 'full'
+
+  // A running pilot has full access on its own terms.
   if (isPilotActive(org)) return 'full'
-  return daysSincePilotStart(org.pilot_start_date) > PILOT_LOCKOUT_DAYS
+
+  // Everything remaining degrades on the existing schedule. For a non-pilot
+  // with no pilot_start_date, daysSincePilotStart returns 0, which is <=
+  // PILOT_LOCKOUT_DAYS and therefore 'read_only' rather than 'locked': an
+  // account with no history is frozen, not locked out.
+  return daysSincePilotStart(org?.pilot_start_date) > PILOT_LOCKOUT_DAYS
     ? 'locked'
     : 'read_only'
 }

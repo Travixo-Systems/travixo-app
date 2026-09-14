@@ -21,7 +21,7 @@ BEGIN
   ) VALUES (
     p_org_name,
     p_org_slug,
-    'starter',
+    'travixo',
     'trialing',
     true,
     NOW(),
@@ -34,13 +34,13 @@ BEGIN
   INSERT INTO public.users (id, email, full_name, organization_id, role)
   VALUES (p_user_id, p_user_email, p_user_full_name, v_org_id, 'owner');
 
-  -- Get starter plan ID
+  -- The single plan row
   SELECT id INTO v_plan_id
   FROM public.subscription_plans
-  WHERE slug = 'starter'
+  WHERE slug = 'travixo'
   LIMIT 1;
 
-  -- Create subscription (trialing on starter, pilot gives VGP access)
+  -- Create subscription (trialing; the pilot window grants access)
   IF v_plan_id IS NOT NULL THEN
     INSERT INTO public.subscriptions (
       organization_id, plan_id, status,

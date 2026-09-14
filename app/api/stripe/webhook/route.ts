@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import * as Sentry from '@sentry/node';
 import { markOrganizationConverted, isPayingStatus, billingStatusFromStripe } from '@/lib/billing/mark-converted';
+import { cycleFromPriceId, TRAVIXO_PLAN_SLUG } from '@/lib/stripe';
 
 export const runtime = 'nodejs';
 
@@ -31,30 +32,6 @@ function getSupabaseAdmin() {
   return createClient(url, key);
 }
 
-// Reverse lookup from price ID to plan slug + cycle
-function planFromPriceId(priceId: string): { slug: string; cycle: 'monthly' | 'yearly' } | null {
-  const map: Record<string, Record<string, string | undefined>> = {
-    starter: {
-      monthly: process.env.STRIPE_PRICE_STARTER_MONTHLY,
-      yearly: process.env.STRIPE_PRICE_STARTER_ANNUAL,
-    },
-    professional: {
-      monthly: process.env.STRIPE_PRICE_PROFESSIONAL_MONTHLY,
-      yearly: process.env.STRIPE_PRICE_PROFESSIONAL_ANNUAL,
-    },
-    business: {
-      monthly: process.env.STRIPE_PRICE_BUSINESS_MONTHLY,
-      yearly: process.env.STRIPE_PRICE_BUSINESS_ANNUAL,
-    },
-  };
-
-  for (const [slug, prices] of Object.entries(map)) {
-    if (prices.monthly === priceId) return { slug, cycle: 'monthly' };
-    if (prices.yearly === priceId) return { slug, cycle: 'yearly' };
-  }
-  return null;
-}
-
 function safeISODate(timestamp: number | undefined | null): string | null {
   if (!timestamp || typeof timestamp !== 'number') return null;
   try {
@@ -79,13 +56,31 @@ export async function POST(request: NextRequest) {
 
     step = 'verify_signature';
     const stripeClient = getStripe();
+
+    // Fail loudly and distinctly on a missing secret. The non-null assertion
+    // that used to be here passed `undefined` straight into constructEvent,
+    // which reports it as a SIGNATURE failure -- sending whoever debugs it
+    // looking for a mismatched secret rather than an absent one. Signature
+    // verification is never skipped; an unconfigured endpoint refuses instead.
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      console.error('[Webhook] STRIPE_WEBHOOK_SECRET is not set; refusing to process events');
+      Sentry.captureException(new Error('STRIPE_WEBHOOK_SECRET is not set'), {
+        tags: { area: 'stripe_webhook', step: 'verify_signature' },
+      });
+      return NextResponse.json(
+        { error: 'Webhook is not configured: STRIPE_WEBHOOK_SECRET is not set' },
+        { status: 500 }
+      );
+    }
+
     let event: Stripe.Event;
 
     try {
       event = stripeClient.webhooks.constructEvent(
         body,
         signature,
-        process.env.STRIPE_WEBHOOK_SECRET!
+        webhookSecret
       );
     } catch (err: any) {
       console.error('[Webhook] Signature failed:', err.message);
@@ -236,12 +231,8 @@ export async function GET(request: NextRequest) {
           : 'missing';
 
     const priceVars = {
-      price_starter_monthly: process.env.STRIPE_PRICE_STARTER_MONTHLY,
-      price_starter_annual: process.env.STRIPE_PRICE_STARTER_ANNUAL,
-      price_professional_monthly: process.env.STRIPE_PRICE_PROFESSIONAL_MONTHLY,
-      price_professional_annual: process.env.STRIPE_PRICE_PROFESSIONAL_ANNUAL,
-      price_business_monthly: process.env.STRIPE_PRICE_BUSINESS_MONTHLY,
-      price_business_annual: process.env.STRIPE_PRICE_BUSINESS_ANNUAL,
+      price_travixo_monthly: process.env.STRIPE_PRICE_TRAVIXO_MONTHLY,
+      price_travixo_annual: process.env.STRIPE_PRICE_TRAVIXO_ANNUAL,
     };
 
     // A Payment Link URL pasted in place of a price id fails at checkout with
@@ -478,36 +469,55 @@ async function handleSubscriptionChange(supabase: any, subscription: any, eventI
   }
 
   // Get the price ID
-  const priceId = subscription.items?.data?.[0]?.price?.id
-    || subscription.items?.data?.[0]?.plan?.id;
+  const item = subscription.items?.data?.[0];
+  const priceId = item?.price?.id || item?.plan?.id;
   if (!priceId) {
     console.error('[Webhook] subscription: no price ID found in items', JSON.stringify(subscription.items));
-    return;
+    throw new Error(`subscription ${subscription.id} has no price id`);
   }
 
-  // Map Stripe price to our plan
-  const planInfo = planFromPriceId(priceId);
-  console.log(`[Webhook] priceId=${priceId} → plan=${planInfo?.slug || 'unknown'} cycle=${planInfo?.cycle || 'unknown'}`);
-
-  // Find the plan in our DB
-  let planId: string | null = null;
-  if (planInfo) {
-    const { data: plan, error: planErr } = await supabase
-      .from('subscription_plans')
-      .select('id')
-      .eq('slug', planInfo.slug)
-      .single();
-    if (planErr) console.error('[Webhook] subscription: plan lookup error:', planErr.message);
-    planId = plan?.id || null;
+  // Resolve the billing interval from the price.
+  //
+  // There is exactly one product now, so a price either is one of ours or the
+  // subscription is something we cannot account for. Unresolvable FAILS LOUDLY
+  // rather than upserting a null plan_id: a row with no plan silently grants
+  // whatever org_max_assets() falls back to, and we would not find out until a
+  // customer hit a limit they never bought.
+  const cycle = cycleFromPriceId(priceId);
+  if (!cycle) {
+    Sentry.captureException(
+      new Error(`Unrecognised Stripe price on subscription: ${priceId}`),
+      {
+        tags: { area: 'stripe_webhook', step: 'resolve_price' },
+        extra: { stripeSubscriptionId: subscription.id, organizationId, priceId },
+      }
+    );
+    throw new Error(`unrecognised price ${priceId} on subscription ${subscription.id}`);
   }
 
-  // Map status
-  // A Stripe subscription only exists here because someone paid: pilots are
-  // tracked on the organization, never as a subscription. So a Stripe
-  // `trialing` is our 90-day service-term deferral, not a free trial, and
-  // must not be stored or displayed as one.
+  const { data: plan, error: planErr } = await supabase
+    .from('subscription_plans')
+    .select('id')
+    .eq('slug', TRAVIXO_PLAN_SLUG)
+    .single();
+
+  if (planErr || !plan?.id) {
+    throw new Error(`plan row '${TRAVIXO_PLAN_SLUG}' not found: ${planErr?.message || 'no row'}`);
+  }
+
+  console.log(`[Webhook] priceId=${priceId} → cycle=${cycle} plan=${TRAVIXO_PLAN_SLUG}`);
+
   const hasPaid = isPayingStatus(subscription.status);
   const status = billingStatusFromStripe(subscription.status, hasPaid);
+
+  // Quantity IS the licensed asset capacity. It is what the customer bought
+  // and what capacity enforcement measures against -- never the live asset
+  // count, which moves on its own.
+  const licensedCapacity =
+    typeof item?.quantity === 'number' && item.quantity > 0 ? item.quantity : null;
+
+  const customerId =
+    typeof subscription.customer === 'string' ? subscription.customer : subscription.customer?.id;
 
   // Build subscription data, safe date conversions
   const subscriptionData: Record<string, any> = {
@@ -515,16 +525,31 @@ async function handleSubscriptionChange(supabase: any, subscription: any, eventI
     status,
     stripe_subscription_id: subscription.id,
     stripe_price_id: priceId,
+    billing_cycle: cycle,
+    plan_id: plan.id,
     updated_at: new Date().toISOString(),
   };
 
-  // Only set optional fields if they have valid values
-  if (planInfo?.cycle) subscriptionData.billing_cycle = planInfo.cycle;
+  if (licensedCapacity !== null) subscriptionData.licensed_capacity = licensedCapacity;
+
+  // Previously unpersisted: without trial_end the billing page could not show
+  // when a term ends, and the customer id lived only on organizations.
+  const trialEnd = safeISODate(subscription.trial_end);
+  if (trialEnd) subscriptionData.trial_end = trialEnd;
+
   const periodStart = safeISODate(subscription.current_period_start);
   const periodEnd = safeISODate(subscription.current_period_end);
   if (periodStart) subscriptionData.current_period_start = periodStart;
   if (periodEnd) subscriptionData.current_period_end = periodEnd;
-  if (planId) subscriptionData.plan_id = planId;
+
+  if (customerId) {
+    const { error: custErr } = await supabase
+      .from('organizations')
+      .update({ stripe_customer_id: customerId })
+      .eq('id', organizationId)
+      .is('stripe_customer_id', null);
+    if (custErr) console.error('[Webhook] subscription: save customer_id error:', custErr.message);
+  }
 
   console.log('[Webhook] subscriptionData:', JSON.stringify(subscriptionData));
 
@@ -554,13 +579,9 @@ async function handleSubscriptionChange(supabase: any, subscription: any, eventI
   // status means they are genuinely paying. Checkout is not the only path to a
   // paid subscription: a plan change or a recovered payment arrives here, and
   // a customer converting that way would otherwise stay a pilot forever.
-  //
-  // Note 'trialing' counts as paying. Professional annual carries a 90-day
-  // Stripe trial to deliver the 15-month service term, so the customers who
-  // paid the most arrive here as trialing.
   if (isPayingStatus(subscription.status)) {
     const { error: convErr } = await markOrganizationConverted(supabase, organizationId, {
-      planSlug: planInfo?.slug || null,
+      planSlug: TRAVIXO_PLAN_SLUG,
       status,
     });
     if (convErr) { console.error('[Webhook] subscription: mark converted error:', convErr); Sentry.captureException(convErr, { tags: { area: 'stripe_webhook', step: 'subscription_mark_converted' } }); }
@@ -580,13 +601,16 @@ async function handleSubscriptionChange(supabase: any, subscription: any, eventI
     stripeSubscriptionId: subscription.id,
     status,
     metadata: {
-      plan: planInfo?.slug,
-      cycle: planInfo?.cycle,
+      plan: TRAVIXO_PLAN_SLUG,
+      cycle,
+      licensed_capacity: licensedCapacity,
       stripe_status: subscription.status,
     },
   });
 
-  console.log(`[Webhook] Done: org=${organizationId} plan=${planInfo?.slug} status=${status}`);
+  console.log(
+    `[Webhook] Done: org=${organizationId} cycle=${cycle} capacity=${licensedCapacity ?? 'unset'} status=${status}`
+  );
 }
 
 async function handleSubscriptionDeleted(supabase: any, subscription: any, eventId: string) {
@@ -607,17 +631,21 @@ async function handleSubscriptionDeleted(supabase: any, subscription: any, event
     })
     .eq('organization_id', organizationId);
 
-  // Downgrade to starter
-  const { data: starterPlan } = await supabase
+  // There is one plan row now, so a cancellation cannot downgrade to a lesser
+  // tier. plan_id stays pointed at it and access is governed by status
+  // ('cancelled') plus the pilot fields, which is what the access model reads.
+  // licensed_capacity is cleared: nothing is licensed once the subscription is
+  // gone, and a stale figure would read as paid-for capacity.
+  const { data: travixoPlan } = await supabase
     .from('subscription_plans')
     .select('id')
-    .eq('slug', 'starter')
+    .eq('slug', TRAVIXO_PLAN_SLUG)
     .single();
 
-  if (starterPlan) {
+  if (travixoPlan) {
     await supabase
       .from('subscriptions')
-      .update({ plan_id: starterPlan.id })
+      .update({ plan_id: travixoPlan.id, licensed_capacity: null })
       .eq('organization_id', organizationId);
   }
 

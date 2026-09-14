@@ -74,17 +74,12 @@ const PAYING_STATUSES = new Set(['active', 'trialing', 'past_due'])
 /**
  * Map a Stripe subscription status onto the status we store and display.
  *
- * The important case is `trialing`. Stripe uses it for two different things:
- *
- *   1. a genuine free trial, where no money has changed hands
- *   2. the 90-day deferral we attach to Professional annual so one €14 400
- *      payment buys 15 months (lib/billing/service-term.ts)
- *
- * In our product only the second exists — a pilot is tracked on the
- * organization, never as a Stripe subscription. So a Stripe `trialing` here
- * always means someone has already paid, and storing it verbatim made the
- * billing page tell a customer who had just paid €14 400 that they were on an
- * "Essai" ending in 90 days.
+ * The important case is `trialing`. Checkout offers no trial, and a pilot is
+ * tracked on the organization rather than as a Stripe subscription, so a
+ * `trialing` status arriving here means someone has already paid. Storing it
+ * verbatim made the billing page tell a paying customer they were on an
+ * "Essai". The coercion below stays as a defence for any future path that
+ * attaches a Stripe trial.
  *
  * `hasPaid` is the caller's evidence that money moved (a checkout completed,
  * or a subscription carrying a real price). When it is true, trialing is
@@ -114,10 +109,9 @@ export function billingStatusFromStripe(
 /**
  * Whether a Stripe subscription status should convert the org.
  *
- * `trialing` counts: a Professional annual purchase carries a 90-day trial for
- * the 15-month service term (lib/billing/service-term.ts), so the customer has
- * paid even though Stripe reports trialing. Treating that as unpaid would lock
- * out exactly the customers who spent the most.
+ * `trialing` counts: no trial is offered at checkout, so a subscription
+ * reporting trialing was still paid for. Treating it as unpaid would lock out
+ * a customer who has given us money.
  *
  * `past_due` counts too: a failed renewal is a dunning problem, not grounds to
  * revoke access mid-cycle.

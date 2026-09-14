@@ -124,7 +124,9 @@ export async function requireVGPWriteAccess(
     const expired = new Date(org.pilot_end_date) < new Date();
     if (expired) {
       // Check if they've upgraded to a paid plan with VGP
-      const paidPlans = ['professional', 'business', 'enterprise'];
+      // 'travixo' is the single current plan; the rest are retired tiers kept
+      // so an organization still carrying one is not demoted to read-only.
+      const paidPlans = ['travixo', 'professional', 'business', 'enterprise'];
       if (!paidPlans.includes(org.subscription_tier || '')) {
         return {
           denied: NextResponse.json(

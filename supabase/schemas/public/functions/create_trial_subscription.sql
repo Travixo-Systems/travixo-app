@@ -17,7 +17,7 @@ BEGIN
   )
   VALUES (
     NEW.id,
-    (SELECT id FROM subscription_plans WHERE slug = 'professional' LIMIT 1),
+    (SELECT id FROM subscription_plans WHERE slug = 'travixo' LIMIT 1),
     'trialing',
     'monthly',
     NOW(),
@@ -25,7 +25,7 @@ BEGIN
     NOW(),
     NOW() + INTERVAL '30 days'
   );
-  
+
   RETURN NEW;
 END;
 $function$;
