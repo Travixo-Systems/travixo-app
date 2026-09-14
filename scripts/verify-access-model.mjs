@@ -51,7 +51,15 @@ const cases = [
   ['day 60, past lockout',    { is_pilot: true, pilot_start_date: day(-60), pilot_end_date: day(-30) }, 'locked'],
   ['converted mid-grace',     { is_pilot: true, pilot_start_date: day(-40), pilot_end_date: day(-10), converted_to_paid: true }, 'full'],
   ['converted post-lockout',  { is_pilot: true, pilot_start_date: day(-90), pilot_end_date: day(-60), converted_to_paid: true }, 'full'],
-  ['never a pilot',           { is_pilot: false }, 'full'],
+  // is_pilot: false is NOT evidence of payment. An org whose pilot was ended
+  // administratively lands here, and used to compute as a paying customer
+  // forever -- three live orgs were in that state with no write gate and no
+  // asset ceiling. Payment now has to be shown.
+  ['never a pilot, no subscription', { is_pilot: false }, 'read_only'],
+  ['non-pilot with a licence',       { is_pilot: false, licensed_capacity: 250 }, 'full'],
+  ['non-pilot, converted',           { is_pilot: false, converted_to_paid: true }, 'full'],
+  ['expired pilot with a licence',   { is_pilot: true, pilot_start_date: day(-40), pilot_end_date: day(-10), licensed_capacity: 100 }, 'full'],
+  ['expired pilot, licence removed', { is_pilot: true, pilot_start_date: day(-40), pilot_end_date: day(-10), licensed_capacity: null }, 'read_only'],
   ['unbounded pilot',         { is_pilot: true, pilot_start_date: day(-500), pilot_end_date: null }, 'full'],
 ]
 

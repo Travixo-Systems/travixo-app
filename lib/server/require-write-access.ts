@@ -69,7 +69,24 @@ export async function requireWriteAccess(
     }
   }
 
-  const reason = writeDenialReason(org)
+  // licensed_capacity is proof of a live subscription, and accessLevel() now
+  // treats it as such. It lives on subscriptions, not organizations, so it has
+  // to be fetched separately -- omitting it would compute a paying customer as
+  // though they had never subscribed and deny the write.
+  //
+  // A missing row or a failed read leaves it null, which degrades to the pilot
+  // path rather than granting access: this gate fails closed, and an absent
+  // subscription is not evidence of payment.
+  const { data: sub } = await supabase
+    .from('subscriptions')
+    .select('licensed_capacity')
+    .eq('organization_id', orgId)
+    .maybeSingle()
+
+  const reason = writeDenialReason({
+    ...org,
+    licensed_capacity: sub?.licensed_capacity ?? null,
+  })
   if (!reason) {
     return { denied: null, organizationId: orgId }
   }
@@ -80,7 +97,10 @@ export async function requireWriteAccess(
     denied: NextResponse.json(
       {
         error: reason,
-        access_level: accessLevel(org),
+        access_level: accessLevel({
+          ...org,
+          licensed_capacity: sub?.licensed_capacity ?? null,
+        }),
         message:
           reason === 'account_locked'
             ? "Votre accès a été désactivé. Souscrivez pour retrouver l'accès à vos données."
