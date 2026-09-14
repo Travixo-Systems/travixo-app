@@ -2,7 +2,7 @@ CREATE TABLE "public"."vgp_regulatory_profiles" (
   "id"                      uuid                     NOT NULL DEFAULT gen_random_uuid(),
   "name"                    text                     NOT NULL,
   "category"                text,
-  "default_interval_months" integer                  NOT NULL,
+  "default_interval_months" integer,
   "regulatory_reference"    text,
   "description"             text,
   "created_at"              timestamp with time zone DEFAULT now(),
@@ -18,6 +18,9 @@ CREATE TABLE "public"."vgp_regulatory_profiles" (
     CHECK ((classification_status = ANY (ARRAY['automatic'::text, 'requires_confirmation'::text, 'manual_only'::text]))),
   CONSTRAINT "vgp_regulatory_profiles_code_key" UNIQUE (code),
   CONSTRAINT "vgp_regulatory_profiles_effective_range_check" CHECK (((effective_to IS NULL) OR (effective_from IS NULL) OR (effective_to >= effective_from))),
+  CONSTRAINT "vgp_regulatory_profiles_interval_presence_check"
+    CHECK ((((classification_status = 'manual_only'::text) AND (default_interval_months IS NULL)) OR ((classification_status <> 'manual_only'::text) AND (default_interval_months IS
+    NOT NULL)))),
   CONSTRAINT "vgp_regulatory_profiles_pkey" PRIMARY KEY (id)
 );
 

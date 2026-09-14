@@ -22,10 +22,10 @@ existing vgp_schedules rows.
       in the Postgres fixture cannot hide the invariant being broken.
   EVIDENCE: Static parse of the migration text: 24 rows, 24 unique codes, by-interval {3:2, 6:14, 12:7, NULL:1}, by-status {automatic:18, requires_confirmation:5, manual_only:1}, only manual_only is NULL, all manual_only are NULL, and /UPDATE\s+public\.vgp_schedules/i does not match anywhere in the up-migration. Agrees with S1 on every count.
 
-- [ ] S3: Manual - seed applied to production through the service role, and the
+- [x] S3: Manual - seed applied to production through the service role, and the
       live catalogue confirmed at 24 rows with the 625 existing schedules still
       carrying regulatory_profile_id IS NULL.
-  EVIDENCE: pending
+  EVIDENCE: Applied to production 2026-09-14 via PR #46 (merged 12:55Z). Live catalogue verified through the service role: 24 rows; intervals 3:2, 6:14, 12:7, NULL:1; statuses automatic:18, requires_confirmation:5, manual_only:1; every row cites a basis and carries source_url + source_checked_at 2026-09-14; the sole NULL/manual_only row is equipement-interchangeable. THE INVARIANT HELD: vgp_schedules total 625, associated 0, snapshots set 0. Mirror refreshed (db pull --declarative); its only substantive change is default_interval_months losing NOT NULL plus the new interval_presence_check, matching the migration exactly.
 
 A defect this ledger caught rather than shipped: the first S1 run failed
 "seed is re-runnable" and "re-running corrects a drifted interval". The cause
