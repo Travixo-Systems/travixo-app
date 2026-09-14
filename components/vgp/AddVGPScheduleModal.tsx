@@ -69,7 +69,6 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
   });
 
   useEffect(() => {
-    fetchEquipmentTypes();
     fetchExistingSchedule();
     fetchActiveRental();
   }, []);
@@ -101,20 +100,26 @@ export default function AddVGPScheduleModal({ asset, onClose, onSuccess }: AddVG
     }
   };
 
-  const fetchEquipmentTypes = async () => {
-    try {
-      const res = await fetch('/api/vgp/equipment-types');
-      const data = await res.json();
-      const matchingType = data.equipment_types?.find(
-        (type: any) => type.name.toLowerCase().includes(asset.category?.toLowerCase() || '')
-      );
-      if (matchingType) {
-        setFormData(prev => ({ ...prev, interval_months: matchingType.default_interval_months }));
-      }
-    } catch (error) {
-      console.error('Failed to fetch equipment types:', error);
-    }
-  };
+// The interval auto-fill used to live here. It fetched /api/vgp/equipment-types
+// and overwrote interval_months when a row's name matched the asset's category.
+//
+// It was removed because vgp_equipment_types has always had zero rows and the
+// repo carries no seed for it, so .find() always returned undefined and the
+// call was a silent no-op on every mount -- one gated request, three auth
+// round trips, nothing to show for it. The catch also swallowed the feature
+// gate's rejection, so a non-entitled org logged nothing.
+//
+// Two latent bugs went with it: the matcher fell back to includes('') when
+// asset.category was absent, which matches the FIRST row unconditionally, and
+// asset.category is an optional prop while the assets table stores only
+// category_id -- so the field is populated only when a caller happens to pass
+// the joined name.
+//
+// To restore this, seed the table (category -> default_interval_months ->
+// regulatory_reference) and match on category_id rather than a name substring.
+// The route at app/api/vgp/equipment-types/route.ts is deliberately left in
+// place: it is load-tested (load/lib/scenarios.js:195) and gated
+// (load/gates/check.mjs:57), and it is the seam a real implementation reuses.
 
   const fetchActiveRental = async () => {
     try {
