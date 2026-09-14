@@ -155,17 +155,17 @@ export async function POST(request: Request) {
     if (writeGate.denied) return writeGate.denied;
 
     // Feature gate: require VGP write access (blocks expired pilots)
-    const { denied, organizationId } = await requireVGPWriteAccess(supabase);
+    const { denied } = await requireVGPWriteAccess(supabase);
     if (denied) return denied;
 
-    // Need user.id for performed_by. Both gates above already resolved the
-    // caller, so this reads the request-scoped memo rather than making a third
-    // round trip to GoTrue for an identity we have twice over.
+    // The caller must still be a real signed-in user: this is the 401 guard.
+    // Neither the org id nor the user id is read here any more -- record_inspection()
+    // derives both itself, through get_my_organization_id() and auth.uid(), so
+    // that a caller cannot pass an organization or a performed_by it does not own.
     const identity = await resolveIdentity(supabase);
     if (!identity.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const user = { id: identity.userId };
 
     // Parse request body
     const body = await request.json();
@@ -276,9 +276,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const inspection = (rpcResult as any)?.inspection;
+    const { inspection, asset_blocked } = (rpcResult ?? {}) as RecordInspectionResult;
     console.log('VGP Inspections POST: recorded', inspection?.id,
-      'asset_blocked=' + ((rpcResult as any)?.asset_blocked === true));
+      'asset_blocked=' + (asset_blocked === true));
 
     return NextResponse.json(
       {
@@ -297,6 +297,16 @@ export async function POST(request: Request) {
     );
   }
 }
+
+/**
+ * What record_inspection() returns. Mirrors the jsonb_build_object at
+ * supabase/migrations/20260903100000_record_inspection_rpc.sql:172-176.
+ */
+type RecordInspectionResult = {
+  inspection?: { id?: string } & Record<string, unknown>;
+  next_due_date?: string;
+  asset_blocked?: boolean;
+};
 
 /**
  * Turn a record_inspection() error into something the inspector can act on.
