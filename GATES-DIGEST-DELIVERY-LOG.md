@@ -24,7 +24,7 @@ outbox stops being indistinguishable from a feature that has never worked.
 - [ ] D3: Manual - migration applied to production, then a real weekly digest
       delivered and its row confirmed in vgp_digest_deliveries with a Resend
       message id that resolves in the provider dashboard.
-  EVIDENCE: pending
+  EVIDENCE: PARTIAL - the schema half is done, the delivery half is not. Migration applied to production 2026-09-14 (PR #47, merged 13:42Z). Verified against the live database through the service role: vgp_digest_deliveries EXISTS with 0 rows; all eight declared columns present (id, user_id, organization_id, recipient_email, period, item_count, provider_message_id, sent_at); an anon-key read returns 42501 permission denied. Mirror refreshed and confirms RLS enabled, one own-row SELECT policy, REVOKE ALL FROM authenticated followed by GRANT SELECT, writes to postgres/service_role only, and no anon reference anywhere. NOT YET DONE: no digest has been delivered, so the table is still empty and the original question - does the weekly digest actually send - remains unanswered. D3 is only fully met once a real delivery writes a row carrying a Resend id that resolves in the provider dashboard.
 
 A defect this ledger caught rather than shipped: the first D1 run failed
 "migration is re-runnable". CREATE POLICY has no IF NOT EXISTS in Postgres, so

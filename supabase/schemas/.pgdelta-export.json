@@ -29,6 +29,7 @@
     "public/tables/user_notification_preferences.sql",
     "public/tables/users.sql",
     "public/tables/vgp_alerts.sql",
+    "public/tables/vgp_digest_deliveries.sql",
     "public/tables/vgp_inspections.sql",
     "public/tables/vgp_regulatory_profiles.sql",
     "public/tables/vgp_schedules.sql",
@@ -118,6 +119,7 @@
     "public/tables/user_notification_preferences.sql",
     "public/tables/users.sql",
     "public/tables/vgp_alerts.sql",
+    "public/tables/vgp_digest_deliveries.sql",
     "public/tables/vgp_inspections.sql",
     "public/tables/vgp_regulatory_profiles.sql",
     "public/tables/vgp_schedules.sql"
