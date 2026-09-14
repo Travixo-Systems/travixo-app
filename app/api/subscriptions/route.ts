@@ -137,7 +137,7 @@ export async function GET() {
       vgp_access = 'blocked';
     } else if (isPilotActive) {
       vgp_access = 'full';
-    } else if (['professional', 'business', 'enterprise'].includes(subscription?.plan?.slug || '')) {
+    } else if (['travixo', 'professional', 'business', 'enterprise'].includes(subscription?.plan?.slug || '')) {
       vgp_access = 'full';
     } else if (isPilot && !isPilotActive) {
       // Expired pilot inside the read-only grace window, read-only VGP
