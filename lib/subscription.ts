@@ -46,7 +46,10 @@ export interface Subscription {
   plan_id: string;
   stripe_subscription_id: string | null;
   status: 'trialing' | 'active' | 'cancelled' | 'expired' | 'past_due';
-  billing_cycle: 'monthly' | 'yearly';
+  /** Spelled 'annual', matching STRIPE_PRICE_*_ANNUAL and the DB column. */
+  billing_cycle: 'monthly' | 'annual';
+  /** Licensed asset capacity: the Stripe subscription item quantity. */
+  licensed_capacity: number | null;
   current_period_start: string;
   current_period_end: string;
   cancel_at_period_end: boolean;
@@ -57,9 +60,21 @@ export interface Subscription {
 }
 
 export interface SubscriptionUsage {
+  /** Unarchived assets, including demo data. */
   assets: number;
+  /** Unarchived assets excluding demo data: what a licence is sold against. */
+  billable: number;
+  /**
+   * Effective ceiling. Pilot allowance while a pilot runs, else the licensed
+   * capacity, else a finite floor. Never subscription_plans.max_assets, which
+   * is an int4 sentinel on the travixo row.
+   */
   max_assets: number;
+  /** Stripe subscription item quantity. NULL when there is no subscription. */
+  licensed_capacity: number | null;
   limit_reached: boolean;
+  /** Billable count exceeds a capacity that was actually purchased. */
+  over_capacity: boolean;
 }
 
 export interface SubscriptionInfo {
@@ -140,21 +155,28 @@ export async function checkAssetLimit(): Promise<{
       return { current: 0, max: 100, limitReached: false };
     }
 
-    // Get current asset count (exclude archived/retired assets)
+    // Billable assets: archived excluded, demo excluded. Matches what the
+    // insert trigger counts and what a licence is sold against. is_demo_data is
+    // nullable, so .eq(false) would drop legacy rows and under-report.
     const { count: assetCount } = await supabase
       .from('assets')
       .select('*', { count: 'exact', head: true })
       .eq('organization_id', userData.organization_id)
-      .is('archived_at', null);
+      .is('archived_at', null)
+      .or('is_demo_data.eq.false,is_demo_data.is.null');
 
-    // Get subscription limit
     const { data: subscription } = await supabase
       .from('subscriptions')
-      .select('*, plan:subscription_plans(*)')
+      .select('licensed_capacity')
       .eq('organization_id', userData.organization_id)
       .single();
 
-    const maxAssets = (subscription as unknown as { plan: { max_assets: number } | null })?.plan?.max_assets || 100;
+    // Licensed capacity, never subscription_plans.max_assets: that column is
+    // the int4 sentinel (2147483647) on the travixo row, and surfacing it would
+    // tell a customer they have two billion assets of headroom. Falls back to
+    // the same finite floor org_max_assets() uses.
+    const licensedCapacity = (subscription as { licensed_capacity: number | null } | null)?.licensed_capacity;
+    const maxAssets = typeof licensedCapacity === 'number' ? licensedCapacity : 100;
     const current = assetCount || 0;
 
     return {
@@ -192,7 +214,7 @@ export async function getSubscriptionInfo(): Promise<SubscriptionInfo | null> {
  */
 export async function updateSubscription(
   planSlug: string,
-  billingCycle: 'monthly' | 'yearly'
+  billingCycle: 'monthly' | 'annual'
 ): Promise<{ success: boolean; error?: string; message?: string }> {  // ADD message here
   try {
     const response = await fetch('/api/subscriptions', {

@@ -93,7 +93,7 @@ export function useUpdateSubscription() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ planSlug, billingCycle }: { planSlug: string; billingCycle: 'monthly' | 'yearly' }) =>
+    mutationFn: ({ planSlug, billingCycle }: { planSlug: string; billingCycle: 'monthly' | 'annual' }) =>
       updateSubscription(planSlug, billingCycle),
     onSuccess: () => {
       // Invalidate and refetch subscription data
@@ -135,11 +135,24 @@ export function useDaysRemaining() {
 }
 
 /**
- * Get usage statistics
+ * Get usage statistics.
+ *
+ * The fallback mirrors the database's own floor (org_max_assets returns 100
+ * when there is no pilot and no licence), so a failed fetch reads as the most
+ * restrictive real state rather than as unlimited.
  */
 export function useUsage() {
   const { data: subscriptionInfo } = useSubscription();
-  return subscriptionInfo?.usage || { assets: 0, max_assets: 100, limit_reached: false };
+  return (
+    subscriptionInfo?.usage || {
+      assets: 0,
+      billable: 0,
+      max_assets: 100,
+      licensed_capacity: null,
+      limit_reached: false,
+      over_capacity: false,
+    }
+  );
 }
 
 /**
@@ -151,22 +164,78 @@ export function useHasStripeSubscription() {
 }
 
 /**
- * Initiate Stripe Checkout, redirects to Stripe-hosted payment page
+ * Initiate Stripe Checkout, redirects to Stripe-hosted payment page.
+ *
+ * There is no plan to choose: the route derives licensed capacity from the
+ * organization's billable asset count, so the only choice is how often you are
+ * billed. Sending a planSlug would be ignored at best.
  */
 export function useStripeCheckout() {
   return useMutation({
-    mutationFn: async ({ planSlug, billingCycle }: { planSlug: string; billingCycle: 'monthly' | 'yearly' }) => {
+    mutationFn: async ({ billingCycle }: { billingCycle: 'monthly' | 'annual' }) => {
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planSlug, billingCycle }),
+        body: JSON.stringify({ billingCycle }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Checkout failed');
-      return data as { url: string };
+      if (!res.ok) {
+        // The over-capacity refusal carries a contact_sales code and the
+        // counts. Preserve them so the caller can explain rather than showing
+        // a bare error string.
+        const err = new Error(data.error || 'Checkout failed') as Error & {
+          code?: string;
+          licensed_capacity?: number;
+          billable_assets?: number;
+        };
+        err.code = data.code;
+        err.licensed_capacity = data.licensed_capacity;
+        err.billable_assets = data.billable_assets;
+        throw err;
+      }
+      return data as { url: string; licensed_capacity: number };
     },
     onSuccess: (data) => {
       if (data.url) window.location.href = data.url;
+    },
+  });
+}
+
+/**
+ * Change licensed capacity on an existing subscription.
+ *
+ * Increases apply immediately and prorated; decreases are scheduled at period
+ * end. The route decides which, from the direction of the change. This is the
+ * ONLY path that changes capacity: asset CRUD must never call it.
+ */
+export function useCapacityChange() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ capacity }: { capacity: number }) => {
+      const res = await fetch('/api/stripe/subscription/capacity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ capacity }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        const err = new Error(data.error || 'Capacity change failed') as Error & { code?: string };
+        err.code = data.code;
+        throw err;
+      }
+      return data as {
+        capacity: number;
+        previous_capacity?: number;
+        pending_capacity?: number;
+        changed: boolean;
+        effective: 'immediately' | 'period_end' | 'unchanged';
+        effective_at?: string | null;
+      };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subscription'] });
+      queryClient.invalidateQueries({ queryKey: ['asset-limit'] });
     },
   });
 }
@@ -214,8 +283,10 @@ export function useVGPAccess(): {
     return { access: 'full', isLoading: false };
   }
 
+  // 'travixo' is the single current plan; the rest are retired tiers, kept so
+  // an organization still carrying one is not demoted.
   const planSlug = subscriptionInfo.subscription?.plan?.slug;
-  if (['professional', 'business', 'enterprise'].includes(planSlug || '')) {
+  if (['travixo', 'professional', 'business', 'enterprise'].includes(planSlug || '')) {
     return { access: 'full', isLoading: false };
   }
 

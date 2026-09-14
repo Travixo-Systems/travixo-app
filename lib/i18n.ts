@@ -233,10 +233,6 @@ export const translations = {
       en: "No Plan",
       fr: "Aucun Plan",
     },
-    forMidSizeOps: {
-      en: "For mid-size operations",
-      fr: "Pour opérations moyennes",
-    },
     forMidSizeOperations: {
       en: "For mid-size operations",
       fr: "Pour les opérations de taille moyenne",
@@ -390,14 +386,6 @@ export const translations = {
         en: "Multi-location Support",
         fr: "Support Multi-sites",
       },
-      priority_support: {
-        en: "Priority Support",
-        fr: "Support Prioritaire",
-      },
-      dedicated_support: {
-        en: "Dedicated Account Manager",
-        fr: "Gestionnaire de Compte Dédié",
-      },
       team_management: {
         en: "Team Management",
         fr: "Gestion d'Équipe",
@@ -410,17 +398,9 @@ export const translations = {
         en: "API Access",
         fr: "Accès API",
       },
-      custom_branding: {
-        en: "Custom Branding",
-        fr: "Marque Personnalisée",
-      },
       white_label: {
         en: "White-Label Branding",
         fr: "Marque Blanche",
-      },
-      custom_integrations: {
-        en: "Custom Integrations",
-        fr: "Intégrations Personnalisées",
       },
       qr_generation: {
         en: "QR Code Generation",
@@ -446,17 +426,129 @@ export const translations = {
         en: "REST API for custom integrations. Contact us for API documentation and access.",
         fr: "API REST pour intégrations personnalisées. Contactez-nous pour la documentation API et l'accès.",
       },
-      custom_branding: {
-        en: "Custom logos and colors in reports. Contact us to configure.",
-        fr: "Logos et couleurs personnalisés dans les rapports. Contactez-nous pour configurer.",
-      },
       white_label: {
         en: "Full white-label branding. Contact us for setup.",
         fr: "Marque blanche complète. Contactez-nous pour la configuration.",
       },
-      custom_integrations: {
-        en: "ServiceNow, SAP, or custom ERP integrations. Built during implementation.",
-        fr: "Intégrations ServiceNow, SAP ou ERP personnalisées. Construites pendant la mise en œuvre.",
+    },
+
+    // --- Capacity page: the three states -----------------------------------
+    capacityNoSubscriptionTitle: {
+      en: "License your fleet",
+      fr: "Souscrivez pour votre parc",
+    },
+    capacityNoSubscriptionBody: {
+      en: "You have {billable} billable assets. Licensed capacity is what you buy; it does not change when you add or retire equipment.",
+      fr: "Vous avez {billable} équipements facturables. La capacité sous licence est ce que vous achetez; elle ne change pas quand vous ajoutez ou retirez du matériel.",
+    },
+    capacityActiveTitle: {
+      en: "Licensed capacity",
+      fr: "Capacité sous licence",
+    },
+    capacitySummary: {
+      en: "{billable} of {licensed} assets licensed",
+      fr: "{billable} sur {licensed} équipements sous licence",
+    },
+    capacityOverTitle: {
+      en: "Over licensed capacity",
+      fr: "Capacité sous licence dépassée",
+    },
+    capacityOverBody: {
+      en: "{billable} assets for {licensed} licensed. Adding new assets is blocked.",
+      fr: "{billable} équipements pour {licensed} sous licence. Ajout de nouveaux équipements bloqué.",
+    },
+    capacitySelectorLabel: {
+      en: "Capacity to license",
+      fr: "Capacité à souscrire",
+    },
+    capacitySelectorHelp: {
+      en: "In blocks of {block}. Cannot go below your current {billable} billable assets.",
+      fr: "Par blocs de {block}. Ne peut pas descendre sous vos {billable} équipements facturables actuels.",
+    },
+    capacityFloorReached: {
+      en: "This is your current fleet size. Archive assets to license less.",
+      fr: "C'est la taille actuelle de votre parc. Archivez des équipements pour souscrire moins.",
+    },
+    capacityDecrease: {
+      en: "Decrease",
+      fr: "Réduire",
+    },
+    capacityIncrease: {
+      en: "Increase",
+      fr: "Augmenter",
+    },
+    subscribeCta: {
+      en: "Subscribe",
+      fr: "Souscrire",
+    },
+    perMonthLabel: {
+      en: "per month",
+      fr: "par mois",
+    },
+    perYearLabel: {
+      en: "per year",
+      fr: "par an",
+    },
+    legalVat: {
+      en: "VAT not applicable, art. 293 B of the French General Tax Code.",
+      fr: "TVA non applicable, art. 293 B du CGI.",
+    },
+    whatIsIncluded: {
+      en: "Included at every fleet size",
+      fr: "Inclus quelle que soit la taille du parc",
+    },
+    includedFeatures: {
+      fleet: {
+        en: "Asset register and Excel import",
+        fr: "Parc et import Excel",
+      },
+      qr: {
+        en: "QR codes and public scan page",
+        fr: "QR et page publique de scan",
+      },
+      rentals: {
+        en: "Rental check-outs and returns",
+        fr: "Sorties et retours de location",
+      },
+      clients: {
+        en: "Clients and client recall",
+        fr: "Clients et rappel client",
+      },
+      vgpDue: {
+        en: "VGP due dates",
+        fr: "Échéances VGP",
+      },
+      inspections: {
+        en: "Inspections",
+        fr: "Inspections",
+      },
+      certificates: {
+        en: "Certificates",
+        fr: "Certificats",
+      },
+      alerts: {
+        en: "Alerts",
+        fr: "Alertes",
+      },
+      complianceReport: {
+        en: "Compliance report",
+        fr: "Rapport de conformité",
+      },
+      audits: {
+        en: "Audits",
+        fr: "Audits",
+      },
+      teams: {
+        en: "Teams and permissions",
+        fr: "Équipes et permissions",
+      },
+      unlimitedUsers: {
+        en: "Unlimited users",
+        fr: "Utilisateurs illimités",
+      },
+      languages: {
+        en: "French and English",
+        fr: "FR/EN",
       },
     },
   },
@@ -1441,8 +1533,8 @@ export const translations = {
       fr: "Paiement annuel : douze mois de service au prix de dix.",
     },
     pricesExcludeTax: {
-      en: "All prices exclude VAT.",
-      fr: "Tous les prix sont hors taxes.",
+      en: "VAT not applicable, art. 293 B of the French General Tax Code.",
+      fr: "TVA non applicable, art. 293 B du CGI.",
     },
     estimateHeading: {
       en: "Estimate your price",
