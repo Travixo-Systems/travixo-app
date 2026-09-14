@@ -64,6 +64,13 @@ export interface WeeklyDigestResult {
   skipped_not_monday: boolean;
   users_processed: number;
   emails_sent: number;
+  /**
+   * Deliveries written to vgp_digest_deliveries. Reported separately from
+   * emails_sent because the two can legitimately differ: a send that succeeds
+   * while its log insert fails leaves mail delivered and unrecorded, and that
+   * gap should be visible in the response rather than inferred.
+   */
+  deliveries_logged: number;
   rows_cleared: number;
   errors: string[];
 }
@@ -95,6 +102,7 @@ export async function runWeeklyDigest(force = false): Promise<WeeklyDigestResult
     skipped_not_monday: false,
     users_processed: 0,
     emails_sent: 0,
+    deliveries_logged: 0,
     rows_cleared: 0,
     errors: [],
   };
@@ -219,6 +227,40 @@ export async function runWeeklyDigest(force = false): Promise<WeeklyDigestResult
         }
 
         result.emails_sent++;
+
+        // Log the delivery BEFORE clearing the queue.
+        //
+        // The order matters and is not arbitrary. Clearing first would mean a
+        // crash between the two writes leaves no trace of the send at all --
+        // the queue rows gone, no delivery row -- which is exactly the
+        // ambiguity this table exists to remove. Logging first can at worst
+        // leave a delivery row whose queue entries are retried next Monday,
+        // and a duplicate email is recoverable where lost evidence is not.
+        const { error: logError } = await supabase
+          .from("vgp_digest_deliveries")
+          .insert({
+            user_id: userId,
+            organization_id: rows[0].organization_id ?? null,
+            recipient_email: email,
+            period: "weekly",
+            item_count: rows.length,
+            provider_message_id: sendResult.emailId ?? null,
+          });
+
+        if (logError) {
+          // The mail went out. Not logging it does not un-send it, so this
+          // must not abort the run or block the queue clear -- but it does
+          // reopen the ambiguity for this one delivery, which is worth an
+          // alert rather than a silent console line.
+          console.log(`${LOG_PREFIX} Failed to log delivery for ${email}: ${logError.message}`);
+          Sentry.captureException(logError, {
+            tags: { area: "vgp_weekly", step: "log_delivery" },
+            extra: { userId, rowCount: rows.length, emailId: sendResult.emailId },
+          });
+          result.errors.push(`Delivery log for ${email} failed: ${logError.message}`);
+        } else {
+          result.deliveries_logged++;
+        }
 
         // Clear only after the send is acknowledged.
         const { error: clearError } = await supabase
