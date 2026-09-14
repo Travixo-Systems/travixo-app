@@ -41,22 +41,19 @@ export type BillingCycle = 'monthly' | 'annual';
 /** The single plan slug backing every subscription. */
 export const TRAVIXO_PLAN_SLUG = 'travixo';
 
-/** Self-serve capacity ceiling. Above this, checkout refuses and sales take over. */
-export const MAX_SELF_SERVE_CAPACITY = 2000;
-
-/** Licensed capacity is sold in blocks of this size. */
-export const CAPACITY_BLOCK = 10;
-
 /**
- * Round a billable asset count up to the capacity actually licensed.
- *
- * Floor of one block: an organization with no assets yet still licenses the
- * smallest unit, and Stripe rejects quantity 0 on a subscription item.
+ * Capacity sizing and the price formula live in lib/billing/capacity-price.ts,
+ * which has no dependencies so client components can import it too. Re-exported
+ * here so server code that already imports from this module keeps one import,
+ * and so there is exactly one definition of each.
  */
-export function licensedCapacityFor(billableAssets: number): number {
-  const safe = Number.isFinite(billableAssets) && billableAssets > 0 ? billableAssets : 0;
-  return Math.max(CAPACITY_BLOCK, Math.ceil(safe / CAPACITY_BLOCK) * CAPACITY_BLOCK);
-}
+export {
+  MAX_SELF_SERVE_CAPACITY,
+  CAPACITY_BLOCK,
+  licensedCapacityFor,
+  monthlyPrice,
+  annualPrice,
+} from '@/lib/billing/capacity-price';
 
 /**
  * Reverse lookup: Stripe Price ID -> billing cycle.

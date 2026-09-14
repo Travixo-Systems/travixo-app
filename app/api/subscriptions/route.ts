@@ -97,6 +97,23 @@ export async function GET() {
 
     const currentAssets = assetCount || 0;
 
+    // Billable count: what a licence is actually sold against. Demo data is
+    // excluded, and is_demo_data is nullable, so .eq(false) would silently drop
+    // every legacy row and under-report. This is the number the subscription
+    // page sizes capacity from, so it must match what checkout counts.
+    const { count: billableCount, error: billableError } = await supabase
+      .from('assets')
+      .select('*', { count: 'exact', head: true })
+      .eq('organization_id', organizationId)
+      .is('archived_at', null)
+      .or('is_demo_data.eq.false,is_demo_data.is.null');
+
+    if (billableError) {
+      console.error('Error counting billable assets:', billableError);
+    }
+
+    const billableAssets = billableCount ?? currentAssets;
+
     // Check if pilot is active
     const isPilot = org?.is_pilot || false;
     const isPilotActive = isPilot &&
@@ -118,8 +135,21 @@ export async function GET() {
       daysRemaining = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     }
 
-    // Asset limit: the pilot cap while the pilot runs, the plan limit after.
-    const maxAssets = isPilotActive ? PILOT_MAX_ASSETS : (subscription?.plan?.max_assets || 100);
+    // Asset limit.
+    //
+    // subscription_plans.max_assets is NOT read any more. On the travixo row it
+    // is the int4 sentinel (2147483647), and rendering that as a ceiling is
+    // meaningless -- capacity lives on the subscription now. Mirrors
+    // org_max_assets(): pilot allowance while a pilot runs, else the licensed
+    // capacity, else the same finite floor the database falls back to.
+    const licensedCapacity: number | null =
+      typeof subscription?.licensed_capacity === 'number'
+        ? subscription.licensed_capacity
+        : null;
+
+    const maxAssets = isPilotActive
+      ? PILOT_MAX_ASSETS
+      : (licensedCapacity ?? 100);
 
     // Hard cutoff after the full window plus the read-only grace period
     // (30 + 15). The figures live in lib/billing/pilot-window.
@@ -149,8 +179,13 @@ export async function GET() {
       organization: org,
       usage: {
         assets: currentAssets,
+        billable: billableAssets,
         max_assets: maxAssets,
-        limit_reached: currentAssets >= maxAssets,
+        licensed_capacity: licensedCapacity,
+        // Measured against the billable count, because that is what the
+        // licence covers and what the insert trigger counts.
+        limit_reached: billableAssets >= maxAssets,
+        over_capacity: licensedCapacity !== null && billableAssets > licensedCapacity,
       },
       days_remaining: daysRemaining,
       // Only an unpaid org is on a trial. A Stripe subscription exists solely
@@ -206,76 +241,26 @@ export async function POST(request: Request) {
 
     const organizationId = userData.organization_id;
 
-    // Get the new plan
-    const { data: newPlan, error: planError } = await supabase
-      .from('subscription_plans')
-      .select('*')
-      .eq('slug', plan_slug)
-      .eq('is_active', true)
-      .single();
-
-    if (planError || !newPlan) {
-      return NextResponse.json({ error: 'Plan not found' }, { status: 404 });
-    }
-
-    // Check asset limit before downgrade
-    const { count: assetCount, error: countError } = await supabase
-      .from('assets')
-      .select('*', { count: 'exact', head: true })
-      .eq('organization_id', organizationId);
-
-    if (countError) {
-      console.error('Error counting assets:', countError);
-    }
-
-    const currentAssets = assetCount || 0;
-
-    if (currentAssets > newPlan.max_assets) {
-      return NextResponse.json(
-        { 
-          error: 'Cannot downgrade',
-          message: `You have ${currentAssets} assets but the ${newPlan.name} plan only allows ${newPlan.max_assets}. Please delete ${currentAssets - newPlan.max_assets} assets first.`
-        },
-        { status: 400 }
-      );
-    }
-
-    // Update subscription
-    const currentPeriodEnd = new Date();
-    currentPeriodEnd.setDate(currentPeriodEnd.getDate() + (billing_cycle === 'yearly' ? 365 : 30));
-
-    const { data: updated, error: updateError } = await supabase
-      .from('subscriptions')
-      .update({
-        plan_id: newPlan.id,
-        billing_cycle: billing_cycle,
-        status: 'active',
-        current_period_start: new Date().toISOString(),
-        current_period_end: currentPeriodEnd.toISOString(),
-        trial_start: null,
-        trial_end: null,
-        updated_at: new Date().toISOString()
-      })
-      .eq('organization_id', organizationId)
-      .select(`
-        *,
-        plan:subscription_plans(*)
-      `)
-      .single();
-
-    if (updateError) {
-      console.error('Update error:', updateError);
-      return NextResponse.json(
-        { error: updateError.message || 'Failed to update subscription' },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      subscription: updated,
-      message: 'Subscription updated successfully'
-    });
+    // There are no plans to switch between any more.
+    //
+    // This handler belongs to the retired tier model: it swapped plan_id,
+    // refused downgrades by comparing the asset count against the target
+    // plan's max_assets, and wrote a period end from a 'yearly' cycle. Under
+    // capacity pricing all three are wrong -- max_assets on the only active
+    // plan row is the int4 sentinel, so the downgrade guard could never fire,
+    // and it would write a subscription row Stripe knows nothing about.
+    //
+    // Refused outright rather than left reachable. Capacity changes go through
+    // POST /api/stripe/subscription/capacity, which talks to Stripe; a new
+    // subscription goes through POST /api/stripe/checkout.
+    return NextResponse.json(
+      {
+        error: 'plan_changes_retired',
+        message:
+          'Les forfaits ont ete remplaces par la capacite sous licence. Utilisez /api/stripe/subscription/capacity pour modifier votre capacite.',
+      },
+      { status: 410 }
+    );
 
   } catch (error: any) {
     console.error('Subscription update error:', error);

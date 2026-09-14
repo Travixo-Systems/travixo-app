@@ -103,7 +103,12 @@ export async function getEntitlementContext(): Promise<EntitlementContext | null
     planSlug: sub?.plan?.slug || 'starter',
     planFeatures: sub?.plan?.features || {},
     overrides: overrideResult.data || [],
-    maxAssets: pilotActive ? PILOT_MAX_ASSETS : (sub?.plan?.max_assets || 100),
+    // Licensed capacity, NOT the plan's max_assets: that is the int4 sentinel
+    // on the travixo row. Mirrors org_max_assets(): pilot allowance while a
+    // pilot runs, else what was actually licensed, else a finite floor.
+    maxAssets: pilotActive
+      ? PILOT_MAX_ASSETS
+      : (typeof sub?.licensed_capacity === 'number' ? sub.licensed_capacity : 100),
     maxUsers: sub?.plan?.max_users || 5,
     currentAssets: assetCount.count || 0,
     currentUsers: userCount.count || 0,
@@ -175,7 +180,10 @@ export function getFeatureAccessLevel(ctx: EntitlementContext, feature: Feature)
  * Check if org can create more assets
  */
 export function canCreateAsset(ctx: EntitlementContext): boolean {
-  if (ctx.maxAssets >= 999999) return true;
+  // There is no unlimited tier any more. This used to short-circuit on the
+  // old enterprise sentinel (999999); with subscription_plans.max_assets now
+  // 2147483647 on the only active plan row, that check granted every
+  // organization unlimited assets. Capacity is finite and always compared.
   return ctx.currentAssets < ctx.maxAssets;
 }
 
@@ -183,6 +191,14 @@ export function canCreateAsset(ctx: EntitlementContext): boolean {
  * Check if org can invite more users
  */
 export function canInviteUser(ctx: EntitlementContext): boolean {
-  if (ctx.maxUsers >= 999999) return true;
-  return ctx.currentUsers < ctx.maxUsers;
+  // Users are UNLIMITED under capacity pricing, deliberately: what is sold is
+  // asset capacity, and seats are not metered. The subscription page states
+  // "unlimited users" as an included feature.
+  //
+  // This used to be a >= 999999 sentinel check that happened to return true
+  // because max_users on the travixo row is the int4 sentinel. That produced
+  // the right answer for the wrong reason, and would have started refusing
+  // invitations the moment anyone put a real number in that column. Stated
+  // outright instead.
+  return true;
 }
