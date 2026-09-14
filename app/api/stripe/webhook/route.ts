@@ -56,13 +56,31 @@ export async function POST(request: NextRequest) {
 
     step = 'verify_signature';
     const stripeClient = getStripe();
+
+    // Fail loudly and distinctly on a missing secret. The non-null assertion
+    // that used to be here passed `undefined` straight into constructEvent,
+    // which reports it as a SIGNATURE failure -- sending whoever debugs it
+    // looking for a mismatched secret rather than an absent one. Signature
+    // verification is never skipped; an unconfigured endpoint refuses instead.
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      console.error('[Webhook] STRIPE_WEBHOOK_SECRET is not set; refusing to process events');
+      Sentry.captureException(new Error('STRIPE_WEBHOOK_SECRET is not set'), {
+        tags: { area: 'stripe_webhook', step: 'verify_signature' },
+      });
+      return NextResponse.json(
+        { error: 'Webhook is not configured: STRIPE_WEBHOOK_SECRET is not set' },
+        { status: 500 }
+      );
+    }
+
     let event: Stripe.Event;
 
     try {
       event = stripeClient.webhooks.constructEvent(
         body,
         signature,
-        process.env.STRIPE_WEBHOOK_SECRET!
+        webhookSecret
       );
     } catch (err: any) {
       console.error('[Webhook] Signature failed:', err.message);
