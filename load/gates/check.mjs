@@ -54,7 +54,7 @@ const checks = {
   // Item 4: public pricing shared-cacheable; gated reference data private only.
   G4() {
     const p = read('app/api/subscriptions/plans/route.ts')
-    const e = read('app/api/vgp/equipment-types/route.ts')
+    const e = read('app/api/vgp/regulatory-profiles/route.ts')
     const imports = p.split('\n').filter((l) => l.trim().startsWith('import')).join('\n')
     const pub = p.includes('s-maxage=3600') && !imports.includes('@/lib/supabase/server')
     const priv = e.includes('private, max-age=3600')
