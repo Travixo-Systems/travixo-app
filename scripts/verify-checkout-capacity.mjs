@@ -129,7 +129,13 @@ try {
 } catch { /* handled below */ }
 
 const KEY = env.STRIPE_SECRET_KEY
-const MONTHLY = env.STRIPE_PRICE_TRAVIXO_MONTHLY
+
+// Prefer an explicit TEST-mode copy of the graduated price when one exists.
+// STRIPE_PRICE_TRAVIXO_* are the LIVE ids the app runs on; retrieving them
+// with a test key 404s, which is why this probe skips by default. A test-mode
+// twin under STRIPE_PRICE_TESTTRAVIXO_* lets the amounts actually be checked.
+const MONTHLY = env.STRIPE_PRICE_TESTTRAVIXO_MONTHLY || env.STRIPE_PRICE_TRAVIXO_MONTHLY
+const USING_TEST_TWIN = !!env.STRIPE_PRICE_TESTTRAVIXO_MONTHLY
 
 if (!KEY) {
   skip('no STRIPE_SECRET_KEY in .env.local -- cannot probe Stripe')
@@ -153,6 +159,14 @@ if (!KEY) {
       `GET /v1/prices/${MONTHLY} returned ${probe.status}`
     )
   } else {
+    // The twin only proves anything if its tiers match the live grid, so the
+    // amount assertions below are the real check on it.
+    console.log(
+      USING_TEST_TWIN
+        ? 'NOTE  probing the test-mode twin (STRIPE_PRICE_TESTTRAVIXO_MONTHLY)'
+        : 'NOTE  probing the configured price in test mode'
+    )
+
     async function createSession(quantity) {
       const b = new URLSearchParams()
       b.append('mode', 'subscription')
