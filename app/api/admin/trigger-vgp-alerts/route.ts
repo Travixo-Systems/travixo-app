@@ -2,53 +2,26 @@
 // Manual VGP Alert Trigger - Admin Testing Endpoint
 // POST /api/admin/trigger-vgp-alerts
 //
-// Protected: Only users with role 'admin' or 'owner' can trigger
-// Returns: JSON summary of what was (or would be) sent
+// Protected: PLATFORM ADMINS ONLY (public.platform_admins membership).
 //
-// CORRECTED: Uses existing @/lib/supabase/server createClient
-//            instead of creating an inline client
+// This runs the real VGP alert cron and SENDS REAL EMAIL to customer
+// recipients. It is not a read-only diagnostic.
+//
+// It previously gated on the caller's TENANT role (users.role in
+// ('admin','owner')). That is a different privilege model: under B1 a platform
+// admin is a platform_admins row whose users.role is an ordinary 'member' with
+// a NULL organization_id. So the old check simultaneously
+//   - admitted every tenant owner/admin of every organization, and
+//   - excluded the actual platform admins.
+// See lib/auth/requireSuperAdminApi.ts for the model.
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { requireSuperAdminApi } from '@/lib/auth/requireSuperAdminApi';
 import { runVGPAlertsCron } from '@/app/api/cron/vgp-alerts/route';
 
 const LOG_PREFIX = '[VGP-MANUAL-TRIGGER]';
-
-// ---------------------------------------------------------------------------
-// Auth helper: Get current user via existing server client
-// ---------------------------------------------------------------------------
-
-async function getAuthenticatedUser() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    return null;
-  }
-
-  // Fetch user role from users table
-  const { data: userData } = await supabase
-    .from('users')
-    .select('role, organization_id')
-    .eq('id', user.id)
-    .single() as { data: { role: string; organization_id: string } | null; error: unknown };
-
-  if (!userData) {
-    return null;
-  }
-
-  return {
-    id: user.id,
-    email: user.email,
-    role: userData.role,
-    organization_id: userData.organization_id,
-  };
-}
 
 // ---------------------------------------------------------------------------
 // Route Handler
@@ -57,33 +30,23 @@ async function getAuthenticatedUser() {
 export async function POST(request: NextRequest) {
   console.log(`${LOG_PREFIX} Manual trigger called`);
 
-  // 1. Authenticate user
-  const user = await getAuthenticatedUser();
+  // Platform-admin gate. Returns a 401/403 response rather than redirecting:
+  // a redirect is unreadable to a POST caller. Fails closed on RPC error.
+  const supabase = await createClient();
+  const gate = await requireSuperAdminApi(supabase);
 
-  if (!user) {
-    console.log(`${LOG_PREFIX} Unauthorized: no authenticated user`);
-    return NextResponse.json(
-      { error: 'Authentication required' },
-      { status: 401 }
-    );
-  }
-
-  // 2. Check admin/owner role
-  if (!['admin', 'owner'].includes(user.role)) {
+  if (gate.denied) {
     console.log(
-      `${LOG_PREFIX} Forbidden: user ${user.email} has role ${user.role}`
+      `${LOG_PREFIX} Denied: ${gate.email ?? 'unauthenticated'} is not a platform admin`
     );
-    return NextResponse.json(
-      { error: 'Only admin or owner users can trigger VGP alerts' },
-      { status: 403 }
-    );
+    return gate.denied;
   }
 
   console.log(
-    `${LOG_PREFIX} Authorized: ${user.email} (${user.role}) triggered manual alert run`
+    `${LOG_PREFIX} Authorized: ${gate.email} (platform admin) triggered manual alert run`
   );
 
-  // 3. Run the cron logic
+  // Run the cron logic.
   try {
     const result = await runVGPAlertsCron();
 
@@ -93,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       ...result,
-      triggered_by: user.email,
+      triggered_by: gate.email,
       triggered_at: new Date().toISOString(),
     });
   } catch (error) {
@@ -104,7 +67,7 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         error: msg,
-        triggered_by: user.email,
+        triggered_by: gate.email,
         triggered_at: new Date().toISOString(),
       },
       { status: 500 }

@@ -4589,6 +4589,101 @@ export const translations = {
     retry: { en: "Retry", fr: "Réessayer" },
     backToHome: { en: "Back to home", fr: "Retour à l'accueil" },
   },
+
+  // ============================================================================
+  // PLATFORM ADMIN - EVIDENCE
+  // Exception-first detectors over live data. Admin-only surface.
+  // ============================================================================
+  adminEvidence: {
+    pageTitle: { en: "Evidence", fr: "Preuves" },
+    pageSubtitle: {
+      en: "Detectors over live data. Exceptions first, aggregates below.",
+      fr: "Détecteurs sur données réelles. Exceptions d'abord, agrégats ensuite.",
+    },
+    ruleHeading: { en: "Rule", fr: "Règle" },
+    noRows: { en: "No rows match this detector.", fr: "Aucune ligne ne correspond à ce détecteur." },
+    detectorFailed: {
+      en: "This detector could not run, so zero rows does not mean zero problems.",
+      fr: "Ce détecteur n'a pas pu s'exécuter : zéro ligne ne signifie donc pas zéro problème.",
+    },
+    rowsFound: { en: "rows found", fr: "lignes trouvées" },
+    legacyNote: {
+      en: "These rows predate the atomic write introduced on 2026-09-03. They are damage already recorded, not a leak still running.",
+      fr: "Ces lignes sont antérieures à l'écriture atomique introduite le 2026-09-03. Il s'agit de dommages déjà enregistrés, pas d'une faille encore active.",
+    },
+
+    // D1
+    d1Title: { en: "D1 Atomic disagreement", fr: "D1 Désaccord atomique" },
+    d1Rule: {
+      en: "On an asset's latest inspection: result is failed while the asset is not out_of_service (Rule A), or result is failed while its active schedule is not marked failed (Rule B). Archived assets and schedules are excluded.",
+      fr: "Sur la dernière inspection d'un équipement : résultat failed alors que l'équipement n'est pas out_of_service (Règle A), ou résultat failed alors que son planning actif n'est pas marqué failed (Règle B). Équipements et plannings archivés exclus.",
+    },
+    d1RuleExcluded: {
+      en: "Not used as a rule: schedule.last_inspection_date differing from the latest inspection date. That matches 549 rows which were rewritten in bulk by the VGP due-date reseed, so it would report a deliberate migration as a defect.",
+      fr: "Règle écartée : last_inspection_date du planning différent de la dernière date d'inspection. Cela correspond à 549 lignes réécrites en masse par le reseed des échéances VGP, ce qui signalerait une migration délibérée comme un défaut.",
+    },
+    d1RuleA: { en: "Failed, still in service", fr: "Échec, toujours en service" },
+    d1RuleB: { en: "Failed, schedule disagrees", fr: "Échec, planning en désaccord" },
+    d1Clean: {
+      en: "No asset has a failed inspection contradicted by its status or schedule.",
+      fr: "Aucun équipement n'a d'inspection en échec contredite par son statut ou son planning.",
+    },
+    d1AssetsInspected: { en: "assets carrying an inspection", fr: "équipements avec une inspection" },
+
+    // D2
+    d2Title: { en: "D2 Documentary gaps", fr: "D2 Lacunes documentaires" },
+    d2Rule: {
+      en: "Inspection with no certificate_url (Gap A), or a certificate present whose asset reference does not resolve (Gap B). File existence in storage is not checked and is not claimed.",
+      fr: "Inspection sans certificate_url (Lacune A), ou certificat présent dont la référence d'équipement ne se résout pas (Lacune B). L'existence du fichier en stockage n'est pas vérifiée ni affirmée.",
+    },
+    d2GapA: { en: "No certificate", fr: "Aucun certificat" },
+    d2GapB: { en: "Unresolvable reference", fr: "Référence non résolue" },
+    d2Clean: {
+      en: "Every inspection carries a certificate and resolves to an asset.",
+      fr: "Chaque inspection possède un certificat et se rattache à un équipement.",
+    },
+    d2WithCertificate: { en: "of inspections carry a certificate", fr: "des inspections ont un certificat" },
+
+    // D3
+    d3Title: { en: "D3 Rental expiry", fr: "D3 Expiration en location" },
+    d3Rule: {
+      en: "Active rental whose asset falls due for VGP before the expected return date. The machine becomes non-conformant while standing on a customer site, where nobody can inspect it.",
+      fr: "Location active dont l'équipement arrive à échéance VGP avant la date de retour prévue. La machine devient non conforme alors qu'elle est sur un site client, où personne ne peut la vérifier.",
+    },
+    d3Clean: {
+      en: "No active rental outlives its asset's VGP due date.",
+      fr: "Aucune location active ne dépasse l'échéance VGP de son équipement.",
+    },
+    d3Unscheduled: {
+      en: "Active rentals whose asset has no VGP schedule at all. These cannot breach the rule because there is no due date to compare, but they sit outside the compliance system entirely: no alert, no digest, no DREETS report.",
+      fr: "Locations actives dont l'équipement n'a aucun planning VGP. Elles ne peuvent pas enfreindre la règle faute d'échéance à comparer, mais elles sont hors du système de conformité : ni alerte, ni digest, ni rapport DREETS.",
+    },
+    d3NoReturnDate: { en: "active rentals with no expected return date", fr: "locations actives sans date de retour prévue" },
+    d3WorstOffender: { en: "Worst offender", fr: "Cas le plus grave" },
+    d3PerOrg: { en: "Breaches per organization", fr: "Manquements par organisation" },
+    d3Days: { en: "days overdue at return", fr: "jours de retard au retour" },
+
+    // Shared column headers
+    colOrg: { en: "Organization", fr: "Organisation" },
+    colAsset: { en: "Asset", fr: "Équipement" },
+    colAssetStatus: { en: "Asset status", fr: "Statut équipement" },
+    colInspection: { en: "Inspection", fr: "Inspection" },
+    colInspectionDate: { en: "Inspection date", fr: "Date d'inspection" },
+    colResult: { en: "Result", fr: "Résultat" },
+    colSchedule: { en: "Schedule", fr: "Planning" },
+    colScheduleStatus: { en: "Schedule status", fr: "Statut planning" },
+    colRule: { en: "Rule", fr: "Règle" },
+    colKind: { en: "Kind", fr: "Type" },
+    colCertificate: { en: "Certificate", fr: "Certificat" },
+    colRental: { en: "Rental", fr: "Location" },
+    colClient: { en: "Client", fr: "Client" },
+    colCheckout: { en: "Checked out", fr: "Sortie" },
+    colExpectedReturn: { en: "Expected return", fr: "Retour prévu" },
+    colNextDue: { en: "VGP due", fr: "Échéance VGP" },
+    colDaysOver: { en: "Days over", fr: "Jours de dépassement" },
+    colCreated: { en: "Recorded", fr: "Enregistré" },
+    none: { en: "none", fr: "aucun" },
+  },
 } as const;
 
 /**

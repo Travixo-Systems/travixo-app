@@ -65,7 +65,9 @@ export default function AdminOrgActions({
   const [days, setDays] = useState<ExtendDays>(ALLOWED_EXTEND_DAYS[0])
   const [endMode, setEndMode] = useState<EndMode>(ALLOWED_END_MODES[0])
   const [confirmText, setConfirmText] = useState('')
-  const [paidPlan, setPaidPlan] = useState<PlanSlug>(ALLOWED_PLAN_SLUGS[1])
+  // Index 0, not 1: the list is the set of ACTIVE plans and currently holds a
+  // single entry, so a hardcoded [1] would be undefined and submit no plan.
+  const [paidPlan, setPaidPlan] = useState<PlanSlug>(ALLOWED_PLAN_SLUGS[0])
   const [paidReason, setPaidReason] = useState('')
   const [message, setMessage] = useState<{ kind: 'ok' | 'err'; text: string } | null>(
     null
@@ -252,6 +254,15 @@ export default function AdminOrgActions({
             organization to paid and ends its pilot. Stripe will have no record
             of it, so the reason below is what makes this traceable later.
           </p>
+
+          <div className="mb-3 rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700">
+            <span className="font-medium">Asset capacity is not set by this.</span>{' '}
+            Licensed capacity is the quantity purchased on a Stripe
+            subscription, and there is no subscription here — so it stays empty
+            and the organization falls to the post-pilot floor of 100 assets. If
+            they hold more than that, agree the capacity and set it on a real
+            subscription; do not treat this control as having granted it.
+          </div>
 
           <div className="mb-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
             Only for payments that actually happened. If this organization just
