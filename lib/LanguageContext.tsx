@@ -29,7 +29,39 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const supabase = createClient();
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // TEMPORARY DIAGNOSTIC -- REMOVE BEFORE MERGE.
+      // This is the listener that actually navigates. Logged here, immediately
+      // before the decision, so the observed line is the one that fires.
+      try {
+        const cookiesNow = document.cookie
+          .split('; ')
+          .map((c) => c.split('=')[0])
+          .filter((n) => n.startsWith('travixo-auth'))
+        // Truncated subject + email DOMAIN only. This may run on a preview
+        // pointed at production data, so no token, no cookie value and no
+        // full email may reach the console. See components/SlotProbe.tsx.
+        let subject = '(no session)'
+        const token = (session as { access_token?: string } | null)?.access_token
+        if (token) {
+          const p = JSON.parse(atob(token.split('.')[1]))
+          const sub = typeof p.sub === 'string' ? p.sub.slice(0, 8) : '?'
+          const domain =
+            typeof p.email === 'string' && p.email.includes('@')
+              ? `@${p.email.split('@')[1]}`
+              : '(no email claim)'
+          subject = `${sub} ${domain}`
+        }
+        console.log(
+          `[LANGCTX s${getCurrentSlot()}] event=${event} subject=${subject} ` +
+            `cookies=${JSON.stringify(cookiesNow)} ` +
+            `willNavigate=${event === 'SIGNED_OUT'} ` +
+            `target=${event === 'SIGNED_OUT' ? slotUrl(getCurrentSlot(), '/login') : '-'}`
+        )
+      } catch {
+        // diagnostics must never break the handler
+      }
+
       if (event === 'SIGNED_OUT') {
         // slotUrl, not a bare '/login'. This provider is mounted app-wide, so
         // it fires in whichever tab saw SIGNED_OUT -- and a document
