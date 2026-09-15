@@ -80,7 +80,10 @@ export async function getEntitlementContext(): Promise<EntitlementContext | null
   return {
     organizationId: orgId,
     subscriptionStatus: sub?.status || 'trialing',
-    planSlug: sub?.plan?.slug || 'starter',
+    // Informational only: nothing decides on this any more. Defaulting to a
+    // retired slug ('starter') described a plan that is deactivated and that
+    // no organization points at.
+    planSlug: sub?.plan?.slug || 'travixo',
     // Licensed capacity, NOT the plan's max_assets: that is the int4 sentinel
     // on the travixo row. Mirrors org_max_assets(): pilot allowance while a
     // pilot runs, else what was actually licensed, else a finite floor.

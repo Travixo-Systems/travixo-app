@@ -246,10 +246,10 @@ export function useVGPAccess(): {
     return { access: 'full', isLoading: false };
   }
 
-  // 'travixo' is the single current plan; the rest are retired tiers, kept so
-  // an organization still carrying one is not demoted.
-  const planSlug = subscriptionInfo.subscription?.plan?.slug;
-  if (['travixo', 'professional', 'business', 'enterprise'].includes(planSlug || '')) {
+  // An active subscription, not a plan name. Mirrors the server computation in
+  // app/api/subscriptions/route.ts: with one plan an allowlist can only ever
+  // grant, and it rots silently the moment a slug changes.
+  if (ACTIVE_STATUSES.has(subscriptionInfo.subscription?.status || '')) {
     return { access: 'full', isLoading: false };
   }
 
