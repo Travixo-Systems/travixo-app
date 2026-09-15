@@ -3252,6 +3252,37 @@ export const translations = {
       en: "Other Alerts",
       fr: "Autres Alertes",
     },
+
+    // --- Scope headings -----------------------------------------------------
+    // Two sections on this page write to two different tables, and only one of
+    // them changes the signed-in user's own mail. Twice now, someone has set
+    // the ORGANISATION's digest control, seen it read "Weekly", and had no
+    // user_notification_preferences row behind it. These headings state the
+    // scope in the heading itself rather than leaving it to be inferred.
+    yoursTitle: {
+      en: "Your notifications",
+      fr: "Vos notifications",
+    },
+    yoursScope: {
+      en: "Applies to you only. Other members are unaffected.",
+      fr: "Ne s'applique qu'à vous. Les autres membres ne sont pas concernés.",
+    },
+    orgTitle: {
+      en: "Organisation defaults",
+      fr: "Paramètres par défaut de l'organisation",
+    },
+    orgScope: {
+      en: "Applies to members who have not set their own preferences. It does not change your own alerts.",
+      fr: "S'applique aux membres qui n'ont pas défini leurs propres préférences. Ne modifie pas vos propres alertes.",
+    },
+    orgScopeLink: {
+      en: "To change your own, use Your notifications above.",
+      fr: "Pour modifier les vôtres, utilisez Vos notifications ci-dessus.",
+    },
+    orgAdminOnly: {
+      en: "Only owners and admins can change these.",
+      fr: "Seuls les propriétaires et administrateurs peuvent les modifier.",
+    },
     assetAlerts: {
       en: "Asset movement alerts",
       fr: "Alertes de mouvement d'actifs",

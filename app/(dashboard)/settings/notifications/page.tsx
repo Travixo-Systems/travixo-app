@@ -104,9 +104,9 @@ export default function NotificationsSettingsPage() {
     setPreferences(prev => ({ ...prev, audit_alerts: !prev.audit_alerts }));
   };
 
-  const handleChangeDigestMode = (mode: string) => {
-    setPreferences(prev => ({ ...prev, digest_mode: mode }));
-  };
+  // No handleChangeDigestMode: the control it served is gone. digest_mode is
+  // still carried in state and in the PATCH payload, because the org API
+  // validates it, but nothing in the UI sets it any more.
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -173,14 +173,58 @@ export default function NotificationsSettingsPage() {
           )}
         </div>
 
-        {/* The signed-in user's own alert settings.
+        {/* ================================================================ */}
+        {/* SCOPE 1: YOURS                                                   */}
+        {/* ================================================================ */}
+        {/* First, and labelled by scope, because this is the only section on
+            the page that changes the signed-in user's own mail. It sat below
+            the organisation cards before, and twice someone scrolled to the
+            org "Digest Mode", set it to Weekly, and ended up with no
+            user_notification_preferences row at all -- the control they found
+            was not the control that governs their delivery.
+
             Outside the isEditing branches on purpose: those gate the
-            ORGANIZATION's defaults, which only owners and admins may change.
-            This block is every member's control over their own mail and has its
-            own save button, so it must not be hidden behind that edit mode. */}
-        <div className="mb-6">
+            ORGANISATION's defaults, which only owners and admins may change.
+            This block is every member's control over their own mail and has
+            its own save button, so it must not be hidden behind that mode. */}
+        <section aria-labelledby="notif-scope-yours" className="mb-10">
+          <div className="mb-3">
+            <h2
+              id="notif-scope-yours"
+              className="text-[17px] font-semibold text-[var(--text-primary,#1a1a1a)]"
+            >
+              {t('notifications.yoursTitle')}
+            </h2>
+            <p className="text-[13px] text-[var(--text-muted,#777)]">
+              {t('notifications.yoursScope')}
+            </p>
+          </div>
           <MyVGPAlertPreferences />
-        </div>
+        </section>
+
+        {/* ================================================================ */}
+        {/* SCOPE 2: THE ORGANISATION'S                                      */}
+        {/* ================================================================ */}
+        <section aria-labelledby="notif-scope-org">
+          <div className="mb-3 flex items-start justify-between gap-4">
+            <div>
+              <h2
+                id="notif-scope-org"
+                className="text-[17px] font-semibold text-[var(--text-primary,#1a1a1a)]"
+              >
+                {t('notifications.orgTitle')}
+              </h2>
+              <p className="text-[13px] text-[var(--text-muted,#777)]">
+                {t('notifications.orgScope')}{' '}
+                <span className="text-[var(--text-hint,#888)]">
+                  {t('notifications.orgScopeLink')}
+                </span>
+              </p>
+              <p className="text-[12px] text-[var(--text-hint,#888)] mt-1">
+                {t('notifications.orgAdminOnly')}
+              </p>
+            </div>
+          </div>
 
         {/* VIEW MODE */}
         {!isEditing && (
@@ -233,24 +277,21 @@ export default function NotificationsSettingsPage() {
               </div>
             </div>
 
-            {/* Digest Mode */}
-            <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
-              <h3 className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">
-                {t('notifications.digestMode')}
-              </h3>
-              <p className="text-[13px] text-[var(--text-hint,#888)] mb-4">{t('notifications.digestModeDesc')}</p>
+            {/* The organisation-level "Digest Mode" card used to sit here.
+                It is gone, not relabelled.
 
-              <div className="flex items-center justify-between py-3">
-                <span className="text-[15px] font-semibold text-[var(--text-secondary,#444)]">{t('notifications.digestMode')}</span>
-                <span className="text-[15px] text-[var(--text-primary,#1a1a1a)]">
-                  {preferences.digest_mode === 'daily' && t('notifications.daily')}
-                  {preferences.digest_mode === 'weekly' && t('notifications.weekly')}
-                  {preferences.digest_mode === 'realtime' && t('notifications.realtime')}
-                  {preferences.digest_mode === 'immediate' && t('notifications.immediate')}
-                  {preferences.digest_mode === 'never' && t('notifications.never')}
-                </span>
-              </div>
-            </div>
+                organizations.notification_preferences.digest_mode feeds NO
+                routing: lib/vgp/notification-routing.ts never reads it, and
+                delivery frequency comes from user_notification_preferences
+                .vgp_frequency alone, falling back to DEFAULT_FREQUENCY when a
+                user has no row. So the card rendered "Weekly (Monday 8:00 AM)"
+                while the person reading it was still on daily_digest -- and
+                twice that is exactly what happened.
+
+                Relabelling a control that changes nothing would have kept the
+                trap and added a caveat. The field stays in state and in the
+                PATCH payload, because the org API still validates it, but it
+                is no longer presented as a setting anyone can act on. */}
 
             {/* Other Alerts */}
             <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
@@ -344,29 +385,11 @@ export default function NotificationsSettingsPage() {
               </div>
             )}
 
-            {/* Digest Mode */}
-            {preferences.email_enabled && (
-              <div className="bg-[var(--card-bg,#edeff2)] shadow rounded-lg p-6">
-                <h3 className="text-[15px] font-semibold text-[var(--text-primary,#1a1a1a)] mb-1">
-                  {t('notifications.digestMode')}
-                </h3>
-                <p className="text-[13px] text-[var(--text-hint,#888)] mb-4">{t('notifications.digestModeDesc')}</p>
-
-                <div>
-                  <select
-                    value={preferences.digest_mode || 'daily'}
-                    onChange={(e) => handleChangeDigestMode(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="immediate">{t('notifications.immediate')}</option>
-                    <option value="realtime">{t('notifications.realtime')}</option>
-                    <option value="daily">{t('notifications.daily')}</option>
-                    <option value="weekly">{t('notifications.weekly')}</option>
-                    <option value="never">{t('notifications.never')}</option>
-                  </select>
-                </div>
-              </div>
-            )}
+            {/* The editable Digest Mode select is removed for the same reason
+                as its view-mode counterpart above: digest_mode reaches no
+                routing code, so offering it as a choice invited people to set
+                their delivery frequency somewhere that could never affect it.
+                Personal frequency lives in the "Your notifications" section. */}
 
             {/* Other Alerts */}
             {preferences.email_enabled && (
@@ -410,6 +433,7 @@ export default function NotificationsSettingsPage() {
             </div>
           </form>
         )}
+        </section>
       </div>
     </div>
   );
