@@ -1,93 +1,65 @@
 // app/(admin)/admin/orgs/[id]/page.tsx
-// Platform-admin org detail: organization fields + users + Phase 2 write
-// actions (extend trial/pilot, feature flags) + recent admin audit log.
-// Server component. Gated by app/(admin)/admin/layout.tsx.
+// Platform-admin organisation detail.
+//
+// Server component. Gated by app/(admin)/admin/layout.tsx, which calls
+// requireSuperAdmin() for every /admin route; this page adds no weaker check
+// of its own and performs no writes. The write controls it renders are the
+// existing AdminOrgActions island, unchanged.
+//
+// READS GO THROUGH THE COOKIE-BOUND ANON CLIENT
+//
+// lib/supabase/server.ts, the same client /admin/evidence uses. Not
+// service-role. Every cross-tenant read below works only because of the
+// super_admin_* SELECT policies added in 4a06175; without them an org-less
+// platform admin reads zero rows with no error, which is how this surface
+// came to render a confident empty answer over 733 live inspections.
+//
+// WHAT IS OMITTED, AND WHY IT IS OMITTED RATHER THAN ZEROED
+//
+// Two of the three header actions the brief asks for have no backing path.
+// There is no admin impersonation route anywhere in the codebase, and
+// licensed_capacity is written only by Stripe checkout, the Stripe webhook,
+// /api/stripe/subscription/capacity and the capacity-drift cron - never by an
+// admin path. Rendering "Voir comme l'organisation" and "Modifier la capacite"
+// would be two controls that do nothing, so the page states their absence
+// instead. Only "Prolonger l'essai" is real, and it is the existing
+// extendTrial action.
+//
+// The Pilot scope panel is omitted per-organization when the org has
+// converted to paid: there is no pilot window left to describe.
 
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { fetchSignInIndex } from '@/lib/admin/lastConnected'
+import { mostRecentSignIn } from '@/lib/admin/orgHealth'
+import { accessLevel, PILOT_MAX_ASSETS } from '@/lib/billing/access-model'
+import {
+  fetchChain,
+  fetchUsage,
+  fetchBilling,
+  fetchAttention,
+  fetchRecentEvents,
+} from '@/lib/admin/orgDetail'
 import {
   canEndPilot,
   canExtendPilot,
   extendUnavailableReason,
-  formatLastConnected,
-  mostRecentSignIn,
-  orgHealth,
-  daysAgo,
 } from '@/lib/admin/orgHealth'
 import AdminOrgActions from './AdminOrgActions'
+import AdminOrgDetailView, { type PilotScope } from './AdminOrgDetailView'
 
 export const dynamic = 'force-dynamic'
-
-function formatDate(value: string | null): string {
-  if (!value) return '-'
-  return value.slice(0, 10)
-}
-
-function formatDateTime(value: string | null): string {
-  if (!value) return '-'
-  // YYYY-MM-DD HH:MM (UTC slice), locale-independent.
-  return value.slice(0, 16).replace('T', ' ')
-}
 
 interface OrgDetail {
   id: string
   name: string
   slug: string
-  subscription_tier: string | null
   subscription_status: string | null
   is_pilot: boolean
-  trial_ends_at: string | null
   pilot_start_date: string | null
   pilot_end_date: string | null
   converted_to_paid: boolean
   feature_flags: Record<string, boolean> | null
-  created_at: string
-}
-
-interface OrgUser {
-  id: string
-  email: string
-  full_name: string | null
-  role: string
-  language: string | null
-  created_at: string
-}
-
-interface AuditRow {
-  id: string
-  actor_id: string | null
-  action: string
-  before: Record<string, unknown> | null
-  after: Record<string, unknown> | null
-  created_at: string
-}
-
-// Compact "before -> after" summary tailored to each audited action.
-function summarizeAudit(row: AuditRow): string {
-  const before = row.before ?? {}
-  const after = row.after ?? {}
-  if (row.action === 'extend_trial') {
-    const branch = (after as { branch?: string }).branch ?? 'trial'
-    const field = branch === 'pilot' ? 'pilot_end_date' : 'trial_ends_at'
-    const b = (before as Record<string, string | null>)[field]
-    const a = (after as Record<string, string | null>)[field]
-    const days = (after as { days?: number }).days
-    return `${branch} ${formatDate(b ?? null)} -> ${formatDate(a ?? null)} (+${days ?? '?'}d)`
-  }
-  if (row.action === 'set_feature_flag') {
-    const flag = (after as { flag?: string }).flag ?? '?'
-    const enabled = (after as { enabled?: boolean }).enabled
-    return `${flag} -> ${enabled ? 'enabled' : 'disabled'}`
-  }
-  if (row.action === 'end_pilot') {
-    const mode = (after as { mode?: string }).mode ?? '?'
-    const b = (before as Record<string, string | null>).pilot_end_date
-    const a = (after as Record<string, string | null>).pilot_end_date
-    return `ended (${mode}) ${formatDate(b ?? null)} -> ${formatDate(a ?? null)}`
-  }
-  return '-'
 }
 
 export default async function AdminOrgDetailPage({
@@ -99,11 +71,10 @@ export default async function AdminOrgDetailPage({
   const { id } = await params
   const supabase = await createClient()
 
-  // --- Organization -----------------------------------------------------
   const { data: org } = await supabase
     .from('organizations')
     .select(
-      'id, name, slug, subscription_tier, subscription_status, is_pilot, trial_ends_at, pilot_start_date, pilot_end_date, converted_to_paid, feature_flags, created_at'
+      'id, name, slug, subscription_status, is_pilot, pilot_start_date, pilot_end_date, converted_to_paid, feature_flags'
     )
     .eq('id', id)
     .single()
@@ -113,333 +84,122 @@ export default async function AdminOrgDetailPage({
   }
 
   const o = org as OrgDetail
-  const flags: Record<string, boolean> = o.feature_flags ?? {}
 
-  // --- Users in this org ------------------------------------------------
-  const { data: usersData } = await supabase
+  // --- Headline counts ---------------------------------------------------
+  const [assetCount, activeRentalCount, inspectionCount, userCount] =
+    await Promise.all([
+      supabase
+        .from('assets')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', id),
+      supabase
+        .from('rentals')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', id)
+        .eq('status', 'active'),
+      supabase
+        .from('vgp_inspections')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', id),
+      supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', id),
+    ])
+
+  const assets = assetCount.count ?? 0
+
+  // --- Panels, in parallel: they share no state --------------------------
+  const [chain, usage, billing, events] = await Promise.all([
+    fetchChain(supabase, id),
+    fetchUsage(supabase, id),
+    fetchBilling(supabase, id),
+    fetchRecentEvents(supabase, id),
+  ])
+
+  // --- Sign-in recency, for the attention panel --------------------------
+  // auth.users.last_sign_in_at is not reachable through PostgREST, so it comes
+  // from the Auth admin API. On failure `known` is false and the stale-signin
+  // check is skipped rather than asserted: an unreadable index is not evidence
+  // that nobody signed in.
+  const { data: memberRows } = await supabase
     .from('users')
-    .select('id, email, full_name, role, language, created_at')
+    .select('id')
     .eq('organization_id', id)
-    .order('created_at', { ascending: false })
 
-  const users: OrgUser[] = (usersData as OrgUser[] | null) ?? []
-
-  // --- Engagement inputs -------------------------------------------------
-  // last_sign_in_at lives in auth.users, which PostgREST does not expose,
-  // so it comes from the Auth admin API. A failure yields known:false and
-  // the UI renders "unknown" rather than a misleading "never".
+  const memberIds = ((memberRows as { id: string }[] | null) ?? []).map((u) => u.id)
   const signIns = await fetchSignInIndex()
   const lastConnected = mostRecentSignIn(
-    users.map((u) => signIns.byUserId.get(u.id) ?? null)
+    memberIds.map((uid) => signIns.byUserId.get(uid) ?? null)
   )
 
-  // Real vs demo assets: demo rows are seeded by us, so they say nothing
-  // about whether the customer adopted the product.
-  const { data: assetRows } = await supabase
-    .from('assets')
-    .select('id, is_demo_data')
-    .eq('organization_id', id)
+  const attention = await fetchAttention(supabase, id, {
+    assetCount: assets,
+    licensedCapacity: billing.licensedCapacity,
+    daysSinceSignIn: lastConnected.daysAgo,
+    signInKnown: signIns.known,
+  })
 
-  const assets = (assetRows as { id: string; is_demo_data: boolean }[] | null) ?? []
-  const demoAssets = assets.filter((a) => a.is_demo_data).length
-  const realAssets = assets.length - demoAssets
+  // --- Pilot scope -------------------------------------------------------
+  // Applicable only while there is a pilot window to describe. A converted
+  // organization has none, and the panel says so rather than rendering
+  // four empty rows.
+  const daysRemaining =
+    o.pilot_end_date != null
+      ? Math.ceil((new Date(o.pilot_end_date).getTime() - Date.now()) / 86400000)
+      : null
 
-  const { count: inspectionCount } = await supabase
-    .from('vgp_inspections')
-    .select('id', { count: 'exact', head: true })
-    .eq('organization_id', id)
+  const pilot: PilotScope = {
+    applicable: o.is_pilot && !o.converted_to_paid,
+    isPilot: o.is_pilot,
+    startDate: o.pilot_start_date,
+    endDate: o.pilot_end_date,
+    daysRemaining,
+    includedCapacity: PILOT_MAX_ASSETS,
+  }
 
-  const health = orgHealth({
+  // --- Access level ------------------------------------------------------
+  // licensed_capacity is passed explicitly: accessLevel() treats it as proof
+  // of payment, and omitting it computes a paying customer as though they had
+  // never subscribed.
+  const access = accessLevel({
     is_pilot: o.is_pilot,
     pilot_start_date: o.pilot_start_date,
     pilot_end_date: o.pilot_end_date,
     converted_to_paid: o.converted_to_paid,
-    realAssets,
-    demoAssets,
-    userCount: users.length,
-    inspectionCount: inspectionCount ?? 0,
-    lastConnected,
+    licensed_capacity: billing.licensedCapacity,
   })
 
-  const extendAllowed = canExtendPilot(o)
-  const extendReason = extendUnavailableReason(o)
-  const endAllowed = canEndPilot(o)
-
-  // --- Recent admin audit log for THIS org ------------------------------
-  // target_org_id is captured explicitly by the Phase 2 functions (the
-  // admin is org-less, so the acted-on org is never inferred).
-  const { data: auditData } = await supabase
-    .from('admin_audit_log')
-    .select('id, actor_id, action, before, after, created_at')
-    .eq('target_org_id', id)
-    .order('created_at', { ascending: false })
-    .limit(10)
-
-  const audit: AuditRow[] = (auditData as AuditRow[] | null) ?? []
-
-  // Resolve actor emails (admins have a users row in B1).
-  const actorIds = Array.from(
-    new Set(audit.map((a) => a.actor_id).filter((x): x is string => !!x))
-  )
-  const actorEmailById = new Map<string, string>()
-  if (actorIds.length > 0) {
-    const { data: actors } = await supabase
-      .from('users')
-      .select('id, email')
-      .in('id', actorIds)
-    for (const a of (actors as { id: string; email: string }[] | null) ?? []) {
-      actorEmailById.set(a.id, a.email)
-    }
-  }
-
-  const fields: { label: string; value: string }[] = [
-    { label: 'Name', value: o.name },
-    { label: 'Slug', value: o.slug },
-    { label: 'Tier', value: o.subscription_tier ?? '-' },
-    { label: 'Status', value: o.subscription_status ?? '-' },
-    { label: 'Pilot', value: o.is_pilot ? 'Yes' : 'No' },
-    { label: 'Trial ends', value: formatDate(o.trial_ends_at) },
-    { label: 'Pilot ends', value: formatDate(o.pilot_end_date) },
-    { label: 'Converted to paid', value: o.converted_to_paid ? 'Yes' : 'No' },
-    { label: 'Access level', value: health.access },
-    {
-      label: 'Last connected',
-      value: formatLastConnected(lastConnected, signIns.known),
-    },
-    { label: 'Created', value: formatDate(o.created_at) },
-    { label: 'Org ID', value: o.id },
-  ]
-
-  const engagementClass: Record<string, string> = {
-    active: 'bg-green-100 text-green-800',
-    idle: 'bg-amber-100 text-amber-800',
-    dormant: 'bg-red-100 text-red-800',
-    never: 'bg-gray-200 text-gray-700',
-  }
-
-  const accessClass: Record<string, string> = {
-    full: 'bg-green-100 text-green-800',
-    read_only: 'bg-amber-100 text-amber-800',
-    locked: 'bg-red-100 text-red-800',
-  }
+  const flags: Record<string, boolean> = o.feature_flags ?? {}
 
   return (
-    <div className="space-y-10">
-      <div>
-        <Link href="/admin" className="text-sm text-blue-700 hover:underline">
-          ← Back to organizations
-        </Link>
-      </div>
-
-      {/* ============================ Org fields ======================== */}
-      <section>
-        <h1 className="mb-4 text-xl font-semibold">{o.name}</h1>
-        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-          <dl className="divide-y divide-gray-100">
-            {fields.map((f) => (
-              <div key={f.label} className="grid grid-cols-3 gap-4 px-4 py-3 text-sm">
-                <dt className="font-medium text-gray-500">{f.label}</dt>
-                <dd className="col-span-2 text-gray-900">{f.value}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-      </section>
-
-      {/* ============================ Pilot health ====================== */}
-      <section>
-        <h2 className="mb-4 text-xl font-semibold">Engagement</h2>
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <div>
-              <div className="text-xs uppercase tracking-wide text-gray-500">
-                Last connected
-              </div>
-              <div className="mt-1 text-lg font-semibold text-gray-900">
-                {formatLastConnected(lastConnected, signIns.known)}
-              </div>
-              <span
-                className={`mt-1 inline-block rounded px-1.5 py-0.5 text-xs font-medium ${
-                  engagementClass[health.engagement] ?? 'bg-gray-200 text-gray-700'
-                }`}
-              >
-                {health.engagement}
-              </span>
-            </div>
-            <div>
-              <div className="text-xs uppercase tracking-wide text-gray-500">
-                Real assets
-              </div>
-              <div className="mt-1 text-lg font-semibold text-gray-900">
-                {realAssets}
-              </div>
-              <div className="text-xs text-gray-500">{demoAssets} demo</div>
-            </div>
-            <div>
-              <div className="text-xs uppercase tracking-wide text-gray-500">
-                VGP inspections
-              </div>
-              <div className="mt-1 text-lg font-semibold text-gray-900">
-                {inspectionCount ?? 0}
-              </div>
-            </div>
-            <div>
-              <div className="text-xs uppercase tracking-wide text-gray-500">
-                Access
-              </div>
-              <div className="mt-1">
-                <span
-                  className={`inline-block rounded px-2 py-0.5 text-sm font-medium ${
-                    accessClass[health.access] ?? 'bg-gray-200 text-gray-700'
-                  }`}
-                >
-                  {health.access}
-                </span>
-              </div>
-              {health.daysLeft !== null && (
-                <div className="mt-1 text-xs text-gray-500">
-                  {health.daysLeft >= 0
-                    ? `${health.daysLeft}d left`
-                    : `ended ${Math.abs(health.daysLeft)}d ago`}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="border-t border-gray-100 pt-3">
-            <div className="mb-2 flex items-center gap-2">
-              <span className="text-xs uppercase tracking-wide text-gray-500">
-                Conversion signals
-              </span>
-              <span className="rounded bg-gray-900 px-1.5 py-0.5 text-xs font-medium text-white">
-                score {health.score}
-              </span>
-            </div>
-            <ul className="list-inside list-disc space-y-0.5 text-sm text-gray-700">
-              {health.signals.map((s) => (
-                <li key={s}>{s}</li>
-              ))}
-            </ul>
-            <p className="mt-2 text-xs text-gray-400">
-              Triage hint only — never used for billing or access decisions.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ============================ Actions =========================== */}
-      <section>
-        <h2 className="mb-4 text-xl font-semibold">Actions</h2>
+    <AdminOrgDetailView
+      orgName={o.name}
+      orgSlug={o.slug}
+      accessLevel={access}
+      subscriptionStatus={o.subscription_status}
+      assetCount={assets}
+      activeRentals={activeRentalCount.count ?? 0}
+      inspections={inspectionCount.count ?? 0}
+      users={userCount.count ?? 0}
+      chain={chain}
+      usage={usage}
+      billing={billing}
+      pilot={pilot}
+      attention={attention}
+      events={events}
+      actions={
         <AdminOrgActions
           orgId={o.id}
           orgName={o.name}
           isPilot={o.is_pilot}
           flags={flags}
-          canExtend={extendAllowed}
-          extendReason={extendReason}
-          canEnd={endAllowed}
+          canExtend={canExtendPilot(o)}
+          extendReason={extendUnavailableReason(o)}
+          canEnd={canEndPilot(o)}
           alreadyPaid={o.converted_to_paid}
         />
-      </section>
-
-      {/* ============================ Users ============================= */}
-      <section>
-        <div className="mb-4 flex items-baseline justify-between">
-          <h2 className="text-xl font-semibold">Users</h2>
-          <span className="text-sm text-gray-500">{users.length} total</span>
-        </div>
-
-        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
-              <tr>
-                <th className="px-4 py-3 font-medium">Email</th>
-                <th className="px-4 py-3 font-medium">Name</th>
-                <th className="px-4 py-3 font-medium">Role</th>
-                <th className="px-4 py-3 font-medium">Language</th>
-                <th className="px-4 py-3 font-medium">Last connected</th>
-                <th className="px-4 py-3 font-medium">Created</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {users.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
-                    No users in this organization.
-                  </td>
-                </tr>
-              ) : (
-                users.map((u) => (
-                  <tr key={u.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-gray-900">{u.email}</td>
-                    <td className="px-4 py-3 text-gray-600">{u.full_name ?? '-'}</td>
-                    <td className="px-4 py-3 text-gray-600">{u.role}</td>
-                    <td className="px-4 py-3 text-gray-600">{u.language ?? '-'}</td>
-                    <td className="px-4 py-3 text-gray-600">
-                      {(() => {
-                        if (!signIns.known) return 'unknown'
-                        const iso = signIns.byUserId.get(u.id) ?? null
-                        if (!iso) return 'never'
-                        const d = daysAgo(iso)
-                        if (d === null) return 'unknown'
-                        if (d <= 0) return 'today'
-                        if (d === 1) return 'yesterday'
-                        return `${d}d ago`
-                      })()}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{formatDate(u.created_at)}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* ============================ Audit log ========================= */}
-      <section>
-        <div className="mb-4 flex items-baseline justify-between">
-          <h2 className="text-xl font-semibold">Admin activity</h2>
-          <span className="text-sm text-gray-500">last 10 actions</span>
-        </div>
-
-        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
-              <tr>
-                <th className="px-4 py-3 font-medium">When</th>
-                <th className="px-4 py-3 font-medium">Action</th>
-                <th className="px-4 py-3 font-medium">Change</th>
-                <th className="px-4 py-3 font-medium">Actor</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {audit.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-gray-400">
-                    No admin actions recorded for this organization.
-                  </td>
-                </tr>
-              ) : (
-                audit.map((a) => (
-                  <tr key={a.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-gray-600">
-                      {formatDateTime(a.created_at)}
-                    </td>
-                    <td className="px-4 py-3 text-gray-900">{a.action}</td>
-                    <td className="px-4 py-3 text-gray-600">{summarizeAudit(a)}</td>
-                    <td className="px-4 py-3 text-gray-600">
-                      {a.actor_id
-                        ? actorEmailById.get(a.actor_id) ?? a.actor_id
-                        : '-'}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </div>
+      }
+    />
   )
 }
