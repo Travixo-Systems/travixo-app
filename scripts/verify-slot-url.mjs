@@ -54,9 +54,17 @@ const fail = (m, d) => {
 
 const read = p => (existsSync(p) ? readFileSync(p, 'utf8') : null)
 
+// account-slot.ts imports './cookie-name' without an extension, which bare
+// Node cannot resolve. scripts/ts-alias-loader.mjs teaches it both that and
+// the '@/' alias, but it documented itself as a `node --import` flag and
+// nothing passed the flag -- so this gate exited 1 from the moment it was
+// written, on origin/main as well as here. Registering the hook inside the
+// script means it runs however it is invoked. Same repair as the two admin
+// gates in 98fb7a7.
 const AS = 'lib/supabase/account-slot.ts'
 let m
 try {
+  await import(pathToFileURL(resolve('scripts/ts-alias-loader.mjs')).href)
   m = await import(pathToFileURL(resolve(AS)).href)
 } catch (err) {
   console.log(`FAIL  cannot import ${AS}: ${err?.message}`)
