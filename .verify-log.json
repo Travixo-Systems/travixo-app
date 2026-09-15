@@ -1,0 +1,17 @@
+{
+  "verify-paid-status-e2e": {
+    "last_run": "2026-09-15T09:26:24.719Z",
+    "outcome": "pass",
+    "detail": null
+  },
+  "verify-conversion-e2e": {
+    "last_run": "2026-09-15T09:26:26.127Z",
+    "outcome": "pass",
+    "detail": null
+  },
+  "verify-readonly-enforcement": {
+    "last_run": "2026-09-15T09:26:28.107Z",
+    "outcome": "pass",
+    "detail": null
+  }
+}

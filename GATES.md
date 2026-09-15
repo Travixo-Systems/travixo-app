@@ -84,6 +84,32 @@ Prerequisite for G3-G5: a dev server for THIS app. Port 3000 was serving a diffe
   EXPECT: build verification passed
   EVIDENCE: bash, exit 0, tsc --noEmit silent, "build verification passed".
 
+## Staying true
+
+Evidence in this file is a snapshot. The three e2e gates (G3-G5) were the ones
+that went stale for three weeks, so their freshness is now itself verified
+rather than remembered:
+
+    npm run verify:e2e       run all three, RECORD each outcome + timestamp
+    npm run verify:fresh     FAIL if any is missing, failed, or older than 7d
+    npm run verify:report    the staleness table
+    npm run verify           static gates + freshness, in one command
+
+The record lives in .verify-log.json, tracked rather than gitignored, and is
+written by the runner itself. A date a human types rots exactly the way the
+gate did, so no date in this file is authoritative -- ask verify:report.
+
+The static gates need no server and no database, so they run automatically:
+`prebuild` invokes verify:static, which means the plan-slug sweep, write-gate
+coverage and access-model checks run on every `npm run build`, including
+Vercel's. Verified firing, and verified not to recurse (verify-build-clean
+shells out to `npm run build`, so it is deliberately NOT in prebuild).
+
+The e2e three cannot join them: they need a live server and write probe rows to
+the database, so a build hook would break deploys for environmental reasons.
+Freshness is the only automatic pressure available to them, which is why the
+ceiling is 7 days rather than a polite reminder.
+
 ## Status
 
 8 met with evidence, 0 unmet, 0 abandoned.
