@@ -57,9 +57,12 @@ async function org() {
 async function main() {
   if (!WHSEC) { fail('STRIPE_WEBHOOK_SECRET missing from the env file'); return }
 
+  // Reachability only. GET /api/stripe/webhook is secret-gated and answers 404
+  // without a CRON_SECRET bearer, which is deliberate: an unauthenticated
+  // caller cannot even confirm the endpoint exists. Any HTTP response proves
+  // the server is up; only a thrown fetch means it is not.
   try {
-    const p = await fetch(`${BASE}/api/stripe/webhook`)
-    if (!p.ok) { fail(`${BASE}/api/stripe/webhook not reachable (${p.status})`); return }
+    await fetch(`${BASE}/api/stripe/webhook`)
   } catch (err) { fail(`cannot reach ${BASE} -- start the dev server`, err?.message); return }
 
   const st = Date.now()
@@ -72,7 +75,7 @@ async function main() {
 
   // An expired pilot: day 31, unconverted. Exactly the customer who pays late.
   const o = (await (await fetch(`${U}/rest/v1/organizations`, { method: 'POST', headers: svcH, body: JSON.stringify({
-    name: `__unlazy_conv_${st}`, slug: `unlazy-conv-${st}`, subscription_tier: 'starter', subscription_status: 'trialing',
+    name: `__unlazy_conv_${st}`, slug: `unlazy-conv-${st}`, subscription_tier: 'travixo', subscription_status: 'trialing',
     is_pilot: true, pilot_start_date: day(-31), pilot_end_date: day(-1), trial_ends_at: day(-1), converted_to_paid: false,
   }) })).json())[0]
   created.orgId = o.id

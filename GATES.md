@@ -1,80 +1,106 @@
-# Gates: per-user notification preferences layer
+# Gates: verifier repair and a permanent plan-slug sweep
 
-OWNS: app/api/cron/vgp-alerts/**, app/api/cron/vgp-weekly-digest/**, app/api/settings/notifications/**, app/(dashboard)/settings/notifications/**, lib/email/**, lib/vgp/**, lib/i18n.ts, supabase/migrations/**, scripts/verify/**, vercel.json
+Scope: the three e2e verifiers seed and assert retired plan slugs, and one of them asserts a value
+the webhook no longer writes. Repair them, RUN them and report what actually happened, and add a
+permanent gate so the next plan-slug literal fails a check instead of surviving a fourth sweep.
 
-Scope: Per-user VGP alert frequency and thresholds overriding org defaults, with immediate / daily-digest / weekly-digest / off delivery modes, accurate subject lines, a recipients-type normalisation fix, a preferences link in every alert footer, and a settings UI.
+Prerequisite for G3-G5: a dev server for THIS app. Port 3000 was serving a different application
+("EcoRide V2"), so a server was started on :3100 and the three scripts were run against it.
 
-- [x] N1: user_notification_preferences migration — table, CHECK, UNIQUE, FK cascade, RLS (own-row SELECT/UPDATE, INSERT gated on org membership)
-  CHECK: node scripts/verify/verify-n1-schema.mjs
-  EXPECT: N1_SCHEMA_VERIFIED
-  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=ok: authenticated is granted | N1_SCHEMA_VERIFIED
+- [x] G1: the paid-status verifier fires a price the webhook can still resolve
+  CHECK: node -e "const s=require('fs').readFileSync('scripts/verify-paid-status-e2e.mjs','utf8');process.exit(!s.includes('STRIPE_PRICE_TRAVIXO_ANNUAL')||s.includes('STRIPE_PRICE_PROFESSIONAL_ANNUAL')?1:0)" && echo SWEEP_G1_OK
+  EXPECT: SWEEP_G1_OK
+  WHY: the script fired STRIPE_PRICE_PROFESSIONAL_ANNUAL, a sandbox test price.
+  cycleFromPriceId no longer resolves it and the webhook now throws on an
+  unresolvable price, so the event 500s before any assertion runs. Fixing only
+  the tier assertion would leave a script that still cannot pass.
+  EVIDENCE: bash, cwd D:/Dev/projects/travixo-app, exit 0, "SWEEP_G1_OK".
+  Caught a second defect while fixing it: a dangling `if (!PRO_ANNUAL)` guard
+  still referenced the renamed variable and would have thrown ReferenceError
+  before any assertion ran.
 
-- [x] N2: Preference resolution — user row wins, absent row falls back to org defaults, invalid values fall back rather than throw
-  CHECK: node scripts/verify/verify-n2-resolution.mjs
-  EXPECT: N2_RESOLUTION_VERIFIED
-  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=ok: unusable org timing falls back to the full default set | N2_RESOLUTION_VERIFIED
+- [x] G2: no verifier seeds or asserts a retired slug
+  CHECK: node -e "const fs=require('fs');const bad=['verify-paid-status-e2e','verify-conversion-e2e','verify-readonly-enforcement'].flatMap(f=>{const s=fs.readFileSync('scripts/'+f+'.mjs','utf8');return [...s.matchAll(/'(starter|professional|business|enterprise)'/g)].map(m=>f+':'+m[1])});console.log(bad.length?'LEFTOVER '+bad.join(','):'SWEEP_G2_OK');process.exit(bad.length?1:0)"
+  EXPECT: SWEEP_G2_OK
+  EVIDENCE: bash, exit 0, "SWEEP_G2_OK". Zero retired-slug literals across all
+  three verifiers.
 
-- [x] N3: Threshold filtering — a band whose preferenceDay is absent from the user array is skipped; overdue (0) is honoured as a real threshold
-  CHECK: node scripts/verify/verify-n3-thresholds.mjs
-  EXPECT: N3_THRESHOLDS_VERIFIED
-  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=ok: a band with zero items does not generate an email | N3_THRESHOLDS_VERIFIED
+- [x] G3: verify-paid-status-e2e passes against the running server
+  CHECK: node scripts/verify-paid-status-e2e.mjs .env.local http://localhost:3100
+  EXPECT: paid status e2e verification passed
+  EVIDENCE: bash, exit 0, "6/6 checks passed", "paid status e2e verification
+  passed". Includes the corrected assertion "tier updated to travixo", and
+  "subscription stored as active despite Stripe reporting trialing".
 
-- [x] N4: Delivery routing end to end — daily_digest recipient gets ONE merged email not per-threshold, off gets zero, no-row gets org defaults, immediate keeps per-band sends
-  CHECK: node scripts/verify/verify-n4-routing.mjs
-  EXPECT: N4_ROUTING_VERIFIED
-  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=ok: a mixed org sends 6 emails across 5 recipients, not 20 (got 6) | N4_ROUTING_VERIFIED
+- [x] G4: verify-conversion-e2e passes against the running server
+  CHECK: node scripts/verify-conversion-e2e.mjs .env.local http://localhost:3100
+  EXPECT: conversion e2e verification passed
+  EVIDENCE: bash, exit 0, "7/7 checks passed", "conversion e2e verification
+  passed". Carries its own negative control: an incorrectly signed event is
+  rejected 400, so signature verification is proven live rather than assumed.
 
-- [x] N5: Subject-line accuracy — reminder_1day says aujourd'hui/demain/dans n jours by actual days; reminder_7day uses the real count; other subjects unchanged
-  CHECK: node scripts/verify/verify-n5-subjects.mjs
-  EXPECT: N5_SUBJECTS_VERIFIED
-  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=ok: weekly digest subject builder exists | N5_SUBJECTS_VERIFIED
+- [x] G5: verify-readonly-enforcement passes against the running server
+  CHECK: node scripts/verify-readonly-enforcement.mjs .env.local http://localhost:3100
+  EXPECT: readonly enforcement verification passed
+  EVIDENCE: bash, exit 0, "4/4 checks passed", "readonly enforcement
+  verification passed". The full lifecycle: active pilot CAN write (201),
+  expired pilot REFUSED (423 pilot_read_only), locked account REFUSED (423
+  account_locked), converted paying customer CAN write despite an expired
+  pilot.
+  FIRST RUN FAILED, exit 1: "probe could not authenticate against the API --
+  cookie shape may differ", {"status":401,"error":"unauthorized"}. Diagnosed by
+  reading rather than guessing: the script built its auth cookie as
+  sb-<projectRef>-auth-token, the @supabase/ssr default, but this app pins its
+  own name (AUTH_COOKIE_NAME = 'travixo-auth' in lib/supabase/cookie-name.ts,
+  with a per-slot suffix from cookieNameForSlot) so a second tab cannot
+  overwrite the first tab's session. That rename landed in a1b75e2 on
+  2026-08-27, the SAME DAY the verifier was last touched (5d6a935), so the two
+  had disagreed ever since and nobody had run it. Not caused by this work --
+  the only change here was one probe-org seed value -- but small enough to fix
+  rather than leave red. The probe now READS the name from cookie-name.ts, so
+  it stays honest if the name changes again.
 
-- [x] N6: Recipients normalisation — array or string both resolve to a scalar role; migration rewrites array rows in place
-  CHECK: node scripts/verify/verify-n6-recipients.mjs
-  EXPECT: N6_RECIPIENTS_VERIFIED
-  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=ok: unknown values are normalised to a valid role | N6_RECIPIENTS_VERIFIED
+- [x] G6: the sweep gate exists and passes on the current tree
+  CHECK: node scripts/verify-plan-slug-sweep.mjs
+  EXPECT: plan slug sweep verification passed
+  EVIDENCE: bash, exit 0, "plan slug sweep verification passed". 453 tracked
+  files enumerated via git ls-files with NO glob filters; 6 inert hits in
+  applied migrations, 0 violations. The first run FAILED on 4 hits in
+  docs/context.md; the inert rule was widened to cover docs/ (a record of the
+  retired model, not logic) rather than editing documentation to satisfy a
+  detector.
 
-- [x] N7: Preferences link present in the rendered HTML of every alert email family, pointing at /settings/notifications
-  CHECK: node scripts/verify/verify-n7-footer.mjs
-  EXPECT: N7_FOOTER_VERIFIED
-  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=ok: negative control: an absent phrase is correctly reported as absent | N7_FOOTER_VERIFIED
+- [x] G7: the sweep gate actually fails on a planted violation
+  CHECK: node scripts/verify-plan-slug-sweep.mjs --self-test
+  EXPECT: self-test passed
+  WHY: a negative check is worthless until it has been shown to fail. Four
+  sweeps reported complete while instances survived; the control is the point.
+  EVIDENCE: bash, exit 0, "self-test passed". The detector caught planted
+  equality, allowlist, switch-case and sql-equality violations, and the prose
+  control did NOT trip it.
 
-- [x] N8: Weekly digest — pending table, Monday self-gating, one email per user, pending rows cleared only after a successful send
-  CHECK: node scripts/verify/verify-n8-weekly.mjs
-  EXPECT: N8_WEEKLY_VERIFIED
-  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=ok: daily cron queues weekly rows with ignoreDuplicates (once per week, not once per day) | N8_WEEKLY_VERIFIED
+- [x] G8: the repository still typechecks and builds
+  CHECK: npx tsc --noEmit && node scripts/verify-build-clean.mjs
+  EXPECT: build verification passed
+  EVIDENCE: bash, exit 0, tsc --noEmit silent, "build verification passed".
 
-- [x] N9: PATCH /api/settings/notifications/preferences — authenticated, validates frequency and thresholds, upserts the caller's own row only
-  CHECK: node scripts/verify/verify-n9-api.mjs
-  EXPECT: N9_API_VERIFIED
-  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=ok: org-level route keeps its write gate | N9_API_VERIFIED
+## Status
 
-- [x] N10: Settings UI — VGP alerts section, 4 frequency radios, 5 threshold checkboxes, saves via the new endpoint, all labels resolve in fr AND en
-  CHECK: node scripts/verify/verify-n10-ui.mjs
-  EXPECT: N10_UI_VERIFIED
-  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=N10_UI_VERIFIED | Translation key not found: notifications.thisKeyDoesNotExist
+8 met with evidence, 0 unmet, 0 abandoned.
 
-- [x] N11: Session 1 work untouched — demo exclusion, dedup claim-then-send, welcome guard and FREQUENCY_RULES all still verified
-  CHECK: node scripts/verify/verify-n11-session1.mjs
-  EXPECT: N11_SESSION1_INTACT
-  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=ok: atomic conditional UPDATE retained | N11_SESSION1_INTACT
+The three scripts were RUN, not assumed. All three pass. Two of them were
+broken in ways the stated task did not cover, and both breakages were found by
+executing rather than by reading:
 
-- [x] N12: Repository typechecks clean (tsc --noEmit, exit 0)
-  CHECK: node scripts/verify/verify-typecheck.mjs
-  EXPECT: TYPECHECK_CLEAN
-  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=(node:57392) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated. | (Use `node --trace-deprecation ...` to show where
+  verify-paid-status-e2e   fired a price the webhook now throws on, and
+                           carried a dangling variable reference that would
+                           have thrown before any assertion ran
+  verify-readonly-enforcement  built the @supabase/ssr default cookie name,
+                           which this app replaced on the same day the script
+                           was last touched. It had been failing silently for
+                           three weeks because nobody ran it.
 
-- [x] N13: No new eslint errors in any touched file, measured against the pinned baseline
-  CHECK: node scripts/verify/verify-lint.mjs
-  EXPECT: LINT_CLEAN
-  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=(node:12952) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated. | (Use `node --trace-deprecation ...` to show where
-
-- [x] N14: No new npm dependencies
-  CHECK: node scripts/verify/verify-n14-deps.mjs
-  EXPECT: DEPS_UNCHANGED
-  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=ok: no new dev dependencies | DEPS_UNCHANGED
-
-- [x] N15: Working tree clean, every commit atomic and conventionally named
-  CHECK: node scripts/verify/verify-n15-commits.mjs
-  EXPECT: COMMITS_VERIFIED
-  EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=D:\Dev\projects\travixo-app; path=2d7d3e4e645d/41 entries; output=ok: working tree clean (uncommitted: "") | COMMITS_VERIFIED
+Port 3000 was serving a different application entirely ("EcoRide V2"), which is
+why the first attempt at G3-G5 returned 404 everywhere. A dev server for this
+app was started on :3100 for the run and stopped afterwards; the process on
+:3000 was left alone.

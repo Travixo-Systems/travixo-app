@@ -73,7 +73,7 @@ async function main() {
   created.userId = uo.id
 
   const org = (await (await fetch(`${U}/rest/v1/organizations`, { method: 'POST', headers: svcH, body: JSON.stringify({
-    name: `__unlazy_ro_${st}`, slug: `unlazy-ro-${st}`, subscription_tier: 'starter', subscription_status: 'trialing',
+    name: `__unlazy_ro_${st}`, slug: `unlazy-ro-${st}`, subscription_tier: 'travixo', subscription_status: 'trialing',
     is_pilot: true, pilot_start_date: day(-1), pilot_end_date: day(29), trial_ends_at: day(29), converted_to_paid: false,
   }) })).json())[0]
   created.orgId = org.id
@@ -92,9 +92,17 @@ async function main() {
   // whole session as base64-encoded JSON, not a bare access token. The Origin
   // header is required by the CSRF check in proxy.ts, which rejects same-site
   // mutations without it.
-  const projectRef = new URL(U).hostname.split('.')[0]
+  // The cookie name is NOT the @supabase/ssr default (sb-<ref>-auth-token).
+  // This app pins its own name so a second tab cannot overwrite the first
+  // tab's session: AUTH_COOKIE_NAME in lib/supabase/cookie-name.ts, with a
+  // per-slot suffix from cookieNameForSlot(). Slot 0 is the bare name. Reading
+  // it from source keeps this probe honest if the name changes again.
+  const cookieName = (
+    readFileSync('lib/supabase/cookie-name.ts', 'utf8')
+      .match(/AUTH_COOKIE_NAME\s*=\s*'([^']+)'/) || [, 'travixo-auth']
+  )[1]
   const cookieValue = 'base64-' + Buffer.from(JSON.stringify(sessionBody)).toString('base64')
-  const cookie = `sb-${projectRef}-auth-token=${cookieValue}`
+  const cookie = `${cookieName}=${cookieValue}`
   const authH = {
     'Content-Type': 'application/json',
     Cookie: cookie,
