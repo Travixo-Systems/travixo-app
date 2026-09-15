@@ -33,8 +33,22 @@ import { readFileSync, writeFileSync, unlinkSync, existsSync } from 'fs'
 
 const SLUGS = ['starter', 'professional', 'business', 'enterprise']
 
-/** Admin tooling. ALLOWED_PLAN_SLUGS is the list of historical slugs, by design. */
-const EXEMPT = new Set(['lib/admin/featureFlags.ts'])
+/**
+ * Nothing is exempt any more.
+ *
+ * lib/admin/featureFlags.ts used to be listed here, on the rationale that
+ * ALLOWED_PLAN_SLUGS was "the list of historical slugs, by design". That
+ * rationale was wrong in a way the exemption hid: the list was not a historical
+ * record, it was the live set of plans the admin mark-paid control offered, and
+ * every slug in it was is_active = false in production while
+ * public.admin_mark_paid requires `slug = p_plan_slug AND is_active`. The two
+ * sets were disjoint, so the control could not succeed at all -- and the
+ * exemption is why this sweep could not see it.
+ *
+ * The list now holds only the live slug, so there is nothing to exempt. Keeping
+ * the entry would re-hide the next drift.
+ */
+const EXEMPT = new Set([])
 
 /** Binary and lockfile extensions worth skipping: no comparisons live there. */
 const SKIP_EXT = /\.(png|jpg|jpeg|gif|webp|ico|svg|pdf|woff2?|ttf|eot|mp4|zip|xlsx?|lock)$/i

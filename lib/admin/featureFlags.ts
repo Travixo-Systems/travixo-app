@@ -80,16 +80,22 @@ export const END_MODE_LABELS: Record<EndMode, { label: string; description: stri
 // ---------------------------------------------------------------------------
 // Plans a platform admin may assign when recording an off-Stripe payment.
 //
-// Mirrors subscription_plans.slug. The DB re-checks against the live table, so
-// this list is the fast-fail copy, not the authority: if a plan is added there,
-// add it here too or the admin UI will refuse it while the RPC would allow it.
+// Mirrors subscription_plans WHERE is_active, which is what
+// public.admin_mark_paid re-checks. It is the fast-fail copy, not the
+// authority.
+//
+// This list used to be ['starter','professional','business','enterprise'].
+// Every one of those rows is is_active = false in production, and
+// admin_mark_paid requires `slug = p_plan_slug AND is_active`, so the two sets
+// were disjoint: every option the UI offered raised invalid_plan ("Unknown
+// plan."), and 'travixo' -- the only active plan -- could not be selected. The
+// control could not succeed at all.
+//
+// Keep this in step with the live table. A plan added there must be added here
+// or the UI will refuse what the RPC would allow; a plan deactivated there must
+// be removed here or the UI will offer what the RPC will refuse.
 // ---------------------------------------------------------------------------
-export const ALLOWED_PLAN_SLUGS = [
-  'starter',
-  'professional',
-  'business',
-  'enterprise',
-] as const
+export const ALLOWED_PLAN_SLUGS = ['travixo'] as const
 export type PlanSlug = (typeof ALLOWED_PLAN_SLUGS)[number]
 
 export function isAllowedPlanSlug(slug: string): slug is PlanSlug {
