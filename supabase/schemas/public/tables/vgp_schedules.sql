@@ -108,6 +108,11 @@ CREATE POLICY "Users can view own org vgp_schedules" ON "public"."vgp_schedules"
    FROM public.users
   WHERE (users.id = auth.uid()))));
 
+CREATE POLICY "super_admin_read_all_vgp_schedules" ON "public"."vgp_schedules"
+  FOR SELECT
+  TO PUBLIC
+  USING (public.is_super_admin());
+
 GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."vgp_schedules" TO "anon", "authenticated", "postgres", "service_role";
 
 COMMENT ON COLUMN "public"."vgp_schedules"."archive_reason" IS 'Reason for archiving (required for compliance)';

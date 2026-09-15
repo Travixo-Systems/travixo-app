@@ -56,6 +56,11 @@ CREATE POLICY "Users can view own organization subscription" ON "public"."subscr
    FROM public.users
   WHERE (users.id = auth.uid()))));
 
+CREATE POLICY "super_admin_read_all_subscriptions" ON "public"."subscriptions"
+  FOR SELECT
+  TO PUBLIC
+  USING (public.is_super_admin());
+
 GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."subscriptions" TO "anon", "authenticated", "postgres", "service_role";
 
 COMMENT ON COLUMN "public"."subscriptions"."licensed_capacity" IS 'Licensed asset capacity = the Stripe subscription item quantity. NULL when there is no Stripe subscription (pilot/trial). Never derived from the live asset count: capacity is what was purchased, not what is in use.';

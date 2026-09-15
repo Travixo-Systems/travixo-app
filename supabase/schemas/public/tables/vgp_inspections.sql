@@ -48,8 +48,15 @@ CREATE POLICY "Users can view org inspections" ON "public"."vgp_inspections"
    FROM public.users
   WHERE (users.id = auth.uid()))));
 
+CREATE POLICY "super_admin_read_all_vgp_inspections" ON "public"."vgp_inspections"
+  FOR SELECT
+  TO PUBLIC
+  USING (public.is_super_admin());
+
 GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."vgp_inspections" TO "anon", "authenticated", "postgres", "service_role";
 
 COMMENT ON COLUMN "public"."vgp_inspections"."observations" IS 'Observations de l''inspecteur (utiliser "RAS" si aucune remarque)';
 
 COMMENT ON COLUMN "public"."vgp_inspections"."verification_type" IS 'Type de vérification VGP (PERIODIQUE/INITIALE/REMISE_SERVICE)';
+
+COMMENT ON POLICY "super_admin_read_all_vgp_inspections" ON "public"."vgp_inspections" IS 'Platform admins are org-less, so the tenant policy returns zero rows with no error for them. Read-only cross-tenant SELECT for the admin console.';

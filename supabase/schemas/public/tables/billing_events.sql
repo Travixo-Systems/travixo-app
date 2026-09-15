@@ -29,4 +29,9 @@ CREATE POLICY "Users can view own org billing events" ON "public"."billing_event
    FROM public.users
   WHERE (users.id = auth.uid()))));
 
+CREATE POLICY "super_admin_read_all_billing_events" ON "public"."billing_events"
+  FOR SELECT
+  TO PUBLIC
+  USING (public.is_super_admin());
+
 GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."billing_events" TO "anon", "authenticated", "postgres", "service_role";

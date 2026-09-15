@@ -36,4 +36,9 @@ CREATE POLICY "scans_select_same_org" ON "public"."scans"
            FROM public.users u
           WHERE (u.id = auth.uid())))))));
 
+CREATE POLICY "super_admin_read_all_scans" ON "public"."scans"
+  FOR SELECT
+  TO PUBLIC
+  USING (public.is_super_admin());
+
 GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."scans" TO "anon", "authenticated", "postgres", "service_role";
