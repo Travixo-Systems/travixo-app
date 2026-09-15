@@ -2860,6 +2860,13 @@ export const translations = {
       en: "Clients",
       fr: "Clients",
     },
+    // Shown only to a platform admin who also belongs to an organization.
+    // An org-less platform admin is redirected to /admin at login instead and
+    // never sees this sidebar.
+    platformAdmin: {
+      en: "Platform admin",
+      fr: "Admin plateforme",
+    },
   },
   // ============================================================================
   // AUDITS MODULE
