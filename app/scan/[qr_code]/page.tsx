@@ -22,8 +22,6 @@ import {
 import RentalStatusCard, { type ActiveRental } from '@/components/rental/RentalStatusCard'
 import dynamic from 'next/dynamic'
 import VGPComplianceBadge from '@/components/rental/VGPComplianceBadge'
-import RentalUpgradePrompt from '@/components/rental/RentalUpgradePrompt'
-import { useFeatureAccess } from '@/hooks/useSubscription'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
 
@@ -134,7 +132,6 @@ export default function ScanPage({ params }: PageProps) {
   const [returnRental, setReturnRental] = useState<ActiveRental | null>(null)
   const [organizationId, setOrganizationId] = useState<string>('')
   const [rentalKey, setRentalKey] = useState(0) // Force re-fetch after action
-  const { hasAccess: hasRentalAccess, isLoading: rentalAccessLoading } = useFeatureAccess('rental_management')
 
   useEffect(() => {
     async function resolveParams() {
@@ -757,8 +754,7 @@ export default function ScanPage({ params }: PageProps) {
         </div>
 
         {/* Rental Status Card */}
-        {!rentalAccessLoading && hasRentalAccess ? (
-          <RentalStatusCard
+                  <RentalStatusCard
             key={rentalKey}
             assetId={asset.id}
             isAuthenticated={isAuthenticated}
@@ -768,11 +764,6 @@ export default function ScanPage({ params }: PageProps) {
               setShowReturnOverlay(true)
             }}
           />
-        ) : !rentalAccessLoading && isAuthenticated ? (
-          <div className="mb-6">
-            <RentalUpgradePrompt />
-          </div>
-        ) : null}
 
         {!isAuthenticated && (
           <div className="border-2 border-blue-500 rounded-lg p-6 mb-6 text-center" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>

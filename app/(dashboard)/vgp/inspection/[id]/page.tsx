@@ -4,7 +4,6 @@ import { use, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertCircle, Save, CheckCircle, X, Upload, FileText } from 'lucide-react';
 import { useUploadThing } from '@/lib/uploadthing';
-import FeatureGate from '@/components/subscription/FeatureGate';
 import { VGPReadOnlyBanner } from '@/components/vgp/VGPUpgradeOverlay';
 import { useVGPAccess } from '@/hooks/useSubscription';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -179,32 +178,27 @@ export default function InspectionRecorderPage({
 
   if (loading) {
     return (
-      <FeatureGate feature="vgp_compliance">
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-4 text-[var(--text-muted,#777)]">{t('vgpInspection.loading')}</p>
           </div>
         </div>
-      </FeatureGate>
     );
   }
 
   if (error && !schedule) {
     return (
-      <FeatureGate feature="vgp_compliance">
         <div className="p-3 md:p-6">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-red-800">{error}</p>
           </div>
         </div>
-      </FeatureGate>
     );
   }
 
   if (isReadOnly) {
     return (
-      <FeatureGate feature="vgp_compliance">
         <div className="p-3 md:p-6 max-w-4xl mx-auto">
           <VGPReadOnlyBanner />
           <div className="mt-4">
@@ -220,12 +214,10 @@ export default function InspectionRecorderPage({
             </button>
           </div>
         </div>
-      </FeatureGate>
     );
   }
 
   return (
-    <FeatureGate feature="vgp_compliance">
       <div className="p-3 md:p-6 max-w-4xl mx-auto">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-[var(--text-primary,#1a1a1a)]">{t('vgpInspection.pageTitle')}</h1>
@@ -497,6 +489,5 @@ export default function InspectionRecorderPage({
           </div>
         </form>
       </div>
-    </FeatureGate>
   );
 }

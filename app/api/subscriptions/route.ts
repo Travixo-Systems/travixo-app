@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server';
 import type { CookieOptions } from '@supabase/ssr';
 import { isAccountLocked } from '@/lib/billing/pilot-window';
 import { PILOT_MAX_ASSETS } from '@/lib/billing/access-model';
+import { ACTIVE_STATUSES } from '@/lib/subscription';
 
 async function createClient() {
   const cookieStore = await cookies();
@@ -167,7 +168,12 @@ export async function GET() {
       vgp_access = 'blocked';
     } else if (isPilotActive) {
       vgp_access = 'full';
-    } else if (['travixo', 'professional', 'business', 'enterprise'].includes(subscription?.plan?.slug || '')) {
+    } else if (
+      // An active subscription, not a plan name. With one plan an allowlist can
+      // only ever grant, and it rots silently the moment a slug changes -- it
+      // had already outlived three of the four slugs it listed.
+      ACTIVE_STATUSES.has(subscription?.status || '')
+    ) {
       vgp_access = 'full';
     } else if (isPilot && !isPilotActive) {
       // Expired pilot inside the read-only grace window, read-only VGP

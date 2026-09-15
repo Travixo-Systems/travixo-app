@@ -2,10 +2,10 @@
 /**
  * verify-paid-status-e2e.mjs
  *
- * The Professional annual case, end to end: a signed
- * customer.subscription.created carrying Stripe status `trialing` (the 90-day
- * service-term deferral) must leave the customer recorded as active, with no
- * trial wording anywhere the billing page reads.
+ * A paid subscription reported by Stripe as `trialing` must be recorded as
+ * ACTIVE, with no trial wording anywhere the billing page reads. Checkout
+ * offers no trial, so a Stripe `trialing` on a real subscription means the
+ * customer has already paid.
  *
  * Needs the dev server running.
  * Usage: node scripts/verify-paid-status-e2e.mjs [env-file] [base-url]
@@ -25,7 +25,11 @@ for (const line of readFileSync(ENV_PATH, 'utf8').split('\n')) {
 const U = env.NEXT_PUBLIC_SUPABASE_URL
 const SVC = env.SUPABASE_SERVICE_ROLE_KEY
 const WHSEC = env.STRIPE_WEBHOOK_SECRET
-const PRO_ANNUAL = env.STRIPE_PRICE_PROFESSIONAL_ANNUAL
+// The annual price the webhook can still resolve. cycleFromPriceId knows only
+// the two TraviXO prices now, and an unrecognised price makes the webhook throw
+// rather than upsert a null plan -- so firing the retired Professional price
+// would 500 before any assertion below ran.
+const ANNUAL_PRICE = env.STRIPE_PRICE_TRAVIXO_ANNUAL
 const svcH = { apikey: SVC, Authorization: `Bearer ${SVC}`, 'Content-Type': 'application/json', Prefer: 'return=representation' }
 
 let failures = 0, checks = 0
@@ -44,21 +48,22 @@ async function cleanup() {
 
 async function main() {
   if (!WHSEC) { fail('STRIPE_WEBHOOK_SECRET missing'); return }
-  if (!PRO_ANNUAL) { fail('STRIPE_PRICE_PROFESSIONAL_ANNUAL missing'); return }
+  if (!ANNUAL_PRICE) { fail('STRIPE_PRICE_TRAVIXO_ANNUAL missing'); return }
+  // Reachability only. GET /api/stripe/webhook is secret-gated and answers 404
+  // without a CRON_SECRET bearer. Any HTTP response proves the server is up.
   try {
-    const p = await fetch(`${BASE}/api/stripe/webhook`)
-    if (!p.ok) { fail(`webhook not reachable (${p.status})`); return }
+    await fetch(`${BASE}/api/stripe/webhook`)
   } catch (err) { fail(`cannot reach ${BASE} -- start the dev server`, err?.message); return }
 
   const st = Date.now()
   const o = (await (await fetch(`${U}/rest/v1/organizations`, { method: 'POST', headers: svcH, body: JSON.stringify({
-    name: `__unlazy_paid_${st}`, slug: `unlazy-paid-${st}`, subscription_tier: 'starter', subscription_status: 'trialing',
+    name: `__unlazy_paid_${st}`, slug: `unlazy-paid-${st}`, subscription_tier: 'travixo', subscription_status: 'trialing',
     is_pilot: true, pilot_start_date: day(-31), pilot_end_date: day(-1), trial_ends_at: day(-1),
     converted_to_paid: false, stripe_customer_id: `cus_unlazy_paid_${st}`,
   }) })).json())[0]
   created.orgId = o.id
 
-  // Professional annual: Stripe reports `trialing` for 90 days.
+  // Stripe reports `trialing`; the customer has paid.
   const event = {
     id: `evt_unlazy_paid_${st}`,
     type: 'customer.subscription.created',
@@ -70,7 +75,7 @@ async function main() {
       metadata: { organization_id: created.orgId },
       current_period_start: Math.floor(Date.now() / 1000),
       current_period_end: Math.floor(Date.now() / 1000) + 90 * 86400,
-      items: { data: [{ price: { id: PRO_ANNUAL } }] },
+      items: { data: [{ price: { id: ANNUAL_PRICE } }] },
     } },
   }
   const body = JSON.stringify(event)
@@ -96,8 +101,10 @@ async function main() {
   if (org.converted_to_paid === true && org.is_pilot === false) pass('org converted out of pilot')
   else fail(`converted=${org.converted_to_paid} is_pilot=${org.is_pilot}, expected true/false`)
 
-  if (org.subscription_tier === 'professional') pass('tier updated to professional from the price id')
-  else fail(`tier is "${org.subscription_tier}", expected professional`)
+  // One plan now. markOrganizationConverted writes TRAVIXO_PLAN_SLUG rather
+  // than a tier derived from the price.
+  if (org.subscription_tier === 'travixo') pass('tier updated to travixo')
+  else fail(`tier is "${org.subscription_tier}", expected travixo`)
 
   // --- nothing the billing page reads may say "trial" -----------
   // Recompute the API's is_trial from the stored rows: a paid customer must

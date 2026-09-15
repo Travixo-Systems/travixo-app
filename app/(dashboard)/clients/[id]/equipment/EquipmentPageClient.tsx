@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { ArrowLeft, Loader2, Send, AlertTriangle, ShieldAlert } from 'lucide-react'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
-import FeatureGate from '@/components/subscription/FeatureGate'
 import StatusBadge from '@/components/ui/StatusBadge'
 import toast from 'react-hot-toast'
 
@@ -235,7 +234,7 @@ export default function EquipmentPageClient() {
   ]
 
   return (
-    <FeatureGate feature="rental_management">
+    <>
       <div className="p-3 md:p-6 max-w-5xl mx-auto pb-28">
         <Link
           href={`/clients/${clientId}`}
@@ -442,6 +441,6 @@ export default function EquipmentPageClient() {
           </div>
         </div>
       )}
-    </FeatureGate>
+    </>
   )
 }

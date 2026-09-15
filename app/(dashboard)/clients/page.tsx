@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { Plus, Search, Users, Package, AlertTriangle, ChevronRight, Edit3, X, Loader2 } from 'lucide-react'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
-import FeatureGate from '@/components/subscription/FeatureGate'
 import StatusBadge from '@/components/ui/StatusBadge'
 import toast from 'react-hot-toast'
 
@@ -168,7 +167,6 @@ export default function ClientsPage() {
   }
 
   return (
-    <FeatureGate feature="rental_management">
       <div className="p-3 md:p-6 max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
@@ -452,6 +450,5 @@ export default function ClientsPage() {
           </div>
         )}
       </div>
-    </FeatureGate>
   )
 }

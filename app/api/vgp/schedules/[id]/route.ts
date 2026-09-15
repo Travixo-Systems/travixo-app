@@ -3,7 +3,6 @@ import { RESOLVED_SLOT_HEADER, cookieOptionsForSlot } from '@/lib/supabase/accou
 import { cookies, headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { CookieOptions } from '@supabase/ssr';
-import { requireFeature, requireVGPWriteAccess } from '@/lib/server/require-feature';
 import { requireWriteAccess } from '@/lib/server/require-write-access';
 
 async function createClient() {
@@ -41,10 +40,6 @@ export async function GET(
 ) {
   try {
     const supabase = await createClient();
-
-    // Feature gate: require vgp_compliance (also handles auth + org lookup)
-    const { denied } = await requireFeature(supabase, 'vgp_compliance');
-    if (denied) return denied;
 
     const resolvedParams = await params;
     const scheduleId = resolvedParams.id;
@@ -102,10 +97,6 @@ export async function PATCH(
     // read-only at day 30 - see lib/billing/access-model.ts.
     const writeGate = await requireWriteAccess(supabase);
     if (writeGate.denied) return writeGate.denied;
-
-    // Feature gate: require VGP write access (blocks expired pilots)
-    const { denied } = await requireVGPWriteAccess(supabase);
-    if (denied) return denied;
 
     // Need user.id for audit trail
     const { data: { user } } = await supabase.auth.getUser();
@@ -207,10 +198,6 @@ export async function DELETE(
     // read-only at day 30 - see lib/billing/access-model.ts.
     const writeGate = await requireWriteAccess(supabase);
     if (writeGate.denied) return writeGate.denied;
-
-    // Feature gate: require VGP write access (blocks expired pilots)
-    const { denied } = await requireVGPWriteAccess(supabase);
-    if (denied) return denied;
 
     // Need user.id for archived_by
     const { data: { user } } = await supabase.auth.getUser();

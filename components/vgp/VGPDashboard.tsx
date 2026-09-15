@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { AlertCircle, CheckCircle, Calendar, FileText, TrendingUp, ArrowRight } from 'lucide-react';
-import FeatureGate from '@/components/subscription/FeatureGate';
 import { useLanguage } from '@/lib/LanguageContext';
 import { createTranslator } from '@/lib/i18n';
 import { VGPReadOnlyBanner } from './VGPUpgradeOverlay';
@@ -11,9 +10,7 @@ import { useVGPAccess } from '@/hooks/useSubscription';
 
 export default function VGPComplianceDashboard() {
   return (
-    <FeatureGate feature="vgp_compliance">
       <VGPContent />
-    </FeatureGate>
   );
 }
 

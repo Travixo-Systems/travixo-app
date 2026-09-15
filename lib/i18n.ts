@@ -462,12 +462,8 @@ export const translations = {
       fr: "Capacité à souscrire",
     },
     capacitySelectorHelp: {
-      en: "In blocks of {block}. Cannot go below your current {billable} billable assets.",
-      fr: "Par blocs de {block}. Ne peut pas descendre sous vos {billable} équipements facturables actuels.",
-    },
-    capacityFloorReached: {
-      en: "This is your current fleet size. Archive assets to license less.",
-      fr: "C'est la taille actuelle de votre parc. Archivez des équipements pour souscrire moins.",
+      en: "In blocks of {block}.",
+      fr: "Par blocs de {block}.",
     },
     capacityDecrease: {
       en: "Decrease",

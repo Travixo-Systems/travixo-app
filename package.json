@@ -6,7 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "verify:static": "node scripts/verify-plan-slug-sweep.mjs && node scripts/verify-write-gate-coverage.mjs && node scripts/verify-access-model.mjs",
+    "verify:e2e": "node scripts/run-e2e-verifiers.mjs",
+    "verify:fresh": "node scripts/verify-log.mjs --check",
+    "verify:report": "node scripts/verify-log.mjs --report",
+    "verify": "npm run verify:static && npm run verify:fresh",
+    "prebuild": "npm run verify:static"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",

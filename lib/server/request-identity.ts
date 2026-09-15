@@ -6,10 +6,10 @@
 // ---------------------------------------------------------------------------
 // WHY
 // ---------------------------------------------------------------------------
-// requireWriteAccess() and requireFeature() each start the same way: call
-// auth.getUser(), then select users.organization_id. Routes that use both --
-// recording a VGP inspection is the clearest case -- therefore pay that pair
-// twice, and the inspection route calls getUser() a third time itself.
+// requireWriteAccess() and the read paths each start the same way: call
+// auth.getUser(), then select users.organization_id. A route doing both --
+// recording a VGP inspection is the clearest case -- therefore paid that pair
+// twice, and the inspection route called getUser() a third time itself.
 //
 // getUser() is NOT a local token decode. It is a network round trip to the
 // GoTrue server to validate the JWT. The audit counted 72 call sites across
@@ -27,8 +27,7 @@
 // Only identity: the user and their organization id. Not entitlement, not
 // pilot state, not feature access. Those are authorisation decisions, and
 // caching them -- even briefly -- is how a revoked plan keeps working. The
-// organizations row that requireWriteAccess reads, and the has_feature_access
-// RPC that requireFeature calls, are left alone on purpose.
+// organizations row that requireWriteAccess reads is left alone on purpose.
 
 import { cache } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
