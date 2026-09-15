@@ -305,8 +305,22 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // ?force=1 runs the digest off-Monday, for verifying delivery on demand.
+  //
+  // Read AFTER the CRON_SECRET check, deliberately. That check returns 401 as
+  // the handler's first act, so there is no path on which this line executes
+  // without a valid secret -- force cannot be reached by an unauthenticated
+  // caller, and moving this above the guard would silently break that.
+  //
+  // Vercel's scheduled invocation sends no query string, so the daily cron is
+  // unaffected and still returns at the Monday gate six days a week.
+  const force = new URL(request.url).searchParams.get("force") === "1";
+  if (force) {
+    console.log(`${LOG_PREFIX} force=1: bypassing the Monday gate`);
+  }
+
   try {
-    const result = await runWeeklyDigest();
+    const result = await runWeeklyDigest(force);
     return NextResponse.json(result, { status: result.success ? 200 : 207 });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);
