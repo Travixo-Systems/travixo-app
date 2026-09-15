@@ -132,14 +132,54 @@ function LoginContent() {
           toast.success(t.welcomeBackToast[language])
         }
 
-        // Everyone lands on the tenant dashboard after login, platform
-        // admins included. /admin is reached deliberately by navigating
-        // there; the admin layout still gates it via requireSuperAdmin().
+        // Where to land.
         //
+        // /admin ONLY for a platform admin who has no organization. Both
+        // conditions are required, and they answer different questions:
+        //
+        //   is_super_admin()        may this person use /admin at all
+        //   organization_id IS NULL is /dashboard meaningless for them
+        //
+        // An org-less admin has no tenant to render: every dashboard query
+        // filters on organization_id, so /dashboard resolves to zeros and an
+        // empty org name. /admin is the only surface that works for them.
+        //
+        // A platform admin who ALSO belongs to an organization keeps the
+        // normal dashboard, because that org is real work they would lose by
+        // being bounced away from it. They reach /admin from the sidebar
+        // entry instead.
+        //
+        // Neither check grants anything. The admin layout still calls
+        // requireSuperAdmin() on every /admin route, so this only decides
+        // where to point the browser.
+        let destination = '/dashboard'
+        try {
+          // scopedSupabase, NOT the module-level `supabase`: that one was
+          // built against the slot in effect BEFORE sign-in. On a
+          // second-account login it still holds slot 0's session, so both
+          // reads below would answer for the wrong user and could route this
+          // tab on someone else's identity.
+          const [{ data: isAdmin }, { data: profile }] = await Promise.all([
+            scopedSupabase.rpc('is_super_admin'),
+            scopedSupabase
+              .from('users')
+              .select('organization_id')
+              .eq('id', data.user.id)
+              .maybeSingle(),
+          ])
+          if (isAdmin === true && !profile?.organization_id) {
+            destination = '/admin'
+          }
+        } catch {
+          // Any failure leaves destination at '/dashboard'. Landing a platform
+          // admin on the tenant dashboard is a wrong-page annoyance they can
+          // navigate out of; failing the login over a routing lookup is not.
+        }
+
         // A full page load, not router.push: the slot may have changed, and
         // every Server Component must re-render against the new cookie. The
         // URL carries the slot so a reload keeps this tab on this account.
-        window.location.assign(slotUrl(loginSlot, '/dashboard'))
+        window.location.assign(slotUrl(loginSlot, destination))
         return
       }
     } catch (error: any) {
