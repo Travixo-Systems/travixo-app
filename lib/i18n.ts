@@ -497,6 +497,72 @@ export const translations = {
       en: "Included at every fleet size",
       fr: "Inclus quelle que soit la taille du parc",
     },
+
+    // --- Subscribed: block 1, status only, no controls ----------------------
+    yourSubscription: {
+      en: "Your subscription",
+      fr: "Votre abonnement",
+    },
+    licensedUsedSummary: {
+      en: "{licensed} assets licensed, {billable} in use",
+      fr: "{licensed} équipements sous licence, {billable} utilisés",
+    },
+    nextBilling: {
+      en: "Next billing",
+      fr: "Prochaine facturation",
+    },
+    billingAnnual: {
+      en: "Annual",
+      fr: "Annuel",
+    },
+
+    // --- Subscribed: block 2, the only interactive card ---------------------
+    expandFleetTitle: {
+      en: "Expand your fleet",
+      fr: "Élargir votre parc",
+    },
+    expandCta: {
+      en: "Move to {capacity} assets, plus {delta} EUR per month",
+      fr: "Passer à {capacity} équipements, +{delta} EUR par mois",
+    },
+    expandCtaAnnual: {
+      en: "Move to {capacity} assets, plus {delta} EUR per year",
+      fr: "Passer à {capacity} équipements, +{delta} EUR par an",
+    },
+    proratedImmediately: {
+      en: "The difference is billed pro rata immediately.",
+      fr: "La différence est facturée au prorata immédiatement.",
+    },
+
+    // --- Shared ------------------------------------------------------------
+    licensedCapacityDescription: {
+      en: "The number of assets your subscription covers. Not the number you currently have.",
+      fr: "Le nombre d'équipements couverts par votre abonnement. Pas le nombre que vous possédez actuellement.",
+    },
+    increaseCapacity: {
+      en: "Increase capacity",
+      fr: "Augmenter la capacité",
+    },
+    capacityIncreaseImmediate: {
+      en: "Additional capacity is available immediately and billed pro rata for the rest of this period.",
+      fr: "La capacité supplémentaire est disponible immédiatement et facturée au prorata pour le reste de la période.",
+    },
+    capacityDecreaseAtPeriodEnd: {
+      en: "A reduction takes effect at the end of the current period. You keep what you have paid for until then.",
+      fr: "Une réduction prend effet à la fin de la période en cours. Vous conservez ce que vous avez payé jusque-là.",
+    },
+    capacityUpdated: {
+      en: "Capacity updated",
+      fr: "Capacité mise à jour",
+    },
+    capacityUpdateFailed: {
+      en: "Could not change capacity",
+      fr: "Impossible de modifier la capacité",
+    },
+    twoMonthsFree: {
+      en: "2 months free",
+      fr: "2 mois offerts",
+    },
     includedFeatures: {
       fleet: {
         en: "Asset register and Excel import",
@@ -1399,68 +1465,6 @@ export const translations = {
     errorUpdateFailed: {
       en: "Update failed",
       fr: "Échec de la mise à jour",
-    },
-
-    // --- Licensed capacity -------------------------------------------------
-    licensedCapacity: {
-      en: "Licensed capacity",
-      fr: "Capacité sous licence",
-    },
-    licensedCapacityDescription: {
-      en: "The number of assets your subscription covers. Not the number you currently have.",
-      fr: "Le nombre d'équipements couverts par votre abonnement. Pas le nombre que vous possédez actuellement.",
-    },
-    assetsLicensed: {
-      en: "assets licensed",
-      fr: "équipements sous licence",
-    },
-    capacityUsed: {
-      en: "{used} of {licensed} used",
-      fr: "{used} sur {licensed} utilisés",
-    },
-    capacityRemaining: {
-      en: "{count} remaining",
-      fr: "{count} restants",
-    },
-    increaseCapacity: {
-      en: "Increase capacity",
-      fr: "Augmenter la capacité",
-    },
-    decreaseCapacity: {
-      en: "Decrease capacity",
-      fr: "Réduire la capacité",
-    },
-    capacityIncreaseImmediate: {
-      en: "Additional capacity is available immediately and billed pro rata for the rest of this period.",
-      fr: "La capacité supplémentaire est disponible immédiatement et facturée au prorata pour le reste de la période.",
-    },
-    capacityDecreaseAtPeriodEnd: {
-      en: "A reduction takes effect at the end of the current period. You keep what you have paid for until then.",
-      fr: "Une réduction prend effet à la fin de la période en cours. Vous conservez ce que vous avez payé jusque-là.",
-    },
-    capacityPendingChange: {
-      en: "Scheduled: {capacity} assets from {date}",
-      fr: "Programmé : {capacity} équipements à partir du {date}",
-    },
-    capacityReached: {
-      en: "Licensed capacity reached",
-      fr: "Capacité sous licence atteinte",
-    },
-    capacityReachedDescription: {
-      en: "You have used all the capacity your subscription covers. Increase it to add more assets.",
-      fr: "Vous avez utilisé toute la capacité couverte par votre abonnement. Augmentez-la pour ajouter des équipements.",
-    },
-    capacityUpdated: {
-      en: "Capacity updated",
-      fr: "Capacité mise à jour",
-    },
-    capacityUpdateFailed: {
-      en: "Could not change capacity",
-      fr: "Impossible de modifier la capacité",
-    },
-    billingAnnual: {
-      en: "Annual",
-      fr: "Annuel",
     },
   },
 
