@@ -25,7 +25,7 @@ const EXEMPT = {
   'app/api/settings/profile/route.ts': 'own profile; not tenant data',
   'app/api/team/invitations/accept/route.ts': 'accepting an invite is how a user joins; runs before org context',
   'app/api/internal/post-registration/route.ts': 'runs during signup, before any pilot exists',
-  'app/api/admin/trigger-vgp-alerts/route.ts': 'platform admin only, already gated by requireSuperAdmin',
+  'app/api/admin/trigger-vgp-alerts/route.ts': 'platform admin only, gated by requireSuperAdminApi (asserted below)',
   'app/api/scan/update/route.ts': 'public QR scan logging; anonymous by design, service role',
   'app/api/assets/preview-import/route.ts': 'parses an uploaded file and returns a preview; writes nothing',
 }
@@ -83,6 +83,46 @@ if (ungated.length === 0) {
 const stale = Object.keys(EXEMPT).filter(f => !routes.includes(f))
 if (stale.length === 0) pass('every exemption refers to a route that exists')
 else fail('exemption list contains paths that do not exist', stale.join(', '))
+
+// An exemption reason is free text and nothing verified it. One of them claimed
+// the admin trigger route was "already gated by requireSuperAdmin" while the
+// file gated on the TENANT role (users.role in ('admin','owner')) and never
+// imported the guard at all -- so every tenant owner could fire a cron that
+// sends real customer email. The reason read as a finished control, which is
+// exactly why nobody re-read the file. Assert the claim instead of trusting it.
+const ADMIN_ROUTES = routes.filter(r => r.startsWith('app/api/admin/'))
+if (ADMIN_ROUTES.length === 0) {
+  fail('no app/api/admin routes found -- the admin scan matched nothing')
+} else {
+  const ungatedAdmin = []
+  const tenantRoleGated = []
+  for (const r of ADMIN_ROUTES) {
+    const src = readFileSync(r, 'utf8')
+    if (!/requireSuperAdminApi\s*\(/.test(src)) ungatedAdmin.push(r)
+    // The specific regression: authorising a platform endpoint on tenant role.
+    if (/\[['"]admin['"],\s*['"]owner['"]\]|\[['"]owner['"],\s*['"]admin['"]\]/.test(src)) {
+      tenantRoleGated.push(r)
+    }
+  }
+
+  if (ungatedAdmin.length === 0) {
+    pass(`all ${ADMIN_ROUTES.length} app/api/admin route(s) call requireSuperAdminApi()`)
+  } else {
+    fail(
+      `${ungatedAdmin.length} app/api/admin route(s) do not call requireSuperAdminApi()`,
+      ungatedAdmin.join('\n      ')
+    )
+  }
+
+  if (tenantRoleGated.length === 0) {
+    pass('no app/api/admin route authorises on a tenant role')
+  } else {
+    fail(
+      `${tenantRoleGated.length} app/api/admin route(s) authorise on tenant role, not platform_admins`,
+      tenantRoleGated.join('\n      ')
+    )
+  }
+}
 
 // The gate must fail closed. Assert the helper denies on a lookup error.
 const helper = 'lib/server/require-write-access.ts'
