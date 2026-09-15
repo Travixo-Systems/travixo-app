@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Language } from './i18n';
-import { createClient } from '@/lib/supabase/client';
+import { createClient, getCurrentSlot, slotUrl } from '@/lib/supabase/client';
 
 interface LanguageContextType {
   language: Language;
@@ -31,7 +31,15 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') {
-        window.location.href = '/login';
+        // slotUrl, not a bare '/login'. This provider is mounted app-wide, so
+        // it fires in whichever tab saw SIGNED_OUT -- and a document
+        // navigation carries no /u/<slot> prefix and no slot header (only
+        // fetch() is decorated, in installAccountSlotFetch). proxy.ts would
+        // therefore resolve DEFAULT_SLOT and read slot 0's cookie, so a tab on
+        // slot 1 lands on account 1's login and reads as signed out even
+        // though its own session is untouched. The three sign-out buttons
+        // already navigate this way; this was the one that did not.
+        window.location.assign(slotUrl(getCurrentSlot(), '/login'));
       }
     });
 
