@@ -97,6 +97,8 @@ BEGIN
 END;
 $function$;
 
-GRANT EXECUTE ON FUNCTION "public"."admin_mark_paid"(uuid, text, text) TO PUBLIC, "anon", "authenticated", "postgres", "service_role";
+GRANT EXECUTE ON FUNCTION "public"."admin_mark_paid"(uuid, text, text) TO "authenticated", "postgres", "service_role";
 
 COMMENT ON FUNCTION "public"."admin_mark_paid"(uuid, text, text) IS 'Record an off-Stripe payment for an organization. Requires super admin and a reason of at least 10 characters. Logs to admin_audit_log with source=admin_manual so manual grants stay distinguishable from Stripe conversions. For "needs more time", use extend_trial() instead.';
+
+REVOKE ALL ON FUNCTION "public"."admin_mark_paid"(uuid, text, text) FROM PUBLIC;
