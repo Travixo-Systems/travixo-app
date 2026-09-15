@@ -21,6 +21,11 @@ CREATE INDEX idx_vgp_digest_deliveries_sent_at ON public.vgp_digest_deliveries U
 
 CREATE INDEX idx_vgp_digest_deliveries_user ON public.vgp_digest_deliveries USING btree (user_id, sent_at DESC);
 
+CREATE POLICY "super_admin_read_all_vgp_digest_deliveries" ON "public"."vgp_digest_deliveries"
+  FOR SELECT
+  TO PUBLIC
+  USING (public.is_super_admin());
+
 CREATE POLICY "vgp_digest_deliveries_select_own" ON "public"."vgp_digest_deliveries"
   FOR SELECT
   TO "authenticated"

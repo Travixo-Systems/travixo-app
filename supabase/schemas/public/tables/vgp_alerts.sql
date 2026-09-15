@@ -51,6 +51,11 @@ CREATE POLICY "Users can view org alerts" ON "public"."vgp_alerts"
    FROM public.users
   WHERE (users.id = auth.uid()))));
 
+CREATE POLICY "super_admin_read_all_vgp_alerts" ON "public"."vgp_alerts"
+  FOR SELECT
+  TO PUBLIC
+  USING (public.is_super_admin());
+
 CREATE POLICY "vgp_alerts_org_select" ON "public"."vgp_alerts"
   FOR SELECT
   TO PUBLIC
