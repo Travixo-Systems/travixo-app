@@ -93,9 +93,16 @@ else fail('end_pilot missing from types/database.ts Functions')
 // ---------------------------------------------------------------------
 // 2. Last connected
 // ---------------------------------------------------------------------
+// orgHealth.ts imports '@/lib/billing/access-model', an alias bare Node cannot
+// resolve. scripts/ts-alias-loader.mjs teaches it that alias, but it documented
+// itself as a `node --import` flag and NOTHING passed the flag -- so this import
+// failed, the script exited 1, and the failure was read as environmental for
+// long enough to become decoration. Registering the hook here means the gate
+// runs however it is invoked, including `node scripts/verify-admin-org-health.mjs`.
 const OH = 'lib/admin/orgHealth.ts'
 let oh
 try {
+  await import(pathToFileURL(resolve('scripts/ts-alias-loader.mjs')).href)
   oh = await import(pathToFileURL(resolve(OH)).href)
 } catch (err) {
   console.log(`FAIL  cannot import ${OH}: ${err?.message}`)

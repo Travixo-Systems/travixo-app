@@ -106,9 +106,16 @@ if (/GREATEST\(now\(\), COALESCE\(v_old_pilot, now\(\)\)\)/.test(extendBody)) {
 // ---------------------------------------------------------------------
 // 2. canExtendPilot
 // ---------------------------------------------------------------------
+// orgHealth.ts and access-model.ts both import through the '@/' alias, which
+// bare Node cannot resolve. scripts/ts-alias-loader.mjs teaches it that alias
+// but documented itself as a `node --import` flag, and nothing passed the flag,
+// so this import failed and the script exited 1 -- a gate reporting failure for
+// so long that the failure was read as environmental. Register the hook here so
+// the gate runs however it is invoked.
 const OH = 'lib/admin/orgHealth.ts'
 let oh
 try {
+  await import(pathToFileURL(resolve('scripts/ts-alias-loader.mjs')).href)
   oh = await import(pathToFileURL(resolve(OH)).href)
 } catch (err) {
   console.log(`FAIL  cannot import ${OH}: ${err?.message}`)
