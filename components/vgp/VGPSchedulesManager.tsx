@@ -8,7 +8,6 @@ import {
 import { useLanguage } from '@/lib/LanguageContext';
 import { createTranslator, Language } from '@/lib/i18n';
 import { EditScheduleModal } from './EditScheduleModal';
-import FeatureGate from '@/components/subscription/FeatureGate';
 import { VGPReadOnlyBanner } from './VGPUpgradeOverlay';
 import { useVGPAccess } from '@/hooks/useSubscription';
 
@@ -352,7 +351,7 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
     //
     // This used to call fetchAllSchedules(), which walks EVERY page of
     // /api/vgp/schedules -- and each page pays the three-call auth preamble in
-    // require-feature.ts. Editing a single date on a large fleet therefore cost
+    // the server gate. Editing a single date on a large fleet therefore cost
     // a full multi-page re-read of the list. handleArchive above already does
     // it this way; this is the same idea for an update instead of a removal.
     //
@@ -753,14 +752,12 @@ function VGPSchedulesContent({ language, t }: { language: Language; t: (key: str
 }
 
 export default function VGPSchedulesManager() {
-  //  Hook called HERE, outside FeatureGate
+  //  Hook called HERE, at the top level
   const { language } = useLanguage();
   const t = createTranslator(language);
   
   return (
-    <FeatureGate feature="vgp_compliance">
       <VGPSchedulesContent language={language} t={t} />
-    </FeatureGate>
   );
 }
 

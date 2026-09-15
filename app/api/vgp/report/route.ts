@@ -7,8 +7,8 @@ import { cookies, headers } from "next/headers";
 import { NextResponse } from "next/server";
 import type { CookieOptions } from "@supabase/ssr";
 import { generateVGPReport } from "@/lib/pdf-generator";
-import { requireFeature } from "@/lib/server/require-feature";
 import { requireWriteAccess } from '@/lib/server/require-write-access';
+import { resolveIdentity } from '@/lib/server/request-identity';
 
 const INSPECTION_FIELDS = `
   id,
@@ -70,9 +70,13 @@ export async function POST(request: Request) {
     const writeGate = await requireWriteAccess(supabase);
     if (writeGate.denied) return writeGate.denied;
 
-    // Feature gate: require vgp_compliance (also handles auth + org lookup)
-    const { denied, organizationId } = await requireFeature(supabase, 'vgp_compliance');
-    if (denied) return denied;
+    // Reads stay open to any authenticated member, including a
+    // read-only pilot. Only writes are gated, by requireWriteAccess.
+    const identity = await resolveIdentity(supabase);
+    if (identity.reason !== 'ok' || !identity.organizationId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const organizationId = identity.organizationId;
 
     // Need user email for report contact info
     const { data: { user } } = await supabase.auth.getUser();
@@ -212,9 +216,13 @@ export async function GET(request: Request) {
   try {
     const supabase = await createClient();
 
-    // Feature gate: require vgp_compliance (also handles auth + org lookup)
-    const { denied, organizationId } = await requireFeature(supabase, 'vgp_compliance');
-    if (denied) return denied;
+    // Reads stay open to any authenticated member, including a
+    // read-only pilot. Only writes are gated, by requireWriteAccess.
+    const identity = await resolveIdentity(supabase);
+    if (identity.reason !== 'ok' || !identity.organizationId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const organizationId = identity.organizationId;
 
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get("start_date");

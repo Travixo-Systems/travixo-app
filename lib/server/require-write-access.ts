@@ -5,11 +5,9 @@
  * It is the only place a write is actually refused — the React hooks that
  * render read-only UI are a courtesy to honest users, not a control.
  *
- * Deliberately separate from requireFeature(): that answers "does this plan
- * include this feature", reading public.has_feature_access(), which falls
- * through to `subscriptions.status IN ('active','trialing')` once a pilot
- * ends and therefore returns true forever. See lib/billing/access-model.ts
- * for why that function must never authorise a mutation.
+ * This is now the ONLY gate. Per-feature gating is gone: one plan carries
+ * every feature, so the only question worth asking is whether the
+ * organization is current. See lib/billing/access-model.ts.
  */
 
 import { NextResponse } from 'next/server'
@@ -32,9 +30,9 @@ export interface WriteAccessResult {
 export async function requireWriteAccess(
   supabase: SupabaseClient
 ): Promise<WriteAccessResult> {
-  // Shared with requireFeature() through a request-scoped memo: a route that
-  // calls both gates (recording an inspection calls both) resolves the caller
-  // once instead of twice. Only identity is shared -- the organizations read
+  // Shared with the read paths through a request-scoped memo, so a route that
+  // resolves identity and then gates resolves the caller once instead of
+  // twice. Only identity is shared -- the organizations read
   // below still happens every time, because that is the authorisation decision
   // and caching it is how a lapsed pilot keeps writing.
   const identity = await resolveIdentity(supabase)

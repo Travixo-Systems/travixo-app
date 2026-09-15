@@ -2,28 +2,10 @@ import { createClient } from '@/lib/supabase/server';
 import { isAccountLocked } from '@/lib/billing/pilot-window';
 import { PILOT_MAX_ASSETS } from '@/lib/billing/access-model';
 
-export type Feature =
-  | 'qr_tracking'
-  | 'public_scanning'
-  | 'basic_reports'
-  | 'csv_export'
-  | 'email_support'
-  | 'vgp_compliance'
-  | 'digital_audits'
-  | 'api_access'
-  | 'custom_branding'
-  | 'priority_support'
-  | 'dedicated_support'
-  | 'custom_integrations';
-
-export type FeatureAccessLevel = 'full' | 'read_only' | 'blocked';
-
 export interface EntitlementContext {
   organizationId: string;
   subscriptionStatus: string;
   planSlug: string;
-  planFeatures: Record<string, boolean | string>;
-  overrides: Array<{ feature: string; granted: boolean; expires_at: string | null }>;
   maxAssets: number;
   maxUsers: number;
   currentAssets: number;
@@ -37,8 +19,10 @@ export interface EntitlementContext {
 }
 
 /**
- * Load the full entitlement context for the current user.
- * 5 parallel DB queries for performance.
+ * Load the entitlement context for the current user.
+ *
+ * entitlement_overrides is no longer read: it only ever fed per-feature
+ * gating, and every feature now ships on the one plan.
  */
 export async function getEntitlementContext(): Promise<EntitlementContext | null> {
   const supabase = await createClient();
@@ -55,16 +39,12 @@ export async function getEntitlementContext(): Promise<EntitlementContext | null
 
   const orgId = userData.organization_id;
 
-  const [subResult, overrideResult, assetCount, userCount, orgResult] = await Promise.all([
+  const [subResult, assetCount, userCount, orgResult] = await Promise.all([
     supabase
       .from('subscriptions')
       .select('*, plan:subscription_plans(*)')
       .eq('organization_id', orgId)
       .single(),
-    supabase
-      .from('entitlement_overrides')
-      .select('feature, granted, expires_at')
-      .eq('organization_id', orgId),
     supabase
       .from('assets')
       .select('id', { count: 'exact', head: true })
@@ -101,8 +81,6 @@ export async function getEntitlementContext(): Promise<EntitlementContext | null
     organizationId: orgId,
     subscriptionStatus: sub?.status || 'trialing',
     planSlug: sub?.plan?.slug || 'starter',
-    planFeatures: sub?.plan?.features || {},
-    overrides: overrideResult.data || [],
     // Licensed capacity, NOT the plan's max_assets: that is the int4 sentinel
     // on the travixo row. Mirrors org_max_assets(): pilot allowance while a
     // pilot runs, else what was actually licensed, else a finite floor.
@@ -119,61 +97,6 @@ export async function getEntitlementContext(): Promise<EntitlementContext | null
     convertedToPaid,
     accountLocked,
   };
-}
-
-/**
- * Check if org has access to a feature.
- * Resolution order: overrides → subscription status → plan features → deny
- */
-export function hasFeature(ctx: EntitlementContext, feature: Feature): boolean {
-  // Account locked, no access to anything
-  if (ctx.accountLocked) return false;
-
-  // Active pilots get all features
-  if (ctx.pilotActive) return true;
-
-  // 1. Check overrides (custom deals, pilots, promos)
-  const override = ctx.overrides.find(o => o.feature === feature);
-  if (override) {
-    if (override.expires_at && new Date(override.expires_at) < new Date()) {
-      // Expired override, fall through to plan check
-    } else {
-      return override.granted;
-    }
-  }
-
-  // 2. Check subscription status
-  if (!['active', 'trialing'].includes(ctx.subscriptionStatus)) {
-    return false;
-  }
-
-  // 3. Check plan features (true = enabled, false/'on_demand' = not included)
-  return ctx.planFeatures[feature] === true;
-}
-
-/**
- * Get access level for a feature.
- * Returns 'full' if user can read+write, 'read_only' if expired pilot
- * with prior access, 'blocked' if no access at all.
- */
-export function getFeatureAccessLevel(ctx: EntitlementContext, feature: Feature): FeatureAccessLevel {
-  // Account locked, everything blocked
-  if (ctx.accountLocked) return 'blocked';
-
-  // Full access if feature is enabled
-  if (hasFeature(ctx, feature)) return 'full';
-
-  // For VGP: expired pilot within grace period = read-only
-  if (feature === 'vgp_compliance' && ctx.isPilot && !ctx.pilotActive) {
-    return 'read_only';
-  }
-
-  // For digital_audits: same treatment as VGP for expired pilots in grace period
-  if (feature === 'digital_audits' && ctx.isPilot && !ctx.pilotActive) {
-    return 'read_only';
-  }
-
-  return 'blocked';
 }
 
 /**

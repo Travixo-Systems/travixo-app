@@ -3,8 +3,8 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { RESOLVED_SLOT_HEADER, cookieOptionsForSlot } from '@/lib/supabase/account-slot';
 import { cookies, headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { requireFeature, requireVGPWriteAccess } from "@/lib/server/require-feature";
 import { requireWriteAccess } from '@/lib/server/require-write-access';
+import { resolveIdentity } from '@/lib/server/request-identity';
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -53,9 +53,13 @@ export async function GET(request: Request) {
   try {
     const supabase = await createClient();
 
-    // Feature gate: require vgp_compliance (also handles auth + org lookup)
-    const { denied, organizationId } = await requireFeature(supabase, 'vgp_compliance');
-    if (denied) return denied;
+    // Reads stay open to any authenticated member, including a
+    // read-only pilot. Only writes are gated, by requireWriteAccess.
+    const identity = await resolveIdentity(supabase);
+    if (identity.reason !== 'ok' || !identity.organizationId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const organizationId = identity.organizationId;
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || undefined;
@@ -154,9 +158,7 @@ export async function POST(request: Request) {
     const writeGate = await requireWriteAccess(supabase);
     if (writeGate.denied) return writeGate.denied;
 
-    // Feature gate: require VGP write access (blocks expired pilots)
-    const { denied, organizationId } = await requireVGPWriteAccess(supabase);
-    if (denied) return denied;
+    const organizationId = writeGate.organizationId!;
 
     const body = await request.json().catch(() => ({}));
     const asset_id = body?.asset_id as string;

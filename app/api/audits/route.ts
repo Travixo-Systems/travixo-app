@@ -6,8 +6,8 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { requireFeature } from '@/lib/server/require-feature';
 import { requireWriteAccess } from '@/lib/server/require-write-access';
+import { resolveIdentity } from '@/lib/server/request-identity';
 
 // ============================================================================
 // GET /api/audits - List all audits for the organization
@@ -17,9 +17,13 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
 
-    // Feature gate: require digital_audits (also handles auth + org lookup)
-    const { denied, organizationId } = await requireFeature(supabase, 'digital_audits');
-    if (denied) return denied;
+    // Reads stay open to any authenticated member, including a
+    // read-only pilot. Only writes are gated, by requireWriteAccess.
+    const identity = await resolveIdentity(supabase);
+    if (identity.reason !== 'ok' || !identity.organizationId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const organizationId = identity.organizationId;
 
     // Parse query parameters
     const searchParams = request.nextUrl.searchParams;
@@ -84,9 +88,13 @@ export async function POST(request: NextRequest) {
     const writeGate = await requireWriteAccess(supabase);
     if (writeGate.denied) return writeGate.denied;
 
-    // Feature gate: require digital_audits (also handles auth + org lookup)
-    const { denied, organizationId } = await requireFeature(supabase, 'digital_audits');
-    if (denied) return denied;
+    // Reads stay open to any authenticated member, including a
+    // read-only pilot. Only writes are gated, by requireWriteAccess.
+    const identity = await resolveIdentity(supabase);
+    if (identity.reason !== 'ok' || !identity.organizationId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const organizationId = identity.organizationId;
 
     // Need user info for created_by and role check
     const { data: { user } } = await supabase.auth.getUser();
@@ -224,9 +232,13 @@ export async function PATCH(request: NextRequest) {
     const writeGate = await requireWriteAccess(supabase);
     if (writeGate.denied) return writeGate.denied;
 
-    // Feature gate: require digital_audits (also handles auth + org lookup)
-    const { denied, organizationId } = await requireFeature(supabase, 'digital_audits');
-    if (denied) return denied;
+    // Reads stay open to any authenticated member, including a
+    // read-only pilot. Only writes are gated, by requireWriteAccess.
+    const identity = await resolveIdentity(supabase);
+    if (identity.reason !== 'ok' || !identity.organizationId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const organizationId = identity.organizationId;
 
     // Parse request body
     const body = await request.json();
@@ -312,9 +324,13 @@ export async function DELETE(request: NextRequest) {
     const writeGate = await requireWriteAccess(supabase);
     if (writeGate.denied) return writeGate.denied;
 
-    // Feature gate: require digital_audits (also handles auth + org lookup)
-    const { denied, organizationId } = await requireFeature(supabase, 'digital_audits');
-    if (denied) return denied;
+    // Reads stay open to any authenticated member, including a
+    // read-only pilot. Only writes are gated, by requireWriteAccess.
+    const identity = await resolveIdentity(supabase);
+    if (identity.reason !== 'ok' || !identity.organizationId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const organizationId = identity.organizationId;
 
     // Need user role for permission check
     const { data: { user } } = await supabase.auth.getUser();

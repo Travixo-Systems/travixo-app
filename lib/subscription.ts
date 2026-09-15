@@ -2,26 +2,18 @@
 import { createClient } from '@/lib/supabase/client';
 
 /**
- * Central feature registry, single source of truth for all gated features.
- * Add new features here; the FeatureKey type updates automatically.
+ * Features are no longer gated per plan.
+ *
+ * FEATURE_REGISTRY and FeatureKey lived here to drive per-feature access
+ * checks and the upgrade prompts behind them. There is one plan now and it
+ * carries everything, so a per-feature question has no answer but yes. Both
+ * are deleted rather than left returning true, along with every gate that
+ * consumed them. subscription_plans.features still exists as a column; nothing
+ * reads it at runtime.
+ *
+ * What survives is ACCESS gating: requireWriteAccess / writeDenialReason,
+ * answering whether the organization is current.
  */
-export const FEATURE_REGISTRY = {
-  qr_generation: { title: 'QR Generation', description: 'QR code generation for assets.' },
-  public_scanning: { title: 'Public Scanning', description: 'Public asset scanning via QR codes.' },
-  basic_reports: { title: 'Basic Reports', description: 'Standard reporting dashboards.' },
-  csv_export: { title: 'CSV Export', description: 'Export data to CSV files.' },
-  email_support: { title: 'Email Support', description: 'Email-based customer support.' },
-  vgp_compliance: { title: 'VGP Compliance Module', description: 'VGP compliance tracking is available on Professional plans and above. Upgrade to automate your French regulatory compliance.' },
-  digital_audits: { title: 'Digital Audits', description: 'Digital audit workflows are available on Professional plans and above. Upgrade to streamline your inventory audits.' },
-  api_access: { title: 'API Access', description: 'API access is available on Business and Enterprise plans. Upgrade to integrate TraviXO with your existing systems.' },
-  custom_branding: { title: 'Custom Branding', description: 'Custom branding is available on Enterprise plans. Upgrade to white-label the platform for your organization.' },
-  priority_support: { title: 'Priority Support', description: 'Priority customer support channels.' },
-  dedicated_support: { title: 'Dedicated Support', description: 'Dedicated support is available on Business and Enterprise plans. Upgrade for priority assistance.' },
-  custom_integrations: { title: 'Custom Integrations', description: 'Custom integrations are available on Enterprise plans. Upgrade for tailored integration solutions.' },
-  rental_management: { title: 'Rental Management', description: 'Equipment rental tracking is available on Professional plans and above. Upgrade to track who has your equipment and block non-compliant checkouts.' },
-} as const;
-
-export type FeatureKey = keyof typeof FEATURE_REGISTRY;
 
 /** Valid subscription statuses that grant feature access */
 export const ACTIVE_STATUSES: ReadonlySet<string> = new Set(['active', 'trialing']);
@@ -35,7 +27,8 @@ export interface SubscriptionPlan {
   price_yearly: number;
   max_assets: number;
   max_users: number;
-  features: Record<FeatureKey, boolean | string>;
+  /** Retained column, not read at runtime. */
+  features: Record<string, boolean | string>;
   is_active: boolean;
   display_order: number;
 }
@@ -87,46 +80,6 @@ export interface SubscriptionInfo {
   pilot_end_date: string | null;
   vgp_access: 'full' | 'read_only' | 'blocked';
   account_locked: boolean;
-}
-
-/**
- * Check if organization has access to a specific feature.
- * Uses the database `has_feature_access` RPC for a single round-trip that
- * validates pilot dates and subscription status in one query.
- */
-export async function hasFeatureAccess(
-  feature: FeatureKey
-): Promise<boolean> {
-  try {
-    const supabase = createClient();
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return false;
-
-    const { data: userData } = await supabase
-      .from('users')
-      .select('organization_id')
-      .eq('id', user.id)
-      .single();
-
-    if (!userData?.organization_id) return false;
-
-    // Single RPC call, pilot check + status check + feature lookup
-    const { data: hasAccess, error } = await supabase.rpc('has_feature_access', {
-      org_id: userData.organization_id,
-      feature_name: feature,
-    });
-
-    if (error) {
-      console.error('Feature access RPC error:', error);
-      return false;
-    }
-
-    return hasAccess === true;
-  } catch (error) {
-    console.error('Feature access check error:', error);
-    return false;
-  }
 }
 
 /**

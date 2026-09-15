@@ -8,8 +8,7 @@ import {
   checkAssetLimit,
   ACTIVE_STATUSES,
   type SubscriptionInfo,
-  type SubscriptionPlan,
-  type FeatureKey
+  type SubscriptionPlan
 } from '@/lib/subscription';
 
 /**
@@ -37,42 +36,6 @@ export function usePlans() {
     },
     staleTime: 1000 * 60 * 60, // 1 hour (plans don't change often)
   });
-}
-
-/**
- * Check if user has access to a feature.
- *
- * Returns `{ hasAccess, isLoading }` so consumers can distinguish between
- * "still loading" and "no access", preventing a flash of locked content
- * for paying users. Also validates subscription status is active/trialing.
- */
-export function useFeatureAccess(feature: FeatureKey): { hasAccess: boolean; isLoading: boolean } {
-  const { data: subscriptionInfo, isLoading } = useSubscription();
-
-  if (isLoading || !subscriptionInfo) {
-    return { hasAccess: false, isLoading: true };
-  }
-
-  // Account locked, no access to anything
-  if (subscriptionInfo.account_locked) {
-    return { hasAccess: false, isLoading: false };
-  }
-
-  // Active pilots get everything (pilot_active check is done server-side)
-  if (subscriptionInfo.pilot_active) {
-    return { hasAccess: true, isLoading: false };
-  }
-
-  const sub = subscriptionInfo.subscription;
-  if (!sub?.plan) {
-    return { hasAccess: false, isLoading: false };
-  }
-
-  // Check subscription is in an active state before granting access
-  const statusOk = ACTIVE_STATUSES.has(sub.status);
-  const featureEnabled = sub.plan.features?.[feature] === true;
-
-  return { hasAccess: statusOk && featureEnabled, isLoading: false };
 }
 
 /**

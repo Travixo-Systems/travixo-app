@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { FileText, Download, ExternalLink } from 'lucide-react';
-import FeatureGate from '@/components/subscription/FeatureGate';
 import { useLanguage } from '@/lib/LanguageContext';
 import { createTranslator } from '@/lib/i18n';
 
@@ -426,8 +425,6 @@ function VGPInspectionsContent() {
 
 export default function VGPInspectionsPage() {
   return (
-    <FeatureGate feature="vgp_compliance">
       <VGPInspectionsContent />
-    </FeatureGate>
   );
 }

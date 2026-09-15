@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { FileText, Download, Calendar, AlertCircle, CheckCircle, XCircle, AlertTriangle, FileSpreadsheet } from 'lucide-react';
-import FeatureGate from '@/components/subscription/FeatureGate';
 import { useLanguage } from '@/lib/LanguageContext';
 import { createTranslator } from '@/lib/i18n';
 
@@ -707,8 +706,6 @@ function VGPReportContent() {
 
 export default function VGPReportPage() {
   return (
-    <FeatureGate feature="vgp_compliance">
       <VGPReportContent />
-    </FeatureGate>
   );
 }

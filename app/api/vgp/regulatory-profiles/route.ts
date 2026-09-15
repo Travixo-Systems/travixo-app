@@ -10,15 +10,10 @@
 // chosen by the user, never inferred from asset_categories.
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
-import { requireFeature } from '@/lib/server/require-feature';
 
 export async function GET() {
   try {
     const supabase = await createClient();
-
-    // Feature gate: require vgp_compliance (also handles auth + org lookup)
-    const { denied } = await requireFeature(supabase, 'vgp_compliance');
-    if (denied) return denied;
 
     const { data, error } = await supabase
       .from('vgp_regulatory_profiles')
