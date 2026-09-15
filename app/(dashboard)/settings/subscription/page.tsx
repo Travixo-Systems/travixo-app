@@ -425,15 +425,13 @@ export default function SubscriptionPage() {
                   </div>
 
                   <p className="text-[13px] mt-2" style={{ color: 'var(--text-muted, #777)' }}>
-                    {t('subscription.capacitySelectorHelp')
-                      .replace('{block}', String(CAPACITY_BLOCK))
-                      .replace('{billable}', String(billable))}
+                    {t('subscription.capacitySelectorHelp').replace('{block}', String(CAPACITY_BLOCK))}
                   </p>
-                  {atFloor && (
-                    <p className="text-[13px] mt-1" style={{ color: 'var(--text-secondary, #444)' }}>
-                      {t('subscription.capacityFloorReached')}
-                    </p>
-                  )}
+                  {/* Sits beside the price it explains, not in the feature
+                      block: it is a fact about how this figure is composed. */}
+                  <p className="text-[13px] mt-1" style={{ color: 'var(--text-muted, #777)' }}>
+                    {t('pricing.baseIncludes').replace('{amount}', String(BASE_ASSETS))}
+                  </p>
                 </div>
 
                 <div className="flex items-stretch gap-3">
@@ -532,9 +530,6 @@ export default function SubscriptionPage() {
                   </div>
                 ))}
               </div>
-              <p className="text-[13px] mt-4" style={{ color: 'var(--text-muted, #777)' }}>
-                {t('pricing.baseIncludes').replace('{amount}', String(BASE_ASSETS))}
-              </p>
             </div>
           </>
         )}
