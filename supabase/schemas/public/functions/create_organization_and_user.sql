@@ -54,16 +54,9 @@ BEGIN
     ON CONFLICT (organization_id) DO NOTHING;
   END IF;
 
-  -- Grant all features via entitlement overrides for pilot period
-  INSERT INTO public.entitlement_overrides (organization_id, feature, granted, reason, expires_at)
-  SELECT v_org_id, f.feature, true, 'pilot', NOW() + INTERVAL '30 days'
-  FROM (VALUES
-    ('qr_generation'), ('public_scanning'), ('basic_reports'), ('csv_export'),
-    ('email_support'), ('vgp_compliance'), ('digital_audits'), ('api_access'),
-    ('custom_branding'), ('priority_support'), ('dedicated_support'),
-    ('custom_integrations')
-  ) AS f(feature)
-  ON CONFLICT (organization_id, feature) DO NOTHING;
+  -- No entitlement_overrides seeding. A pilot is not granted features one by
+  -- one any more: every feature ships on the one plan, and the pilot window
+  -- governs duration while org_max_assets() governs capacity.
 
   RETURN v_org_id;
 END;
@@ -71,6 +64,6 @@ $function$;
 
 GRANT EXECUTE ON FUNCTION "public"."create_organization_and_user"(text, text, uuid, text, text) TO "authenticated", "postgres", "service_role";
 
-COMMENT ON FUNCTION "public"."create_organization_and_user"(text, text, uuid, text, text) IS 'Signup: creates the org, owner profile, trialing subscription and pilot feature grants. Pilot window is 30 days -- must match PILOT_FULL_DAYS in lib/billing/pilot-window.ts and the "30-day trial" claim on the website.';
+COMMENT ON FUNCTION "public"."create_organization_and_user"(text, text, uuid, text, text) IS 'Signup: creates the org, owner profile and trialing subscription. Pilot window is 30 days -- must match PILOT_FULL_DAYS in lib/billing/pilot-window.ts and the "30-day trial" claim on the website. No feature grants: one plan carries every feature.';
 
 REVOKE ALL ON FUNCTION "public"."create_organization_and_user"(text, text, uuid, text, text) FROM PUBLIC;

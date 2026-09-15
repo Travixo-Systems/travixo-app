@@ -137,8 +137,19 @@ export async function POST(request: Request) {
     }
 
     // Calculate overdue equipment
+    //
+    // Soft-deleted schedules are excluded via archived_at IS NULL. This read
+    // `.eq("archived", false)` -- a column vgp_schedules does not have; it
+    // carries archived_at timestamptz and no boolean twin. PostgREST answers a
+    // filter on an absent column with 42703, and because the error was
+    // discarded here, `data` came back undefined and overdueEquipment below
+    // degraded to []. Every DREETS report, for every organization, stated zero
+    // overdue equipment -- the one figure a compliance inspection turns on.
+    //
+    // The error is destructured and checked now, so the same class of failure
+    // surfaces instead of printing a clean bill of health.
     const todayIso = new Date().toISOString().split("T")[0];
-    const { data: overdueSchedules } = await supabase
+    const { data: overdueSchedules, error: overdueError } = await supabase
       .from("vgp_schedules")
       .select(`
         id,
@@ -154,7 +165,18 @@ export async function POST(request: Request) {
       `)
       .eq("organization_id", organizationId!)
       .lt("next_due_date", todayIso)
-      .eq("archived", false);
+      .is("archived_at", null);
+
+    if (overdueError) {
+      // Refuse to emit the PDF rather than emit one understating overdue
+      // equipment. A report that silently reads zero is worse than no report:
+      // it is evidence someone may rely on.
+      console.error("[VGP-REPORT] Overdue query failed:", overdueError.message);
+      return NextResponse.json(
+        { error: "Could not determine overdue equipment; report not generated." },
+        { status: 500 }
+      );
+    }
 
     // Map to overdue equipment format
     const overdueEquipment = (overdueSchedules || []).map((schedule: any) => {
