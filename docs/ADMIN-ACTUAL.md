@@ -56,7 +56,15 @@ records that it is there for account-slot resolution, without which
 `lib/supabase/server.ts` falls back to slot 0 and the page reads the wrong
 account's session.
 
-### FINDING — `/api/admin/trigger-vgp-alerts` is not platform-admin gated
+### FIXED — `/api/admin/trigger-vgp-alerts` was not platform-admin gated
+
+**Status: fixed before this branch.** `route.ts` now imports
+`requireSuperAdminApi` and gates on it, returning `gate.denied` (a 401/403,
+never a redirect) for anyone who is not a `platform_admins` member. Its header
+documents the old tenant-role model and why it both admitted every tenant owner
+and excluded the actual platform admins. Re-verified 2026-09-15. The
+description below is the defect as it stood, kept because the reasoning about
+the two disjoint privilege models is still the thing to understand.
 
 `route.ts:72` gates on the caller's **tenant** role:
 
@@ -498,17 +506,18 @@ lifecycle mutations.
 |---|---|---|---|---|---|
 | `/admin` | Organizations; Recent signups | org count, per-org user count, per-org asset count, tier, status, pilot, created — all live. Access + Last connected derived (Auth admin API, not DB) | none | `organizations`, `users`, `assets`, `auth.users` | **PARTIAL** — `TEST?` chip is a hardcoded email-pattern heuristic (`page.tsx:27-32`), not data; all strings hardcoded English |
 | `/admin/orgs/[id]` | Org fields; Engagement; Actions; Users; Admin activity | org fields, user list, real/demo asset split, inspection count, audit log — all live. Access/engagement/score derived | `extendTrial`, `endPilot`, `toggleFeatureFlag`, `markPaid` | `organizations`, `users`, `assets`, `vgp_inspections`, `admin_audit_log`, `subscription_plans` | **PARTIAL** — conversion score is a hardcoded heuristic (`orgHealth.ts:225-265`, self-labelled); feature-flag toggle writes a value nothing reads (ORPHAN); `markPaid` plan list FIXED 2026-09-15 (`ALLOWED_PLAN_SLUGS` now `['travixo']`, matching the one active plan); `summarizeAudit` has no `admin_mark_paid` branch so both live audit rows show `-`; all strings hardcoded English |
-| `POST /api/admin/trigger-vgp-alerts` | n/a | n/a | runs the VGP alert cron, sends email | `vgp_alerts` + cron's tables | **STALE** — gated on tenant role, not `requireSuperAdmin` (`route.ts:72`), contradicting `scripts/verify-write-gate-coverage.mjs:28`; unaudited; not linked from any admin page |
+| `POST /api/admin/trigger-vgp-alerts` | n/a | n/a | runs the VGP alert cron, sends email | `vgp_alerts` + cron's tables | **PARTIAL** — gating FIXED (now `requireSuperAdminApi`); still unaudited (no `admin_audit_log` write) and not linked from any admin page |
 | Feature flags (component) | within Actions | flag state from `organizations.feature_flags` | `toggleFeatureFlag` | `organizations` | **ORPHAN** — no consumer for any of the 3 keys; 0/19 orgs have flags set |
 
 ---
 
 ## Summary of findings
 
-1. `/api/admin/trigger-vgp-alerts` is gated on tenant role, not platform-admin
-   membership (`route.ts:72`). Any tenant owner/admin across all 19 orgs can
-   trigger a real email-sending cron run. `verify-write-gate-coverage.mjs:28`
-   asserts it is `requireSuperAdmin`-gated; it is not.
+1. ~~`/api/admin/trigger-vgp-alerts` is gated on tenant role, not platform-admin
+   membership.~~ **FIXED before this branch.** The route now calls
+   `requireSuperAdminApi(supabase)` and returns `gate.denied` for a non-admin.
+   Re-verified 2026-09-15. It remains unaudited (no `admin_audit_log` write)
+   and unlinked from any admin page.
 2. ~~`markPaid` offers four plans, all `is_active: false` live; the one active
    plan (`travixo`) is not offered.~~ **FIXED 2026-09-15.**
    `ALLOWED_PLAN_SLUGS` (`lib/admin/featureFlags.ts:98`) now reads

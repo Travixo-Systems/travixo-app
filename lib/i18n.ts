@@ -4691,6 +4691,302 @@ export const translations = {
     colCreated: { en: "Recorded", fr: "Enregistré" },
     none: { en: "none", fr: "aucun" },
   },
+
+  // ---------------------------------------------------------------------
+  // adminConsole - the platform-admin console (all seven areas).
+  //
+  // Separate from adminEvidence, which predates it and owns the three
+  // detectors. Both are bilingual; the admin surface was English-only in a
+  // two-language app until this rehaul.
+  // ---------------------------------------------------------------------
+  adminConsole: {
+    // Navigation and shell
+    navOverview: { en: "Overview", fr: "Vue d'ensemble" },
+    navOrganizations: { en: "Organizations", fr: "Organisations" },
+    navEvidence: { en: "Evidence", fr: "Preuves" },
+    navCatalogue: { en: "Regulatory catalogue", fr: "Catalogue réglementaire" },
+    navDeliveries: { en: "Deliveries", fr: "Livraisons" },
+    navAudit: { en: "Audit journal", fr: "Journal d'audit" },
+
+    // Overview page
+    overviewTitle: { en: "Overview", fr: "Vue d'ensemble" },
+    overviewSubtitle: {
+      en: "Every figure on this page is a live query. Metrics with no source are omitted rather than shown as zero.",
+      fr: "Chaque chiffre de cette page provient d'une requête réelle. Les indicateurs sans source sont omis plutôt qu'affichés à zéro.",
+    },
+
+    // Headline counts
+    countOrganizations: { en: "Organizations", fr: "Organisations" },
+    countActivePilots: { en: "Active pilots", fr: "Pilotes actifs" },
+    countPaying: { en: "Paying", fr: "Payants" },
+    countAssets: { en: "Assets", fr: "Équipements" },
+    countRentals: { en: "Rentals", fr: "Locations" },
+    countInspections: { en: "Inspections", fr: "Inspections" },
+
+    // Deltas. Absolute counts, never a percentage: the prior window is zero
+    // for every entity measured, and a percentage over zero is invented.
+    deltaNew: { en: "new in 30d", fr: "nouveaux en 30j" },
+    deltaPrior: { en: "prior 30d", fr: "30j précédents" },
+
+    // Panel: evidence health
+    panelEvidenceTitle: { en: "Evidence health", fr: "Santé des preuves" },
+    panelEvidenceSubtitle: {
+      en: "The three detectors, run live.",
+      fr: "Les trois détecteurs, exécutés en direct.",
+    },
+    detectorD1: { en: "Atomic disagreement", fr: "Désaccord atomique" },
+    detectorD2: { en: "Documentary gaps", fr: "Lacunes documentaires" },
+    detectorD3: { en: "Rental expiry", fr: "Expiration en location" },
+    detectorClean: { en: "clean", fr: "conforme" },
+    detectorUnavailable: { en: "could not run", fr: "exécution impossible" },
+    openEvidence: { en: "Open evidence", fr: "Ouvrir les preuves" },
+
+    // Panel: regulatory catalogue
+    panelCatalogueTitle: { en: "Regulatory catalogue", fr: "Catalogue réglementaire" },
+    catalogueProfiles: { en: "profiles", fr: "profils" },
+    catalogueAutomatic: { en: "sourced", fr: "sourcés" },
+    catalogueToConfirm: { en: "to confirm", fr: "à confirmer" },
+    catalogueManualOnly: { en: "manual only", fr: "manuel uniquement" },
+    openCatalogue: { en: "Open catalogue", fr: "Ouvrir le catalogue" },
+
+    // Panel: deliveries
+    panelDeliveriesTitle: { en: "Deliveries", fr: "Livraisons" },
+    deliveriesAlertsToday: { en: "Alerts sent today", fr: "Alertes envoyées aujourd'hui" },
+    deliveriesLastDigest: { en: "Last digest", fr: "Dernier digest" },
+    deliveriesQueued: { en: "Queued", fr: "En attente" },
+    deliveriesNever: { en: "never", fr: "jamais" },
+    openDeliveries: { en: "Open deliveries", fr: "Ouvrir les livraisons" },
+
+    // Orgs to watch
+    watchTitle: { en: "Organizations to watch", fr: "Organisations à surveiller" },
+    watchSubtitle: {
+      en: "Pilots nearing their end date, and organizations over their licensed capacity.",
+      fr: "Pilotes proches de leur échéance, et organisations au-delà de leur capacité sous licence.",
+    },
+    watchClean: {
+      en: "No pilot ends within 14 days and no organization exceeds its licensed capacity.",
+      fr: "Aucun pilote ne se termine sous 14 jours et aucune organisation ne dépasse sa capacité sous licence.",
+    },
+    watchReasonPilotEnding: { en: "Pilot ends soon", fr: "Pilote bientôt terminé" },
+    watchReasonOverCapacity: { en: "Over capacity", fr: "Capacité dépassée" },
+    watchReasonLocked: { en: "Locked out", fr: "Accès verrouillé" },
+
+    // Billing summary
+    billingTitle: { en: "Billing", fr: "Facturation" },
+    billingSubtitle: {
+      en: "Organizations carrying a licensed capacity, priced from the published grid.",
+      fr: "Organisations disposant d'une capacité sous licence, tarifées selon la grille publiée.",
+    },
+    billingNoSubscriptions: {
+      en: "No organization carries a licensed capacity.",
+      fr: "Aucune organisation ne dispose d'une capacité sous licence.",
+    },
+    billingLicensed: { en: "Licensed", fr: "Sous licence" },
+    billingMonthly: { en: "Monthly", fr: "Mensuel" },
+    billingConverted: { en: "Marked paid", fr: "Marqués payants" },
+    billingEvents: { en: "Billing events", fr: "Événements de facturation" },
+
+    // Recent admin actions
+    recentActionsTitle: { en: "Recent admin actions", fr: "Actions d'administration récentes" },
+    recentActionsNone: {
+      en: "No admin action has ever been recorded.",
+      fr: "Aucune action d'administration n'a jamais été enregistrée.",
+    },
+    openAudit: { en: "Open journal", fr: "Ouvrir le journal" },
+
+    // Shared
+    colOrganization: { en: "Organization", fr: "Organisation" },
+    colReason: { en: "Reason", fr: "Motif" },
+    colWhen: { en: "When", fr: "Quand" },
+    colAction: { en: "Action", fr: "Action" },
+    colActor: { en: "Actor", fr: "Auteur" },
+    colCapacity: { en: "Capacity", fr: "Capacité" },
+    colUsed: { en: "Used", fr: "Utilisé" },
+    colPrice: { en: "Price", fr: "Tarif" },
+    colStatus: { en: "Status", fr: "Statut" },
+    readFailed: {
+      en: "This read could not run, so an empty result does not mean there is nothing to see.",
+      fr: "Cette lecture n'a pas pu s'exécuter : un résultat vide ne signifie donc pas qu'il n'y a rien à voir.",
+    },
+    perMonth: { en: "/month", fr: "/mois" },
+  },
+
+  // ---------------------------------------------------------------------
+  // adminOrgDetail - /admin/orgs/[id].
+  //
+  // Every string on the organisation detail page. Each Chaine TraviXO leg
+  // carries its own query text, shown under the leg, so a reader can see what
+  // the ratio counted rather than trusting the label.
+  // ---------------------------------------------------------------------
+  adminOrgDetail: {
+    back: { en: "Back to organizations", fr: "Retour aux organisations" },
+
+    // Header actions
+    actionExtendTrial: { en: "Extend trial", fr: "Prolonger l'essai" },
+    actionsUnavailable: {
+      en: "View as organization and Edit capacity are not offered: neither has a backing path. There is no admin impersonation route, and licensed_capacity is written only by Stripe checkout, the Stripe webhook and the capacity cron. Rendering them would be two controls that do nothing.",
+      fr: "Voir comme l'organisation et Modifier la capacite ne sont pas proposes : aucun des deux n'a de chemin d'execution. Il n'existe pas de route d'impersonation admin, et licensed_capacity n'est ecrit que par le paiement Stripe, le webhook Stripe et le cron de capacite. Les afficher reviendrait a proposer deux commandes sans effet.",
+    },
+
+    // Stat cards
+    statCapacity: { en: "Capacity used", fr: "Capacite utilisee" },
+    statCapacityNone: { en: "no licence", fr: "aucune licence" },
+    statActiveRentals: { en: "Active rentals", fr: "Locations actives" },
+    statInspections: { en: "Inspections", fr: "Inspections" },
+    statUsers: { en: "Users", fr: "Utilisateurs" },
+    statEvidenceScore: { en: "Evidence score", fr: "Score de preuve" },
+    statEvidenceBasis: {
+      en: "inspections carrying a certificate",
+      fr: "inspections avec un certificat",
+    },
+
+    // Chaine TraviXO
+    chainTitle: { en: "TraviXO chain", fr: "Chaine TraviXO" },
+    chainSubtitle: {
+      en: "Four legs, each from a live query. The query is stated under each leg.",
+      fr: "Quatre maillons, chacun issu d'une requete reelle. La requete est indiquee sous chaque maillon.",
+    },
+    legGood: { en: "Good", fr: "Bon" },
+    legTodo: { en: "To complete", fr: "A completer" },
+    legNoData: { en: "Nothing to measure", fr: "Rien a mesurer" },
+
+    legIdentity: { en: "Identity", fr: "Identite" },
+    legIdentityQuery: {
+      en: "Distinct assets carrying at least one row in scans, over total assets.",
+      fr: "Equipements distincts ayant au moins une ligne dans scans, sur le total des equipements.",
+    },
+    legIdentitySubstituted: {
+      en: "Substituted. The specified query was assets with a QR code over total assets, but assets.qr_code is NOT NULL and UNIQUE, so it is 2732 of 2732 in every organization and can never fail. Scan coverage measures whether the QR estate reaches the field.",
+      fr: "Requete substituee. La requete prevue etait les equipements avec QR code sur le total, mais assets.qr_code est NOT NULL et UNIQUE : 2732 sur 2732 dans chaque organisation, donc toujours 100%. La couverture de scan mesure si le parc QR est reellement utilise.",
+    },
+
+    legMovement: { en: "Movement", fr: "Mouvement" },
+    legMovementQuery: {
+      en: "Rentals with both a checkout date and an actual return date, over total rentals.",
+      fr: "Locations avec une date de sortie et une date de retour effective, sur le total des locations.",
+    },
+
+    legCompliance: { en: "Compliance", fr: "Conformite" },
+    legComplianceQuery: {
+      en: "Schedules whose next due date is today or later, over total schedules.",
+      fr: "Plannings dont la prochaine echeance est aujourd'hui ou plus tard, sur le total des plannings.",
+    },
+
+    legEvidence: { en: "Evidence", fr: "Preuve" },
+    legEvidenceQuery: {
+      en: "Inspections with a non-null certificate_url, over total inspections.",
+      fr: "Inspections avec un certificate_url non nul, sur le total des inspections.",
+    },
+
+    // Usage reel
+    usageTitle: { en: "Actual usage", fr: "Usage reel" },
+    usageAssets: { en: "Equipment", fr: "Materiels" },
+    usageActiveRentals: { en: "Active rentals", fr: "Locations actives" },
+    usageScans: { en: "Scans", fr: "Scans" },
+    usageCertificates: { en: "Valid certificates", fr: "Certificats valides" },
+    usageAlerts: { en: "Alerts generated", fr: "Alertes generees" },
+    usageSites: { en: "Distinct locations", fr: "Emplacements distincts" },
+    usageSitesNote: {
+      en: "Distinct non-empty assets.current_location values. There is no sites table in the schema, so this counts locations recorded on equipment, not a site registry.",
+      fr: "Valeurs distinctes et non vides de assets.current_location. Le schema ne comporte pas de table des sites : ce compte porte sur les emplacements saisis sur les equipements, pas sur un registre de sites.",
+    },
+    usageNoDelta: {
+      en: "no dated source per organization",
+      fr: "aucune source datee par organisation",
+    },
+    deltaWindow: { en: "last 30d", fr: "30 derniers j" },
+    deltaPriorWindow: { en: "prior 30d", fr: "30 j precedents" },
+
+    // Facturation
+    billingTitle: { en: "Billing", fr: "Facturation" },
+    billingLicensedCapacity: { en: "Licensed capacity", fr: "Capacite sous licence" },
+    billingComputedPrice: { en: "Computed price", fr: "Tarif calcule" },
+    billingPriceBasis: {
+      en: "From the published grid: 179 covering the first 100, then 1.55, 1.20 and 0.80 per asset by band.",
+      fr: "Selon la grille publiee : 179 couvrant les 100 premiers, puis 1,55, 1,20 et 0,80 par equipement selon la tranche.",
+    },
+    billingInterval: { en: "Billing interval", fr: "Periodicite" },
+    billingNextDate: { en: "Next billing date", fr: "Prochaine echeance" },
+    billingStripeState: { en: "Stripe sync", fr: "Synchronisation Stripe" },
+    billingStripeLinked: { en: "Linked", fr: "Liee" },
+    billingStripeNotLinked: {
+      en: "Not linked. stripe_subscription_id is null, so this subscription never came from Stripe and nothing reconciles it against an invoice.",
+      fr: "Non liee. stripe_subscription_id est nul : cet abonnement ne provient pas de Stripe et rien ne le rapproche d'une facture.",
+    },
+    billingLastWebhook: { en: "Last webhook", fr: "Dernier webhook" },
+    billingNoWebhook: {
+      en: "No billing event has ever been recorded for this organization.",
+      fr: "Aucun evenement de facturation n'a jamais ete enregistre pour cette organisation.",
+    },
+    billingNoSubscription: {
+      en: "This organization has no subscriptions row, so there is no capacity, no interval and no billing date to show.",
+      fr: "Cette organisation n'a aucune ligne dans subscriptions : il n'y a donc ni capacite, ni periodicite, ni echeance a afficher.",
+    },
+
+    // Pilot scope
+    pilotTitle: { en: "Pilot scope", fr: "Perimetre du pilote" },
+    pilotStatus: { en: "Status", fr: "Statut" },
+    pilotPeriod: { en: "Period", fr: "Periode" },
+    pilotIncludedCapacity: { en: "Included capacity", fr: "Capacite incluse" },
+    pilotDaysRemaining: { en: "Days remaining", fr: "Jours restants" },
+    pilotEnded: { en: "ended", fr: "termine" },
+    pilotActive: { en: "Running", fr: "En cours" },
+    pilotNotApplicable: {
+      en: "This organization is not on a pilot: it converted to paid, so there is no pilot window to scope.",
+      fr: "Cette organisation n'est pas en pilote : elle est passee au paiement, il n'y a donc aucune fenetre de pilote a delimiter.",
+    },
+
+    // Points d'attention
+    attentionTitle: { en: "Points of attention", fr: "Points d'attention" },
+    attentionClean: {
+      en: "No exception found. Checked:",
+      fr: "Aucune exception detectee. Verifie :",
+    },
+    attentionOverdueSchedules: {
+      en: "schedules past their due date",
+      fr: "plannings dont l'echeance est depassee",
+    },
+    attentionOverCapacity: {
+      en: "assets beyond the licensed capacity",
+      fr: "equipements au-dela de la capacite sous licence",
+    },
+    attentionNoCertificate: {
+      en: "inspections with no certificate",
+      fr: "inspections sans certificat",
+    },
+    attentionRentalOutlivesVgp: {
+      en: "active rentals whose VGP falls due before the expected return",
+      fr: "locations actives dont la VGP echoit avant le retour prevu",
+    },
+    attentionNoRecentSignin: {
+      en: "days since anyone signed in",
+      fr: "jours depuis la derniere connexion",
+    },
+    attentionNeverSignedIn: {
+      en: "no member has ever signed in",
+      fr: "aucun membre ne s'est jamais connecte",
+    },
+
+    // Evenements recents
+    eventsTitle: { en: "Recent events", fr: "Evenements recents" },
+    eventsNone: {
+      en: "No admin action, inspection or rental has been recorded for this organization.",
+      fr: "Aucune action d'administration, inspection ou location n'a ete enregistree pour cette organisation.",
+    },
+    eventAdmin: { en: "Admin", fr: "Admin" },
+    eventInspection: { en: "Inspection", fr: "Inspection" },
+    eventRental: { en: "Rental", fr: "Location" },
+
+    // Shared
+    readFailed: {
+      en: "This read could not run, so an empty result does not mean there is nothing to see.",
+      fr: "Cette lecture n'a pas pu s'executer : un resultat vide ne signifie donc pas qu'il n'y a rien a voir.",
+    },
+    panelOmitted: { en: "Panel omitted", fr: "Panneau omis" },
+    of: { en: "of", fr: "sur" },
+    none: { en: "none", fr: "aucun" },
+    unknown: { en: "unknown", fr: "inconnu" },
+  },
 } as const;
 
 /**
