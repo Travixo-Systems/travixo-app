@@ -21,6 +21,7 @@ import {
   Bars3Icon,
   XMarkIcon,
   ArrowRightOnRectangleIcon,
+  ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
 import { AlertCircle, Calendar, FileText, History } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -54,6 +55,11 @@ export default function Sidebar() {
   const [flyoutPos, setFlyoutPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const vgpButtonRef = useRef<HTMLButtonElement>(null);
   const [user, setUser] = useState<{ firstName: string; lastName: string; email: string } | null>(null);
+  // A platform admin who ALSO belongs to an organization. An org-less one is
+  // redirected to /admin at login and never renders this sidebar, so the
+  // entry below exists precisely for the person who would otherwise have no
+  // way back to /admin from the tenant app.
+  const [showAdminLink, setShowAdminLink] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
   const supabase = createClient();
@@ -95,11 +101,19 @@ export default function Sidebar() {
       if (!authUser) return;
       const { data } = await supabase
         .from('users')
-        .select('first_name, last_name, email')
+        .select('first_name, last_name, email, organization_id')
         .eq('id', authUser.id)
         .single();
       if (data) {
         setUser({ firstName: data.first_name || '', lastName: data.last_name || '', email: data.email });
+
+        // Only ask the admin question for someone who has an organization.
+        // An org-less admin does not reach this sidebar, so the RPC would be
+        // a round trip whose answer is never rendered.
+        if (data.organization_id) {
+          const { data: isAdmin } = await supabase.rpc('is_super_admin');
+          setShowAdminLink(isAdmin === true);
+        }
       }
     })();
   }, []);
@@ -149,6 +163,12 @@ export default function Sidebar() {
     { name: t('navigation.team'), href: '/team', icon: UsersIcon },
     { name: t('navigation.settings'), href: '/settings', icon: Cog6ToothIcon },
     { name: t('navigation.subscription'), href: '/settings/subscription', icon: CreditCardIcon },
+    // Appended, not inserted: the mobile rail slices this array at index 2
+    // (navigation.slice(0, 2) / .slice(2)), so putting the entry anywhere
+    // earlier would silently reshuffle the primary items.
+    ...(showAdminLink
+      ? [{ name: t('navigation.platformAdmin'), href: '/admin', icon: ShieldCheckIcon }]
+      : []),
   ];
 
   const vgpNavigation = [
