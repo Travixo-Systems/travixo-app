@@ -84,10 +84,19 @@ function LoginContent() {
       // UI: the first login takes slot 0, and a login in a second tab
       // automatically takes the next free slot. The user does nothing.
       const targetSlot = claimSlotForNewLogin()
-      if (targetSlot !== null && targetSlot !== getCurrentSlot()) {
+      if (targetSlot === null) {
+        // Every slot is held by a live tab. The old code fell back to
+        // getCurrentSlot() here -- slot 0 on any bare path -- and signed in
+        // over whichever account already held that cookie, silently changing
+        // the other tab's identity. Refuse rather than evict.
+        setIsLoading(false)
+        toast.error(t.tooManyAccountsError[language])
+        return
+      }
+      if (targetSlot !== getCurrentSlot()) {
         setCurrentSlot(targetSlot)
       }
-      const loginSlot = targetSlot ?? getCurrentSlot()
+      const loginSlot = targetSlot
 
       // createClient() reads the slot we just set, so this client writes to
       // the right cookie.
