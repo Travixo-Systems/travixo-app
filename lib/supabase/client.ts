@@ -200,16 +200,32 @@ export function claimSlotForNewLogin(): number | null {
   // abandoned. Taking the highest slot first means the common case (one old
   // tab on slot 0, orphans above it) reclaims an orphan, not the live session.
   const mine = getCurrentSlot()
+
+  // ZERO CLAIMS ANYWHERE.
+  //
+  // If NO slot carries a claim, the heartbeat is not running in this browser
+  // at all -- the first load after this code deploys, a browser with
+  // localStorage unavailable, or every claiming tab already closed. In that
+  // state a claim tells us nothing about any slot, so treating the cookies as
+  // live tabs would strand the user: every slot full, nothing reclaimable,
+  // and a refusal to sign in at all.
+  //
+  // Absence of evidence is not evidence of occupancy. With no census running,
+  // the cookies are exactly what production showed them to be -- orphans. So
+  // reclaim the highest slot that is not this tab's.
+  const anyClaimExists = listSlots().some((s) => slotClaimTimestamp(s) !== null)
+
   const reclaimable = [...listSlots()]
     .reverse()
-    .find((s) => s !== mine && !slotIsClaimedByAnOpenTab(s))
+    .find((s) => s !== mine && (!anyClaimExists || !slotIsClaimedByAnOpenTab(s)))
   if (reclaimable !== undefined) {
     clearSlotCookie(reclaimable)
     return reclaimable
   }
 
-  // Every slot is genuinely in use by a live tab. There is no slot to give
-  // without evicting someone, so the caller must refuse rather than guess.
+  // Every slot other than this tab's is held by a live, claiming tab. There is
+  // no slot to give without evicting someone, so the caller must refuse rather
+  // than guess -- which is what silently changed a tab's identity before.
   return null
 }
 
@@ -225,18 +241,33 @@ export function claimSlotForNewLogin(): number | null {
  * can answer "is any OTHER tab using this slot", which sessionStorage cannot.
  */
 export function slotIsClaimedByAnOpenTab(slot: number): boolean {
-  if (typeof window === 'undefined') return true
+  const heartbeat = slotClaimTimestamp(slot)
+  if (heartbeat === null) return false
+  // A tab refreshes its claim on an interval; a claim older than the stale
+  // window belonged to a tab that is gone.
+  return Date.now() - heartbeat < SLOT_CLAIM_STALE_MS
+}
+
+/**
+ * This slot's recorded heartbeat, or null when no usable claim exists.
+ *
+ * Distinct from slotIsClaimedByAnOpenTab() on purpose. "No claim recorded"
+ * and "claimed by a live tab" are different facts, and collapsing them is what
+ * made a full cookie jar unreclaimable: a browser where the heartbeat has
+ * never run would report every slot claimed and refuse every sign-in.
+ *
+ * Returns null for: storage unavailable, no entry, or an unparseable entry.
+ * Callers decide what absence means; this function does not guess.
+ */
+function slotClaimTimestamp(slot: number): number | null {
+  if (typeof window === 'undefined') return null
   try {
     const raw = window.localStorage.getItem(slotClaimKey(slot))
-    if (!raw) return false
+    if (!raw) return null
     const heartbeat = Number(raw)
-    if (!Number.isFinite(heartbeat)) return true
-    // A tab refreshes its claim on an interval; a claim older than the stale
-    // window belonged to a tab that is gone.
-    return Date.now() - heartbeat < SLOT_CLAIM_STALE_MS
+    return Number.isFinite(heartbeat) ? heartbeat : null
   } catch {
-    // Storage unavailable: assume claimed, so we never evict on a guess.
-    return true
+    return null
   }
 }
 

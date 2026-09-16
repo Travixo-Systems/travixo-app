@@ -24,13 +24,22 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-export async function POST(request: NextRequest) {
-  const body = (await request.json().catch(() => ({}))) as {
-    clientIsAdmin?: unknown
-    clientOrganizationId?: unknown
-    clientDestination?: unknown
-    clientUserId?: unknown
-    slot?: unknown
+// GET, not POST, deliberately.
+//
+// This route writes nothing -- it reads the caller's own session and logs what
+// it found. verify-write-gate-coverage.mjs requires every MUTATING route to
+// call requireWriteAccess(), and it is right to: a POST that skips that gate is
+// exactly the hole that check exists to catch. Rather than add an exemption for
+// a diagnostic, the route is a GET, which is what it always was semantically.
+// The client's observed values ride in the query string.
+export async function GET(request: NextRequest) {
+  const q = request.nextUrl.searchParams
+  const body = {
+    clientUserId: q.get('clientUserId'),
+    clientIsAdmin: q.get('clientIsAdmin'),
+    clientOrganizationId: q.get('clientOrganizationId'),
+    clientDestination: q.get('clientDestination'),
+    slot: q.get('slot'),
   }
 
   const supabase = await createClient()
@@ -74,14 +83,20 @@ export async function POST(request: NextRequest) {
       profileError,
       wouldChoose: serverWouldChoose,
     },
+    // The client's values arrive as query strings, so these are the client's
+    // OWN JSON encoding of what it saw -- "true", "null", "undefined" are
+    // distinguishable, which is the point: === true and !value behave
+    // differently for each, and only the observed value settles which fired.
     client: {
-      userId: body.clientUserId ?? null,
-      isAdmin: body.clientIsAdmin ?? null,
-      isAdminType: typeof body.clientIsAdmin,
-      organizationId: body.clientOrganizationId ?? null,
-      destination: body.clientDestination ?? null,
-      slot: body.slot ?? null,
+      userId: body.clientUserId,
+      isAdminRaw: body.clientIsAdmin,
+      organizationIdRaw: body.clientOrganizationId,
+      destination: body.clientDestination,
+      slot: body.slot,
     },
+    // clientDestination is sent as a plain string (not JSON-encoded), so this
+    // is a like-for-like comparison. A false here means the two decision
+    // points disagreed for the same user -- which is the thing to look for.
     agree: serverWouldChoose === body.clientDestination,
   }
 

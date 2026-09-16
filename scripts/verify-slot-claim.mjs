@@ -78,14 +78,27 @@ const { slotHasSession, occupiedSlots, claimSlotForNewLogin } = client
 // ---------------------------------------------------------------------
 // A cookie jar and a location, so the real browser helpers can run in Node.
 // ---------------------------------------------------------------------
-function install({ jar = '', pathname = '/dashboard' } = {}) {
+function install({ jar = '', pathname = '/dashboard', claims = {} } = {}) {
   globalThis.document = { cookie: jar }
+  // `claims` maps slot -> age in ms. A live tab refreshes its heartbeat, so a
+  // recent timestamp means "open"; an old one means the tab is gone.
+  const store = new Map(
+    Object.entries(claims).map(([slot, ageMs]) => [
+      `travixo.account.claim.${slot}`,
+      String(Date.now() - Number(ageMs)),
+    ])
+  )
   globalThis.window = {
     location: { pathname, protocol: 'https:', href: `https://x${pathname}` },
     sessionStorage: {
       _v: null,
       getItem() { return this._v },
       setItem(_k, v) { this._v = v },
+    },
+    localStorage: {
+      getItem: (k) => (store.has(k) ? store.get(k) : null),
+      setItem: (k, v) => { store.set(k, v) },
+      removeItem: (k) => { store.delete(k) },
     },
   }
 }
@@ -272,6 +285,58 @@ if (claimedSlot !== null && Number.isInteger(claimedSlot) && claimedSlot >= 0 &&
   pass(`the claim is a valid slot in [0, ${MAX_ACCOUNT_SLOTS})`)
 } else {
   fail(`the claim ${claimedSlot} is not a valid slot`)
+}
+
+// 6. ZERO CLAIMS: the first load after this code deploys. No heartbeat has
+//    ever run, so no slot carries a claim, yet every slot has a cookie. This
+//    is the exact production state -- orphan cookies, no live owners -- and
+//    it must yield a usable slot rather than a refusal.
+install({ jar: named(allNames), pathname: '/dashboard', claims: {} })
+const zeroClaims = claimSlotForNewLogin()
+uninstall()
+if (zeroClaims !== null) {
+  pass(`with cookies but NO heartbeat anywhere, a sign-in still gets slot ${zeroClaims}`)
+} else {
+  fail(
+    'with no heartbeat recorded, the claim refuses every slot',
+    'a browser that has never run the heartbeat could not sign in at all'
+  )
+}
+
+// 7. A LIVE claiming tab must still be protected. Once the heartbeat IS
+//    running, a slot a tab refreshed moments ago is not reclaimable -- this is
+//    what stops the fix from becoming a new identity-swap of its own.
+//
+//    Tab is on slot 0; slots 1 and 2 are claimed by live tabs. The only
+//    reclaim candidates are 1 and 2, both live, so the answer must be null.
+install({
+  jar: named(allNames),
+  pathname: '/dashboard',
+  claims: { 0: 1_000, 1: 1_000, 2: 1_000 },
+})
+const allLive = claimSlotForNewLogin()
+uninstall()
+if (allLive === null) {
+  pass('when every other slot is held by a LIVE tab, the claim refuses rather than evicting')
+} else {
+  fail(
+    `claim returned slot ${allLive} while a live tab held it -- would swap that tab's identity`
+  )
+}
+
+// 8. A STALE claim is reclaimable. A tab that crashed left its heartbeat
+//    behind; past the stale window it must not keep the slot hostage.
+install({
+  jar: named(allNames),
+  pathname: '/dashboard',
+  claims: { 0: 1_000, 1: 10 * 60_000, 2: 10 * 60_000 },
+})
+const staleReclaim = claimSlotForNewLogin()
+uninstall()
+if (staleReclaim !== null && staleReclaim !== 0) {
+  pass(`a slot whose claim went stale is reclaimed (slot ${staleReclaim})`)
+} else {
+  fail(`stale claims were not reclaimed (got ${staleReclaim})`)
 }
 
 console.log('')

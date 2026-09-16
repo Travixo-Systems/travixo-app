@@ -186,17 +186,18 @@ function LoginContent() {
           // so the values reach Vercel runtime logs. Deliberately awaited: the
           // navigation below is a full page load and would cancel it.
           try {
-            await fetch('/api/_diag/login-destination', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                clientUserId: data.user.id,
-                clientIsAdmin: isAdmin,
-                clientOrganizationId: profile?.organization_id ?? null,
-                clientDestination: destination,
-                slot: loginSlot,
-              }),
+            // JSON.stringify each value so `true`, `"true"`, `null` and
+            // `undefined` stay distinguishable in the log -- they behave
+            // differently through `=== true` and `!value`, which is exactly
+            // what this is meant to tell apart.
+            const q = new URLSearchParams({
+              clientUserId: String(data.user.id),
+              clientIsAdmin: JSON.stringify(isAdmin ?? null),
+              clientOrganizationId: JSON.stringify(profile?.organization_id ?? null),
+              clientDestination: destination,
+              slot: String(loginSlot),
             })
+            await fetch(`/api/_diag/login-destination?${q}`)
           } catch {
             // diagnostics must never block a login
           }
