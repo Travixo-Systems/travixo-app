@@ -101,10 +101,23 @@ if (pageSrc && /\[['"]admin['"],\s*['"]owner['"]\]|\[['"]owner['"],\s*['"]admin[
   pass('the evidence page adds no tenant-role check of its own')
 }
 
-if (layoutSrc && /href="\/admin\/evidence"/.test(layoutSrc)) {
+// The nav moved out of layout.tsx into AdminNav.tsx when the console gained a
+// top nav with an active state (which needs usePathname, so a client
+// component). The property worth asserting is that the link EXISTS in the
+// nav, not which file the nav happens to live in, so both are checked.
+// Matches both spellings: the JSX attribute href="/admin/evidence" and the
+// data-driven form { href: '/admin/evidence', ... } that a nav built from a
+// list uses. Asserting only the first would pass a hardcoded link and fail a
+// perfectly good array, which is a property of the regex rather than of the
+// nav.
+const navSrc = read('app/(admin)/admin/AdminNav.tsx')
+const EVIDENCE_LINK = /href[:=]\s*["']\/admin\/evidence["']/
+const navCarriesLink = [layoutSrc, navSrc].some((src) => src && EVIDENCE_LINK.test(src))
+
+if (navCarriesLink) {
   pass('/admin/evidence is linked from the admin nav')
 } else {
-  fail('/admin/evidence is not linked from the admin nav')
+  fail('/admin/evidence is not linked from the admin nav (checked layout.tsx and AdminNav.tsx)')
 }
 
 // ---------------------------------------------------------------------

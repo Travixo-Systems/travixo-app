@@ -8,13 +8,19 @@
 // useLanguage() + createTranslator(), which are client-side. Every visible
 // string resolves through lib/i18n.ts in en and fr.
 //
-// Layout primitives match the existing admin pages exactly (see
-// docs/ADMIN-ACTUAL.md item 6): gray-50 ground, white cards with
-// border-gray-200 and rounded-lg, tables with a gray-50 uppercase head and
-// divide-y bodies, semantic chips in the established colour pairs.
+// Layout primitives come from ../adminPrimitives, the console's shared visual
+// vocabulary: --page-bg ground, --card-bg panels with 0.5px #dcdee3 rules,
+// 11/12/13px type, and status chips in the compliance triple. Colour carries
+// compliance meaning only. This page previously carried its own gray-50 and
+// white palette; it now matches the overview and the organisation detail page
+// rather than being a third dialect.
+//
+// Nothing about the detectors changed: the same rules, the same i18n keys, the
+// same failed-before-empty ordering that verify-admin-evidence.mjs asserts.
 
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
+import { CleanLine, FailedLine, StatusChip, type Tone } from '../adminPrimitives'
 import type { DisagreementResult } from '@/lib/admin/evidence/atomicDisagreement'
 import type { DocumentaryGapResult } from '@/lib/admin/evidence/documentaryGaps'
 import type { RentalExpiryResult } from '@/lib/admin/evidence/rentalExpiry'
@@ -34,62 +40,58 @@ function day(value: string | null): string {
   return value ? value.slice(0, 10) : '-'
 }
 
-/** Severity chip. red = acts on safety now, amber = degrades a control. */
-function Chip({ tone, children }: { tone: 'red' | 'amber' | 'green' | 'gray'; children: React.ReactNode }) {
-  const cls =
+/**
+ * Severity chip, mapped onto the console's compliance triple.
+ *
+ * The detectors speak in red/amber/green; the shared StatusChip speaks in
+ * retard/bientot/conforme. Same meaning, one vocabulary, so this page and the
+ * rest of the console cannot drift apart.
+ */
+function Chip({
+  tone,
+  children,
+}: {
+  tone: 'red' | 'amber' | 'green' | 'gray'
+  children: React.ReactNode
+}) {
+  const mapped: Tone =
     tone === 'red'
-      ? 'bg-red-100 text-red-800'
+      ? 'retard'
       : tone === 'amber'
-        ? 'bg-amber-100 text-amber-800'
+        ? 'bientot'
         : tone === 'green'
-          ? 'bg-green-100 text-green-800'
-          : 'bg-gray-200 text-gray-700'
-  return (
-    <span className={`inline-block rounded px-1.5 py-0.5 text-xs font-medium ${cls}`}>
-      {children}
-    </span>
-  )
+          ? 'conforme'
+          : 'neutral'
+  return <StatusChip tone={mapped}>{children}</StatusChip>
 }
 
-/** The green line. A clean detector says so out loud rather than vanishing. */
-function CleanLine({ text }: { text: string }) {
-  return (
-    <div className="rounded border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
-      {text}
-    </div>
-  )
-}
-
-/** A detector that could not run is never rendered as clean. */
-function FailedLine({ text, error }: { text: string; error: string | null }) {
-  return (
-    <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-      <span className="font-medium">{text}</span>
-      {error ? <span className="ml-2 font-mono text-xs">{error}</span> : null}
-    </div>
-  )
-}
-
+/**
+ * The rule, stated before the rows.
+ *
+ * A detector that shows rows without stating what it looked for asks the
+ * reader to reverse-engineer the query from the results.
+ */
 function Rule({ label, body }: { label: string; body: string }) {
   return (
-    <div className="mb-3 rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700">
+    <div className="mb-3 rounded border border-[#dcdee3] bg-[#e9ebee] px-3 py-2 text-[11px] leading-snug text-[var(--text-secondary,#444444)]">
       <span className="font-medium">{label}. </span>
       {body}
     </div>
   )
 }
 
-const TH = 'px-4 py-3 font-medium'
-const TD = 'px-4 py-3 text-gray-600'
+const TH =
+  'px-3 py-2 text-left text-[11px] font-medium uppercase tracking-wide text-[var(--text-hint,#6a6a6a)]'
+const TD = 'px-3 py-2 text-[12px] text-[var(--text-secondary,#444444)]'
 
 function TableShell({ head, children }: { head: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
-      <table className="min-w-full divide-y divide-gray-200 text-sm">
-        <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
-          <tr>{head}</tr>
+    <div className="overflow-x-auto rounded-lg border border-[#dcdee3] bg-[var(--card-bg,#edeef1)]">
+      <table className="min-w-full">
+        <thead>
+          <tr className="border-b border-[#dcdee3]">{head}</tr>
         </thead>
-        <tbody className="divide-y divide-gray-100">{children}</tbody>
+        <tbody className="divide-y divide-[#dcdee3]">{children}</tbody>
       </table>
     </div>
   )
@@ -102,17 +104,21 @@ export default function AdminEvidenceView({ d1, d2, d3, orgNames }: Props) {
   const org = (id: string) => orgNames[id] ?? id.slice(0, 8)
 
   return (
-    <div className="space-y-10">
+    <div className="min-h-screen space-y-5 bg-[var(--page-bg,#f6f8fd)] px-6 py-5">
       <section>
-        <h1 className="text-xl font-semibold">{t('adminEvidence.pageTitle')}</h1>
-        <p className="mt-1 text-sm text-gray-500">{t('adminEvidence.pageSubtitle')}</p>
+        <h1 className="text-[20px] font-medium leading-tight text-[var(--text-primary,#1a1a1a)]">
+          {t('adminEvidence.pageTitle')}
+        </h1>
+        <p className="mt-0.5 text-[11px] text-[var(--text-hint,#6a6a6a)]">
+          {t('adminEvidence.pageSubtitle')}
+        </p>
       </section>
 
       {/* ==================== D1 ATOMIC DISAGREEMENT ==================== */}
       <section>
         <div className="mb-4 flex items-baseline justify-between">
-          <h2 className="text-xl font-semibold">{t('adminEvidence.d1Title')}</h2>
-          <span className="text-sm text-gray-500">
+          <h2 className="text-[13px] font-medium text-[var(--text-primary,#1a1a1a)]">{t('adminEvidence.d1Title')}</h2>
+          <span className="text-[11px] tabular-nums text-[var(--text-muted,#5f5f5f)]">
             {d1.rows.length} {t('adminEvidence.rowsFound')}
           </span>
         </div>
@@ -143,8 +149,8 @@ export default function AdminEvidenceView({ d1, d2, d3, orgNames }: Props) {
               }
             >
               {d1.rows.map((r) => (
-                <tr key={`${r.rule}-${r.inspectionId}`} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">
+                <tr key={`${r.rule}-${r.inspectionId}`} className="hover:bg-[rgba(0,0,0,0.02)]">
+                  <td className="px-3 py-2">
                     {r.rule === 'failed_asset_in_service' ? (
                       <Chip tone="red">{t('adminEvidence.d1RuleA')}</Chip>
                     ) : (
@@ -152,33 +158,33 @@ export default function AdminEvidenceView({ d1, d2, d3, orgNames }: Props) {
                     )}
                   </td>
                   <td className={TD}>{org(r.organizationId)}</td>
-                  <td className="px-4 py-3 text-gray-900">{r.assetName}</td>
+                  <td className="px-3 py-2 text-[12px] font-medium text-[var(--text-primary,#1a1a1a)]">{r.assetName}</td>
                   <td className={TD}>
-                    <span className="font-mono text-xs">{r.assetStatus}</span>
+                    <span className="font-mono text-[11px]">{r.assetStatus}</span>
                   </td>
                   <td className={TD}>
-                    <span className="font-mono text-xs">{r.inspectionResult}</span>
+                    <span className="font-mono text-[11px]">{r.inspectionResult}</span>
                   </td>
                   <td className={TD}>{day(r.inspectionDate)}</td>
                   <td className={TD}>
-                    <span className="font-mono text-xs">{r.scheduleStatus ?? '-'}</span>
+                    <span className="font-mono text-[11px]">{r.scheduleStatus ?? '-'}</span>
                   </td>
                   <td className={TD}>
-                    <span className="font-mono text-xs">{shortId(r.inspectionId)}</span>
+                    <span className="font-mono text-[11px]">{shortId(r.inspectionId)}</span>
                   </td>
                   <td className={TD}>
-                    <span className="font-mono text-xs">{shortId(r.scheduleId)}</span>
+                    <span className="font-mono text-[11px]">{shortId(r.scheduleId)}</span>
                   </td>
                   <td className={TD}>{day(r.inspectionCreatedAt)}</td>
                 </tr>
               ))}
             </TableShell>
-            <p className="mt-2 text-xs text-gray-500">{t('adminEvidence.legacyNote')}</p>
+            <p className="mt-2 text-[11px] leading-snug text-[var(--text-muted,#5f5f5f)]">{t('adminEvidence.legacyNote')}</p>
           </>
         )}
 
         {!d1.failed && (
-          <p className="mt-2 text-xs text-gray-400">
+          <p className="mt-2 text-[11px] leading-snug text-[var(--text-hint,#6a6a6a)]">
             {d1.assetsInspected} {t('adminEvidence.d1AssetsInspected')}
           </p>
         )}
@@ -187,8 +193,8 @@ export default function AdminEvidenceView({ d1, d2, d3, orgNames }: Props) {
       {/* ==================== D2 DOCUMENTARY GAPS ====================== */}
       <section>
         <div className="mb-4 flex items-baseline justify-between">
-          <h2 className="text-xl font-semibold">{t('adminEvidence.d2Title')}</h2>
-          <span className="text-sm text-gray-500">
+          <h2 className="text-[13px] font-medium text-[var(--text-primary,#1a1a1a)]">{t('adminEvidence.d2Title')}</h2>
+          <span className="text-[11px] tabular-nums text-[var(--text-muted,#5f5f5f)]">
             {d2.rows.length} {t('adminEvidence.rowsFound')}
           </span>
         </div>
@@ -216,8 +222,8 @@ export default function AdminEvidenceView({ d1, d2, d3, orgNames }: Props) {
               }
             >
               {d2.rows.map((r) => (
-                <tr key={`${r.kind}-${r.inspectionId}`} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">
+                <tr key={`${r.kind}-${r.inspectionId}`} className="hover:bg-[rgba(0,0,0,0.02)]">
+                  <td className="px-3 py-2">
                     {r.kind === 'unresolvable_reference' ? (
                       <Chip tone="red">{t('adminEvidence.d2GapB')}</Chip>
                     ) : (
@@ -225,27 +231,27 @@ export default function AdminEvidenceView({ d1, d2, d3, orgNames }: Props) {
                     )}
                   </td>
                   <td className={TD}>{org(r.organizationId)}</td>
-                  <td className="px-4 py-3 text-gray-900">{r.assetName ?? shortId(r.assetId)}</td>
+                  <td className="px-3 py-2 text-[12px] font-medium text-[var(--text-primary,#1a1a1a)]">{r.assetName ?? shortId(r.assetId)}</td>
                   <td className={TD}>
-                    <span className="font-mono text-xs">{r.inspectionResult}</span>
+                    <span className="font-mono text-[11px]">{r.inspectionResult}</span>
                   </td>
                   <td className={TD}>{day(r.inspectionDate)}</td>
                   <td className={TD}>
                     {r.certificateFileName ?? (r.certificateUrl ? shortId(r.certificateUrl) : t('adminEvidence.none'))}
                   </td>
                   <td className={TD}>
-                    <span className="font-mono text-xs">{shortId(r.inspectionId)}</span>
+                    <span className="font-mono text-[11px]">{shortId(r.inspectionId)}</span>
                   </td>
                   <td className={TD}>{day(r.createdAt)}</td>
                 </tr>
               ))}
             </TableShell>
-            <p className="mt-2 text-xs text-gray-500">{t('adminEvidence.legacyNote')}</p>
+            <p className="mt-2 text-[11px] leading-snug text-[var(--text-muted,#5f5f5f)]">{t('adminEvidence.legacyNote')}</p>
           </>
         )}
 
         {!d2.failed && (
-          <p className="mt-2 text-xs text-gray-400">
+          <p className="mt-2 text-[11px] leading-snug text-[var(--text-hint,#6a6a6a)]">
             {d2.withCertificate}/{d2.inspectionsTotal} {t('adminEvidence.d2WithCertificate')}
           </p>
         )}
@@ -254,8 +260,8 @@ export default function AdminEvidenceView({ d1, d2, d3, orgNames }: Props) {
       {/* ==================== D3 RENTAL EXPIRY ========================= */}
       <section>
         <div className="mb-4 flex items-baseline justify-between">
-          <h2 className="text-xl font-semibold">{t('adminEvidence.d3Title')}</h2>
-          <span className="text-sm text-gray-500">
+          <h2 className="text-[13px] font-medium text-[var(--text-primary,#1a1a1a)]">{t('adminEvidence.d3Title')}</h2>
+          <span className="text-[11px] tabular-nums text-[var(--text-muted,#5f5f5f)]">
             {d3.rows.length} {t('adminEvidence.rowsFound')}
           </span>
         </div>
@@ -269,7 +275,7 @@ export default function AdminEvidenceView({ d1, d2, d3, orgNames }: Props) {
         ) : (
           <>
             {d3.worst && (
-              <div className="mb-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+              <div className="mb-3 rounded border border-[#f0c4c4] bg-[#fdf3f3] px-3 py-2 text-[12px] text-[var(--status-retard-ink,#991b1b)]">
                 <span className="font-medium">{t('adminEvidence.d3WorstOffender')}: </span>
                 {org(d3.worst.organizationId)} / {d3.worst.assetName ?? shortId(d3.worst.assetId)} -{' '}
                 {d3.worst.daysOverdueAtReturn} {t('adminEvidence.d3Days')}
@@ -292,9 +298,9 @@ export default function AdminEvidenceView({ d1, d2, d3, orgNames }: Props) {
               }
             >
               {d3.rows.map((r) => (
-                <tr key={r.rentalId} className="hover:bg-gray-50">
+                <tr key={r.rentalId} className="hover:bg-[rgba(0,0,0,0.02)]">
                   <td className={TD}>{org(r.organizationId)}</td>
-                  <td className="px-4 py-3 text-gray-900">{r.assetName ?? shortId(r.assetId)}</td>
+                  <td className="px-3 py-2 text-[12px] font-medium text-[var(--text-primary,#1a1a1a)]">{r.assetName ?? shortId(r.assetId)}</td>
                   <td className={TD}>{r.clientName}</td>
                   <td className={TD}>{day(r.checkoutDate)}</td>
                   <td className={TD}>{day(r.nextDueDate)}</td>
@@ -303,17 +309,17 @@ export default function AdminEvidenceView({ d1, d2, d3, orgNames }: Props) {
                     <Chip tone="red">{r.daysOverdueAtReturn}</Chip>
                   </td>
                   <td className={TD}>
-                    <span className="font-mono text-xs">{shortId(r.rentalId)}</span>
+                    <span className="font-mono text-[11px]">{shortId(r.rentalId)}</span>
                   </td>
                   <td className={TD}>
-                    <span className="font-mono text-xs">{shortId(r.scheduleId)}</span>
+                    <span className="font-mono text-[11px]">{shortId(r.scheduleId)}</span>
                   </td>
                 </tr>
               ))}
             </TableShell>
 
             {Object.keys(d3.perOrg).length > 0 && (
-              <div className="mt-3 text-xs text-gray-500">
+              <div className="mt-3 text-[11px] text-[var(--text-muted,#5f5f5f)]">
                 <span className="font-medium">{t('adminEvidence.d3PerOrg')}: </span>
                 {Object.entries(d3.perOrg)
                   .sort((a, b) => b[1] - a[1])
@@ -329,7 +335,7 @@ export default function AdminEvidenceView({ d1, d2, d3, orgNames }: Props) {
             exactly why counting only breaches would score it as fine. */}
         {!d3.failed && d3.unscheduled.length > 0 && (
           <div className="mt-4">
-            <div className="mb-2 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+            <div className="mb-2 rounded border border-[#f0dcc0] bg-[#fdf8f1] px-3 py-2 text-[11px] leading-snug text-[var(--status-bientot-ink,#8a4b03)]">
               {t('adminEvidence.d3Unscheduled')}
             </div>
             <TableShell
@@ -344,13 +350,13 @@ export default function AdminEvidenceView({ d1, d2, d3, orgNames }: Props) {
               }
             >
               {d3.unscheduled.map((r) => (
-                <tr key={r.rentalId} className="hover:bg-gray-50">
+                <tr key={r.rentalId} className="hover:bg-[rgba(0,0,0,0.02)]">
                   <td className={TD}>{org(r.organizationId)}</td>
-                  <td className="px-4 py-3 text-gray-900">{r.assetName ?? shortId(r.assetId)}</td>
+                  <td className="px-3 py-2 text-[12px] font-medium text-[var(--text-primary,#1a1a1a)]">{r.assetName ?? shortId(r.assetId)}</td>
                   <td className={TD}>{r.clientName}</td>
                   <td className={TD}>{day(r.expectedReturnDate)}</td>
                   <td className={TD}>
-                    <span className="font-mono text-xs">{shortId(r.rentalId)}</span>
+                    <span className="font-mono text-[11px]">{shortId(r.rentalId)}</span>
                   </td>
                 </tr>
               ))}
@@ -359,7 +365,7 @@ export default function AdminEvidenceView({ d1, d2, d3, orgNames }: Props) {
         )}
 
         {!d3.failed && d3.withoutReturnDate > 0 && (
-          <p className="mt-2 text-xs text-gray-400">
+          <p className="mt-2 text-[11px] leading-snug text-[var(--text-hint,#6a6a6a)]">
             {d3.withoutReturnDate} {t('adminEvidence.d3NoReturnDate')}
           </p>
         )}

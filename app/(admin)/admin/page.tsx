@@ -1,297 +1,99 @@
 // app/(admin)/admin/page.tsx
-// Platform-admin home: cross-tenant organizations table + recent signups.
-// Read-only. Server component. Gated by app/(admin)/admin/layout.tsx.
+// Platform-admin overview: the control room.
+//
+// Server component. Gated by app/(admin)/admin/layout.tsx, which calls
+// requireSuperAdmin() for every /admin route; this page adds no weaker check
+// of its own and performs no writes.
+//
+// READS GO THROUGH THE COOKIE-BOUND ANON CLIENT
+//
+// lib/supabase/server.ts, the same client /admin/evidence and the organisation
+// detail page use. Not service-role. Every cross-tenant read works only
+// because of the nine super_admin SELECT policies added in 4a06175.
+//
+// WHAT MOVED, AND WHAT IS GONE
+//
+// The full organisations table moved to /admin/orgs. It was the first thing on
+// this page and it is a reference list, not an operational signal: nineteen
+// rows of slugs and tiers do not tell anyone what needs attention today.
+//
+// "Recent signups" is dropped entirely. Twenty rows of raw user emails is not
+// an operational signal, and the same twenty rows are reachable per
+// organisation from the detail page.
+//
+// WHAT IS OMITTED, AND WHY IT IS OMITTED RATHER THAN ZEROED
+//
+// MRR, ARR and trial-to-paid conversion have no heading, no zero and no dash
+// anywhere on this page. Measured live: one organisation carries a
+// licensed_capacity, zero subscriptions carry a stripe_subscription_id, and
+// the only four billing_events run Feb to May 2026 and end in
+// subscription_deleted. Two of the three converted_to_paid organisations were
+// set by admin_mark_paid against ZZ-LOADTEST orgs with the UI's own warning
+// text pasted in as the reason. A revenue figure over that base would be
+// fiction with a currency symbol on it.
 
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { fetchSignInIndex } from '@/lib/admin/lastConnected'
 import {
-  engagementLevel,
-  formatLastConnected,
-  mostRecentSignIn,
-  type LastConnected,
-} from '@/lib/admin/orgHealth'
-import { accessLevel } from '@/lib/billing/access-model'
+  fetchStrip,
+  fetchCatalogue,
+  fetchDeliveries,
+  fetchWatchlist,
+  fetchBillingOverview,
+  fetchAdminActions,
+} from '@/lib/admin/overview'
+import { detectAtomicDisagreement } from '@/lib/admin/evidence/atomicDisagreement'
+import { detectDocumentaryGaps } from '@/lib/admin/evidence/documentaryGaps'
+import { detectRentalExpiry } from '@/lib/admin/evidence/rentalExpiry'
+import AdminOverviewView, { type EvidenceSummary } from './AdminOverviewView'
 
 export const dynamic = 'force-dynamic'
 
-// ---------------------------------------------------------------------------
-// Test-user heuristic.
-//
-// NOT AUTHORITATIVE. There is NO database column marking test accounts.
-// These patterns are matched against the user email purely to surface a
-// visual "TEST?" hint in the admin UI. Do not use this for billing, access
-// control, or any decision that matters. A real customer could match one of
-// these patterns; a test account could match none.
-// ---------------------------------------------------------------------------
-const TEST_PATTERNS: string[] = [
-  '+test', // plus-addressed test inboxes, e.g. someone+test@gmail.com
-  'example.com', // RFC 2606 reserved example domain
-  '@travixosystems.com', // TraviXO's own domain (internal/staff accounts)
-  'travixo', // any TraviXO-owned address (e.g. travixosystems@gmail.com)
-]
-
-function looksLikeTestUser(email: string | null | undefined): boolean {
-  if (!email) return false
-  const e = email.toLowerCase()
-  return TEST_PATTERNS.some((p) => e.includes(p))
-}
-
-function formatDate(value: string | null): string {
-  if (!value) return '-'
-  // Stable, locale-independent rendering (YYYY-MM-DD) so the table reads
-  // the same regardless of where the admin is.
-  return value.slice(0, 10)
-}
-
-interface OrgRow {
-  id: string
-  name: string
-  slug: string
-  subscription_tier: string | null
-  subscription_status: string | null
-  is_pilot: boolean
-  trial_ends_at: string | null
-  pilot_start_date: string | null
-  pilot_end_date: string | null
-  converted_to_paid: boolean
-  created_at: string
-}
-
-interface SignupRow {
-  id: string
-  email: string
-  full_name: string | null
-  role: string
-  organization_id: string | null
-  created_at: string
-}
-
-export default async function AdminDashboardPage() {
+export default async function AdminOverviewPage() {
   const supabase = await createClient()
 
-  // --- Organizations (newest first) -------------------------------------
-  // super_admin_all_access on organizations grants full cross-tenant read.
-  const { data: orgsData } = await supabase
-    .from('organizations')
-    .select(
-      'id, name, slug, subscription_tier, subscription_status, is_pilot, trial_ends_at, pilot_start_date, pilot_end_date, converted_to_paid, created_at'
-    )
-    .order('created_at', { ascending: false })
-
-  const orgs: OrgRow[] = (orgsData as OrgRow[] | null) ?? []
-
-  // --- Per-org user counts ---------------------------------------------
-  // super_admin_read_all_users (this migration) grants full cross-tenant
-  // read of users, so these counts span every tenant.
-  const { data: allUsers } = await supabase
-    .from('users')
-    .select('id, organization_id')
-
-  const userRows =
-    (allUsers as { id: string; organization_id: string | null }[] | null) ?? []
-
-  const userCountByOrg = new Map<string, number>()
-  const userIdsByOrg = new Map<string, string[]>()
-  for (const u of userRows) {
-    if (!u.organization_id) continue
-    userCountByOrg.set(u.organization_id, (userCountByOrg.get(u.organization_id) ?? 0) + 1)
-    const list = userIdsByOrg.get(u.organization_id)
-    if (list) list.push(u.id)
-    else userIdsByOrg.set(u.organization_id, [u.id])
-  }
-
-  // --- Last connected, per org -----------------------------------------
-  // auth.users.last_sign_in_at is not reachable through PostgREST, so it
-  // comes from the Auth admin API. On failure signIns.known is false and
-  // every cell renders "unknown" rather than a misleading "never".
+  // The sign-in index is needed before the watchlist can judge staleness.
+  // last_sign_in_at lives in auth.users, which PostgREST does not expose, so
+  // it comes from the Auth admin API. On failure `known` is false and the
+  // stale-sign-in condition is skipped rather than asserted.
   const signIns = await fetchSignInIndex()
-  const lastConnectedByOrg = new Map<string, LastConnected>()
-  for (const [orgId, ids] of userIdsByOrg) {
-    lastConnectedByOrg.set(
-      orgId,
-      mostRecentSignIn(ids.map((uid) => signIns.byUserId.get(uid) ?? null))
-    )
+
+  // Independent reads, so run them together rather than in series.
+  const [strip, catalogue, deliveries, billing, actions, d1, d2, d3] =
+    await Promise.all([
+      fetchStrip(supabase),
+      fetchCatalogue(supabase),
+      fetchDeliveries(supabase),
+      fetchBillingOverview(supabase),
+      fetchAdminActions(supabase),
+      detectAtomicDisagreement(supabase),
+      detectDocumentaryGaps(supabase),
+      detectRentalExpiry(supabase),
+    ])
+
+  // The watchlist needs the sign-in index and issues per-organisation counts,
+  // so it runs after rather than inside the batch above.
+  const watch = await fetchWatchlist(supabase, signIns)
+
+  // A detector that could not run is never folded into a zero: the panel
+  // renders a failure line instead of a green all-clear.
+  const evidence: EvidenceSummary = {
+    d1: { rows: d1.rows.length, failed: d1.failed },
+    d2: { rows: d2.rows.length, failed: d2.failed },
+    d3: { rows: d3.rows.length, failed: d3.failed },
+    anyFailed: d1.failed || d2.failed || d3.failed,
+    error: d1.error ?? d2.error ?? d3.error,
   }
-
-  // --- Per-org asset counts --------------------------------------------
-  // Cross-tenant read is granted by super_admin_read_all_assets (added in
-  // the Phase 1 migration), which routes through is_super_admin(). So these
-  // counts span every tenant for a platform admin.
-  const { data: allAssets } = await supabase
-    .from('assets')
-    .select('id, organization_id')
-
-  const assetCountByOrg = new Map<string, number>()
-  for (const a of (allAssets as { id: string; organization_id: string }[] | null) ?? []) {
-    if (!a.organization_id) continue
-    assetCountByOrg.set(a.organization_id, (assetCountByOrg.get(a.organization_id) ?? 0) + 1)
-  }
-
-  // --- Recent signups (last 20 users across all orgs) -------------------
-  const { data: signupsData } = await supabase
-    .from('users')
-    .select('id, email, full_name, role, organization_id, created_at')
-    .order('created_at', { ascending: false })
-    .limit(20)
-
-  const signups: SignupRow[] = (signupsData as SignupRow[] | null) ?? []
-
-  const orgNameById = new Map<string, string>()
-  for (const o of orgs) orgNameById.set(o.id, o.name)
 
   return (
-    <div className="space-y-10">
-      {/* ============================ Organizations ====================== */}
-      <section>
-        <div className="mb-4 flex items-baseline justify-between">
-          <h1 className="text-xl font-semibold">Organizations</h1>
-          <span className="text-sm text-gray-500">{orgs.length} total</span>
-        </div>
-
-        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
-              <tr>
-                <th className="px-4 py-3 font-medium">Name</th>
-                <th className="px-4 py-3 font-medium">Slug</th>
-                <th className="px-4 py-3 font-medium">Tier</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Pilot</th>
-                <th className="px-4 py-3 font-medium">Access</th>
-                <th className="px-4 py-3 font-medium">Last connected</th>
-                <th className="px-4 py-3 font-medium">Pilot ends</th>
-                <th className="px-4 py-3 text-right font-medium">Users</th>
-                <th className="px-4 py-3 text-right font-medium">Assets</th>
-                <th className="px-4 py-3 font-medium">Created</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {orgs.length === 0 ? (
-                <tr>
-                  <td colSpan={10} className="px-4 py-8 text-center text-gray-400">
-                    No organizations.
-                  </td>
-                </tr>
-              ) : (
-                orgs.map((org) => (
-                  <tr key={org.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <Link
-                        href={`/admin/orgs/${org.id}`}
-                        className="font-medium text-blue-700 hover:underline"
-                      >
-                        {org.name}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{org.slug}</td>
-                    <td className="px-4 py-3 text-gray-600">{org.subscription_tier ?? '-'}</td>
-                    <td className="px-4 py-3 text-gray-600">{org.subscription_status ?? '-'}</td>
-                    <td className="px-4 py-3 text-gray-600">{org.is_pilot ? 'Yes' : 'No'}</td>
-                    <td className="px-4 py-3">
-                      {(() => {
-                        const lvl = accessLevel(org)
-                        const cls =
-                          lvl === 'full'
-                            ? 'bg-green-100 text-green-800'
-                            : lvl === 'read_only'
-                              ? 'bg-amber-100 text-amber-800'
-                              : 'bg-red-100 text-red-800'
-                        return (
-                          <span
-                            className={`inline-block rounded px-1.5 py-0.5 text-xs font-medium ${cls}`}
-                          >
-                            {lvl}
-                          </span>
-                        )
-                      })()}
-                    </td>
-                    <td className="px-4 py-3">
-                      {(() => {
-                        const lc =
-                          lastConnectedByOrg.get(org.id) ?? { at: null, daysAgo: null }
-                        const label = formatLastConnected(lc, signIns.known)
-                        const lvl = engagementLevel(lc)
-                        const cls = !signIns.known
-                          ? 'text-gray-400'
-                          : lvl === 'active'
-                            ? 'text-green-700'
-                            : lvl === 'idle'
-                              ? 'text-amber-700'
-                              : 'text-red-700'
-                        return <span className={cls}>{label}</span>
-                      })()}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{formatDate(org.pilot_end_date)}</td>
-                    <td className="px-4 py-3 text-right text-gray-900">
-                      {userCountByOrg.get(org.id) ?? 0}
-                    </td>
-                    <td className="px-4 py-3 text-right text-gray-900">
-                      {assetCountByOrg.get(org.id) ?? 0}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{formatDate(org.created_at)}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* ============================ Recent signups ==================== */}
-      <section>
-        <div className="mb-4 flex items-baseline justify-between">
-          <h2 className="text-xl font-semibold">Recent signups</h2>
-          <span className="text-sm text-gray-500">last 20 users</span>
-        </div>
-
-        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
-              <tr>
-                <th className="px-4 py-3 font-medium">Email</th>
-                <th className="px-4 py-3 font-medium">Name</th>
-                <th className="px-4 py-3 font-medium">Role</th>
-                <th className="px-4 py-3 font-medium">Organization</th>
-                <th className="px-4 py-3 font-medium">Created</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {signups.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
-                    No users.
-                  </td>
-                </tr>
-              ) : (
-                signups.map((u) => (
-                  <tr key={u.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <span className="text-gray-900">{u.email}</span>
-                      {looksLikeTestUser(u.email) && (
-                        <span
-                          className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800"
-                          title="Heuristic only - not an authoritative test-account flag"
-                        >
-                          TEST?
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{u.full_name ?? '-'}</td>
-                    <td className="px-4 py-3 text-gray-600">{u.role}</td>
-                    <td className="px-4 py-3 text-gray-600">
-                      {u.organization_id
-                        ? orgNameById.get(u.organization_id) ?? u.organization_id
-                        : '-'}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{formatDate(u.created_at)}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </div>
+    <AdminOverviewView
+      strip={strip}
+      evidence={evidence}
+      catalogue={catalogue}
+      deliveries={deliveries}
+      watch={watch}
+      billing={billing}
+      actions={actions}
+    />
   )
 }
