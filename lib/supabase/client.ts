@@ -96,13 +96,36 @@ export function clearSlotCookie(slot: number): void {
   }
 }
 
-/** Whether a slot currently holds a session, judged by its cookie existing. */
+/**
+ * Whether a slot currently holds a session.
+ *
+ * Judged by its cookie existing with a non-empty value -- INCLUDING the
+ * chunked form.
+ *
+ * @supabase/ssr shards a token larger than 3180 bytes across `name.0`,
+ * `name.1`, ... and writes NO cookie under the bare name. An earlier version
+ * of this function only matched the bare name, so a slot holding a large
+ * token read as FREE, and claimSlotForNewLogin() handed it to a new sign-in
+ * that then overwrote a live session. Confirmed by execution, not reading:
+ * a jar of `travixo-auth-1.0` + `travixo-auth-1.1` reported slot 1 unoccupied.
+ *
+ * Matches the same name set clearSlotCookie() removes, so "is it occupied"
+ * and "what does signing out delete" can no longer disagree.
+ */
 export function slotHasSession(slot: number): boolean {
   if (typeof document === 'undefined') return false
   const name = cookieNameForSlot(slot)
-  return document.cookie
-    .split('; ')
-    .some((c) => c.startsWith(`${name}=`) && c.length > name.length + 1)
+  return document.cookie.split('; ').some((c) => {
+    const eq = c.indexOf('=')
+    if (eq <= 0) return false
+    const cookieName = c.slice(0, eq)
+    if (c.slice(eq + 1) === '') return false
+    if (cookieName === name) return true
+    // A chunk of this exact name: `name.0`, `name.1`, ... and NOT `name-1`,
+    // which is a different slot that merely shares the prefix.
+    const suffix = cookieName.slice(name.length)
+    return cookieName.startsWith(name) && /^\.(?:0|[1-9][0-9]*)$/.test(suffix)
+  })
 }
 
 /** Slots that currently hold a session. */
@@ -126,8 +149,24 @@ export function occupiedSlots(): number[] {
  * own cookie, instead of overwriting the first tab's session. The user does
  * nothing and clicks nothing.
  *
- * Returns null when every slot is taken, so the caller can reuse the current
- * one rather than silently evicting someone.
+ * Never returns a slot that holds a session belonging to a tab that is still
+ * open, so a new sign-in cannot take over another account's identity.
+ *
+ * WHEN THE POOL IS FULL
+ * ---------------------
+ *
+ * An earlier version returned null here, and BOTH callers turned that null
+ * back into `getCurrentSlot()` -- slot 0 on any bare path. That is the defect
+ * observed in production on 2026-09-15: three cookies existed
+ * (travixo-auth, -1, -2) with no tab bound to the suffixed two, every slot
+ * read as taken, the claim came back null, and the second tab's sign-in
+ * overwrote the first tab's cookie. Tab 1 VISIBLY BECAME the other account.
+ *
+ * Cookies outlive the tabs that made them: a crashed tab, a closed tab, a
+ * cleared sessionStorage all leave a cookie with no owner. So "every slot has
+ * a cookie" does NOT mean "every slot is in use". Rather than evict slot 0 by
+ * default, reclaim the least-recently-usable slot that no OPEN tab claims,
+ * and fall back to a slot this browser can prove is stale.
  */
 export function claimSlotForNewLogin(): number | null {
   if (typeof window === 'undefined') return DEFAULT_SLOT
@@ -139,19 +178,114 @@ export function claimSlotForNewLogin(): number | null {
 
   const taken = occupiedSlots()
 
-  // Nothing signed in yet, or this tab's own slot is the one signed in.
+  // Nothing signed in yet: the ordinary single-account case, clean URL.
   if (taken.length === 0) return DEFAULT_SLOT
 
+  // A free slot is always preferred, whether or not this tab holds one.
+  const free = listSlots().find((s) => !taken.includes(s))
+  if (free !== undefined) return free
+
+  // Every slot holds a cookie. Reclaim one that no open tab is using rather
+  // than silently overwriting whichever account happens to sit in slot 0.
+  //
+  // Two deliberate constraints:
+  //
+  //   - never this tab's own slot, so signing in here cannot evict the
+  //     session this very tab is displaying
+  //   - highest slot first, so slot 0 -- the incumbent single-account user,
+  //     and the slot every pre-existing tab is on -- is the LAST to go
+  //
+  // The second matters on the first deploy of this code: tabs opened before
+  // it shipped have registered no claim, so they would otherwise look
+  // abandoned. Taking the highest slot first means the common case (one old
+  // tab on slot 0, orphans above it) reclaims an orphan, not the live session.
   const mine = getCurrentSlot()
-  if (taken.includes(mine)) {
-    // This tab's slot is already in use. If the browser is signing in again
-    // here, treat it as a fresh login for a DIFFERENT account and move to a
-    // free slot, so the existing session in this slot is not destroyed.
-    const free = listSlots().find((s) => !taken.includes(s))
-    return free ?? null
+  const reclaimable = [...listSlots()]
+    .reverse()
+    .find((s) => s !== mine && !slotIsClaimedByAnOpenTab(s))
+  if (reclaimable !== undefined) {
+    clearSlotCookie(reclaimable)
+    return reclaimable
   }
 
-  return mine
+  // Every slot is genuinely in use by a live tab. There is no slot to give
+  // without evicting someone, so the caller must refuse rather than guess.
+  return null
+}
+
+/**
+ * Whether an OPEN tab in this browser has claimed a slot.
+ *
+ * Each tab records its slot under a per-slot key in localStorage on mount and
+ * removes it on unload, so this is a best-effort census of live tabs. It is
+ * deliberately conservative: when the answer is unknown the slot is treated as
+ * claimed, so a reclaim never races a tab that is merely slow to register.
+ *
+ * localStorage is shared across tabs by design here -- that is exactly why it
+ * can answer "is any OTHER tab using this slot", which sessionStorage cannot.
+ */
+export function slotIsClaimedByAnOpenTab(slot: number): boolean {
+  if (typeof window === 'undefined') return true
+  try {
+    const raw = window.localStorage.getItem(slotClaimKey(slot))
+    if (!raw) return false
+    const heartbeat = Number(raw)
+    if (!Number.isFinite(heartbeat)) return true
+    // A tab refreshes its claim on an interval; a claim older than the stale
+    // window belonged to a tab that is gone.
+    return Date.now() - heartbeat < SLOT_CLAIM_STALE_MS
+  } catch {
+    // Storage unavailable: assume claimed, so we never evict on a guess.
+    return true
+  }
+}
+
+/** localStorage key recording that an open tab holds a slot. */
+function slotClaimKey(slot: number): string {
+  return `travixo.account.claim.${parseSlot(slot)}`
+}
+
+/** How long a tab's slot claim stays valid without a refresh. */
+const SLOT_CLAIM_STALE_MS = 30_000
+
+/**
+ * Register this tab as the live owner of its slot, and keep the claim fresh.
+ *
+ * Without this, claimSlotForNewLogin() cannot tell a cookie whose tab is still
+ * open from one left behind by a closed tab, and a full pool has no safe
+ * answer. Installed once from AccountSlotBootstrap.
+ *
+ * Returns a cleanup function that releases the claim.
+ */
+export function installSlotClaim(): () => void {
+  if (typeof window === 'undefined') return () => {}
+
+  const write = () => {
+    try {
+      window.localStorage.setItem(slotClaimKey(getCurrentSlot()), String(Date.now()))
+    } catch {
+      // Storage unavailable: the slot simply reads as unclaimed, which is the
+      // conservative direction -- it can be reclaimed, never silently stolen.
+    }
+  }
+
+  write()
+  const timer = window.setInterval(write, SLOT_CLAIM_STALE_MS / 3)
+
+  const release = () => {
+    try {
+      window.localStorage.removeItem(slotClaimKey(getCurrentSlot()))
+    } catch {
+      // nothing to do; the claim ages out on its own
+    }
+  }
+  window.addEventListener('pagehide', release)
+
+  return () => {
+    window.clearInterval(timer)
+    window.removeEventListener('pagehide', release)
+    release()
+  }
 }
 
 /**

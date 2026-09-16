@@ -55,7 +55,16 @@ function SignUpContent() {
     // is already in slot 0 -- so creating a new account while evaluating would
     // silently disconnect the first one.
     const signupSlot = claimSlotForNewLogin()
-    if (signupSlot !== null && signupSlot !== getCurrentSlot()) {
+    if (signupSlot === null) {
+      // Every slot is held by a live tab. Falling through here used to reuse
+      // getCurrentSlot() -- slot 0 on a bare path -- and write the new session
+      // over whichever account was already there, silently changing that tab's
+      // identity. Refuse instead of evicting someone.
+      setIsLoading(false)
+      toast.error(ta.tooManyAccountsError[language])
+      return
+    }
+    if (signupSlot !== getCurrentSlot()) {
       setCurrentSlot(signupSlot)
     }
 

@@ -84,10 +84,19 @@ function LoginContent() {
       // UI: the first login takes slot 0, and a login in a second tab
       // automatically takes the next free slot. The user does nothing.
       const targetSlot = claimSlotForNewLogin()
-      if (targetSlot !== null && targetSlot !== getCurrentSlot()) {
+      if (targetSlot === null) {
+        // Every slot is held by a live tab. The old code fell back to
+        // getCurrentSlot() here -- slot 0 on any bare path -- and signed in
+        // over whichever account already held that cookie, silently changing
+        // the other tab's identity. Refuse rather than evict.
+        setIsLoading(false)
+        toast.error(t.tooManyAccountsError[language])
+        return
+      }
+      if (targetSlot !== getCurrentSlot()) {
         setCurrentSlot(targetSlot)
       }
-      const loginSlot = targetSlot ?? getCurrentSlot()
+      const loginSlot = targetSlot
 
       // createClient() reads the slot we just set, so this client writes to
       // the right cookie.
@@ -169,6 +178,27 @@ function LoginContent() {
           ])
           if (isAdmin === true && !profile?.organization_id) {
             destination = '/admin'
+          }
+
+          // TEMPORARY DIAGNOSTIC -- REMOVE BEFORE MERGE.
+          // Report what THIS decision point resolved, and let the server
+          // re-resolve the same three inputs independently. Logged server-side
+          // so the values reach Vercel runtime logs. Deliberately awaited: the
+          // navigation below is a full page load and would cancel it.
+          try {
+            await fetch('/api/_diag/login-destination', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                clientUserId: data.user.id,
+                clientIsAdmin: isAdmin,
+                clientOrganizationId: profile?.organization_id ?? null,
+                clientDestination: destination,
+                slot: loginSlot,
+              }),
+            })
+          } catch {
+            // diagnostics must never block a login
           }
         } catch {
           // Any failure leaves destination at '/dashboard'. Landing a platform

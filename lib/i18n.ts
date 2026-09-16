@@ -4004,6 +4004,14 @@ export const translations = {
   auth: {
     // ---------- shared ----------
     systems: { en: "SYSTEMS", fr: "SYSTEMS" },
+    // Shown when every account slot is held by a tab that is still open, so
+    // there is no slot to give a new sign-in without evicting someone. The
+    // old code silently reused slot 0 here and signed in over whichever
+    // account already held that cookie, changing that tab's identity.
+    tooManyAccountsError: {
+      en: "You are already signed in to the maximum number of accounts in this browser. Sign out of one, or close its tab, before adding another.",
+      fr: "Vous êtes déjà connecté au nombre maximum de comptes dans ce navigateur. Déconnectez-vous d'un compte, ou fermez son onglet, avant d'en ajouter un autre.",
+    },
     allRightsReserved: {
       en: "All rights reserved.",
       fr: "Tous droits réservés.",

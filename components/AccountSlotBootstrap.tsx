@@ -20,9 +20,16 @@
 //
 // Renders nothing.
 
+//  3. Register this tab as the live owner of its slot, refreshed on an
+//     interval and released on unload. Without this census, a browser whose
+//     slot cookies are all present cannot tell a session whose tab is still
+//     open from one left behind by a closed tab -- which is exactly how a
+//     second sign-in came to overwrite the first account's cookie.
+
 import { useEffect } from 'react'
 import {
   installAccountSlotFetch,
+  installSlotClaim,
   installSlotHistoryGuard,
 } from '@/lib/supabase/client'
 
@@ -30,6 +37,9 @@ export default function AccountSlotBootstrap() {
   useEffect(() => {
     installAccountSlotFetch()
     installSlotHistoryGuard()
+    // Returns a release function; running it on unmount drops this tab's claim
+    // so the slot becomes reclaimable immediately rather than after it ages out.
+    return installSlotClaim()
   }, [])
 
   return null

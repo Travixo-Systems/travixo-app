@@ -2,8 +2,6 @@ import type { Metadata } from 'next';
 import { Inter, Roboto_Mono } from "next/font/google";
 import { Providers } from './providers';
 import AccountSlotBootstrap from '@/components/AccountSlotBootstrap';
-// TEMPORARY DIAGNOSTIC -- REMOVE BEFORE MERGE.
-import SlotProbe from '@/components/SlotProbe';
 import "./globals.css";
 
 const inter = Inter({
@@ -49,8 +47,6 @@ export default function RootLayout({
             navigation hint cookie pointing at the active tab. Renders
             nothing. See lib/supabase/account-slot.ts. */}
         <AccountSlotBootstrap />
-        {/* TEMPORARY DIAGNOSTIC -- REMOVE BEFORE MERGE. See components/SlotProbe.tsx. */}
-        <SlotProbe />
         <Providers>
           {children}
         </Providers>
