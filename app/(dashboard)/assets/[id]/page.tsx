@@ -6,6 +6,7 @@ import Link from 'next/link'
 import QRCode from 'qrcode'
 import { ArrowLeft, ArrowDownToLine } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import AssetHistoryTimeline from '@/components/assets/AssetHistoryTimeline'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
 import { VGPStatusBadge } from '@/components/vgp/VGPStatusBadge'
@@ -435,6 +436,15 @@ export default function AssetDetailPage() {
             </div>
           )}
         </section>
+
+        {/* Unified history: inspections + rentals + field scans in one column.
+            Sits above the per-type tables below, which stay as the detailed
+            view for someone who already knows which kind of record they want. */}
+        <AssetHistoryTimeline
+          assetId={assetId}
+          inspections={inspections}
+          rentals={rentals}
+        />
 
         {/* SECTION 3, Inspection History */}
         <section className="rounded-lg p-5" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
