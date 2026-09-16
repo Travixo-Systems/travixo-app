@@ -1,18 +1,23 @@
 // app/(admin)/admin/layout.tsx
-// Gates EVERY /admin route. requireSuperAdmin() redirects any
-// non-super_admin to '/', so child pages can assume the caller is a
-// verified platform admin.
+// Gates EVERY /admin route. requireSuperAdmin() redirects any non-super_admin
+// to '/', so child pages can assume the caller is a verified platform admin.
+//
+// The shell carries the console's visual language: the --page-bg ground, a
+// dark --sidebar-bg header, and the 3px brand rail from DESIGN_SPEC.md. The
+// rail is horizontal here rather than vertical because the admin console uses
+// a top nav; it is the same immutable #e8600a brand element.
 
 import Link from 'next/link'
 import { requireSuperAdmin } from '@/lib/auth/requireSuperAdmin'
 import AdminLogoutButton from './AdminLogoutButton'
+import AdminNav from './AdminNav'
 
 export const metadata = {
   title: 'Platform Admin',
 }
 
-// Always render dynamically: admin data is cross-tenant and must never
-// be cached or statically prerendered.
+// Always render dynamically: admin data is cross-tenant and must never be
+// cached or statically prerendered.
 export const dynamic = 'force-dynamic'
 
 export default async function AdminLayout({
@@ -23,26 +28,23 @@ export default async function AdminLayout({
   const { email } = await requireSuperAdmin()
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
-      <header className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-6">
-            <Link href="/admin" className="text-lg font-semibold">
-              TraviXO Platform Admin
+    <div className="min-h-screen bg-[var(--page-bg,#f6f8fd)] text-[var(--text-primary,#1a1a1a)]">
+      <header className="bg-[var(--sidebar-bg,#0a2730)]">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-6">
+            <Link
+              href="/admin"
+              className="text-[15px] font-semibold text-[var(--accent,#e8600a)]"
+            >
+              TraviXO
             </Link>
-            <nav className="flex items-center gap-4 text-sm text-gray-600">
-              <Link href="/admin" className="hover:text-gray-900">
-                Organizations
-              </Link>
-              <Link href="/admin/evidence" className="hover:text-gray-900">
-                Evidence
-              </Link>
-            </nav>
+            <AdminNav />
           </div>
-          <div className="flex items-center gap-3 text-sm text-gray-500">
-            <span className="flex items-center">
-              {email}
-              <span className="ml-2 rounded bg-gray-900 px-2 py-0.5 text-xs font-medium text-white">
+
+          <div className="flex items-center gap-3">
+            <span className="flex items-center text-[12px] text-white/60">
+              <span className="hidden sm:inline">{email}</span>
+              <span className="ml-2 rounded bg-white/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white/80">
                 platform_admin
               </span>
             </span>
@@ -50,7 +52,11 @@ export default async function AdminLayout({
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-7xl px-6 py-8">{children}</main>
+
+      {/* The immutable brand rail. 3px, #e8600a, always. */}
+      <div className="h-[3px] w-full bg-[var(--accent,#e8600a)]" />
+
+      <main>{children}</main>
     </div>
   )
 }

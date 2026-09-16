@@ -4995,6 +4995,206 @@ export const translations = {
     none: { en: "none", fr: "aucun" },
     unknown: { en: "unknown", fr: "inconnu" },
   },
+
+  // ---------------------------------------------------------------------
+  // adminOverview - /admin, the platform control room.
+  //
+  // The overview answers "what needs attention today". The full
+  // organisations table moved to /admin/orgs; see adminOrgsList below.
+  // ---------------------------------------------------------------------
+  adminOverview: {
+    pageTitle: { en: "Overview", fr: "Vue d'ensemble" },
+    pageSubtitle: {
+      en: "Every figure is a live query. Metrics with no source are omitted rather than shown as zero.",
+      fr: "Chaque chiffre provient d'une requete reelle. Les indicateurs sans source sont omis plutot qu'affiches a zero.",
+    },
+
+    // Top strip
+    statOrganizations: { en: "Organizations", fr: "Organisations" },
+    statActivePilots: { en: "Active trials", fr: "Essais actifs" },
+    statPaying: { en: "Paying customers", fr: "Clients payants" },
+    statAssets: { en: "Equipment", fr: "Materiels" },
+    statActiveRentals: { en: "Active rentals", fr: "Locations actives" },
+    statInspections: { en: "Inspections", fr: "Inspections" },
+    statAttention: { en: "Points of attention", fr: "Points d'attention" },
+    statAttentionSub: {
+      en: "organizations on the watchlist",
+      fr: "organisations sous surveillance",
+    },
+    deltaNew: { en: "last 30d", fr: "30 derniers j" },
+    deltaPrior: { en: "prior 30d", fr: "30 j precedents" },
+    deltaUnavailable: { en: "no dated source", fr: "aucune source datee" },
+
+    // Panel 1: evidence health
+    evidenceTitle: { en: "Evidence health", fr: "Sante des preuves" },
+    evidenceSubtitle: {
+      en: "The three detectors, run live against production.",
+      fr: "Les trois detecteurs, executes en direct sur la production.",
+    },
+    evidenceOpen: { en: "Open evidence", fr: "Ouvrir les preuves" },
+    evidenceD1: { en: "Atomic disagreement", fr: "Desaccord atomique" },
+    evidenceD2: { en: "Documentary gaps", fr: "Lacunes documentaires" },
+    evidenceD3: { en: "Rental expiry", fr: "Expiration en location" },
+    evidenceRows: { en: "rows", fr: "lignes" },
+    evidenceClean: {
+      en: "All three detectors ran and matched nothing. Checked: failed inspections contradicted by asset or schedule status, inspections without a certificate, and active rentals whose VGP falls due before the expected return.",
+      fr: "Les trois detecteurs se sont executes sans correspondance. Verifie : inspections en echec contredites par le statut de l'equipement ou du planning, inspections sans certificat, et locations actives dont la VGP echoit avant le retour prevu.",
+    },
+    evidenceDetectorFailed: {
+      en: "A detector could not run, so zero rows does not mean zero problems.",
+      fr: "Un detecteur n'a pas pu s'executer : zero ligne ne signifie donc pas zero probleme.",
+    },
+
+    // Panel 2: regulatory catalogue
+    catalogueTitle: { en: "Regulatory catalogue", fr: "Catalogue reglementaire" },
+    catalogueOpen: { en: "Open catalogue", fr: "Ouvrir le catalogue" },
+    catalogueTotal: { en: "Profiles", fr: "Profils" },
+    catalogueSourced: {
+      en: "carrying an arrete article",
+      fr: "avec un article d'arrete",
+    },
+    catalogueToConfirm: { en: "to confirm", fr: "a confirmer" },
+    catalogueManual: { en: "manual only", fr: "manuel uniquement" },
+
+    // Panel 3: deliveries
+    deliveriesTitle: { en: "Deliveries", fr: "Livraisons" },
+    deliveriesOpen: { en: "Open deliveries", fr: "Ouvrir les livraisons" },
+    deliveriesSentToday: { en: "Alerts sent today", fr: "Alertes envoyees aujourd'hui" },
+    deliveriesSentTotal: { en: "Alerts sent, all time", fr: "Alertes envoyees, au total" },
+    deliveriesQueued: { en: "Queued, not yet sent", fr: "En attente, pas encore envoyees" },
+    deliveriesLastDigest: { en: "Last digest run", fr: "Dernier envoi de digest" },
+    deliveriesNoDigest: {
+      en: "No digest has ever been delivered.",
+      fr: "Aucun digest n'a jamais ete livre.",
+    },
+    deliveriesItems: { en: "items", fr: "elements" },
+    deliveriesNoFailureColumn: {
+      en: "There is no failure feed. vgp_alerts records sent and sent_at with no error or bounce column, and vgp_digest_deliveries holds one row per delivery the provider acknowledged, so a failed send leaves no row. The queued count above is what can be measured.",
+      fr: "Il n'existe pas de flux d'echecs. vgp_alerts enregistre sent et sent_at sans colonne d'erreur ni de rejet, et vgp_digest_deliveries ne contient qu'une ligne par livraison acquittee par le fournisseur : un envoi echoue ne laisse donc aucune trace. Le compte en attente ci-dessus est ce qui est mesurable.",
+    },
+
+    // Panel 4: watchlist
+    watchTitle: { en: "Organizations to watch", fr: "Organisations a surveiller" },
+    watchSubtitle: {
+      en: "Only organizations meeting a condition, worst first.",
+      fr: "Uniquement les organisations remplissant une condition, les plus graves d'abord.",
+    },
+    watchOpenAll: { en: "All organizations", fr: "Toutes les organisations" },
+    watchClean: {
+      en: "No organization meets any watch condition. Checked: over licensed capacity, pilot ending within 14 days, no sign-in for 30 days, evidence below 50 percent, and locked while still holding equipment.",
+      fr: "Aucune organisation ne remplit de condition de surveillance. Verifie : capacite sous licence depassee, pilote se terminant sous 14 jours, aucune connexion depuis 30 jours, preuve sous 50 pour cent, et acces verrouille avec des equipements.",
+    },
+    watchColOrg: { en: "Organization", fr: "Organisation" },
+    watchColCapacity: { en: "Capacity", fr: "Capacite" },
+    watchColEvidence: { en: "Evidence", fr: "Preuve" },
+    watchColCondition: { en: "Condition", fr: "Condition" },
+    condOverCapacity: { en: "Over capacity", fr: "Capacite depassee" },
+    condPilotEnding: { en: "Pilot ending", fr: "Pilote bientot termine" },
+    condLockedWithAssets: { en: "Locked, holds equipment", fr: "Verrouille, detient du materiel" },
+    condNoRecentSignin: { en: "No recent sign-in", fr: "Aucune connexion recente" },
+    condEvidenceBelowFloor: { en: "Evidence under 50%", fr: "Preuve sous 50%" },
+
+    // Panel 5: billing
+    billingTitle: { en: "Billing", fr: "Facturation" },
+    billingSubtitle: {
+      en: "Organizations carrying a licensed capacity, priced from the published grid.",
+      fr: "Organisations disposant d'une capacite sous licence, tarifees selon la grille publiee.",
+    },
+    billingNone: {
+      en: "No organization carries a licensed capacity.",
+      fr: "Aucune organisation ne dispose d'une capacite sous licence.",
+    },
+    billingColOrg: { en: "Organization", fr: "Organisation" },
+    billingColCapacity: { en: "Capacity", fr: "Capacite" },
+    billingColPrice: { en: "Grid price", fr: "Tarif grille" },
+    billingColStripe: { en: "Stripe", fr: "Stripe" },
+    billingStripeLinked: { en: "Linked", fr: "Liee" },
+    billingStripeNotLinked: { en: "Not linked", fr: "Non liee" },
+    billingGridNote: {
+      en: "The price is what the published grid says this capacity costs, not what anyone was invoiced. No subscription here carries a stripe_subscription_id, so nothing reconciles against an invoice.",
+      fr: "Le tarif est celui que la grille publiee attribue a cette capacite, pas un montant facture. Aucun abonnement ici ne porte de stripe_subscription_id : rien ne se rapproche d'une facture.",
+    },
+
+    // Panel 6: recent admin actions
+    actionsTitle: { en: "Recent admin actions", fr: "Actions admin recentes" },
+    actionsOpen: { en: "Open journal", fr: "Ouvrir le journal" },
+    actionsNone: {
+      en: "No admin action has ever been recorded.",
+      fr: "Aucune action d'administration n'a jamais ete enregistree.",
+    },
+    actionsColWhen: { en: "When", fr: "Quand" },
+    actionsColAction: { en: "Action", fr: "Action" },
+    actionsColChange: { en: "Change", fr: "Changement" },
+    actionsColOrg: { en: "Organization", fr: "Organisation" },
+    actionsColActor: { en: "Actor", fr: "Auteur" },
+
+    // Shared
+    readFailed: {
+      en: "This read could not run, so an empty result does not mean there is nothing to see.",
+      fr: "Cette lecture n'a pas pu s'executer : un resultat vide ne signifie donc pas qu'il n'y a rien a voir.",
+    },
+    of: { en: "of", fr: "sur" },
+    none: { en: "none", fr: "aucun" },
+  },
+
+  // ---------------------------------------------------------------------
+  // adminOrgsList - /admin/orgs, the full organisations table.
+  //
+  // Moved off the overview: it is a reference list, not an operational
+  // signal, and it was the first thing on the page.
+  // ---------------------------------------------------------------------
+  adminOrgsList: {
+    pageTitle: { en: "Organizations", fr: "Organisations" },
+    pageSubtitle: {
+      en: "Every organization. Filter to narrow, click a row to open it.",
+      fr: "Toutes les organisations. Filtrez pour affiner, cliquez une ligne pour l'ouvrir.",
+    },
+    backToOverview: { en: "Back to overview", fr: "Retour a la vue d'ensemble" },
+    total: { en: "total", fr: "au total" },
+    showing: { en: "shown", fr: "affichees" },
+
+    filterStatus: { en: "Status", fr: "Statut" },
+    filterPilot: { en: "Pilot", fr: "Pilote" },
+    filterAccess: { en: "Access", fr: "Acces" },
+    filterHeadroom: { en: "Capacity headroom", fr: "Marge de capacite" },
+    filterAll: { en: "All", fr: "Toutes" },
+    filterPilotYes: { en: "On pilot", fr: "En pilote" },
+    filterPilotNo: { en: "Not on pilot", fr: "Hors pilote" },
+    headroomOver: { en: "Over capacity", fr: "Capacite depassee" },
+    headroomTight: { en: "Under 10% left", fr: "Moins de 10% restant" },
+    headroomOk: { en: "Comfortable", fr: "Confortable" },
+    headroomNone: { en: "No licence", fr: "Aucune licence" },
+    clearFilters: { en: "Clear filters", fr: "Reinitialiser" },
+
+    colName: { en: "Name", fr: "Nom" },
+    colSlug: { en: "Slug", fr: "Identifiant" },
+    colTier: { en: "Tier", fr: "Formule" },
+    colStatus: { en: "Status", fr: "Statut" },
+    colPilot: { en: "Pilot", fr: "Pilote" },
+    colAccess: { en: "Access", fr: "Acces" },
+    colLastConnected: { en: "Last connected", fr: "Derniere connexion" },
+    colPilotEnds: { en: "Pilot ends", fr: "Fin du pilote" },
+    colUsers: { en: "Users", fr: "Utilisateurs" },
+    colAssets: { en: "Equipment", fr: "Materiels" },
+    colCapacity: { en: "Capacity", fr: "Capacite" },
+    colCreated: { en: "Created", fr: "Creee" },
+
+    yes: { en: "Yes", fr: "Oui" },
+    no: { en: "No", fr: "Non" },
+    never: { en: "never", fr: "jamais" },
+    unknown: { en: "unknown", fr: "inconnu" },
+    today: { en: "today", fr: "aujourd'hui" },
+    yesterday: { en: "yesterday", fr: "hier" },
+    daysAgo: { en: "d ago", fr: "j" },
+    emptyFiltered: {
+      en: "No organization matches these filters.",
+      fr: "Aucune organisation ne correspond a ces filtres.",
+    },
+    readFailed: {
+      en: "This read could not run, so an empty result does not mean there is nothing to see.",
+      fr: "Cette lecture n'a pas pu s'executer : un resultat vide ne signifie donc pas qu'il n'y a rien a voir.",
+    },
+  },
 } as const;
 
 /**
