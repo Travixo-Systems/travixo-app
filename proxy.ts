@@ -328,9 +328,40 @@ export async function proxy(request: NextRequest) {
 
     // Every slot is occupied: there is no account to add, so the ordinary
     // "you are already signed in" bounce applies.
+    //
+    // BOTH conditions, matching app/(auth)/login/page.tsx. They answer
+    // different questions:
+    //
+    //   is_super_admin()        may this person use /admin at all
+    //   organization_id IS NULL is /dashboard meaningless for them
+    //
+    // Checking only the first sent a platform admin who ALSO belongs to an
+    // organization to /admin here, while signing in through the login form
+    // sent the same person to /dashboard. One user, two code paths, two
+    // answers -- and that org is real work they would lose by being bounced
+    // away from it. They reach /admin from the sidebar instead.
+    //
+    // Reading users.organization_id needs no new policy: "Users can view own
+    // profile" (USING auth.uid() = id) already covers this client, which is
+    // scoped to the caller's session.
+    //
+    // Neither check grants anything. The admin layout still calls
+    // requireSuperAdmin() on every /admin route, so this only decides where to
+    // point the browser.
+    //
+    // `user` is non-null inside this branch, guaranteed by the condition above.
     let destination = '/dashboard'
-    const { data: isAdmin } = await supabase.rpc('is_super_admin')
-    if (isAdmin === true) destination = '/admin'
+    const [{ data: isAdmin }, { data: profile }] = await Promise.all([
+      supabase.rpc('is_super_admin'),
+      supabase
+        .from('users')
+        .select('organization_id')
+        .eq('id', user.id)
+        .maybeSingle(),
+    ])
+    if (isAdmin === true && !profile?.organization_id) {
+      destination = '/admin'
+    }
     return NextResponse.redirect(
       new URL(withSlotPath(slot, destination), request.url)
     )
