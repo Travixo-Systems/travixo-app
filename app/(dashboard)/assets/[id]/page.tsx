@@ -223,16 +223,19 @@ export default function AssetDetailPage() {
   }
 
   // ---- QR Code ----
+  // Depends on `loading` as well as `asset`: the canvas lives below the early
+  // `if (loading)` return, so on the first pass — when `asset` is set but the
+  // loading screen is still mounted — the ref is null and toCanvas draws
+  // nothing. Re-running once loading flips is what actually paints the code.
   useEffect(() => {
-    if (asset && qrCanvasRef.current) {
-      const fullUrl = `${window.location.origin}/scan/${asset.qr_code}`
-      QRCode.toCanvas(qrCanvasRef.current, fullUrl, {
-        width: 56,
-        margin: 1,
-        color: { dark: '#000000', light: '#FFFFFF' },
-      })
-    }
-  }, [asset])
+    if (loading || !asset?.qr_code || !qrCanvasRef.current) return
+    const fullUrl = `${window.location.origin}/scan/${asset.qr_code}`
+    QRCode.toCanvas(qrCanvasRef.current, fullUrl, {
+      width: 56,
+      margin: 1,
+      color: { dark: '#000000', light: '#FFFFFF' },
+    })
+  }, [asset, loading])
 
   const downloadQR = () => {
     if (!qrCanvasRef.current || !asset) return
