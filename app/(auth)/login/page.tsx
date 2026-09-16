@@ -179,28 +179,6 @@ function LoginContent() {
           if (isAdmin === true && !profile?.organization_id) {
             destination = '/admin'
           }
-
-          // TEMPORARY DIAGNOSTIC -- REMOVE BEFORE MERGE.
-          // Report what THIS decision point resolved, and let the server
-          // re-resolve the same three inputs independently. Logged server-side
-          // so the values reach Vercel runtime logs. Deliberately awaited: the
-          // navigation below is a full page load and would cancel it.
-          try {
-            // JSON.stringify each value so `true`, `"true"`, `null` and
-            // `undefined` stay distinguishable in the log -- they behave
-            // differently through `=== true` and `!value`, which is exactly
-            // what this is meant to tell apart.
-            const q = new URLSearchParams({
-              clientUserId: String(data.user.id),
-              clientIsAdmin: JSON.stringify(isAdmin ?? null),
-              clientOrganizationId: JSON.stringify(profile?.organization_id ?? null),
-              clientDestination: destination,
-              slot: String(loginSlot),
-            })
-            await fetch(`/api/_diag/login-destination?${q}`)
-          } catch {
-            // diagnostics must never block a login
-          }
         } catch {
           // Any failure leaves destination at '/dashboard'. Landing a platform
           // admin on the tenant dashboard is a wrong-page annoyance they can

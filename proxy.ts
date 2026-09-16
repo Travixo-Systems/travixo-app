@@ -329,30 +329,8 @@ export async function proxy(request: NextRequest) {
     // Every slot is occupied: there is no account to add, so the ordinary
     // "you are already signed in" bounce applies.
     let destination = '/dashboard'
-    const { data: isAdmin, error: adminError } = await supabase.rpc('is_super_admin')
+    const { data: isAdmin } = await supabase.rpc('is_super_admin')
     if (isAdmin === true) destination = '/admin'
-
-    // TEMPORARY DIAGNOSTIC -- REMOVE BEFORE MERGE.
-    // The OTHER place a login can be routed: this fires when an already
-    // signed-in user opens /login and every slot is occupied. Note it does
-    // NOT read organization_id, unlike the login page -- so the two decision
-    // points can disagree for the same user.
-    console.log(
-      `[LOGIN-DEST] ${JSON.stringify({
-        at: new Date().toISOString(),
-        source: 'proxy',
-        userId: user?.id ?? null,
-        email: user?.email ?? null,
-        isSuperAdmin: isAdmin,
-        isSuperAdminType: typeof isAdmin,
-        isSuperAdminError: adminError ? `${adminError.code ?? ''} ${adminError.message}`.trim() : null,
-        organizationId: '(proxy does not read it)',
-        slot,
-        destination,
-        finalUrl: withSlotPath(slot, destination),
-      })}`
-    )
-
     return NextResponse.redirect(
       new URL(withSlotPath(slot, destination), request.url)
     )
