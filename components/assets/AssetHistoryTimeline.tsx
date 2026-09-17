@@ -116,6 +116,20 @@ const SCAN_TYPE_LABEL: Record<string, { fr: string; en: string }> = {
   inventory: { fr: 'Inventaire', en: 'Inventory' },
 }
 
+/**
+ * `notes` written by the automatic QR logger is a fixed English string
+ * baked into rows already in the database, so translating it at the write
+ * site would leave every historic row untranslated. The scan type is
+ * already shown in the title, so the marker adds nothing -- drop it.
+ */
+const AUTO_SCAN_NOTE = 'Automatic scan log'
+
+function cleanNote(note: string | null): string | null {
+  if (!note) return null
+  const trimmed = note.trim()
+  return trimmed === AUTO_SCAN_NOTE ? null : trimmed
+}
+
 function formatStamp(iso: string, language: string): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return '—'
@@ -223,7 +237,7 @@ export default function AssetHistoryTimeline({ assetId, inspections, rentals }: 
         kind: 'scan',
         at: s.scanned_at,
         title: `${KIND_LABEL.scan[isFr ? 'fr' : 'en']} · ${typeLabel}`,
-        detail: s.notes,
+        detail: cleanNote(s.notes),
         location: s.location_name,
       })
     }
