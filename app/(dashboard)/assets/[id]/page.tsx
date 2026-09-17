@@ -6,6 +6,7 @@ import Link from 'next/link'
 import QRCode from 'qrcode'
 import { ArrowLeft, ArrowDownToLine } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import AssetHistoryTimeline from '@/components/assets/AssetHistoryTimeline'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
 import { VGPStatusBadge } from '@/components/vgp/VGPStatusBadge'
@@ -223,16 +224,19 @@ export default function AssetDetailPage() {
   }
 
   // ---- QR Code ----
+  // Depends on `loading` as well as `asset`: the canvas lives below the early
+  // `if (loading)` return, so on the first pass — when `asset` is set but the
+  // loading screen is still mounted — the ref is null and toCanvas draws
+  // nothing. Re-running once loading flips is what actually paints the code.
   useEffect(() => {
-    if (asset && qrCanvasRef.current) {
-      const fullUrl = `${window.location.origin}/scan/${asset.qr_code}`
-      QRCode.toCanvas(qrCanvasRef.current, fullUrl, {
-        width: 56,
-        margin: 1,
-        color: { dark: '#000000', light: '#FFFFFF' },
-      })
-    }
-  }, [asset])
+    if (loading || !asset?.qr_code || !qrCanvasRef.current) return
+    const fullUrl = `${window.location.origin}/scan/${asset.qr_code}`
+    QRCode.toCanvas(qrCanvasRef.current, fullUrl, {
+      width: 56,
+      margin: 1,
+      color: { dark: '#000000', light: '#FFFFFF' },
+    })
+  }, [asset, loading])
 
   const downloadQR = () => {
     if (!qrCanvasRef.current || !asset) return
@@ -432,6 +436,15 @@ export default function AssetDetailPage() {
             </div>
           )}
         </section>
+
+        {/* Unified history: inspections + rentals + field scans in one column.
+            Sits above the per-type tables below, which stay as the detailed
+            view for someone who already knows which kind of record they want. */}
+        <AssetHistoryTimeline
+          assetId={assetId}
+          inspections={inspections}
+          rentals={rentals}
+        />
 
         {/* SECTION 3, Inspection History */}
         <section className="rounded-lg p-5" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
