@@ -20,23 +20,23 @@
     "a column merely because some API route writes it -- API routes can use a",
     "SECURITY DEFINER RPC or the service role instead."
   ],
-
   "authenticated": {
     "users": [
       "first_name",
       "last_name",
-      "full_name",
       "avatar_url",
-      "language",
-      "updated_at"
+      "language"
     ],
-
     "$comment_users": [
-      "NOT role: privilege escalation (C-1). Role changes belong to /api/team.",
-      "NOT organization_id: tenant escape (C-1).",
-      "NOT email: identity is owned by auth.users, not this row."
+      "Patch A corrections applied:",
+      "DENY role            -- C-1 privilege escalation; /api/team owns role changes.",
+      "DENY organization_id -- C-1 tenant escape.",
+      "DENY email           -- identity is owned by auth.users.",
+      "DENY updated_at      -- maintained by trigger update_users_updated_at.",
+      "DENY full_name       -- NOT derived, but no authenticated path writes it:",
+      "                        set once at signup, read as a legacy fallback.",
+      "DENY id, created_at  -- identity / immutable."
     ],
-
     "organizations": [
       "name",
       "logo_url",
@@ -45,7 +45,6 @@
       "address",
       "city",
       "postal_code",
-      "siret",
       "country",
       "timezone",
       "currency",
@@ -54,28 +53,23 @@
       "branding_colors",
       "notification_preferences",
       "vgp_alerts_enabled",
-      "vgp_alert_days",
-      "onboarding_completed",
-      "updated_at"
+      "vgp_alert_days"
     ],
-
     "$comment_organizations": [
       "Profile and preference columns only.",
-      "NOT converted_to_paid / is_pilot / pilot_start_date / pilot_end_date /",
-      "trial_ends_at / subscription_tier / subscription_status: billing authority",
-      "(C-2). Only the Stripe webhook (service role) and the admin SECURITY",
-      "DEFINER RPCs may write these.",
-      "NOT stripe_customer_id: set by the webhook.",
-      "NOT feature_flags: set_feature_flag() only, super-admin gated.",
-      "NOT demo_alert_sent / welcome_email_sent: one-shot server claims.",
-      "NOT slug: identity.",
-      "onboarding_completed IS included -- OnboardingBanner.tsx writes it from",
-      "the browser as an ordinary member. Flagged as a known widening: it is",
-      "cosmetic state, not authority."
+      "DENY converted_to_paid / is_pilot / pilot_start_date / pilot_end_date /",
+      "     trial_ends_at / subscription_tier / subscription_status -- C-2 billing",
+      "     authority. Stripe webhook (service role) and the admin DEFINER RPCs only.",
+      "DENY stripe_customer_id -- set by the webhook.",
+      "DENY feature_flags      -- set_feature_flag() only, super-admin gated.",
+      "DENY demo_alert_sent / welcome_email_sent / demo_data_seeded -- one-shot",
+      "     server claim flags; a client write breaks the claim guard.",
+      "DENY siret              -- company registration identity, not a preference.",
+      "DENY onboarding_completed -- moved behind /api/settings/onboarding.",
+      "DENY updated_at         -- maintained by trigger update_organizations_updated_at.",
+      "DENY id, slug, created_at, pilot_notes -- identity or staff-only."
     ],
-
     "subscriptions": [],
-
     "$comment_subscriptions": [
       "EMPTY BY DESIGN. No column of this table may be written by a normal",
       "session. licensed_capacity, status, plan_id, current_period_end and the",
@@ -83,7 +77,6 @@
       "under the service role. The capacity route calls Stripe and then persists",
       "server-side; it does not need client UPDATE."
     ],
-
     "assets": [
       "name",
       "description",
@@ -101,7 +94,6 @@
       "archive_reason",
       "updated_at"
     ],
-
     "$comment_assets": [
       "Wide by necessity: the asset edit/archive/retire modals write these",
       "directly from the browser today (H-2). This list documents the CURRENT",
@@ -111,17 +103,96 @@
       "NOT qr_code / qr_url: identity, UNIQUE-constrained.",
       "NOT is_demo_data: feeds the billable asset count."
     ],
-
-    "audits":            ["name", "status", "started_at", "completed_at", "verified_assets", "missing_assets", "total_assets", "notes", "updated_at"],
-    "audit_items":       ["status", "verified_at", "verified_by", "notes"],
-    "clients":           ["name", "email", "phone", "address", "city", "postal_code", "siret", "contact_name", "notes", "updated_at"],
-    "rentals":           ["status", "actual_return_date", "returned_by", "return_condition", "return_notes", "return_scan_id", "expected_return_date", "checkout_notes", "client_name", "client_contact", "client_id", "updated_at"],
-    "vgp_schedules":     ["interval_months", "last_inspection_date", "next_due_date", "status", "notes", "rapport_url", "regulatory_profile_id", "archived_at", "archived_by", "updated_at"],
-    "vgp_inspections":   ["inspection_date", "inspector_name", "inspector_company", "certification_number", "result", "findings", "certificate_url", "certificate_file_name", "notes", "updated_at"],
-    "asset_categories":  ["name", "description", "icon", "color", "updated_at"],
-    "team_invitations":  ["status", "accepted_at", "token", "expires_at", "role", "updated_at"],
-    "user_notification_preferences": ["vgp_alerts_enabled", "vgp_alert_days", "digest_enabled", "digest_mode", "email_enabled", "updated_at"],
-
+    "audits": [
+      "name",
+      "status",
+      "started_at",
+      "completed_at",
+      "verified_assets",
+      "missing_assets",
+      "total_assets",
+      "notes",
+      "updated_at"
+    ],
+    "audit_items": [
+      "status",
+      "verified_at",
+      "verified_by",
+      "notes"
+    ],
+    "clients": [
+      "name",
+      "email",
+      "phone",
+      "address",
+      "city",
+      "postal_code",
+      "siret",
+      "contact_name",
+      "notes",
+      "updated_at"
+    ],
+    "rentals": [
+      "status",
+      "actual_return_date",
+      "returned_by",
+      "return_condition",
+      "return_notes",
+      "return_scan_id",
+      "expected_return_date",
+      "checkout_notes",
+      "client_name",
+      "client_contact",
+      "client_id",
+      "updated_at"
+    ],
+    "vgp_schedules": [
+      "interval_months",
+      "last_inspection_date",
+      "next_due_date",
+      "status",
+      "notes",
+      "rapport_url",
+      "regulatory_profile_id",
+      "archived_at",
+      "archived_by",
+      "updated_at"
+    ],
+    "vgp_inspections": [
+      "inspection_date",
+      "inspector_name",
+      "inspector_company",
+      "certification_number",
+      "result",
+      "findings",
+      "certificate_url",
+      "certificate_file_name",
+      "notes",
+      "updated_at"
+    ],
+    "asset_categories": [
+      "name",
+      "description",
+      "icon",
+      "color",
+      "updated_at"
+    ],
+    "team_invitations": [
+      "status",
+      "accepted_at",
+      "token",
+      "expires_at",
+      "role",
+      "updated_at"
+    ],
+    "user_notification_preferences": [
+      "vgp_alerts_enabled",
+      "vgp_alert_days",
+      "digest_enabled",
+      "digest_mode",
+      "email_enabled",
+      "updated_at"
+    ],
     "$comment_rest": [
       "vgp_alerts, client_recall_alerts, billing_events, usage_tracking,",
       "entitlement_overrides, admin_audit_log, settings_audit_log,",

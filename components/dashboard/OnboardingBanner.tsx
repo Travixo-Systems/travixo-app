@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
 import { Sparkles, Upload, BarChart3, X } from 'lucide-react';
 
 const BRAND = {
@@ -25,11 +24,11 @@ export default function OnboardingBanner({
 
   async function handleDismiss() {
     setDismissed(true);
-    const supabase = createClient();
-    await supabase
-      .from('organizations')
-      .update({ onboarding_completed: true })
-      .eq('id', organizationId);
+    // Patch A removes onboarding_completed from the columns `authenticated`
+    // may UPDATE, so this can no longer be written from the browser. The route
+    // resolves the organisation from the session rather than trusting the
+    // organizationId prop, and writes the single literal `true`.
+    await fetch('/api/settings/onboarding', { method: 'POST' });
   }
 
   return (

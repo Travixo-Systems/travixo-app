@@ -5,8 +5,33 @@
 // ============================================================================
 
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireWriteAccess } from '@/lib/server/require-write-access';
+
+/**
+ * Elevated client for the two writes that touch users.role and
+ * users.organization_id.
+ *
+ * Patch A removes those columns from what `authenticated` may UPDATE, so the
+ * session client can no longer perform a role change or a member removal --
+ * which is the point: they leave the client-writable surface and only this
+ * route, which already enforces the rules, may perform them.
+ *
+ * Every authorization decision still happens above on the SESSION client:
+ * caller identity from getUser(), caller role from their own users row, the
+ * target's organisation verified to match, owner protected, self-targeting
+ * refused, and admins barred from promoting to admin. This client is used
+ * ONLY to execute a write those checks have already approved, on a memberId
+ * confirmed to sit in the caller's own organisation.
+ */
+function serviceClient() {
+  return createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } }
+  );
+}
 
 // ============================================================================
 // GET /api/team - List all team members for the organization
@@ -289,12 +314,16 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Update the role
-    const { data: updatedMember, error: updateError } = await supabase
+    // Update the role.
+    // Service client: users.role is not writable by `authenticated` after
+    // Patch A. Every guard above has already run on the session client, and
+    // the .eq('organization_id', ...) below keeps the write inside the
+    // caller's own organisation even with an elevated key.
+    const { data: updatedMember, error: updateError } = await serviceClient()
       .from('users')
-      .update({ 
-        role, 
-        updated_at: new Date().toISOString() 
+      .update({
+        role,
+        updated_at: new Date().toISOString()
       })
       .eq('id', memberId)
       .eq('organization_id', userData.organization_id)
@@ -413,15 +442,27 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Remove the member by setting their organization_id to null
-    // This preserves the user account but removes org access
-    const { error: removeError } = await supabase
+    // This preserves the user account but removes org access.
+    //
+    // Service client: neither organization_id nor role is writable by
+    // `authenticated` after Patch A. The guards above have already confirmed
+    // the target is in the caller's organisation, is not the owner, and is not
+    // an admin being removed by an admin.
+    //
+    // The .eq('organization_id', ...) is NEW and deliberate. The original
+    // matched on id alone, which was survivable under the session client
+    // because RLS confined it to the caller's organisation. With an elevated
+    // key that confinement is gone, so the constraint is restated in the query
+    // -- a stale memberId can no longer reach another tenant's row.
+    const { error: removeError } = await serviceClient()
       .from('users')
-      .update({ 
-        organization_id: null, 
+      .update({
+        organization_id: null,
         role: 'member',
-        updated_at: new Date().toISOString() 
+        updated_at: new Date().toISOString()
       })
-      .eq('id', memberId);
+      .eq('id', memberId)
+      .eq('organization_id', userData.organization_id);
 
     if (removeError) {
       console.error('Error removing member:', removeError);

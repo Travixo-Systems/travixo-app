@@ -133,15 +133,25 @@ ORDER BY cg.grantee, cg.table_name, cg.column_name;
 
 function query(sql) {
   // Prefer a container exec when the CLI stack is up; fall back to local psql.
+  // The container name varies with the CLI project_id, which changes when a
+  // stack is brought up on shifted ports to coexist with another worktree's.
+  // GATE_DB_CONTAINER overrides it; both known names are tried before the
+  // psql fallback, which is absent on machines that only have Docker.
+  const containers = [
+    process.env.GATE_DB_CONTAINER,
+    'supabase_db_travixo-app',
+    'supabase_db_travixo-app-c3',
+  ].filter(Boolean);
+
   const attempts = [
-    {
+    ...containers.map((name) => ({
       cmd: 'docker',
       args: [
-        'exec', '-i', 'supabase_db_travixo-app',
+        'exec', '-i', name,
         'psql', '-U', 'postgres', '-d', 'postgres',
         '-At', '-F', '\t', '-c', sql,
       ],
-    },
+    })),
     { cmd: 'psql', args: [DB_URL, '-At', '-F', '\t', '-c', sql] },
   ];
   let lastErr;
