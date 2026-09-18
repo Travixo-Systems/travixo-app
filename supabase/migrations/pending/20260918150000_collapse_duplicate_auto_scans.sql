@@ -72,21 +72,70 @@
 -- so the transcript is the record. Take a backup first if that is not enough.
 -- ===========================================================================
 
-BEGIN;
+-- ---------------------------------------------------------------------------
+-- WHY THIS IS ONE STATEMENT
+-- ---------------------------------------------------------------------------
+-- An earlier draft built a TEMP TABLE and then read it back in later
+-- statements. The Supabase SQL editor runs each statement in its own implicit
+-- transaction, so an ON COMMIT DROP temp table is gone by the time the next
+-- statement looks for it:
+--
+--   ERROR: 42P01: relation "_dupes" does not exist
+--
+-- Everything therefore lives in a single DELETE with the selection inlined as
+-- a CTE. That is also strictly safer: selection and deletion cannot drift
+-- apart or half-apply, because they are the same statement.
+--
+-- The blast-radius guard moves inside that statement too, as a join against a
+-- count of the same CTE: if more than 40 rows match, the condition is false
+-- for every row and NOTHING is deleted. It fails closed rather than loudly,
+-- so run the SELECT below first if you want to see the rows.
+-- ===========================================================================
 
 -- ===========================================================================
--- STEP 1: identify the redundant rows
+-- PRE-FLIGHT: run this on its own first to see exactly what will go
 -- ===========================================================================
--- A burst = consecutive rows for the same (asset_id, scan_type) whose gap from
--- the previous row is <= 60s. The first row of each burst is kept; the rest
--- are the deletion set.
+-- Read-only. Returns one row per scan that the DELETE below would remove.
+--
+--   WITH candidate AS (
+--     SELECT s.id, s.asset_id, s.scanned_at,
+--            LAG(s.scanned_at) OVER (PARTITION BY s.asset_id, s.scan_type
+--                                    ORDER BY s.scanned_at) AS prev_at
+--       FROM public.scans s
+--      WHERE s.scan_type = 'check'
+--        AND s.location_name IS NULL
+--        AND NOT EXISTS (SELECT 1 FROM public.rentals r
+--                         WHERE r.checkout_scan_id = s.id
+--                            OR r.return_scan_id  = s.id)
+--   ), marked AS (
+--     SELECT id, asset_id, scanned_at,
+--            SUM(CASE WHEN prev_at IS NULL
+--                      OR scanned_at - prev_at > INTERVAL '60 seconds'
+--                     THEN 1 ELSE 0 END)
+--              OVER (PARTITION BY asset_id ORDER BY scanned_at
+--                    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS burst_no
+--       FROM candidate
+--   ), ranked AS (
+--     SELECT id, asset_id, scanned_at,
+--            ROW_NUMBER() OVER (PARTITION BY asset_id, burst_no
+--                               ORDER BY scanned_at) AS pos
+--       FROM marked
+--   )
+--   SELECT r.scanned_at, a.name
+--     FROM ranked r JOIN public.assets a ON a.id = r.asset_id
+--    WHERE r.pos > 1
+--    ORDER BY r.scanned_at;
+--
+-- Expected: 13 rows -- Haulotte HA16RTJ x5, JLG 660SJ x3, Volvo EC220E x5.
 
-CREATE TEMP TABLE _dupes ON COMMIT DROP AS
+-- ===========================================================================
+-- THE DELETE
+-- ===========================================================================
+
 WITH candidate AS (
   SELECT
     s.id,
     s.asset_id,
-    s.scan_type,
     s.scanned_at,
     LAG(s.scanned_at) OVER (
       PARTITION BY s.asset_id, s.scan_type ORDER BY s.scanned_at
@@ -102,59 +151,30 @@ WITH candidate AS (
 ),
 marked AS (
   SELECT
-    id, asset_id, scan_type, scanned_at,
+    id, asset_id, scanned_at,
     -- a new burst starts when there is no previous row, or the gap is wide
     SUM(CASE WHEN prev_at IS NULL
               OR scanned_at - prev_at > INTERVAL '60 seconds'
              THEN 1 ELSE 0 END)
-      OVER (PARTITION BY asset_id, scan_type ORDER BY scanned_at
+      OVER (PARTITION BY asset_id ORDER BY scanned_at
             ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS burst_no
   FROM candidate
-)
-SELECT id, asset_id, scanned_at
-FROM (
+),
+ranked AS (
   SELECT
-    id, asset_id, scanned_at,
-    ROW_NUMBER() OVER (PARTITION BY asset_id, scan_type, burst_no
+    id,
+    ROW_NUMBER() OVER (PARTITION BY asset_id, burst_no
                        ORDER BY scanned_at) AS pos
   FROM marked
-) ranked
-WHERE pos > 1;   -- keep the earliest of each burst
-
--- ===========================================================================
--- STEP 2: print what is about to go, and refuse if the blast radius is wrong
--- ===========================================================================
-
-DO $$
-DECLARE
-  v_count int;
-  r       record;
-BEGIN
-  SELECT COUNT(*) INTO v_count FROM _dupes;
-
-  RAISE NOTICE '--- % redundant scan row(s) to delete ---', v_count;
-  FOR r IN
-    SELECT d.scanned_at, a.name
-      FROM _dupes d JOIN public.assets a ON a.id = d.asset_id
-     ORDER BY d.scanned_at
-  LOOP
-    RAISE NOTICE '  %  %', r.scanned_at, r.name;
-  END LOOP;
-
-  IF v_count = 0 THEN
-    RAISE NOTICE 'Nothing to do -- already clean.';
-  ELSIF v_count > 40 THEN
-    RAISE EXCEPTION
-      'ABORT: % rows matched, expected ~13. Re-measure before applying.', v_count;
-  END IF;
-END $$;
-
--- ===========================================================================
--- STEP 3: delete
--- ===========================================================================
-
+),
+doomed AS (
+  SELECT id FROM ranked WHERE pos > 1   -- keep the earliest of each burst
+),
+guard AS (
+  SELECT COUNT(*) AS n FROM doomed
+)
 DELETE FROM public.scans s
- USING _dupes d
- WHERE s.id = d.id;
-
-COMMIT;
+ USING doomed d, guard g
+ WHERE s.id = d.id
+   AND g.n <= 40   -- fails closed: over the limit deletes nothing at all
+RETURNING s.id, s.asset_id, s.scanned_at;
