@@ -8,7 +8,13 @@ import { createTranslator } from '@/lib/i18n'
 
 interface RentalStatusCardProps {
   assetId: string
-  isAuthenticated: boolean
+  /**
+   * Session AND membership of the asset's organization. Checkout and return
+   * are same-org operations -- checkout_asset()/return_asset() both take a
+   * p_organization_id and reject a mismatch -- so a merely-logged-in visitor
+   * from another tenant must not be offered the buttons.
+   */
+  canManage: boolean
   onCheckout: () => void
   onReturn: (rental: ActiveRental) => void
 }
@@ -24,7 +30,7 @@ export interface ActiveRental {
 
 export default function RentalStatusCard({
   assetId,
-  isAuthenticated,
+  canManage,
   onCheckout,
   onReturn,
 }: RentalStatusCardProps) {
@@ -77,7 +83,7 @@ export default function RentalStatusCard({
             {t('rental.availableForRental')}
           </h3>
         </div>
-        {isAuthenticated && (
+        {canManage && (
           <button
             onClick={onCheckout}
             className="w-full py-3 bg-[#f26f00] text-white rounded-lg font-bold hover:bg-[#d96200] transition-colors text-[15px]"
@@ -162,7 +168,7 @@ export default function RentalStatusCard({
         </div>
       </div>
 
-      {isAuthenticated && (
+      {canManage && (
         <button
           onClick={() => onReturn(rental)}
           className={`w-full py-3 rounded-lg font-bold transition-colors text-[15px] ${

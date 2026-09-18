@@ -113,6 +113,15 @@ export default function ScanPage({ params }: PageProps) {
   const [showLocationForm, setShowLocationForm] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
+  // Every write on this page -- rental checkout/return, location update --
+  // requires BOTH a session and membership of the asset's org. The API
+  // enforces that server-side (403 in app/api/scan/update/route.ts, and the
+  // rental RPCs check p_organization_id), so gating on isAuthenticated alone
+  // showed other tenants controls that could only ever fail. viewer_is_member
+  // comes from get_asset_by_qr and is the same signal the status and purchase
+  // date are gated on.
+  const canManage = isAuthenticated && asset?.viewer_is_member === true
+
   // Scan-specific error state: differentiated type + manual retry
   const [scanError, setScanError] = useState<{
     type: 'not_found' | 'timeout' | 'network' | 'unknown'
@@ -121,7 +130,6 @@ export default function ScanPage({ params }: PageProps) {
   
   const [location, setLocation] = useState('')
   const [notes, setNotes] = useState('')
-  const [selectedStatus, setSelectedStatus] = useState('')
   
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
@@ -338,7 +346,6 @@ export default function ScanPage({ params }: PageProps) {
       }
 
       setAsset(data as unknown as Asset)
-      setSelectedStatus(data.status || 'available')
     } catch (err: any) {
       const isTimeout = err?.type === 'timeout' || err?.message === 'timeout'
       const isNetwork = !navigator.onLine || err?.name === 'TypeError'
@@ -401,43 +408,8 @@ export default function ScanPage({ params }: PageProps) {
     }
   }
 
-  async function handleStatusUpdate(newStatus: string) {
-    if (!isAuthenticated) {
-      setErrorMessage(t('scanPage.loginToUpdateStatus'))
-      return
-    }
-
-    if (!asset) return
-    
-    setUpdating(true)
-    setErrorMessage('')
-
-    try {
-      const response = await fetch('/api/scan/update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          asset_id: asset.id,
-          qr_code: qr_code,
-          status: newStatus,
-        }),
-      })
-
-      if (!response.ok) throw new Error('Failed')
-
-      const data = await response.json()
-      setAsset(data.asset)
-      setSelectedStatus(newStatus)
-      setSuccessMessage(`${t('scanPage.statusUpdated')} ${getStatusLabel(newStatus)}`)
-    } catch (error) {
-      setErrorMessage(t('scanPage.statusUpdateError'))
-    } finally {
-      setUpdating(false)
-    }
-  }
-
   async function handleLocationUpdate() {
-    if (!isAuthenticated) {
+    if (!canManage) {
       setErrorMessage(t('scanPage.loginToUpdateLocation'))
       return
     }
@@ -516,26 +488,6 @@ export default function ScanPage({ params }: PageProps) {
       out_of_service: 'bg-red-50 text-red-700 border-2 border-red-500',
     }
     return classes[status] || 'bg-gray-50 text-gray-700 border-2 border-gray-400'
-  }
-
-  function getStatusButtonClass(status: string, isSelected: boolean): string {
-    if (isSelected) {
-      const selected: Record<string, string> = {
-        available: 'bg-green-500 text-white border-2 border-green-600',
-        in_use: 'bg-blue-500 text-white border-2 border-blue-600',
-        maintenance: 'bg-amber-500 text-white border-2 border-amber-600',
-        out_of_service: 'bg-red-500 text-white border-2 border-red-600',
-      }
-      return selected[status] || 'bg-gray-500 text-white border-2 border-gray-600'
-    }
-    
-    const unselected: Record<string, string> = {
-      available: 'bg-white text-green-700 border-2 border-green-400 hover:bg-green-50',
-      in_use: 'bg-white text-blue-700 border-2 border-blue-400 hover:bg-blue-50',
-      maintenance: 'bg-white text-amber-700 border-2 border-amber-400 hover:bg-amber-50',
-      out_of_service: 'bg-white text-red-700 border-2 border-red-400 hover:bg-red-50',
-    }
-    return unselected[status] || 'bg-white text-gray-700 border-2 border-gray-400'
   }
 
   function getStatusIcon(status: string) {
@@ -777,7 +729,7 @@ export default function ScanPage({ params }: PageProps) {
                   <RentalStatusCard
             key={rentalKey}
             assetId={asset.id}
-            isAuthenticated={isAuthenticated}
+            canManage={canManage}
             onCheckout={() => setShowCheckoutOverlay(true)}
             onReturn={(rental) => {
               setReturnRental(rental)
@@ -803,51 +755,15 @@ export default function ScanPage({ params }: PageProps) {
           </div>
         )}
 
-        {isAuthenticated && (
-          <div className="bg-gray-50 rounded-lg shadow-md border-t-[5px] border-r-[5px] border-[#f26f00] p-6 mb-6">
-            <h2 className="text-xl font-bold text-[#00252b] mb-4">{t('scanPage.quickStatusUpdate')}</h2>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => handleStatusUpdate('available')}
-                disabled={updating || selectedStatus === 'available'}
-                className={`p-4 rounded-lg font-bold transition-all flex items-center justify-center gap-2 ${getStatusButtonClass('available', selectedStatus === 'available')} disabled:opacity-50`}
-                style={{ minHeight: '48px' }}
-              >
-                <CheckCircle className="w-5 h-5" />
-                {t('scanPage.statusAvailable')}
-              </button>
-              <button
-                onClick={() => handleStatusUpdate('in_use')}
-                disabled={updating || selectedStatus === 'in_use'}
-                className={`p-4 rounded-lg font-bold transition-all flex items-center justify-center gap-2 ${getStatusButtonClass('in_use', selectedStatus === 'in_use')} disabled:opacity-50`}
-                style={{ minHeight: '48px' }}
-              >
-                <Package className="w-5 h-5" />
-                {t('scanPage.statusInUse')}
-              </button>
-              <button
-                onClick={() => handleStatusUpdate('maintenance')}
-                disabled={updating || selectedStatus === 'maintenance'}
-                className={`p-4 rounded-lg font-bold transition-all flex items-center justify-center gap-2 ${getStatusButtonClass('maintenance', selectedStatus === 'maintenance')} disabled:opacity-50`}
-                style={{ minHeight: '48px' }}
-              >
-                <Wrench className="w-5 h-5" />
-                {t('scanPage.statusMaintenance')}
-              </button>
-              <button
-                onClick={() => handleStatusUpdate('out_of_service')}
-                disabled={updating || selectedStatus === 'out_of_service'}
-                className={`p-4 rounded-lg font-bold transition-all flex items-center justify-center gap-2 ${getStatusButtonClass('out_of_service', selectedStatus === 'out_of_service')} disabled:opacity-50`}
-                style={{ minHeight: '48px' }}
-              >
-                <CircleSlash className="w-5 h-5" />
-                {t('scanPage.statusOutOfService')}
-              </button>
-            </div>
-          </div>
-        )}
+        {/* The manual status buttons that used to sit here are gone. Status is
+            derived, not typed: checkout_asset() sets 'in_use', return_asset()
+            sets 'available', and having a second way to write the same field
+            meant a machine could read 'available' while an active rental said
+            it was out with a client. Sortie/Retour below is now the only path.
+            maintenance / out_of_service belong on the fleet dashboard, where
+            the whole parc is in view, not on a sticker scanned in a yard. */}
 
-        {isAuthenticated && (
+        {canManage && (
           <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-[#00252b] flex items-center gap-2">
