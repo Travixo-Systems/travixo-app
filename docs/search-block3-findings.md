@@ -1,211 +1,180 @@
-# Block 3 — scans: correctness passes, performance fails
+# Block 3 — scans: the UNION pipeline
 
-**Status: `search_scans` is written and every spec test passes, but the
-function is NOT fit to ship. It is uncommitted deliberately.**
+**Status: correctness complete, performance improved 7.7× but not yet good
+enough. One blocker identified that is NOT in the RPC.**
 
-The fan-out case you asked me to include is the one that breaks it.
+Measured on PostgreSQL 17.6 as an authenticated user, with production's RLS
+policy shapes and production's index set.
 
 ---
 
-## What passes
-
-All against a real PostgreSQL 17.6, as an authenticated user with the
-production RLS policy shapes (`scans_select_same_org` reaching the caller's
-org through `assets`, and `get_my_organization_id()` as the cycle-breaker on
-`users`).
-
-### Pagination — the Berger scan at position 93
-
-Dataset: 120 scans, ordered `scanned_at DESC`. Verified the only Berger scan
-is at **position 93**, i.e. page 2 at `PAGE_SIZE = 50`.
+## The pipeline, as specified
 
 ```
-SELECT * FROM search_scans('Berger', NULL, NULL, 50, 0);   -- page 1 only
-
- asset_name        | scanned_by_name | total_count
--------------------+-----------------+-------------
- Grue Télescopique | Frédéric Berger |           1
+per term T:
+  candidates(T) = UNION ALL of one branch per searchable field,
+                  each emitting (root_id, source_type, source_id, matched_field)
+result_ids  = INTERSECT of candidates(T) over all terms, on root_id
+total_count = count over result_ids        -- ids only, no joins
+page        = order + limit/offset on result_ids
+display     = join the 50 paged ids back to the source tables
+matches[]   = aggregate candidates for those 50 ids
 ```
 
-Returned immediately from page 1 without loading page 2. The old client-side
-filter could not do this at all, and hid "Load more" while searching.
+Implemented exactly. Two consequences worth naming:
 
-### Counts — spec §20, §21
+- **§24 is satisfied structurally.** Intersection is on `root_id`, so a term
+  cannot be satisfied by an unrelated record. It is not a filter someone has
+  to remember to write.
+- **§6 provenance now works**, which the first attempt did not deliver:
 
-```
- returned_rows | total_count        page 1: 50 rows, total 120
-            50 |         120        page 2: 50 rows, total 120
-                                    page 3: 20 rows, total 120
-```
+  ```
+   asset_name        | scanned_by_name | matches
+  -------------------+-----------------+----------------------------------
+   Grue Télescopique | Frédéric Berger | [{"source_type": "user",
+                     |                 |   "source_id": "1111...",
+                     |                 |   "matched_field": "last_name"}]
+  ```
 
-`total_count` comes from `count(*) OVER ()` in the same query as the page, so
-filter and count cannot diverge. Never `rows.length`.
+---
 
-### Accents — spec §30
+## Correctness — all spec tests pass
 
-`depot`, `Dépôt`, `DEPOT` → 30 matches each. `securite`, `elevateur`,
-`telescopique`, `eragny`, `frederic` all match their accented data.
+Verified at 120 scans and re-verified at 200,121.
 
-### Special characters — spec §30
-
-| typed | matched serial |
+| test | result |
 |---|---|
-| `TP_01` | `TP_01` only |
-| `TPX01` | `TPX01` only |
+| **Pagination**, Berger at position 93 | returned from page 1, `total_count` = 1 |
+| **Totals** §20/§21 | page 1/2/3 = 50/50/20 rows, total 120 throughout |
+| **Accents** §30 | `depot`→`Dépôt`, `securite`→`Sécurité`, `elevateur`, `telescopique`, `frederic`→`Frédéric` |
+| **Special chars** §30 | `TP_01` matches serial `TP_01` only, **not** `TPX01`; `100%` literal |
+| **Parens/commas** | scan location `Bouygues (Île-de-France), quai 3` found by `bouygues ile-de-france`, `(Île-de-France), quai`, `quai 3` |
+| **Multi-term AND** §24 | `Berger`=1, `Nord`=30, `Berger Nord`=1 |
+| **scan_type** | `Berger`+`checkout`=0, `Berger`+`inventory`=1 — ANDs, never ORs |
+| **Tenant** §27 | org A sees its own Berger only; org B sees 1 scan total |
 
-The underscore is **literal**: `TP_01` does not match `TPX01`. `100%` matches
-only the `100% Béton` asset.
+### A tenant leak the rewrite fixed
 
-Parentheses and commas survive on a field the spec actually covers — a scan
-location of `Bouygues (Île-de-France), quai 3` is found by all of:
-`Bouygues (Île-de-France)`, `Bouygues (Ile-de-France)`,
-`bouygues ile-de-france`, `(Île-de-France), quai`, `quai 3`. That is the
-spec's own "Bouygues Ile de France" case, accent-folding and literal escaping
-working together.
+The first attempt reported `org A total = 121`; this one reports **120**. The
+extra row was a scan whose asset was not visible to the caller. The per-branch
+structure made the boundary explicit and closed it.
 
-*(`Dupont (SARL)` returns 0, correctly: it is an **asset's**
-`current_location`, and §10 scopes scans search to the **scan's**
-`location_name`. Not a bug.)*
+---
 
-### Multi-term AND — spec §24
+## Performance
 
-| query | matches |
-|---|---|
-| `Berger` | 1 |
-| `Nord` | 30 |
-| `Berger Nord` | 1 |
+Dataset: **200,121 scans / 5,005 assets / 503 users**, one Berger, realistic
+surname distribution.
 
-Terms resolve within one record, never OR.
-
-### scan_type as a structured enum — your ruling
-
-| filter | count |
-|---|---|
-| `['checkout']` | 30 |
-| `['checkout','return']` | 60 |
-| `Berger` + `['checkout']` | **0** |
-| `Berger` + `['inventory']` | **1** |
-
-Resolved types AND with the text query. Berger's one scan is an inventory
-scan, so `checkout` correctly excludes it. The RPC filters `scan_type = ANY
-(p_scan_types)` on the enum and never text-matches a label.
-
-### Tenant — spec §27
-
-The same inspector name (`Frédéric Berger`) exists in both organizations.
-
-| caller | Berger scans seen | total scans seen |
+| | first attempt | UNION pipeline |
 |---|---|---|
-| org A user | 1 (its own) | 121 |
-| org B user | 1 (its own, on `Nacelle Org B`) | 1 |
+| `search_scans('Berger')` | 10,022 ms | **1,199 ms** |
+| buffers | 3,413,663 | 147,130 |
+| rows joined before paging | 200,121 | 401 |
 
-Proven in both directions. `SECURITY INVOKER`, no `p_organization_id`, and the
-`assets` join is INNER precisely because the scans policy reaches the tenant
-through it — a LEFT JOIN there would be a hole.
+**7.7× faster, 23× fewer buffers.** The joins now run against 50 ids instead
+of the whole table, exactly as intended.
 
----
+By query shape:
 
-## What fails: the fan-out plan
-
-Dataset: **200,122 scans across 5,000 assets and 503 users**, one Berger.
-
-```
-EXPLAIN (ANALYZE) SELECT * FROM search_scans('Berger', NULL, NULL, 50, 0);
-
-Limit  (actual rows=50)
-  Buffers: shared hit=3,413,663
-  ->  WindowAgg
-        ->  Nested Loop Anti Join  (actual rows=401)
-              ->  Nested Loop Left Join  (actual rows=200,121)
-                    ->  Nested Loop  (actual rows=200,121)
-                          ->  Index Scan using idx_scans_scanned_at_id_desc
-                              (actual rows=200,121)
-                          ->  Index Scan using assets_pkey (loops=200,121)
-                    ->  Index Scan using users_pkey (loops=200,121)
-
-Execution Time: 10,022 ms
-```
-
-**Ten seconds.** Every scan is read, joined to its asset and its user, and only
-then filtered. 3.4M buffer hits to return 50 rows. **The trigram indexes are
-never touched.**
-
-### Root cause — structural, not a missing index
-
-Two things, and the second is the real one.
-
-1. My `NOT EXISTS (SELECT 1 FROM terms WHERE ... NOT LIKE ...)` is a negated
-   correlated subquery. Postgres cannot convert that into an index scan.
-
-2. More fundamentally, **an OR across joined tables is inherently
-   unindexable.** Rewriting the predicate as a plain positive OR chain
-   produces the same plan — a `Seq Scan on scans` feeding 200,121 nested-loop
-   lookups:
-
-   ```
-   ->  Seq Scan on scans s  (actual rows=200,121)
-         ->  Index Scan using assets_pkey  (loops=200,121)
-         ->  Index Scan using users_pkey   (loops=200,121)
-   ```
-
-   An index on `users.last_name` cannot restrict `scans`, because a row may
-   qualify through any of the five columns. The planner has no choice.
-
-This is precisely the risk you named: single-table trigram at 50k was
-comfortable; the relational query with `count(*) OVER ()` on top is not.
-
-### One honest note on the first measurement
-
-My initial fan-out seed made 502 of 504 users `Berger*`, so `Berger` matched
-199,202 of 200,122 scans — 99.5%. At that selectivity no index should be used
-and the planner was right. I corrected the seed to one Berger among 503 and
-re-measured: **the plan and the 10s are unchanged.** The failure is the query
-shape, not the data.
+| query | time |
+|---|---|
+| no text term (enum filter only) | **57 ms** |
+| serial number | 1,230 ms |
+| `Berger` | 1,199 ms |
+| `Dépôt 7` | 3,418 ms |
 
 ---
 
-## The fix I did not apply
+## The blocker: RLS defeats the trigram indexes
 
-The predicate must become a **UNION of per-column index scans**, each one
-independently indexable, before any join:
+Every candidate branch uses its index **when tested standalone**:
+
+```
+Bitmap Index Scan on idx_scans_location_fold_trgm       1.583 ms
+Bitmap Index Scan on idx_assets_name_fold_trgm          0.188 ms
+```
+
+Under RLS, the same predicate becomes a sequential scan:
+
+```
+Seq Scan on scans s  (actual rows=0)
+  Filter: ((ANY (asset_id = (hashed SubPlan 2).col1))
+           AND (search_fold(location_name) ~~ '%berger%'))
+  Rows Removed by Filter: 200,121
+```
+
+**1.583 ms without RLS → ~970 ms with it.** Postgres folds the policy's
+`EXISTS` subquery and the trigram predicate into one `Seq Scan` filter, and
+will not use a bitmap index scan when it must also apply the subplan.
+
+The policy is production's, unmodified:
 
 ```sql
-WITH candidates AS (
-  SELECT s.id FROM scans s JOIN assets a ON a.id = s.asset_id
-   WHERE search_fold(a.name) LIKE ... ESCAPE '\'
-  UNION
-  SELECT s.id FROM scans s JOIN assets a ON a.id = s.asset_id
-   WHERE search_fold(a.serial_number) LIKE ... ESCAPE '\'
-  UNION
-  SELECT s.id FROM scans s
-   WHERE search_fold(s.location_name) LIKE ... ESCAPE '\'
-  UNION
-  SELECT s.id FROM scans s JOIN users u ON u.id = s.scanned_by
-   WHERE search_fold(u.last_name) LIKE ... ESCAPE '\'
-  ...
-)
+CREATE POLICY "scans_select_same_org" ON public.scans
+  FOR SELECT TO authenticated
+  USING (EXISTS (SELECT 1 FROM public.assets a
+                 WHERE a.id = scans.asset_id
+                   AND a.organization_id IN (
+                     SELECT u.organization_id FROM public.users u
+                     WHERE u.id = auth.uid())));
 ```
 
-Each branch can use its own trigram index; the UNION deduplicates; multi-term
-AND becomes an intersection of per-term candidate sets. The page and
-`count(*) OVER ()` are then computed over a small candidate set rather than
-the whole table.
+This is not something the RPC can work around. I tried: removing my redundant
+`EXISTS` guards (verified identical row counts, so they were pure overhead —
+removed, worth ~30 ms), and forcing evaluation order with `CTE AS
+MATERIALIZED` (no effect — RLS applies at table level and cannot be reordered
+from inside the query).
 
-Two things I want your call on before writing it, because both change the
-shape of every later surface:
+### A second, independent finding
 
-1. **It multiplies query complexity per searchable field.** Scans has 5;
-   Fleet's §5 relational contract reaches inspections, schedules, rentals,
-   clients, scans and audits. A hand-written UNION per field per surface will
-   not stay maintainable across 8 RPCs. The alternative is a **materialised
-   search document per row** — one `search_vector`/folded text column per
-   entity, maintained by trigger, with one trigram index. That is a bigger
-   change and a data-model decision, not a query tweak.
+`search_fold` and `search_escape_like` were created at the SQL-function
+default `procost = 100`, which is meant for something expensive. They are a
+regexp and a few replaces. At that cost Postgres priced a sequential scan of
+200k scans at **31,967,185** and made visibly distorted choices around it.
+The migration now sets `COST 1`.
 
-2. **`count(*) OVER ()` may need revisiting at this size.** It is correct and
-   the spec requires an exact total, but it forces the full candidate set to
-   be materialised. That is fine over a few hundred candidates and expensive
-   over tens of thousands.
+This did not by itself fix the RLS interaction, but the estimates were wrong
+and are worth correcting regardless.
 
-Nothing is committed. `supabase/migrations/20260919010000_search_scans.sql`
-exists in the working tree and should not be applied anywhere as written.
+---
+
+## What I have not done
+
+I stopped rather than keep guessing. Three routes exist and each has a cost
+that is yours to weigh:
+
+1. **Rewrite the policy to compare a column directly.** If `scans` carried
+   `organization_id`, the policy becomes `organization_id =
+   get_my_organization_id()` — no subquery, and the planner can combine it
+   with a bitmap index scan. This is a denormalisation plus a policy change on
+   a security-sensitive table, which is explicitly outside what I was told to
+   touch.
+
+2. **A `SECURITY DEFINER` search function that enforces the tenant predicate
+   itself.** Restores index usage, but it is exactly the pattern the hard
+   rules forbid, and there is an open audit finding on `SECURITY DEFINER`
+   functions. I did not do this.
+
+3. **Accept ~1.2 s at 200k scans.** It is 7.7× better than the first attempt
+   and well under a timeout. For context, the tiers cap at 2,000 assets; 200k
+   scans is roughly 8 years of daily scanning for a fleet that size. At 20k
+   scans the same query is comfortably sub-second.
+
+My recommendation is 3 for now and 1 when the security workstream next opens
+that table — not 2.
+
+---
+
+## Generation, not hand-writing
+
+The per-field branches are repetitive by construction, and you were right that
+this is what makes hand-written UNIONs unmaintainable across 8 RPCs. The
+migration's header says it is to be generated from `lib/search/manifest.ts`,
+and the field list there is already the source of truth for which columns are
+`searchable`.
+
+**The generator is not written yet.** Scans has 5 branches and was tractable
+by hand; Fleet's §5 contract reaches inspections, schedules, rentals, clients,
+scans and audits, and will not be. That generator is the first thing block 4
+needs, before another RPC is written by hand.
