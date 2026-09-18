@@ -72,13 +72,15 @@ const ReturnOverlay = dynamic(() => import('@/components/rental/ReturnOverlay'),
 // Shape returned by the get_asset_by_qr RPC. Deliberately has no
 // purchase_price / current_value / organization_id: the public scan view
 // must not expose acquisition cost or book value to anyone who scans the
-// sticker. purchase_date is NULL unless the viewer is a same-org member.
+// sticker. purchase_date and status are NULL unless the viewer is a same-org
+// member -- status is operational state, and a QR label is readable by anyone
+// standing next to the machine.
 interface Asset {
   id: string
   name: string
   serial_number: string | null
   current_location: string | null
-  status: string
+  status: string | null
   purchase_date: string | null
   description: string | null
   last_seen_at: string | null
@@ -728,16 +730,21 @@ export default function ScanPage({ params }: PageProps) {
               label={t('scanPage.serialNumber')} 
               value={asset.serial_number || t('scanPage.notAvailable')} 
             />
-            <InfoCard
-              icon={null}
-              label={t('scanPage.status')}
-              value={
-                <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold ${getStatusBadgeClass(asset.status)}`}>
-                  {getStatusIcon(asset.status)}
-                  {getStatusLabel(asset.status)}
-                </span>
-              }
-            />
+            {/* Operational state, members only. The RPC also returns NULL
+                here for everyone else, so this is the presentation half of
+                that rule rather than the whole of it. */}
+            {asset.viewer_is_member && asset.status && (
+              <InfoCard
+                icon={null}
+                label={t('scanPage.status')}
+                value={
+                  <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold ${getStatusBadgeClass(asset.status)}`}>
+                    {getStatusIcon(asset.status)}
+                    {getStatusLabel(asset.status)}
+                  </span>
+                }
+              />
+            )}
             <InfoCard 
               icon={<MapPin className="w-5 h-5" />}
               label={t('scanPage.location')} 

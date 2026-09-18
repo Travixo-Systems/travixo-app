@@ -946,7 +946,9 @@ export type Database = {
           id: string
           name: string
           serial_number: string | null
-          status: string
+          // NULL unless the caller is a same-org member; see
+          // 20260918120000_hide_asset_status_from_non_members.sql
+          status: string | null
           current_location: string | null
           description: string | null
           purchase_date: string | null
