@@ -29,6 +29,11 @@ CREATE TRIGGER update_users_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION public.update_updated_at_column();
 
+CREATE TRIGGER zz_enforce_users_identity_invariant
+  BEFORE UPDATE ON public.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.enforce_users_identity_invariant();
+
 CREATE POLICY "Admins can update team member roles" ON "public"."users"
   FOR UPDATE
   TO PUBLIC
