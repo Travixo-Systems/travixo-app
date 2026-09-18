@@ -22,15 +22,34 @@ DECLARE
   v_vgp_blocked BOOLEAN := FALSE;
   v_scan_id UUID;
   v_rental_id UUID;
+  -- B1: derived, never accepted. p_organization_id and p_user_id are ignored.
+  v_org    UUID := public.get_my_organization_id();
+  v_actor  UUID := auth.uid();
 BEGIN
-  -- 1. Lock the asset row to prevent race conditions
+  -- B1: a caller with no organisation cannot check anything out. Refused up
+  -- front so the query below is never reached with v_org NULL.
+  IF v_org IS NULL THEN
+    RETURN json_build_object('success', false, 'error', 'asset_not_found');
+  END IF;
+
+  -- 1. Lock the asset row to prevent race conditions.
+  --    B1: scoped to the CALLER'S organisation, not to the argument.
   SELECT * INTO v_asset
   FROM assets
-  WHERE id = p_asset_id AND organization_id = p_organization_id
+  WHERE id = p_asset_id AND organization_id = v_org
   FOR UPDATE;
 
   IF NOT FOUND THEN
     RETURN json_build_object('success', false, 'error', 'asset_not_found');
+  END IF;
+
+  -- B1: a client, when given, must belong to the same organisation (M-2).
+  IF p_client_id IS NOT NULL THEN
+    PERFORM 1 FROM clients
+     WHERE id = p_client_id AND organization_id = v_org;
+    IF NOT FOUND THEN
+      RETURN json_build_object('success', false, 'error', 'client_not_found');
+    END IF;
   END IF;
 
   -- 2. Check for active rental (already checked out)
@@ -47,7 +66,7 @@ BEGIN
   SELECT EXISTS (
     SELECT 1 FROM vgp_schedules
     WHERE asset_id = p_asset_id
-      AND organization_id = p_organization_id
+      AND organization_id = v_org
       AND archived_at IS NULL
       AND (
         (next_due_date < NOW() AND status != 'completed')
@@ -68,9 +87,10 @@ BEGIN
     RETURN json_build_object('success', false, 'error', 'vgp_blocked');
   END IF;
 
-  -- 4. Create scan record (type: 'checkout')
+  -- 4. Create scan record (type: 'checkout').
+  --    B1: attribution from auth.uid(), not from p_user_id.
   INSERT INTO scans (asset_id, scanned_at, scanned_by, location_name, latitude, longitude, scan_type, notes)
-  VALUES (p_asset_id, NOW(), p_user_id, p_location_name, p_latitude, p_longitude, 'checkout', p_checkout_notes)
+  VALUES (p_asset_id, NOW(), v_actor, p_location_name, p_latitude, p_longitude, 'checkout', p_checkout_notes)
   RETURNING id INTO v_scan_id;
 
   -- 5. Create rental record (now with optional client_id)
@@ -80,8 +100,8 @@ BEGIN
     checkout_notes, status, checkout_scan_id, client_id
   )
   VALUES (
-    p_organization_id, p_asset_id, p_client_name, p_client_contact,
-    p_user_id, NOW(), p_expected_return_date,
+    v_org, p_asset_id, p_client_name, p_client_contact,
+    v_actor, NOW(), p_expected_return_date,
     p_checkout_notes, 'active', v_scan_id, p_client_id
   )
   RETURNING id INTO v_rental_id;
@@ -90,7 +110,7 @@ BEGIN
   UPDATE assets
   SET status = 'in_use',
       last_seen_at = NOW(),
-      last_seen_by = p_user_id,
+      last_seen_by = v_actor,
       updated_at = NOW()
   WHERE id = p_asset_id;
 
@@ -102,8 +122,11 @@ BEGIN
 END;
 $function$;
 
-GRANT EXECUTE
-  ON FUNCTION "public"."checkout_asset"(uuid, uuid, uuid, text, text, timestamp WITH time zone, text, text, double precision, double precision, uuid)
-  TO "authenticated", "postgres", "service_role";
+GRANT EXECUTE ON FUNCTION "public"."checkout_asset"(uuid, uuid, uuid, text, text, timestamp WITH time zone, text, text, double precision, double precision, uuid) TO "authenticated";
+
+COMMENT ON FUNCTION "public"."checkout_asset"(uuid, uuid, uuid, text, text, timestamp
+  with time zone, text, text, double precision, double precision, uuid) IS 'B1 (C-3 sibling). Checks out an asset. The organisation is derived from auth.uid() via get_my_organization_id(); p_organization_id and p_user_id are accepted for signature compatibility but IGNORED. p_client_id must belong to the derived organisation (M-2). Attribution uses auth.uid().';
 
 REVOKE ALL ON FUNCTION "public"."checkout_asset"(uuid, uuid, uuid, text, text, timestamp WITH time zone, text, text, double precision, double precision, uuid) FROM PUBLIC;
+
+REVOKE ALL ON FUNCTION "public"."checkout_asset"(uuid, uuid, uuid, text, text, timestamp WITH time zone, text, text, double precision, double precision, uuid) FROM "postgres";

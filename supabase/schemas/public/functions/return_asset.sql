@@ -76,8 +76,10 @@ BEGIN
 END;
 $function$;
 
-GRANT EXECUTE ON FUNCTION "public"."return_asset"(uuid, uuid, text, text, text, double precision, double precision) TO "authenticated", "postgres", "service_role";
+GRANT EXECUTE ON FUNCTION "public"."return_asset"(uuid, uuid, text, text, text, double precision, double precision) TO "authenticated";
 
 COMMENT ON FUNCTION "public"."return_asset"(uuid, uuid, text, text, text, double precision, double precision) IS 'B0 (C-3 fix). Returns an active rental. The organisation is derived from auth.uid() via get_my_organization_id() and the asset must belong to it; a rental in another tenant reports rental_not_found. p_user_id is accepted for signature compatibility but ignored -- attribution uses auth.uid().';
 
 REVOKE ALL ON FUNCTION "public"."return_asset"(uuid, uuid, text, text, text, double precision, double precision) FROM PUBLIC;
+
+REVOKE ALL ON FUNCTION "public"."return_asset"(uuid, uuid, text, text, text, double precision, double precision) FROM "postgres";

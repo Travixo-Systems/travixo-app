@@ -824,6 +824,94 @@ COMMIT;
 2. Refresh the schema mirror: `npx supabase db pull --declarative`, then revert
    the duplicated `[db.migrations]` block it writes into `supabase/config.toml`.
 
+### B1 + B0 grant fix — APPLIED TO PRODUCTION 2026-09-18
+
+Pushed via `supabase db push`:
+
+```
+Applying migration 20260918150000_collapse_duplicate_auto_scans.sql...
+Applying migration 20260918160000_b1_checkout_asset_tenant_check.sql...
+Applying migration 20260918170000_b0_return_asset_grant_narrowing.sql...
+```
+
+**The push first refused**, with `LegacyDbPushMissingLocalError`: the remote
+carried `20260916133224` and `20260918140000` while the local directory did
+not, because those files had been moved to the worktree. The CLI's suggested
+remedy was `migration repair --status reverted 20260916133224 20260918140000`
+— which would have marked **A0 and B0 as un-applied while they are live**.
+Not run. The correct fix was to restore the two files from the worktree so
+local matched remote.
+
+**Ledger: zero local-only, zero remote-only.** Fully in sync.
+
+**`checkout_asset` in production** — one row in `pg_proc` (one file, one
+`CREATE`), ACL exactly:
+
+```sql
+GRANT EXECUTE ON FUNCTION "public"."checkout_asset"(...) TO "authenticated";
+REVOKE ALL ON FUNCTION "public"."checkout_asset"(...) FROM PUBLIC;
+REVOKE ALL ON FUNCTION "public"."checkout_asset"(...) FROM "postgres";
+```
+
+B1 checks live, by line number:
+
+| Line | Check |
+|---|---|
+| 26 | `v_org UUID := public.get_my_organization_id();` |
+| 27 | `v_actor UUID := auth.uid();` |
+| 31 | `IF v_org IS NULL THEN` — refuses org-less callers |
+| 39 | `WHERE id = p_asset_id AND organization_id = v_org` — **tenant check** |
+| 48-51 | `PERFORM 1 FROM clients WHERE id = p_client_id AND organization_id = v_org` → `client_not_found` — **M-2 check** |
+| 69 | `AND organization_id = v_org` in the VGP-compliance subquery |
+
+**`return_asset` ACL now exactly `authenticated`** — the B0 grant fix landed.
+B0's own migration had revoked only `PUBLIC, anon`, leaving the pre-existing
+`service_role` and `postgres` grants in place; `20260918170000` revokes them by
+name. Same mistake was caught in B1 before it shipped.
+
+**#67 (`20260918150000`) — recorded as ledger-only.** Already applied through
+the SQL editor before this push, so the `DELETE` re-ran as a **no-op**: it is
+idempotent by construction (after one run each burst holds one row, so
+`pos > 1` matches nothing). Its guards, reviewed before pushing:
+
+- scoped to `scan_type='check'` **and** `location_name IS NULL` — anonymous
+  auto-scans only
+- excludes any scan a rental references (`checkout_scan_id`/`return_scan_id`)
+- keeps the **earliest** row of each 60-second burst
+- `AND g.n <= 40` — **fails closed**: over the limit it deletes nothing at all
+- `RETURNING s.id, s.asset_id, s.scanned_at` for auditability
+
+**M-6 corroborated by #67.** That commit records that it had to be applied
+through the SQL editor because `public.scans` has INSERT and SELECT policies
+but **no DELETE policy**, so an anon-key delete silently removes nothing. This
+is the same gap M-6 describes from the opposite direction: M-6 notes the INSERT
+policy is not org-scoped; #67 shows the missing DELETE policy turns a
+legitimate cleanup into a silent no-op and pushes the work outside the CLI —
+which is itself how ledger drift starts. Both point at the same under-specified
+policy set on `scans`.
+
+### Correction to the `anon` EXECUTE survey
+
+The earlier survey read `anon=true` on ten functions. **That was measured on the
+local CLI stack, whose role provisioning differs from production.** Read from
+the production mirror, only **seven** functions grant `anon` EXECUTE, and most
+are legitimate:
+
+| Function | Returns | Assessment |
+|---|---|---|
+| `update_updated_at_column` | trigger | **Not callable meaningfully** — trigger function |
+| `enforce_asset_limit` | trigger | same |
+| `track_asset_creation` | trigger | same |
+| `get_asset_by_qr` | TABLE | **Intentionally public** — the QR scan path |
+| `is_super_admin` | boolean | Returns `false` for anon; harmless but needless |
+| `org_max_assets` | integer | Capacity lookup; leaks a plan limit at most |
+| `end_pilot` | jsonb | **Gated by `is_super_admin()`** — not exploitable, but should not be anon-executable |
+
+`create_organization_and_user` is **not** anon-executable in production
+(`authenticated, postgres, service_role` only) — correcting the earlier table.
+The class finding stands but is narrower than first reported, and nothing here
+is exploitable today.
+
 ### The identity-argument class — survey, report only
 
 C-3 is an instance of a pattern: a `SECURITY DEFINER` function that takes an
