@@ -824,6 +824,93 @@ COMMIT;
 2. Refresh the schema mirror: `npx supabase db pull --declarative`, then revert
    the duplicated `[db.migrations]` block it writes into `supabase/config.toml`.
 
+### The identity-argument class — survey, report only
+
+C-3 is an instance of a pattern: a `SECURITY DEFINER` function that takes an
+organisation or user id **as an argument** instead of deriving it. Seven
+functions match on shape. Only three are defects.
+
+| Function | Identity args | anon | authenticated | Verdict |
+|---|---|---|---|---|
+| `admin_mark_paid` | `p_org_id` | **yes** | yes | **OK** — `is_super_admin()` at line 18, before first use of `p_org_id` at line 46 |
+| `end_pilot` | `p_org_id` | **yes** | yes | **OK** — gate line 38, first use line 49 |
+| `extend_trial` | `p_org_id` | **yes** | yes | **OK** — gate line 22, first use line 34 |
+| `set_feature_flag` | `p_org_id` | **yes** | yes | **OK** — gate line 23, first use line 34 |
+| `return_asset` | `p_user_id` | no | yes | **FIXED (B0)** — org + actor now from `auth.uid()` |
+| `checkout_asset` | `p_organization_id`, `p_user_id` | no | yes | **DRAFTED (B1)** — scoped to a caller argument |
+| `create_organization_and_user` | `p_user_id` | **yes** | yes | **OPEN (H-5)** — `p_user_id` never compared to `auth.uid()`; INSERT, so A0 does not cover it |
+
+**The four admin functions are not defects.** They take an org argument by
+design — a platform admin acts across tenants — and each calls
+`is_super_admin()` *before* touching it. Taking the argument is fine; what
+matters is authorizing independently of it.
+
+**`create_organization_and_user` is the remaining open instance.** It is
+`SECURITY DEFINER`, inserts `VALUES (p_user_id, ..., 'owner')`, and never
+compares `p_user_id` to `auth.uid()`. It is called from a `'use client'`
+component (`app/(auth)/confirm/page.tsx:138`), so every argument is
+attacker-controlled. **A0 does not cover it — A0 is `BEFORE UPDATE`, this is an
+INSERT.** Still unproven (V7 not run).
+
+**Separate finding from this survey — `anon` holds EXECUTE on almost
+everything.** Read from the live catalog:
+
+```
+admin_mark_paid              anon=true
+end_pilot                    anon=true
+extend_trial                 anon=true
+set_feature_flag             anon=true
+create_organization_and_user anon=true
+record_inspection            anon=true
+claim_vgp_alerts             anon=true
+has_feature_access           anon=true
+org_max_assets               anon=true
+is_pilot_active              anon=true
+checkout_asset               anon=false
+return_asset                 anon=false
+```
+
+This is the hazard [working-agreements.md](working-agreements.md) already
+documents: Supabase default privileges grant `EXECUTE` on every new function in
+`public` to `anon`, and `REVOKE ... FROM PUBLIC` does **not** undo it, because
+`PUBLIC` and `anon` are different grantees. The four admin functions are gated
+by `is_super_admin()` so this is **not exploitable today** — it is defence by
+predicate rather than by permission, exactly the phrase that file uses. Only
+`checkout_asset` and `return_asset` are clean, because B0 and B1 revoked `anon`
+by name. **Recommended for the Patch E grants sweep: `REVOKE EXECUTE ... FROM
+anon` on every function that is not deliberately public** (`get_asset_by_qr` is
+the only intentional one).
+
+### B1 — C-3 sibling, drafted and locally tested 2026-09-18. NOT APPLIED.
+
+Migration `20260918160000_b1_checkout_asset_tenant_check.sql` (commit `55ba4c8`).
+
+| Test | BEFORE | AFTER |
+|---|---|---|
+| **X1** cross-tenant checkout | **ALLOWED** | **DENY** (`asset_not_found`) |
+| CTL same-org checkout | ALLOW | ALLOW |
+| **NEG** forged attribution | **FORGED** (`checked_out_by=owner-b`) | **CORRECT** (caller) |
+| NEW no-org caller | ALLOWED | DENY |
+| **M2** cross-tenant `client_id` | **ACCEPTED** | **DENY** (`client_not_found`) |
+
+**X1 confirmed as a real cross-tenant write.** The first probe printed
+`orgB_active_rentals=0` and looked like a partial failure; it was not. RLS hides
+Org B's rows from the Org A reader. Reading back as `postgres` showed
+`rental created in org = bbbbbbbb…` and `ORG B asset now status=in_use`.
+
+**M-2 closed here.** `p_client_id` was inserted with no check that the client
+belongs to the organisation, so a rental could reference a parent row in another
+tenant. Now validated against the derived org.
+
+**A correction found while testing.** The first draft revoked from `PUBLIC` and
+`anon` only, leaving the ACL reading `service_role=X/postgres`. `REVOKE` strips
+only the roles it names, and `CREATE OR REPLACE` preserves the existing ACL, so
+the pre-existing `service_role` and `postgres` grants survived. They are now
+revoked by name and the ACL reads exactly `authenticated=X/postgres`.
+
+Rollback verified **both directions**: it restores the old behaviour (X1
+ALLOWED, attribution FORGED, M2 ACCEPTED) and re-applying re-blocks all three.
+
 ### B0 — APPLIED TO PRODUCTION 2026-09-18. C-3 CLOSED.
 
 Pushed via `supabase db push` (CLI ledger), together with two migrations that
