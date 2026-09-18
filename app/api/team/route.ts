@@ -39,10 +39,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch team members
+    // Fetch team members.
+    // Explicit column list: the response is returned to the browser verbatim,
+    // and select('*') shipped every column of every colleague -- including
+    // avatar_url and language, which no consumer reads. Matches the
+    // TeamMember interface in app/(dashboard)/team/page.tsx.
     const { data: members, error: membersError } = await supabase
       .from('users')
-      .select('*')
+      .select('id, email, first_name, last_name, full_name, role, organization_id, created_at, updated_at')
       .eq('organization_id', userData.organization_id)
       .order('role', { ascending: true })
       .order('created_at', { ascending: true });

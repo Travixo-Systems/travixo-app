@@ -221,9 +221,13 @@ export default function TeamPage() {
       setCurrentUserRole(userData.role as RoleType);
 
       // Fetch team members
+      // Explicit column list, matching the TeamMember interface above.
+      // select('*') shipped every column of every colleague to the browser --
+      // including avatar_url and language, which nothing here renders, and
+      // users.id, which is the same value as auth.users.id.
       const { data: membersData, error } = await supabase
         .from('users')
-        .select('*')
+        .select('id, email, first_name, last_name, full_name, role, organization_id, created_at, updated_at')
         .eq('organization_id', userData.organization_id)
         .order('role', { ascending: true })
         .order('created_at', { ascending: true });
