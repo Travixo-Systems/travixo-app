@@ -22,7 +22,13 @@ CREATE OR REPLACE FUNCTION public.get_asset_by_qr (
     a.id,
     a.name::text,
     a.serial_number::text,
-    a.status::text,
+    -- operational state only for same-org members; see header
+    CASE
+      WHEN a.organization_id IN (
+        SELECT u.organization_id FROM public.users u WHERE u.id = auth.uid()
+      ) THEN a.status::text
+      ELSE NULL
+    END AS status,
     a.current_location::text,
     a.description::text,
     -- financial/date detail only for same-org authenticated members
@@ -48,6 +54,6 @@ $function$;
 
 GRANT EXECUTE ON FUNCTION "public"."get_asset_by_qr"(text) TO "anon", "authenticated", "postgres", "service_role";
 
-COMMENT ON FUNCTION "public"."get_asset_by_qr"(text) IS 'Public QR scan lookup. Returns display-safe columns for one asset. Never returns purchase_price, current_value, or organization_id. purchase_date is NULL unless the caller is an authenticated same-org member.';
+COMMENT ON FUNCTION "public"."get_asset_by_qr"(text) IS 'Public QR scan lookup. Returns display-safe columns for one asset. Never returns purchase_price, current_value, or organization_id. purchase_date and status are NULL unless the caller is an authenticated same-org member.';
 
 REVOKE ALL ON FUNCTION "public"."get_asset_by_qr"(text) FROM PUBLIC;
