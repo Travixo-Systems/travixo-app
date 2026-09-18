@@ -243,15 +243,24 @@ the equivalence proof in §8 stands as the behavioural verification.
 
 ## Caveats
 
-1. **The local stack could not replay the repo's migrations.** `supabase start`
-   fails at `20250101000000_subscription_schema.sql` with
-   `relation "organizations" does not exist` — the known missing-genesis-migration
-   problem recorded in `AGENTS.md`. Verification therefore ran against minimal
-   tables built to match `supabase/schemas/` exactly (`assets`, `users`,
-   `scans` with the same columns, types and nullability). The kernel functions
-   and index expressions are schema-independent, so this does not weaken the
-   result — but the migration has **not** been exercised against a full replica
-   of production's schema.
+1. **The local stack cannot replay the repo's migrations on this branch.**
+   `supabase start` fails at `20250101000000_subscription_schema.sql` with
+   `relation "organizations" does not exist` — the known
+   missing-genesis-migration problem recorded in `AGENTS.md`. The EXPLAIN
+   ANALYZE figures in §5 were produced against minimal tables built to match
+   `supabase/schemas/` exactly (`assets`, `users`, `scans`, same columns,
+   types and nullability).
+
+   The kernel *was* additionally verified against the full real schema — 26
+   tables, 85 policies, 62 functions, 108 indexes — with the parity suite
+   passing unchanged and all five trigram indexes building on the real tables.
+   That required a genesis migration, which is **out of scope for
+   `docs/search-spec.md`** and now lives on `chore/db-genesis`, parked and
+   unfinished. See `docs/db/README-genesis.md` on that branch.
+
+   So on this branch alone, the kernel migration cannot be exercised against a
+   full replica of production's schema. Anyone re-running §5 from a clean
+   clone will need that branch, or the minimal tables above.
 2. **Index sizing was not measured.** Five GIN trigram indexes add write cost
    and disk. At 50k rows this was not material; it should be checked against
    production row counts before applying.
