@@ -1,0 +1,23 @@
+ tablename |                policyname                 | permissive |      roles      |  cmd   |                                         qual                                          
+-----------+-------------------------------------------+------------+-----------------+--------+---------------------------------------------------------------------------------------
+ assets    | Users can view assets in own organization | PERMISSIVE | {public}        | SELECT | (organization_id IN ( SELECT users.organization_id                                   +
+           |                                           |            |                 |        |    FROM users                                                                        +
+           |                                           |            |                 |        |   WHERE (users.id = auth.uid())))
+ assets    | assets_select_org_authenticated           | PERMISSIVE | {authenticated} | SELECT | (organization_id IN ( SELECT users.organization_id                                   +
+           |                                           |            |                 |        |    FROM users                                                                        +
+           |                                           |            |                 |        |   WHERE (users.id = auth.uid())))
+ assets    | assets_select_same_org                    | PERMISSIVE | {authenticated} | SELECT | (organization_id IN ( SELECT u.organization_id                                       +
+           |                                           |            |                 |        |    FROM users u                                                                      +
+           |                                           |            |                 |        |   WHERE (u.id = auth.uid())))
+ assets    | super_admin_read_all_assets               | PERMISSIVE | {public}        | SELECT | is_super_admin()
+ scans     | scans_select_same_org                     | PERMISSIVE | {authenticated} | SELECT | (EXISTS ( SELECT 1                                                                   +
+           |                                           |            |                 |        |    FROM assets a                                                                     +
+           |                                           |            |                 |        |   WHERE ((a.id = scans.asset_id) AND (a.organization_id IN ( SELECT u.organization_id+
+           |                                           |            |                 |        |            FROM users u                                                              +
+           |                                           |            |                 |        |           WHERE (u.id = auth.uid()))))))
+ scans     | super_admin_read_all_scans                | PERMISSIVE | {public}        | SELECT | is_super_admin()
+ users     | Users can view own profile                | PERMISSIVE | {authenticated} | SELECT | (auth.uid() = id)
+ users     | super_admin_read_all_users                | PERMISSIVE | {public}        | SELECT | is_super_admin()
+ users     | users_select_same_org                     | PERMISSIVE | {public}        | SELECT | (organization_id = get_my_organization_id())
+(9 rows)
+

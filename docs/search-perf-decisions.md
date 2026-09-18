@@ -5,14 +5,24 @@ what it was measured against, and what would reopen it.
 
 ---
 
-## ACCEPTED — ~1.2 s text search at 200k rows in `scans`
+## ACCEPTED — ~3.4 s text search at 200k rows in `scans`
 
-`search_scans` with any text term costs ~1,151 ms at 200,121 rows in the
-`scans` table. Without a text term (enum or date filter only) it is ~57 ms.
+> **SUPERSEDED FIGURE.** This entry first recorded ~1.2 s, measured against a
+> test harness carrying **one simplified SELECT policy per table**
+> (`organization_id = get_my_organization_id()`). Production carries **nine**:
+> four on `assets`, two on `scans`, three on `users`, all PERMISSIVE and
+> therefore OR'd. Re-measured under the real policies (verified byte-identical
+> to `supabase/schemas/`, dump in `docs/db/harness-pg-policies-dump.txt`), the
+> cost is **2.0–2.9× higher**. The earlier curve described a database we do
+> not have.
 
-This is accepted for now. It is 7.7× better than the first implementation
-(10,022 ms), well inside any timeout, and the alternatives are all worse for
-reasons recorded below.
+`search_scans` with any text term costs **~3,360 ms** at 200,002 rows under
+production's real policies. Correctness is unaffected — 401 matches, tenant
+isolation intact in both directions.
+
+Still accepted for now: it is 3× better than the pre-UNION implementation and
+the alternatives remain worse for the reasons below. But the margin is much
+thinner than recorded, and the revisit threshold moves a long way as a result.
 
 ### The threshold is TOTAL rows in `scans`, across all tenants
 
@@ -32,31 +42,53 @@ Do not translate this into "N years for a customer of size X". That framing
 is wrong here and will produce a threshold nobody hits until it is far too
 late.
 
-### Measured curve
+### Measured curve — under production's real policies
 
-| total rows in `scans` | `search_scans('Berger')` |
-|---|---|
-| 20,120 | 270 ms |
-| 50,121 | 440 ms |
-| 200,121 | 1,151 ms |
+| total rows in `scans` | real policies | old (wrong harness) | factor |
+|---|---|---|---|
+| 20,002 | **544 ms** | 270 ms | 2.0× |
+| 50,002 | **1,034 ms** | 440 ms | 2.4× |
+| 200,002 | **3,360 ms** | 1,151 ms | 2.9× |
 
-Roughly linear, ~5.7 µs per row.
+Still roughly linear, now **~16.8 µs per row** rather than 5.7 µs. The factor
+grows with size, so the disjunction costs more the more rows it is applied to.
 
-### Revisit trigger
+Why the harness mattered: `scans`'s policy reaches the tenant *through*
+`assets` (`EXISTS (SELECT 1 FROM assets a WHERE a.id = scans.asset_id AND
+...)`), so **`assets`'s own RLS applies inside that path**. Four OR'd
+permissive policies on `assets` are therefore evaluated for every candidate
+scan, not one simple comparison.
 
-**400,000 total rows in `scans`**, which projects to ~2.3 s on this curve.
+### Revisit trigger — moved from 400,000 to 120,000
 
-Chosen because it is roughly double the measured point, still inside a
-tolerable interactive wait, and leaves room to act before the experience
-degrades rather than after. Add to the weekly check:
+**120,000 total rows in `scans`**, which is ~2.0 s on the real curve.
+
+The old 400,000 figure was chosen as "~2.3 s on this curve". On the real curve
+400,000 projects to **~6.7 s**, which is not a threshold, it is an outage. The
+same ~2 s intent now lands at 120,000 rows — **a 3.3× reduction in headroom**,
+and the single most consequential correction in this document.
+
+Add to the weekly check:
 
 ```sql
-SELECT count(*) FROM public.scans;   -- revisit search perf above 400,000
+SELECT count(*) FROM public.scans;   -- revisit search perf above 120,000
 ```
 
 When it trips, the fix is the denormalisation below, not more query tuning —
 that avenue is exhausted (see *Rejected*, and
 `docs/search-array-hoist-experiment.md`).
+
+### The harness is now committed, so this cannot silently recur
+
+- `scripts/verify/search-test-harness-schema.sql` — production's nine SELECT
+  policies verbatim.
+- `scripts/verify/verify-harness-policies.mjs` — compares the live harness
+  against `supabase/schemas/` and exits 1 on any divergence in predicate,
+  role, or permissiveness.
+- `docs/db/harness-pg-policies-dump.txt` — the `pg_policies` dump proving what
+  was measured against.
+
+Run the verifier before trusting any performance number from this harness.
 
 ---
 
@@ -133,11 +165,15 @@ Read from `supabase/schemas/`, not from the simplified policies used in the
 block 3 test harness — those used `= get_my_organization_id()` and are NOT
 what production runs:
 
-| table | production policy shape | index-friendly? |
-|---|---|---|
-| `scans` | `EXISTS (SELECT 1 FROM assets a WHERE a.id = scans.asset_id AND a.organization_id IN (SELECT ...))` | no — measured |
-| `assets` | `organization_id IN (SELECT users.organization_id FROM users WHERE users.id = auth.uid())` | **unknown, likely not** |
-| `users` | `organization_id = get_my_organization_id()` | likely yes |
+| table | SELECT policies | shape | index-friendly? |
+|---|---|---|---|
+| `scans` | **2** | `EXISTS (... assets ... users ...)` OR `is_super_admin()` | no — measured |
+| `assets` | **4** | three × `organization_id IN (SELECT ...)` OR `is_super_admin()` | see block 3.6 spike |
+| `users` | **3** | `auth.uid() = id` OR `is_super_admin()` OR `organization_id = get_my_organization_id()` | mixed |
+
+Every one of those nine is PERMISSIVE, so Postgres ORs them. `assets` has
+three SELECT policies with *identical* semantics plus a super-admin one; the
+disjunction is evaluated in full on every query.
 
 **Correction to an earlier assumption.** I had recorded that `assets` uses a
 direct column comparison. It does not: all three of its SELECT policies use
