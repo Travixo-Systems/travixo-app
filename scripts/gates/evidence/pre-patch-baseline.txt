@@ -1,0 +1,148 @@
+
+  UPDATE-SURFACE GATE
+  --------------------------------------------------------------------
+  Derived from the live catalog: column grants x UPDATE/ALL policies.
+  Effective authenticated pairs: 177
+  Effective anon pairs:          152
+  Allowlisted pairs:             112
+  Column-level control active:   none - every table is a table-wide grant
+
+  FAIL - anon has a writable surface (must be empty)
+    audit_items  (7 cols)  asset_id, audit_id, id, notes, status, verified_at, verified_by
+    audits  (12 cols)  completed_at, created_at, created_by, id, missing_assets, name, organization_id, scheduled_date, ...
+    clients  (10 cols)  address, company, created_at, email, id, name, notes, organization_id, ...
+    organizations  (35 cols)  address, branding_colors, city, company_size, converted_to_paid, country, created_at, currency, ...
+    rentals  (19 cols)  actual_return_date, asset_id, checked_out_by, checkout_date, checkout_notes, checkout_scan_id, client_contact, client_id, ...
+    subscriptions  (17 cols)  billing_cycle, cancel_at_period_end, cancelled_at, created_at, current_period_end, current_period_start, id, licensed_capacity, ...
+    team_invitations  (10 cols)  accepted_at, created_at, email, expires_at, id, invited_by, organization_id, role, ...
+    user_notification_preferences  (7 cols)  created_at, id, organization_id, updated_at, user_id, vgp_frequency, vgp_thresholds
+    users  (11 cols)  avatar_url, created_at, email, first_name, full_name, id, language, last_name, ...
+    vgp_schedules  (24 cols)  archive_reason, archived_at, archived_by, asset_id, certification_number, created_at, created_by, edit_history, ...
+
+  FAIL - 91 authenticated pair(s) not on the allowlist
+
+    asset_categories
+      created_at
+      id
+      organization_id
+
+    assets
+      created_at
+      id
+      is_demo_data
+      organization_id
+      qr_code
+      qr_url
+
+    audit_items
+      asset_id
+      audit_id
+      id
+
+    audits
+      created_at
+      created_by
+      id
+      organization_id
+      scheduled_date
+
+    clients
+      company
+      created_at
+      id
+      organization_id
+
+    organizations
+      converted_to_paid  <- C-2 billing authority
+      created_at
+      demo_alert_sent
+      demo_data_seeded
+      feature_flags  <- entitlement
+      id
+      is_pilot  <- C-2 billing authority
+      pilot_end_date  <- C-2 billing authority
+      pilot_notes
+      pilot_start_date  <- C-2 billing authority
+      slug
+      stripe_customer_id  <- C-2 billing identity
+      subscription_status  <- C-2 billing authority
+      subscription_tier  <- C-2 billing authority
+      trial_ends_at  <- C-2 billing authority
+      welcome_email_sent
+
+    rentals
+      asset_id
+      checked_out_by
+      checkout_date
+      checkout_scan_id
+      created_at
+      id
+      organization_id
+
+    subscriptions
+      billing_cycle  <- C-2 billing authority
+      cancel_at_period_end  <- C-2 billing authority
+      cancelled_at  <- C-2 billing authority
+      created_at  <- C-2 billing authority
+      current_period_end  <- C-2 billing authority
+      current_period_start  <- C-2 billing authority
+      id  <- C-2 billing authority
+      licensed_capacity  <- C-2 billing authority
+      metadata  <- C-2 billing authority
+      organization_id  <- C-2 billing authority
+      plan_id  <- C-2 billing authority
+      status  <- C-2 billing authority
+      stripe_price_id  <- C-2 billing authority
+      stripe_subscription_id  <- C-2 billing authority
+      trial_end  <- C-2 billing authority
+      trial_start  <- C-2 billing authority
+      updated_at  <- C-2 billing authority
+
+    team_invitations
+      created_at
+      email
+      id
+      invited_by
+      organization_id
+
+    user_notification_preferences
+      created_at
+      id
+      organization_id
+      user_id
+      vgp_frequency
+      vgp_thresholds
+
+    users
+      created_at
+      email
+      id
+      organization_id  <- C-1 tenant escape
+      role  <- C-1 privilege escalation
+
+    vgp_schedules
+      archive_reason
+      asset_id
+      certification_number
+      created_at
+      created_by
+      edit_history
+      id
+      inspection_location
+      inspector_company
+      inspector_name
+      organization_id
+      regulatory_interval_months
+      regulatory_profile_name_snapshot
+      regulatory_reference_snapshot
+
+  NOTE - 28 grant(s) with no UPDATE policy (dormant, not reachable):
+    anon:admin_audit_log, anon:asset_categories, anon:assets, anon:billing_events, anon:client_recall_alerts, anon:entitlement_overrides, anon:pending_weekly_digests, anon:platform_admins, anon:scans, anon:settings_audit_log, anon:subscription_plans, anon:usage_tracking, anon:vgp_alerts, anon:vgp_digest_deliveries, anon:vgp_inspections, anon:vgp_regulatory_profiles, authenticated:admin_audit_log, authenticated:billing_events, authenticated:client_recall_alerts, authenticated:entitlement_overrides, authenticated:pending_weekly_digests, authenticated:platform_admins, authenticated:scans, authenticated:settings_audit_log, authenticated:subscription_plans, authenticated:usage_tracking, authenticated:vgp_alerts, authenticated:vgp_inspections
+    Dormant, not safe: one permissive policy away from live.
+
+  NOTE - 26 allowlisted pair(s) not currently reachable:
+    audits.notes, audits.updated_at, clients.city, clients.postal_code, clients.siret, clients.contact_name, vgp_inspections.inspection_date, vgp_inspections.inspector_name, vgp_inspections.inspector_company, vgp_inspections.certification_number, vgp_inspections.result, vgp_inspections.findings, ...
+    Expected after remediation narrows the surface. Prune when settled.
+
+  FAIL - update surface exceeds the allowlist
+

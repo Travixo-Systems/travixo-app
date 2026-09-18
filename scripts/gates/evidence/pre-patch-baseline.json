@@ -1,0 +1,1771 @@
+{
+  "pass": false,
+  "violations": [
+    {
+      "grantee": "authenticated",
+      "table": "asset_categories",
+      "column": "created_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "asset_categories",
+      "column": "id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "asset_categories",
+      "column": "organization_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "assets",
+      "column": "created_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "assets",
+      "column": "id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "assets",
+      "column": "is_demo_data",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "assets",
+      "column": "organization_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "assets",
+      "column": "qr_code",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "assets",
+      "column": "qr_url",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "audit_items",
+      "column": "asset_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "audit_items",
+      "column": "audit_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "audit_items",
+      "column": "id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "audits",
+      "column": "created_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "audits",
+      "column": "created_by",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "audits",
+      "column": "id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "audits",
+      "column": "organization_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "audits",
+      "column": "scheduled_date",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "clients",
+      "column": "company",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "clients",
+      "column": "created_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "clients",
+      "column": "id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "clients",
+      "column": "organization_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "organizations",
+      "column": "converted_to_paid",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "organizations",
+      "column": "created_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "organizations",
+      "column": "demo_alert_sent",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "organizations",
+      "column": "demo_data_seeded",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "organizations",
+      "column": "feature_flags",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "organizations",
+      "column": "id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "organizations",
+      "column": "is_pilot",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "organizations",
+      "column": "pilot_end_date",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "organizations",
+      "column": "pilot_notes",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "organizations",
+      "column": "pilot_start_date",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "organizations",
+      "column": "slug",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "organizations",
+      "column": "stripe_customer_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "organizations",
+      "column": "subscription_status",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "organizations",
+      "column": "subscription_tier",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "organizations",
+      "column": "trial_ends_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "organizations",
+      "column": "welcome_email_sent",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "rentals",
+      "column": "asset_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "rentals",
+      "column": "checked_out_by",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "rentals",
+      "column": "checkout_date",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "rentals",
+      "column": "checkout_scan_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "rentals",
+      "column": "created_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "rentals",
+      "column": "id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "rentals",
+      "column": "organization_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "subscriptions",
+      "column": "billing_cycle",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "subscriptions",
+      "column": "cancel_at_period_end",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "subscriptions",
+      "column": "cancelled_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "subscriptions",
+      "column": "created_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "subscriptions",
+      "column": "current_period_end",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "subscriptions",
+      "column": "current_period_start",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "subscriptions",
+      "column": "id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "subscriptions",
+      "column": "licensed_capacity",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "subscriptions",
+      "column": "metadata",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "subscriptions",
+      "column": "organization_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "subscriptions",
+      "column": "plan_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "subscriptions",
+      "column": "status",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "subscriptions",
+      "column": "stripe_price_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "subscriptions",
+      "column": "stripe_subscription_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "subscriptions",
+      "column": "trial_end",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "subscriptions",
+      "column": "trial_start",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "subscriptions",
+      "column": "updated_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "team_invitations",
+      "column": "created_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "team_invitations",
+      "column": "email",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "team_invitations",
+      "column": "id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "team_invitations",
+      "column": "invited_by",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "team_invitations",
+      "column": "organization_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "user_notification_preferences",
+      "column": "created_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "user_notification_preferences",
+      "column": "id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "user_notification_preferences",
+      "column": "organization_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "user_notification_preferences",
+      "column": "user_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "user_notification_preferences",
+      "column": "vgp_frequency",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "user_notification_preferences",
+      "column": "vgp_thresholds",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "users",
+      "column": "created_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "users",
+      "column": "email",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "users",
+      "column": "id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "users",
+      "column": "organization_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "users",
+      "column": "role",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "vgp_schedules",
+      "column": "archive_reason",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "vgp_schedules",
+      "column": "asset_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "vgp_schedules",
+      "column": "certification_number",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "vgp_schedules",
+      "column": "created_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "vgp_schedules",
+      "column": "created_by",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "vgp_schedules",
+      "column": "edit_history",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "vgp_schedules",
+      "column": "id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "vgp_schedules",
+      "column": "inspection_location",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "vgp_schedules",
+      "column": "inspector_company",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "vgp_schedules",
+      "column": "inspector_name",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "vgp_schedules",
+      "column": "organization_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "vgp_schedules",
+      "column": "regulatory_interval_months",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "vgp_schedules",
+      "column": "regulatory_profile_name_snapshot",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "authenticated",
+      "table": "vgp_schedules",
+      "column": "regulatory_reference_snapshot",
+      "hasPolicy": true,
+      "tableWide": true
+    }
+  ],
+  "anonEffective": [
+    {
+      "grantee": "anon",
+      "table": "audit_items",
+      "column": "asset_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "audit_items",
+      "column": "audit_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "audit_items",
+      "column": "id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "audit_items",
+      "column": "notes",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "audit_items",
+      "column": "status",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "audit_items",
+      "column": "verified_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "audit_items",
+      "column": "verified_by",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "audits",
+      "column": "completed_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "audits",
+      "column": "created_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "audits",
+      "column": "created_by",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "audits",
+      "column": "id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "audits",
+      "column": "missing_assets",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "audits",
+      "column": "name",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "audits",
+      "column": "organization_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "audits",
+      "column": "scheduled_date",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "audits",
+      "column": "started_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "audits",
+      "column": "status",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "audits",
+      "column": "total_assets",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "audits",
+      "column": "verified_assets",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "clients",
+      "column": "address",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "clients",
+      "column": "company",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "clients",
+      "column": "created_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "clients",
+      "column": "email",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "clients",
+      "column": "id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "clients",
+      "column": "name",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "clients",
+      "column": "notes",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "clients",
+      "column": "organization_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "clients",
+      "column": "phone",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "clients",
+      "column": "updated_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "address",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "branding_colors",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "city",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "company_size",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "converted_to_paid",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "country",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "created_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "currency",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "demo_alert_sent",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "demo_data_seeded",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "feature_flags",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "industry_sector",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "is_pilot",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "logo_url",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "name",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "notification_preferences",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "onboarding_completed",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "phone",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "pilot_end_date",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "pilot_notes",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "pilot_start_date",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "postal_code",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "siret",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "slug",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "stripe_customer_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "subscription_status",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "subscription_tier",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "timezone",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "trial_ends_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "updated_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "vgp_alert_days",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "vgp_alerts_enabled",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "website",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "organizations",
+      "column": "welcome_email_sent",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "rentals",
+      "column": "actual_return_date",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "rentals",
+      "column": "asset_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "rentals",
+      "column": "checked_out_by",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "rentals",
+      "column": "checkout_date",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "rentals",
+      "column": "checkout_notes",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "rentals",
+      "column": "checkout_scan_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "rentals",
+      "column": "client_contact",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "rentals",
+      "column": "client_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "rentals",
+      "column": "client_name",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "rentals",
+      "column": "created_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "rentals",
+      "column": "expected_return_date",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "rentals",
+      "column": "id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "rentals",
+      "column": "organization_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "rentals",
+      "column": "return_condition",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "rentals",
+      "column": "return_notes",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "rentals",
+      "column": "return_scan_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "rentals",
+      "column": "returned_by",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "rentals",
+      "column": "status",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "rentals",
+      "column": "updated_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "subscriptions",
+      "column": "billing_cycle",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "subscriptions",
+      "column": "cancel_at_period_end",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "subscriptions",
+      "column": "cancelled_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "subscriptions",
+      "column": "created_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "subscriptions",
+      "column": "current_period_end",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "subscriptions",
+      "column": "current_period_start",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "subscriptions",
+      "column": "id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "subscriptions",
+      "column": "licensed_capacity",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "subscriptions",
+      "column": "metadata",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "subscriptions",
+      "column": "organization_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "subscriptions",
+      "column": "plan_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "subscriptions",
+      "column": "status",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "subscriptions",
+      "column": "stripe_price_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "subscriptions",
+      "column": "stripe_subscription_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "subscriptions",
+      "column": "trial_end",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "subscriptions",
+      "column": "trial_start",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "subscriptions",
+      "column": "updated_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "team_invitations",
+      "column": "accepted_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "team_invitations",
+      "column": "created_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "team_invitations",
+      "column": "email",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "team_invitations",
+      "column": "expires_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "team_invitations",
+      "column": "id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "team_invitations",
+      "column": "invited_by",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "team_invitations",
+      "column": "organization_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "team_invitations",
+      "column": "role",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "team_invitations",
+      "column": "status",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "team_invitations",
+      "column": "token",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "user_notification_preferences",
+      "column": "created_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "user_notification_preferences",
+      "column": "id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "user_notification_preferences",
+      "column": "organization_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "user_notification_preferences",
+      "column": "updated_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "user_notification_preferences",
+      "column": "user_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "user_notification_preferences",
+      "column": "vgp_frequency",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "user_notification_preferences",
+      "column": "vgp_thresholds",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "users",
+      "column": "avatar_url",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "users",
+      "column": "created_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "users",
+      "column": "email",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "users",
+      "column": "first_name",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "users",
+      "column": "full_name",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "users",
+      "column": "id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "users",
+      "column": "language",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "users",
+      "column": "last_name",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "users",
+      "column": "organization_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "users",
+      "column": "role",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "users",
+      "column": "updated_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "vgp_schedules",
+      "column": "archive_reason",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "vgp_schedules",
+      "column": "archived_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "vgp_schedules",
+      "column": "archived_by",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "vgp_schedules",
+      "column": "asset_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "vgp_schedules",
+      "column": "certification_number",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "vgp_schedules",
+      "column": "created_at",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "vgp_schedules",
+      "column": "created_by",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "vgp_schedules",
+      "column": "edit_history",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "vgp_schedules",
+      "column": "id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "vgp_schedules",
+      "column": "inspection_location",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "vgp_schedules",
+      "column": "inspector_company",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "vgp_schedules",
+      "column": "inspector_name",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "vgp_schedules",
+      "column": "interval_months",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "vgp_schedules",
+      "column": "last_inspection_date",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "vgp_schedules",
+      "column": "next_due_date",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "vgp_schedules",
+      "column": "notes",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "vgp_schedules",
+      "column": "organization_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "vgp_schedules",
+      "column": "rapport_url",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "vgp_schedules",
+      "column": "regulatory_interval_months",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "vgp_schedules",
+      "column": "regulatory_profile_id",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "vgp_schedules",
+      "column": "regulatory_profile_name_snapshot",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "vgp_schedules",
+      "column": "regulatory_reference_snapshot",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "vgp_schedules",
+      "column": "status",
+      "hasPolicy": true,
+      "tableWide": true
+    },
+    {
+      "grantee": "anon",
+      "table": "vgp_schedules",
+      "column": "updated_at",
+      "hasPolicy": true,
+      "tableWide": true
+    }
+  ],
+  "ungatedGrantTables": [
+    "anon:admin_audit_log",
+    "anon:asset_categories",
+    "anon:assets",
+    "anon:billing_events",
+    "anon:client_recall_alerts",
+    "anon:entitlement_overrides",
+    "anon:pending_weekly_digests",
+    "anon:platform_admins",
+    "anon:scans",
+    "anon:settings_audit_log",
+    "anon:subscription_plans",
+    "anon:usage_tracking",
+    "anon:vgp_alerts",
+    "anon:vgp_digest_deliveries",
+    "anon:vgp_inspections",
+    "anon:vgp_regulatory_profiles",
+    "authenticated:admin_audit_log",
+    "authenticated:billing_events",
+    "authenticated:client_recall_alerts",
+    "authenticated:entitlement_overrides",
+    "authenticated:pending_weekly_digests",
+    "authenticated:platform_admins",
+    "authenticated:scans",
+    "authenticated:settings_audit_log",
+    "authenticated:subscription_plans",
+    "authenticated:usage_tracking",
+    "authenticated:vgp_alerts",
+    "authenticated:vgp_inspections"
+  ],
+  "stale": [
+    "audits.notes",
+    "audits.updated_at",
+    "clients.city",
+    "clients.postal_code",
+    "clients.siret",
+    "clients.contact_name",
+    "vgp_inspections.inspection_date",
+    "vgp_inspections.inspector_name",
+    "vgp_inspections.inspector_company",
+    "vgp_inspections.certification_number",
+    "vgp_inspections.result",
+    "vgp_inspections.findings",
+    "vgp_inspections.certificate_url",
+    "vgp_inspections.certificate_file_name",
+    "vgp_inspections.notes",
+    "vgp_inspections.updated_at",
+    "asset_categories.description",
+    "asset_categories.icon",
+    "asset_categories.color",
+    "asset_categories.updated_at",
+    "team_invitations.updated_at",
+    "user_notification_preferences.vgp_alerts_enabled",
+    "user_notification_preferences.vgp_alert_days",
+    "user_notification_preferences.digest_enabled",
+    "user_notification_preferences.digest_mode",
+    "user_notification_preferences.email_enabled"
+  ],
+  "counts": {
+    "authEffective": 177,
+    "anonEffective": 152,
+    "violations": 91
+  }
+}
