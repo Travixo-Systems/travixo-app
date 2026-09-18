@@ -1,5 +1,8 @@
 -- 20260918150000_collapse_duplicate_auto_scans.sql
---   PENDING: NOT APPLIED, awaiting approval. This DELETES rows -- read first.
+--   APPLIED to production 2026-09-18 via the SQL editor. 13 rows deleted.
+--   Verified afterwards with the anon key: scans 365 -> 352, and the burst
+--   detection that found 5 bursts now finds none. The Volvo EC220E timeline
+--   went from 5 identical 12:24 rows to 1.
 --
 -- Remove the redundant scan rows written by the QR page before it was fixed to
 -- log one auto-scan per visit.
