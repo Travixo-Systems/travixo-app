@@ -102,3 +102,7 @@ CLAUDE.md
 
 # Untracked local verification scripts
 .scratch/
+
+# Supabase local stack runtime state
+supabase/.branches/
+supabase/.temp/

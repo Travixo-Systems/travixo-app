@@ -9,8 +9,8 @@ import * as XLSX from 'xlsx'
 import { v4 as uuidv4 } from 'uuid'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
+import { foldSearchValue } from '@/lib/search/fold'
 import {
-  norm,
   resolveCategoryColumn,
   resolveRowCategory,
   summarise,
@@ -253,8 +253,11 @@ export default function ImportAssetsModal({ isOpen, onClose, onSuccess }: Import
       // accents, so "Chariot élévateur" in the sheet maps onto an existing
       // "Chariot elevateur" instead of creating a near-duplicate. Anything
       // genuinely new is created once, up front.
-      const norm = (v: string) =>
-        v.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
+      // Note: deliberately foldSearchValue, not categoryInference's norm().
+      // That one additionally collapses internal whitespace; this matching has
+      // always used the plain fold, and changing it would silently alter which
+      // sheet categories map onto which existing rows.
+      const norm = foldSearchValue
 
       const { data: existingCats } = await supabase
         .from('asset_categories')

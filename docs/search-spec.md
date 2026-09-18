@@ -1527,6 +1527,28 @@ Cela inclut notamment :
 
 ### Cas concret : sortie d’un matériel → sélectionner un client existant
 
+> **CORRECTION — 2026-09-18 (block 1, inventaire).** Le diagnostic ci-dessous
+> ne correspond pas au code réel. `components/rental/CheckoutOverlay.tsx:56-80`
+> **interroge déjà le serveur à chaque frappe**, avec un debounce de 300 ms
+> (`:75-80`), via `/api/clients`. Il ne filtre pas une liste préchargée : le
+> schéma « charger N clients → rechercher uniquement dans cette liste » décrit
+> plus bas n'est **pas** ce que fait ce composant.
+>
+> L'exigence reste entièrement valable, mais les vrais défauts sont autres :
+> 1. il hérite des défauts de `/api/clients` — destruction de caractères
+>    (`route.ts:38`), recherche accent-sensible, et **ni email ni téléphone**
+>    ne sont interrogés, alors que les exemples `06 12 34 56 78` et
+>    `contact@dupont.fr` ci-dessous les exigent ;
+> 2. il plafonne à `limit=10` (`:60`) **sans pagination ni « charger plus »**
+>    dans le sélecteur ;
+> 3. il avale silencieusement les erreurs réseau (`:66-68`
+>    `catch { /* Silent fail */ }`), si bien qu'un échec de requête s'affiche
+>    exactement comme « ce client n'existe pas » — le chemin vers le doublon
+>    décrit en « Sélection et création sont deux opérations distinctes ».
+>
+> Corriger uniquement « rendre la recherche serveur » ne réparerait donc rien
+> ici : elle l'est déjà. Voir `docs/search-inventory.md` § B1 et § D.
+
 Dans la modale de sortie d’un matériel, l’option :
 
 > **Sélectionner un client**

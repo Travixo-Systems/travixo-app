@@ -46,7 +46,16 @@ if (!url || !svc) {
 const H = { apikey: svc, Authorization: `Bearer ${svc}`, 'Content-Type': 'application/json' }
 const readH = { ...H, Range: '0-99999' }
 
-/** Same normalization idea as the clients unique index: case- and accent-insensitive. */
+/**
+ * Same normalization idea as the clients unique index: case- and
+ * accent-insensitive.
+ *
+ * Deliberately NOT importing foldSearchValue from lib/search/fold.ts: this is
+ * a standalone .mjs run by plain node, with no bundler and no '@/' path alias,
+ * so the shared kernel is not reachable from here. It is also a one-shot
+ * backfill rather than a search path. Kept as a local copy on purpose; if this
+ * script ever becomes part of the app build, switch it to the kernel.
+ */
 const norm = (s) =>
   (s || '')
     .normalize('NFD')

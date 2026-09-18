@@ -22,14 +22,20 @@
  * expected to show inferences and let a human correct them.
  */
 
-/** Lowercase, strip accents, collapse whitespace. */
+import { foldSearchValue } from '@/lib/search/fold'
+
+/**
+ * Lowercase, strip accents, collapse whitespace.
+ *
+ * Accent folding comes from the shared search kernel. The extra internal
+ * whitespace collapse is deliberate and specific to import matching -- a
+ * spreadsheet cell reading "Chariot   elevateur" must map onto the existing
+ * "Chariot elevateur" category. Search itself does NOT collapse internal
+ * whitespace (it splits the query into terms instead), so this stays a
+ * superset of foldSearchValue rather than a second copy of it.
+ */
 export function norm(v: string): string {
-  return v
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .trim()
+  return foldSearchValue(v).replace(/\s+/g, ' ')
 }
 
 export type Confidence = 'high' | 'medium' | 'low'

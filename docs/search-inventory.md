@@ -160,12 +160,81 @@ label cannot match the stored enum without a mapping. Flagging per §19's rule
 
 ---
 
-## Proposed order for later blocks (not started)
+## G. Tier assignment — the cut line
 
-Block 2 is the kernel; block 3 is scans only, per instructions. For reference,
-the remaining surfaces rank by (user pain × spec weight):
+**Decided 2026-09-18, before block 2 closed.** Every one of the 18 surfaces
+sits in exactly one tier. The point is that scope cannot grow quietly: moving
+a surface between tiers is a visible edit to this table, not a silent decision
+inside a later block.
 
-A3/A4 inspections (silent 1000 truncation on a compliance record set, plus
-export ≠ screen) → A6/B1 clients+selector (one fix serves both) → B3/B4
-pickers with no search → A1 Fleet relational search (§5, the largest single
-piece) → A7/A8/A9 → B5/B9.
+### Tier 1 — in scope for this refactor
+
+Surfaces a paying customer hits. These get the full contract: server-side
+search over the complete authorized dataset, `search_fold` normalisation,
+`search_escape_like`, `count(*) OVER ()` totals, multi-term AND, shared
+query builder between screen and export.
+
+| # | Surface | Why tier 1 | Block |
+|---|---|---|---|
+| A5 | Scans | Pilot. Worst violation (50-row scope, "Load more" hidden while searching) and the cleanest RLS story. | **3** |
+| A3 | VGP inspections | Silent ~1000 truncation on a *compliance* record set. | 4 |
+| A4 | VGP inspections export | Same query builder as A3 (§29), plus the `observations`/`findings` divergence. | 4 |
+| A6 | Clients | Character destruction reproduced; email/phone unsearchable. | 5 |
+| B1 | Checkout client selector | Shares A6's API — one fix serves both. Duplicate-record risk. | 5 |
+| B2 | Checkout duplicate pre-check | Same API, same fix. | 5 |
+| A1 | Fleet | Largest single piece: §5 relational search + §6 provenance. | 6 |
+| B7 | Fleet category filter | Archived-inclusion diverges from B8; fixed with A1. | 6 |
+| B8 | Fleet status filter | Same. | 6 |
+
+### Tier 2 — real, but a different fix with a different shape
+
+Server-side search **plus list virtualisation**. Bundling these into the
+search refactor would mean shipping a virtualisation change under a search
+branch. Separate work, sequenced after tier 1.
+
+| # | Surface | The actual shape of the fix |
+|---|---|---|
+| B4 | QR bulk picker | Server search + virtualised list + archived exclusion + selection semantics over the *filtered* set (§14). |
+| B3 | Audit exclusion picker | Server search + virtualisation. Note the audit-scope truncation (500 preview / 1000 creation) is a **data-integrity** bug, not a search bug — it is tracked separately and must not wait on this. |
+
+### Tier 3 — explicitly deferred, with a date
+
+Recorded so deferral is a decision with an owner, not an oversight.
+
+| # | Surface | Deferred because | Revisit |
+|---|---|---|---|
+| B9 | Admin orgs list + filters | Internal tooling, super-admin only. No customer impact. The file already documents its own scaling limit in a header comment. | When org count approaches the 1000 cap, or on the next admin-console workstream. Flagged 2026-09-18. |
+| B5 | Audit scope location dropdown | Options derive from a truncated fetch, so valid locations can be missing — real, but confined to audit creation, which is itself being reworked for the 500/1000 truncation. | Fold into the audit-scope integrity fix rather than the search refactor. Flagged 2026-09-18. |
+| B6 | Audit scope category dropdown | Org-scoped and small; no evidence of truncation. | Same as B5. |
+| A7 | Audits list | Single-field search over an unbounded fetch. Low volume per org today. | After tier 1. Flagged 2026-09-18. |
+| A8 | Audit detail | Client-side, but the dataset is one audit's items. Carries the empty-query row-disappearance bug (§12a of the audit), which is a **correctness fix, not a search fix** — ship independently. | After tier 1. Flagged 2026-09-18. |
+| A9 | Team | Small collections (org members). `full_name` gap is real but low-volume. | After tier 1. Flagged 2026-09-18. |
+| A2 | VGP schedules | **Already conforms** to the scope rule (fully paginated, debounced, trimmed, null-safe). Needs only field additions (§9: inspector, QR, regulatory reference) and `search_fold`. | Cheap follow-on once the kernel exists. Flagged 2026-09-18. |
+
+### Not in any tier — exempt
+
+The four surfaces in § C above, for the reasons recorded there.
+
+### Shipping outside this refactor
+
+| Item | Why it leaves the refactor |
+|---|---|
+| `CheckoutOverlay.tsx:66-68` swallowed fetch error | Data-integrity bug producing duplicate client records. A few lines, no dependency on the search kernel. Separate branch off `main`, ships immediately. |
+| Audit scope truncation (500 preview / 1000 creation, archived included) | Data integrity, not search. An audit that silently omits equipment is wrong regardless of how search works. |
+| CSV escaping (`"` doubling, formula injection) | Correctness in three CSV writers. Independent of search, though it touches the same export routes as block 4. |
+
+---
+
+## Sequencing summary
+
+```
+NOW      (separate branch off main)  CheckoutOverlay silent-catch fix
+block 2  kernel: fold, useDebounce, search_fold, search_escape_like, pg_trgm
+block 3  A5  scans                    (pilot)
+block 4  A3 + A4  inspections + export
+block 5  A6 + B1 + B2  clients + selectors
+block 6  A1 + B7 + B8  fleet + its filters
+─────────── tier 1 complete ───────────
+later    tier 2: B4, B3        (search + virtualisation)
+later    tier 3: A2, A7, A8, A9, B5, B6, B9
+```
