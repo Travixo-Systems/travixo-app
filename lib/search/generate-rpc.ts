@@ -27,6 +27,7 @@
 // it -- which is the reviewable-diff property the golden file exists to give.
 
 import type { FieldBinding, SurfaceManifest, SurfaceRoot } from './manifest'
+import { resolvedClientSideRegister } from './manifest'
 
 /** Thrown for a manifest a surface cannot be generated from. */
 export class ManifestError extends Error {}
@@ -41,10 +42,13 @@ export class ManifestError extends Error {}
  */
 export function searchableBindings(
   surface: string,
-  fields: SurfaceManifest
+  fields: SurfaceManifest,
+  /** Key used in resolvedClientSideRegister, e.g. 'scans'. */
+  surfaceKey: string = surface.replace(/^search_/, '')
 ): Array<{ key: string; sql: FieldBinding }> {
   const out: Array<{ key: string; sql: FieldBinding }> = []
   const unbound: string[] = []
+  const unregistered: string[] = []
 
   for (const [key, policy] of Object.entries(fields)) {
     if (!policy.searchable) continue
@@ -52,7 +56,17 @@ export function searchableBindings(
     // column -- scan_type's label-to-enum resolution is the case. Declaring it
     // is mandatory, so that "searchable with no branch" stays an error for
     // every field that has not said why.
-    if (policy.resolvedClientSide) continue
+    //
+    // It must ALSO appear in resolvedClientSideRegister. The escape hatch is
+    // the only quiet route by which a field stops being searchable, so it is
+    // audited at manifest review rather than trusted.
+    if (policy.resolvedClientSide) {
+      const listed = resolvedClientSideRegister.some(
+        (r) => r.surface === surfaceKey && r.field === key
+      )
+      if (!listed) unregistered.push(key)
+      continue
+    }
     if (!policy.sql) {
       unbound.push(key)
       continue
@@ -66,6 +80,16 @@ export function searchableBindings(
         `${unbound.join(', ')}. Add a binding, or set searchable: false with a ` +
         `note saying why. A searchable field with no branch would silently ` +
         `never match.`
+    )
+  }
+
+  if (unregistered.length > 0) {
+    throw new ManifestError(
+      `${surface}: field(s) using resolvedClientSide but absent from ` +
+        `resolvedClientSideRegister: ${unregistered.join(', ')}. Add an entry ` +
+        `stating what breaks if the escape hatch is removed. That register is ` +
+        `how "searchable but emits no branch" stays audited instead of ` +
+        `becoming the quiet route by which a field stops being searchable.`
     )
   }
 

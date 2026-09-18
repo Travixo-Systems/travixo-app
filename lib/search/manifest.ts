@@ -44,19 +44,44 @@ export interface FieldPolicy {
    * Set when a field is reachable by what the user types, but NOT by matching
    * text against a column.
    *
+   * CLOSED SET. The reason must be one of `ResolvedClientSideReason`, and each
+   * entry must carry a written justification. This is deliberately awkward:
+   * `resolvedClientSide` is the ONLY route by which a field can be
+   * `searchable: true` and still emit no SQL branch, so it is exactly the
+   * route by which a field could quietly stop being searchable. Every use is
+   * listed in `resolvedClientSideRegister` below and is reviewed whenever the
+   * manifest is reviewed.
+   *
    * The case this exists for: `scan_type` is stored as an English enum and
    * rendered as a translated label. Typing "sortie" must find checkouts, so
    * the field is searchable -- but the client resolves the label to enum
    * values against the active locale's dictionary and passes them as a
    * structured parameter. Text-matching either the enum or a label in SQL
    * would be wrong in one language or the other.
-   *
-   * Required, rather than just omitting `sql`, so that "searchable with no
-   * branch" stays a build error for every field that has not explicitly
-   * declared why.
    */
-  resolvedClientSide?: string
+  resolvedClientSide?: {
+    reason: ResolvedClientSideReason
+    /** Why this field cannot be a SQL text branch. Required, not optional. */
+    justification: string
+    /** The RPC parameter the resolved values are passed through. */
+    parameter: string
+  }
 }
+
+/**
+ * The closed set of reasons a searchable field may emit no SQL branch.
+ *
+ * Adding a member is a deliberate act that shows up in review. It is not a
+ * free-text field precisely so that "we could not make it work" cannot become
+ * a reason.
+ */
+export type ResolvedClientSideReason =
+  /**
+   * The stored value is a code and the user sees a localised label, so no
+   * single SQL text predicate is correct in every locale. The client maps
+   * label -> code against the active dictionary and sends codes.
+   */
+  | 'localised-enum'
 
 /**
  * Where a searchable field physically lives, and how to get from that table
@@ -169,8 +194,12 @@ export const scansFields: SurfaceManifest = {
     filterable: true,
     sortable: false,
     note: 'Label resolved to enum values client-side; the RPC filters on the enum, never on a label. A term resolving to zero enums stays a text term rather than being dropped.',
-    resolvedClientSide:
-      'Stored as an English enum (check/inventory/checkout/return), rendered as a translated label. The client maps the typed term to enum values against the active locale dictionary and passes them as p_scan_types. An ILIKE against either the enum or a label would be wrong in one language.',
+    resolvedClientSide: {
+      reason: 'localised-enum',
+      justification:
+        'Stored as an English enum (check/inventory/checkout/return), rendered as a translated label ("Sortie", "Retour", ...). The client maps the typed term to enum values against the active locale dictionary. An ILIKE against the stored enum fails for a French user; an ILIKE against a label fails for an English one; and a label table in the database would duplicate the i18n dictionary and make adding a locale a migration.',
+      parameter: 'p_scan_types',
+    },
   },
 
   scannedAt: {
@@ -229,5 +258,34 @@ export const normalisationVariants = [
     behaviour: 'Same as the categoryInference variant.',
     usedBy: 'One-shot backfill script linking rentals to clients by name.',
     note: 'Local copy on purpose: a standalone .mjs run by plain node, with no bundler and no "@/" path alias, so lib/search/ is unreachable. Not a search path. If this ever joins the app build, switch it to the kernel.',
+  },
+] as const
+
+/**
+ * Register of every field that is `searchable: true` but emits no SQL branch.
+ *
+ * WHY THIS LIST EXISTS SEPARATELY FROM THE FIELD ENTRIES
+ *
+ * `resolvedClientSide` is the only escape hatch from the generator's build
+ * error, so it is the only quiet route by which a field could stop being
+ * searchable -- set it, and the field emits nothing while still claiming to be
+ * searchable. Collecting every use in one short list means "is this still
+ * justified?" gets asked at manifest review, rather than discovered later by a
+ * user who cannot find their equipment.
+ *
+ * Adding a field with `resolvedClientSide` and NOT listing it here fails
+ * `npm run verify:search-rpcs`.
+ *
+ * Each entry must state what breaks if the escape hatch is removed.
+ */
+export const resolvedClientSideRegister = [
+  {
+    surface: 'scans',
+    field: 'scanType',
+    reason: 'localised-enum' as const,
+    parameter: 'p_scan_types',
+    ifRemoved:
+      'Typing "sortie" would match nothing: an ILIKE on the stored English enum cannot match a French label. Making it a SQL branch would require either a label table duplicating the i18n dictionary -- which makes adding a locale a migration -- or accepting that search works in one language only.',
+    reviewed: '2026-09-18',
   },
 ] as const

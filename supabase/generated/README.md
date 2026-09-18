@@ -36,14 +36,38 @@ A surface contributes only its root table and its field bindings.
 
 ## Build errors, by design
 
-A field marked `searchable: true` with no `sql` binding and no
-`resolvedClientSide` explanation **fails the build**. It is not skipped.
+Three things fail the build rather than degrading quietly:
 
-Silently skipping is exactly how a field becomes visible-but-unsearchable
-again — the drift §22 and §23 exist to prevent. `resolvedClientSide` is the
-escape hatch, and it is mandatory to state it: `scan_type` uses it because the
-value is stored as an English enum and rendered as a translated label, so
-text-matching either would be wrong in one language.
+1. **`searchable: true` with no `sql` binding and no `resolvedClientSide`.**
+   Silently skipping is exactly how a field becomes visible-but-unsearchable
+   again — the drift §22 and §23 exist to prevent.
+2. **`resolvedClientSide` set but the field is absent from
+   `resolvedClientSideRegister`.** See below.
+3. **A surface with no searchable fields at all** — it would return nothing
+   for every query.
+
+### `resolvedClientSide` is a closed, audited set
+
+It is the only escape hatch from (1), and therefore the only quiet route by
+which a field could stop being searchable: set it, and the field emits no
+branch while still claiming `searchable: true`.
+
+So it is deliberately awkward to use:
+
+- `reason` must be a member of `ResolvedClientSideReason` — a closed union,
+  not free text, so "we could not make it work" cannot become a reason.
+  Adding a member is a visible act in review.
+- `justification` and `parameter` are required, not optional.
+- The field must also appear in `resolvedClientSideRegister`, with an
+  `ifRemoved` line stating what actually breaks without the hatch, and a
+  `reviewed` date. That register is short by design: it is the list someone
+  reads at manifest review and asks "is this still true?".
+
+One entry today: `scans.scanType`, reason `localised-enum`. The value is
+stored as an English enum and rendered as a translated label, so an `ILIKE` on
+the stored value fails for a French user, an `ILIKE` on a label fails for an
+English one, and a label table in the database would duplicate the i18n
+dictionary and make adding a locale a migration.
 
 ## RLS is the sole tenant boundary
 
