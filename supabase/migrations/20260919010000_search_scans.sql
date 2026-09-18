@@ -51,6 +51,24 @@
 -- root: the joins to assets and users are subject to their own RLS, and the
 -- assets join is INNER precisely because the scans policy reaches the tenant
 -- through it. A LEFT JOIN there would be a tenant hole.
+--
+-- !! RLS IS THE SOLE TENANT BOUNDARY IN THIS FUNCTION !!
+--
+-- The explicit EXISTS guards on assets were removed from every branch: they
+-- were verified redundant under RLS (identical row counts with and without)
+-- and cost ~30ms by forcing a sequential scan ahead of the trigram predicate.
+-- That is sound ONLY while this function is SECURITY INVOKER.
+--
+--   If this function ever becomes SECURITY DEFINER, the explicit organization
+--   predicate returns to EVERY branch in the SAME commit.
+--
+-- A SECURITY DEFINER function bypasses RLS, at which point those guards stop
+-- being redundant and become the only thing separating one tenant from
+-- another's data. There is no intermediate state where this is DEFINER and
+-- the branches carry no org predicate.
+--
+-- Same rule in docs/search-perf-decisions.md and in the branch template in
+-- lib/search/generate-rpc.ts.
 
 CREATE OR REPLACE FUNCTION public.search_scans (
   p_query      text        DEFAULT NULL,
