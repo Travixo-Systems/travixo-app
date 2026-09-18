@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -133,6 +133,9 @@ export default function ScanPage({ params }: PageProps) {
   const [organizationId, setOrganizationId] = useState<string>('')
   const [rentalKey, setRentalKey] = useState(0) // Force re-fetch after action
 
+  /** Asset id already auto-logged this visit; see the scan effect below. */
+  const autoLoggedAssetId = useRef<string | null>(null)
+
   useEffect(() => {
     async function resolveParams() {
       const resolvedParams = await Promise.resolve(params)
@@ -148,15 +151,25 @@ export default function ScanPage({ params }: PageProps) {
     }
   }, [qr_code])
 
+  // One visit to a QR code is one scan. Several things here hand back a fresh
+  // `asset` object for the same machine -- checkAuth() resolving, an update
+  // response, a rental overlay closing -- and without this guard each of them
+  // logged another scan, so a single visit wrote a burst of identical rows
+  // that the history then showed as separate field scans.
   useEffect(() => {
-    if (asset && qr_code) {
-      autoLogScan()
-      // Audit context is a signed-in-only feature, and checkAuth() has already
-      // resolved organizationId. Passing it in avoids a second getUser() plus
-      // users lookup for the same visitor in the same render.
-      if (organizationId) checkActiveAudit(asset.id, organizationId)
-    }
-  }, [asset, organizationId])
+    if (!asset || !qr_code) return
+    if (autoLoggedAssetId.current === asset.id) return
+    autoLoggedAssetId.current = asset.id
+    autoLogScan()
+  }, [asset?.id, qr_code])
+
+  // Audit context is a signed-in-only feature and genuinely depends on
+  // organizationId, which checkAuth() resolves after the asset loads. It is a
+  // read, so re-running it is harmless -- which is exactly why it cannot share
+  // an effect with the scan write above.
+  useEffect(() => {
+    if (asset && organizationId) checkActiveAudit(asset.id, organizationId)
+  }, [asset?.id, organizationId])
 
   useEffect(() => {
     if (successMessage) {
