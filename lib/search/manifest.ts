@@ -31,6 +31,67 @@ export interface FieldPolicy {
    * written down rather than inferred from a predicate.
    */
   note?: string
+  /**
+   * How this field is reached in SQL. REQUIRED when `searchable` is true and
+   * `resolvedClientSide` is not set: the generator emits one UNION branch per
+   * searchable field, and a field it cannot bind is a build error rather than
+   * a silently omitted branch.
+   *
+   * Omit for fields that are not text-searchable (dates, coordinates).
+   */
+  sql?: FieldBinding
+  /**
+   * Set when a field is reachable by what the user types, but NOT by matching
+   * text against a column.
+   *
+   * The case this exists for: `scan_type` is stored as an English enum and
+   * rendered as a translated label. Typing "sortie" must find checkouts, so
+   * the field is searchable -- but the client resolves the label to enum
+   * values against the active locale's dictionary and passes them as a
+   * structured parameter. Text-matching either the enum or a label in SQL
+   * would be wrong in one language or the other.
+   *
+   * Required, rather than just omitting `sql`, so that "searchable with no
+   * branch" stays a build error for every field that has not explicitly
+   * declared why.
+   */
+  resolvedClientSide?: string
+}
+
+/**
+ * Where a searchable field physically lives, and how to get from that table
+ * back to the surface's root record.
+ *
+ * `join` is null when the column is on the root table itself.
+ */
+export interface FieldBinding {
+  /** Schema-qualified table holding the column, e.g. 'public.assets'. */
+  table: string
+  /** Alias used inside the generated branch. */
+  alias: string
+  /** The column to fold and match. */
+  column: string
+  /** Value for the provenance `source_type` column. */
+  sourceType: string
+  /** Value for the provenance `matched_field` column. */
+  matchedField: string
+  /**
+   * How the matched row reaches the root table. Null when the column is on
+   * the root table, in which case the branch selects the root directly.
+   */
+  join: { rootAlias: string; on: string } | null
+}
+
+/** A surface's root table and the id the pipeline intersects on. */
+export interface SurfaceRoot {
+  /** Generated function name, e.g. 'search_scans'. */
+  fn: string
+  /** Schema-qualified root table. */
+  table: string
+  /** Alias for the root table. */
+  alias: string
+  /** Column used for ORDER BY, newest first. */
+  orderBy: string
 }
 
 export type SurfaceManifest = Record<string, FieldPolicy>
@@ -42,14 +103,59 @@ export type SurfaceManifest = Record<string, FieldPolicy>
  * the 50 rows already loaded. Everything below is evaluated server-side
  * against the whole authorized dataset.
  */
+export const scansRoot: SurfaceRoot = {
+  fn: 'search_scans',
+  table: 'public.scans',
+  alias: 's',
+  orderBy: 'scanned_at',
+}
+
 export const scansFields: SurfaceManifest = {
-  assetName: { visible: true, searchable: true, filterable: false, sortable: true },
-  assetSerialNumber: { visible: true, searchable: true, filterable: false, sortable: true },
-  locationName: { visible: true, searchable: true, filterable: false, sortable: false },
+  assetName: {
+    visible: true, searchable: true, filterable: false, sortable: true,
+    sql: {
+      table: 'public.assets', alias: 'a', column: 'name',
+      sourceType: 'asset', matchedField: 'name',
+      join: { rootAlias: 's', on: 's.asset_id = a.id' },
+    },
+  },
+  assetSerialNumber: {
+    visible: true, searchable: true, filterable: false, sortable: true,
+    sql: {
+      table: 'public.assets', alias: 'a', column: 'serial_number',
+      sourceType: 'asset', matchedField: 'serial_number',
+      join: { rootAlias: 's', on: 's.asset_id = a.id' },
+    },
+  },
+  locationName: {
+    visible: true, searchable: true, filterable: false, sortable: false,
+    sql: {
+      // On the root table itself, so no join.
+      table: 'public.scans', alias: 's', column: 'location_name',
+      sourceType: 'scan', matchedField: 'location_name',
+      join: null,
+    },
+  },
 
   // Section 10 names "personne ayant scanné" explicitly. It was rendered but
-  // not searchable, so "which scans did Jean do" had no answer.
-  scannedByName: { visible: true, searchable: true, filterable: false, sortable: false },
+  // not searchable, so "which scans did Jean do" had no answer. Two branches,
+  // because the page renders "First Last" but the columns are separate.
+  scannedByFirstName: {
+    visible: true, searchable: true, filterable: false, sortable: false,
+    sql: {
+      table: 'public.users', alias: 'u', column: 'first_name',
+      sourceType: 'user', matchedField: 'first_name',
+      join: { rootAlias: 's', on: 's.scanned_by = u.id' },
+    },
+  },
+  scannedByLastName: {
+    visible: true, searchable: true, filterable: false, sortable: false,
+    sql: {
+      table: 'public.users', alias: 'u', column: 'last_name',
+      sourceType: 'user', matchedField: 'last_name',
+      join: { rootAlias: 's', on: 's.scanned_by = u.id' },
+    },
+  },
 
   // Resolved client-side from the active locale's label dictionary into enum
   // values, then filtered on the enum server-side. Never text-matched: the
@@ -63,6 +169,8 @@ export const scansFields: SurfaceManifest = {
     filterable: true,
     sortable: false,
     note: 'Label resolved to enum values client-side; the RPC filters on the enum, never on a label. A term resolving to zero enums stays a text term rather than being dropped.',
+    resolvedClientSide:
+      'Stored as an English enum (check/inventory/checkout/return), rendered as a translated label. The client maps the typed term to enum values against the active locale dictionary and passes them as p_scan_types. An ILIKE against either the enum or a label would be wrong in one language.',
   },
 
   scannedAt: {

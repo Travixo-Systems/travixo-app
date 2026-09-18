@@ -33,11 +33,21 @@
 -- joins happen after pagination, against 50 ids, instead of against the whole
 -- table before it.
 --
--- The per-field branches are repetitive by nature. They are meant to be
--- GENERATED from the field manifest in lib/search/manifest.ts, not maintained
--- by hand -- see scripts/build-search-rpc.mjs. Editing this file directly
--- means the manifest and the RPC can drift, which is the exact failure section
--- 22 exists to prevent.
+-- SUPERSEDED BY THE GENERATOR.
+--
+-- This file is the hand-written original, kept as the migration of record
+-- because it is what shipped. The generator now reproduces it from the field
+-- manifest: `npx tsx scripts/build-search-rpcs.ts` writes
+-- supabase/generated/search_scans.sql, which was diffed against this body and
+-- verified to differ only in comment wording, comment placement, one
+-- whitespace alignment, and the order of the three WHERE clauses in `filtered`
+-- (all AND-ed, so semantically identical). The generated version passes the
+-- full block 3 spec suite, including the tenant test.
+--
+-- DO NOT hand-edit this function. Change lib/search/manifest.ts or the
+-- template in lib/search/generate-rpc.ts, regenerate, and commit the new
+-- migration. Editing here lets the manifest and the SQL that actually runs
+-- drift, which is the exact failure section 22 exists to prevent.
 --
 -- ---------------------------------------------------------------------------
 -- TENANCY
