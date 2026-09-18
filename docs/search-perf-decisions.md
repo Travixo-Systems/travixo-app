@@ -94,10 +94,27 @@ Run the verifier before trusting any performance number from this harness.
 
 ## REJECTED (for now) — `organization_id` denormalisation on `scans`
 
+> **CORRECTION — block 3.6.** This entry claimed a direct column comparison is
+> index-friendly and is "the only known fix that restores the trigram
+> indexes". **Measured, that is false.** The Fleet spike tried every policy
+> shape against an indexed trigram column at 200k rows:
+> `organization_id = get_my_organization_id()` → Seq Scan, 1,364 ms (the
+> *slowest* variant, because the function is `STABLE` and re-evaluated rather
+> than folded); `organization_id = 'literal-uuid'` → Seq Scan, 293 ms;
+> `archived_at IS NULL` → Seq Scan, 278 ms; `USING (true)` → **Bitmap Index
+> Scan, 2.6 ms**.
+>
+> **Any policy referencing a column defeats the index on this query.** The
+> denormalisation is therefore not a fix for the index problem. See
+> `docs/search-fleet-spike.md`.
+
 Adding `scans.organization_id` would let the policy become
-`organization_id = get_my_organization_id()` — a direct column comparison with
-no subquery, which the planner **can** combine with a bitmap index scan. That
-is the only known fix that restores the trigram indexes.
+`organization_id = get_my_organization_id()`, replacing the nested `EXISTS`
+traversal through `assets` with a comparison on the row itself. That is likely
+still worth real time for `scans` specifically — the traversal is what makes
+`assets`'s own four-policy disjunction run per candidate scan — but it will
+**not** restore index usage, and must not be carried forward as though it
+will.
 
 Rejected for now because it is a schema change plus a policy rewrite on a
 security-sensitive table, and the tenant boundary for `scans` currently lives
