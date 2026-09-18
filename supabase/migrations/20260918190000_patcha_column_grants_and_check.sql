@@ -56,7 +56,16 @@
 --     name, logo_url, website, phone, address, city, postal_code, country,
 --     timezone, currency, industry_sector, company_size,
 --     branding_colors, notification_preferences,
---     vgp_alerts_enabled, vgp_alert_days
+--     vgp_alerts_enabled, vgp_alert_days,
+--     onboarding_completed  cosmetic state, not authority: it hides a banner
+--                       and nothing reads it for an access decision. Moved
+--                       behind POST /api/settings/onboarding so the
+--                       organisation comes from the session rather than a React
+--                       prop, but it KEEPS the grant because that route uses
+--                       the SESSION client -- so RLS confines the write to the
+--                       caller's own organisation in addition to the .eq().
+--                       Using a service client there would remove that second
+--                       confinement for a cosmetic flag.
 --     -- DENIED --
 --     converted_to_paid, is_pilot, pilot_start_date, pilot_end_date,
 --     trial_ends_at, subscription_tier, subscription_status
@@ -68,8 +77,6 @@
 --                       one-shot server claim flags; a client write breaks the
 --                       claim guard that makes them one-shot.
 --     siret             company registration identity, not a preference.
---     onboarding_completed  moved behind an API route in this same patch;
---                       see app/api/settings/onboarding/route.ts.
 --     id, slug, created_at, pilot_notes   identity or staff-only.
 --     updated_at        maintained by trigger update_organizations_updated_at.
 --
@@ -137,7 +144,8 @@ GRANT UPDATE (
   branding_colors,
   notification_preferences,
   vgp_alerts_enabled,
-  vgp_alert_days
+  vgp_alert_days,
+  onboarding_completed
 ) ON TABLE public.organizations TO authenticated;
 
 -- ---------------------------------------------------------------------------

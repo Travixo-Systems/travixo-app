@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
 /**
@@ -44,23 +43,19 @@ export async function POST() {
       return NextResponse.json({ error: 'no_organization' }, { status: 403 })
     }
 
-    // Service client for the write.
+    // SESSION client, deliberately -- not a service client.
     //
-    // Patch A denies onboarding_completed to `authenticated` at the column
-    // grant, so the session client cannot write it -- which is the point: the
-    // column leaves the client-writable surface entirely and one audited
-    // server path writes it instead.
+    // An elevated key is not needed here and would be the wrong instrument.
+    // The write is confined twice over: .eq() targets the organisation resolved
+    // from the session above, and RLS independently confines the statement to
+    // the caller's own organisation. With a service client the second of those
+    // two would be gone, leaving a single .eq() as the only thing standing
+    // between a bug and a cross-tenant write.
     //
-    // The elevated client is safe here because the id it writes was resolved
-    // from the session above and cannot be influenced by the request: this
-    // route takes no body, and the only value it writes is the literal `true`.
-    const serviceClient = createServiceClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { persistSession: false } }
-    )
-
-    const { error: updateError } = await serviceClient
+    // onboarding_completed therefore stays in the Patch A column allowlist.
+    // It is cosmetic state, not authority: it hides a banner and nothing reads
+    // it for an access decision.
+    const { error: updateError } = await supabase
       .from('organizations')
       .update({ onboarding_completed: true })
       .eq('id', userData.organization_id)

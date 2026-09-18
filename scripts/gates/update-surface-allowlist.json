@@ -53,7 +53,8 @@
       "branding_colors",
       "notification_preferences",
       "vgp_alerts_enabled",
-      "vgp_alert_days"
+      "vgp_alert_days",
+      "onboarding_completed"
     ],
     "$comment_organizations": [
       "Profile and preference columns only.",
@@ -65,9 +66,12 @@
       "DENY demo_alert_sent / welcome_email_sent / demo_data_seeded -- one-shot",
       "     server claim flags; a client write breaks the claim guard.",
       "DENY siret              -- company registration identity, not a preference.",
-      "DENY onboarding_completed -- moved behind /api/settings/onboarding.",
       "DENY updated_at         -- maintained by trigger update_organizations_updated_at.",
-      "DENY id, slug, created_at, pilot_notes -- identity or staff-only."
+      "DENY id, slug, created_at, pilot_notes -- identity or staff-only.",
+      "KEEP onboarding_completed -- cosmetic state, not authority. Written via",
+      "     POST /api/settings/onboarding with the SESSION client, so RLS",
+      "     confines it to the caller org in addition to the .eq(). Nothing",
+      "     reads it for an access decision."
     ],
     "subscriptions": [],
     "$comment_subscriptions": [

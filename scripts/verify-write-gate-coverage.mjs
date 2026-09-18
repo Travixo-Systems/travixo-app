@@ -28,6 +28,7 @@ const EXEMPT = {
   'app/api/admin/trigger-vgp-alerts/route.ts': 'platform admin only, gated by requireSuperAdminApi (asserted below)',
   'app/api/scan/update/route.ts': 'public QR scan logging; anonymous by design, service role',
   'app/api/assets/preview-import/route.ts': 'parses an uploaded file and returns a preview; writes nothing',
+  'app/api/settings/onboarding/route.ts': 'dismisses a banner; freezing it would leave an expired pilot unable to close a prompt it can no longer act on',
 }
 
 const MUTATING = /export\s+async\s+function\s+(POST|PATCH|PUT|DELETE)\b/
