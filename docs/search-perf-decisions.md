@@ -59,9 +59,21 @@ Why the harness mattered: `scans`'s policy reaches the tenant *through*
 permissive policies on `assets` are therefore evaluated for every candidate
 scan, not one simple comparison.
 
-### Revisit trigger — moved from 400,000 to 120,000
+### Revisit trigger — 120,000 rows, unchanged by block 3.7
 
 **120,000 total rows in `scans`**, which is ~2.0 s on the real curve.
+
+> **Does LEAKPROOF move this? No.** Block 3.7 measured `search_scans` at
+> 4,789 ms not-leakproof against 4,840 ms leakproof on an identical dataset:
+> **neutral**. Its branches build the LIKE pattern from
+> `unnest(string_to_array(...))`, and the index cannot be used from that shape
+> regardless of leakproofness — with `enable_seqscan=off` pricing a scan at
+> 4×10¹⁰ the planner still scans it. So the curve and this threshold stand
+> exactly as measured in block 3.6.
+>
+> That `unnest` shape is a **generator template problem, fixable by us**, and
+> is the most promising unexplored lead for `scans`: a CTE supplying a plain
+> scalar uses the index in 0.24 ms. Not attempted yet.
 
 The old 400,000 figure was chosen as "~2.3 s on this curve". On the real curve
 400,000 projects to **~6.7 s**, which is not a threshold, it is an outage. The
@@ -94,19 +106,31 @@ Run the verifier before trusting any performance number from this harness.
 
 ## REJECTED (for now) — `organization_id` denormalisation on `scans`
 
-> **CORRECTION — block 3.6.** This entry claimed a direct column comparison is
-> index-friendly and is "the only known fix that restores the trigram
-> indexes". **Measured, that is false.** The Fleet spike tried every policy
-> shape against an indexed trigram column at 200k rows:
-> `organization_id = get_my_organization_id()` → Seq Scan, 1,364 ms (the
-> *slowest* variant, because the function is `STABLE` and re-evaluated rather
-> than folded); `organization_id = 'literal-uuid'` → Seq Scan, 293 ms;
-> `archived_at IS NULL` → Seq Scan, 278 ms; `USING (true)` → **Bitmap Index
-> Scan, 2.6 ms**.
+> **CORRECTION — block 3.6, then corrected again in block 3.7.** This entry
+> first claimed a direct column comparison is index-friendly and is "the only
+> known fix that restores the trigram indexes". That was false. Block 3.6 then
+> replaced it with *"any policy referencing a column defeats the index"* —
+> **also false**, and an inference from four data points rather than a
+> mechanism.
 >
-> **Any policy referencing a column defeats the index on this query.** The
-> denormalisation is therefore not a fix for the index problem. See
-> `docs/search-fleet-spike.md`.
+> **The actual rule: `LEAKPROOF`.** Under RLS the policy is a security qual,
+> and Postgres only pushes a user expression below a security barrier when
+> every function in it is leakproof. `search_fold` wraps `lower()`; neither is
+> leakproof, and neither are `btrim`, `normalize`, `regexp_replace`,
+> `textlike` or `like_escape`. So the trigram expression index can never be
+> the access path under any real policy. `USING (true)` worked because a
+> trivially-true qual creates no barrier to sit behind — not because it
+> referenced no column.
+>
+> Proven: marking `search_fold` **and** `textlike` **and** `like_escape`
+> leakproof takes Fleet from 279 ms (Seq Scan) to 3.7 ms (Bitmap Index Scan)
+> under production's real four OR'd policies. Marking only one of them changes
+> nothing. See `docs/search-leakproof-tests.md`.
+>
+> **The denormalisation is still not the fix**, but the reason is different
+> from what was recorded: the barrier is leakproofness, not the policy's
+> shape. Anyone reaching for `organization_id` on `scans` to restore index
+> usage would be building it for a reason that was never true.
 
 Adding `scans.organization_id` would let the policy become
 `organization_id = get_my_organization_id()`, replacing the nested `EXISTS`

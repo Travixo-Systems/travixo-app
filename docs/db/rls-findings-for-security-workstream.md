@@ -73,19 +73,63 @@ not a performance fix.
 
 Nine permissive SELECT policies across the three tables in total.
 
-## 3. Context, so this is not mistaken for a performance ticket
+## 3. Bare `STABLE` function calls in policies run per row, not per query
 
-The search work hit a harder wall that consolidation does not fix: **any RLS
-policy referencing a column defeats the trigram index** on these queries.
-Measured at 200k rows:
+**Measured in the harness, not applied anywhere. This is the cheapest win in
+this document.**
 
-| policy | plan | time |
+`users_select_same_org` on `users` is written:
+
+```sql
+USING (organization_id = public.get_my_organization_id())
+```
+
+`get_my_organization_id()` takes no arguments and is `STABLE`, so it ought to
+be evaluated once per query. **It is not.** Postgres treats a bare `STABLE`
+call in a qual as an ordinary expression and evaluates it per row. Wrapping it
+in a scalar subquery forces an InitPlan, evaluated once and reused:
+
+```sql
+USING (organization_id = (SELECT public.get_my_organization_id()))
+```
+
+Measured at 50,001 assets, same query, same data, only the policy text
+differing:
+
+| policy form | plan fragment | time |
 |---|---|---|
-| `USING (true)` | Bitmap Index Scan | **2.6 ms** |
-| `organization_id = 'literal-uuid'` | Seq Scan | 293 ms |
-| `archived_at IS NULL` | Seq Scan | 278 ms |
-| `organization_id = get_my_organization_id()` | Seq Scan | 1,364 ms |
-| all four production policies | Seq Scan | 1,065 ms |
+| `= get_my_organization_id()` | `Filter: (organization_id = get_my_organization_id())`, cost 866..15,157 | **363 ms** |
+| `= (SELECT get_my_organization_id())` | `Filter: (organization_id = (InitPlan 1).col1)`, cost 0.26..1,540 | **137 ms** |
+
+**2.65× faster, cost estimate down roughly tenfold.** This is a well-known
+Supabase RLS pattern.
+
+It applies to **every** policy in the schema written as a bare function call,
+not only this one — worth a sweep for `get_my_organization_id()` and
+`is_super_admin()` across all tables. `is_super_admin()` appears in nine
+policies and is `STABLE` `SECURITY DEFINER` with a table lookup inside it.
+
+No change proposed here beyond handing over the number.
+
+## 4. Context, so this is not mistaken for a performance ticket
+
+The search work hit a harder wall that consolidation does not fix. The cause
+is **`LEAKPROOF`**, not policy shape: under RLS the policy is a security qual,
+and Postgres only pushes a user expression below a security barrier when every
+function in it is leakproof. `search_fold` wraps `lower()`, and neither —
+along with `btrim`, `normalize`, `regexp_replace`, `textlike` and
+`like_escape` — is leakproof. So the trigram expression index cannot be the
+access path under **any** real policy.
+
+(An earlier version of this note claimed "any policy referencing a column
+defeats the index". That was wrong, and is corrected in
+`docs/search-perf-decisions.md`. `USING (true)` was fast because a
+trivially-true qual creates no barrier, not because it referenced no column.)
+
+Marking `search_fold`, `textlike` and `like_escape` leakproof takes Fleet from
+279 ms to **3.7 ms** under the real four policies — but it requires superuser,
+and on Supabase the customer role `postgres` is not superuser. **Not
+deployable.** Full detail: `docs/search-leakproof-tests.md`.
 
 So consolidation is worth doing for its own reasons — a reviewer being able to
 state what a user can see — and it happens to halve a cost. It is not the fix

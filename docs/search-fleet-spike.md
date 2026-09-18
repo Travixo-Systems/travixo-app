@@ -1,5 +1,21 @@
 # Fleet spike — RLS defeats trigram indexes on the driving table too
 
+> **MECHANISM CORRECTED IN BLOCK 3.7.** The section below headed *"The
+> mechanism — and it is NOT what we assumed"* concludes that "any RLS policy
+> that references a column defeats the trigram index". **That is wrong.** The
+> measurements in it are sound; the explanation drawn from them is not.
+>
+> The real cause is **`LEAKPROOF`**: Postgres only pushes a user expression
+> below a security barrier when every function in it is leakproof, and
+> `search_fold`/`lower`/`textlike`/`like_escape` are none of them.
+> `USING (true)` was fast because a trivially-true qual creates no barrier,
+> not because it referenced no column — which is also why the literal-UUID
+> policy was as blocked as the subquery one.
+>
+> Marking the chain leakproof takes the 279 ms below to **3.7 ms** under the
+> same four policies. It requires superuser and is **not deployable on
+> Supabase**. See `docs/search-leakproof-tests.md`.
+
 **Block 3.6 step 2. Timeboxed, no implementation. Plan and timings only.**
 
 The question was whether `organization_id = ANY(hashed subplan)` on the
