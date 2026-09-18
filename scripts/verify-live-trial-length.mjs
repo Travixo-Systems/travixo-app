@@ -124,18 +124,32 @@ async function main() {
     else fail(`trial_ends_at is ${t} days out, expected ${EXPECTED_DAYS}`)
   }
 
-  // --- feature grants must not expire before the pilot ----------
+  // --- feature grants: no longer seeded, deliberately -----------
+  //
+  // This block used to assert that a new signup received entitlement_overrides
+  // rows and that none expired before the pilot ended. Both assertions are
+  // obsolete: 20260915110000_stop_seeding_entitlement_overrides removed the
+  // seeding on purpose, because per-feature gating is gone -- one plan carries
+  // every feature, so a per-feature question has no answer but yes.
+  //
+  // The check was therefore failing on correct behaviour, which is worse than
+  // not checking at all: it trains a reader to expect one red line and ignore
+  // it, and the next real regression hides behind that habit.
+  //
+  // What replaces it is the inverse assertion. The signup path must NOT write
+  // entitlement_overrides any more, and if something starts writing them again
+  // that is a regression worth catching.
   const ents = await (await fetch(
-    `${URL_}/rest/v1/entitlement_overrides?select=expires_at&organization_id=eq.${created.orgId}`,
+    `${URL_}/rest/v1/entitlement_overrides?select=id&organization_id=eq.${created.orgId}`,
     { headers: svcH }
   )).json()
 
-  if (Array.isArray(ents) && ents.length > 0) {
-    const early = ents.filter(e => e.expires_at && new Date(e.expires_at) < new Date(org.pilot_end_date))
-    if (early.length === 0) pass(`all ${ents.length} pilot feature grants last the full window`)
-    else fail(`${early.length} feature grant(s) expire before the pilot ends`)
+  if (Array.isArray(ents) && ents.length === 0) {
+    pass('new signup writes no entitlement_overrides (per-feature gating retired)')
+  } else if (Array.isArray(ents)) {
+    fail(`new signup wrote ${ents.length} entitlement_overrides row(s); seeding was retired in 20260915110000`)
   } else {
-    fail('new org received no pilot feature grants')
+    fail('could not read entitlement_overrides')
   }
 
   // --- no existing pilot left on a short window -----------------
