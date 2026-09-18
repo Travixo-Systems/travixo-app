@@ -32,9 +32,50 @@
 -- extension dependency, nothing to pin, and the behaviour is defined by the
 -- Unicode standard rather than by a dictionary file.
 --
--- btrim() is present because fold.ts ends in .trim(). Without it the two
+-- The trim is present because fold.ts ends in .trim(). Without it the two
 -- implementations disagree on padded input: '  Sécurité  ' folds to
 -- '  securite  ' in SQL but 'securite' in TypeScript.
+--
+-- It is a regexp_replace and NOT btrim(): bare btrim() strips only the
+-- characters in its trim set, which defaults to the space character alone,
+-- whereas JavaScript's .trim() strips all Unicode whitespace. A tab-padded
+-- term -- routine when a value is pasted out of a spreadsheet -- folded to
+-- E'\tgrue\t' in SQL against 'grue' in TypeScript. Caught by
+-- scripts/verify/verify-search-fold-parity.mjs.
+--
+-- COLLATE "und-x-icu" is pinned deliberately, and it is the subtle one.
+-- lower() uses the collation of its argument, while JavaScript's
+-- toLowerCase() is locale-independent Unicode default casing. For accented
+-- Latin the two cannot disagree, because NFD-stripping has already reduced
+-- the text to ASCII before lower() sees it. They CAN disagree on characters
+-- with no canonical decomposition. Measured on this instance:
+--
+--     lower('Ø' COLLATE "C")           -> 'Ø'   (unchanged)
+--     lower('Ø' COLLATE "en-US-x-icu") -> 'ø'
+--     lower('ẞ' COLLATE "C")           -> 'ẞ'   (unchanged)
+--     lower('ẞ' COLLATE "en-US-x-icu") -> 'ß'
+--
+-- Without the pin, this function's behaviour depends on the database's ctype.
+-- An index built under one ctype and queried under another silently stops
+-- matching, and nothing in the application can detect it. Pinning makes the
+-- result identical regardless of how the database was initialised, so the
+-- TypeScript/SQL parity holds on any instance rather than only on ones that
+-- happen to share a locale.
+--
+-- !! REINDEX WARNING !!
+-- These are expression indexes over a collation-aware function. If the host's
+-- ICU version changes (a Supabase platform upgrade, a base-image change), the
+-- stored index entries may no longer match freshly computed values. After any
+-- such upgrade:
+--
+--     REINDEX INDEX CONCURRENTLY idx_assets_name_fold_trgm;
+--     REINDEX INDEX CONCURRENTLY idx_assets_serial_fold_trgm;
+--     REINDEX INDEX CONCURRENTLY idx_scans_location_fold_trgm;
+--     REINDEX INDEX CONCURRENTLY idx_users_first_name_fold_trgm;
+--     REINDEX INDEX CONCURRENTLY idx_users_last_name_fold_trgm;
+--
+-- scripts/verify/verify-search-fold-parity.mjs detects the divergence; run it
+-- after any platform upgrade.
 CREATE OR REPLACE FUNCTION public.search_fold (p_value text)
   RETURNS text
   LANGUAGE sql
@@ -43,7 +84,16 @@ CREATE OR REPLACE FUNCTION public.search_fold (p_value text)
   PARALLEL SAFE
   SET search_path TO 'pg_catalog', 'pg_temp'
   AS $function$
-  SELECT btrim(lower(regexp_replace(normalize(p_value, NFD), '[̀-ͯ]', '', 'g')));
+  SELECT regexp_replace(
+           regexp_replace(
+             lower(
+               regexp_replace(normalize(p_value, NFD), '[̀-ͯ]', '', 'g')
+                 COLLATE "und-x-icu"
+             ),
+             '^\s+', ''
+           ),
+           '\s+$', ''
+         );
 $function$;
 
 COMMENT ON FUNCTION public.search_fold(text) IS
