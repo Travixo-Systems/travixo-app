@@ -33,6 +33,76 @@ const EXEMPT = {
 
 const MUTATING = /export\s+async\s+function\s+(POST|PATCH|PUT|DELETE)\b/
 
+/**
+ * Remove comments and string literals from TypeScript source.
+ *
+ * The gate used to test the raw file for /requireWriteAccess\s*\(/, which a
+ * COMMENT satisfies. app/api/settings/notifications/preferences/route.ts
+ * passed on exactly that: it carries
+ *
+ *   // NOTE: deliberately no requireWriteAccess() gate here, unlike the
+ *
+ * and does not import the function at all, so no call could exist. A security
+ * check that a comment can satisfy reports PASS for a route with no gate --
+ * the precise failure this file exists to prevent.
+ *
+ * Single-pass scanner rather than a chain of regexes, because regexes cannot
+ * tell a quote inside a comment from a comment inside a quote, and getting
+ * that wrong in either direction reintroduces the bug.
+ */
+function stripCommentsAndStrings(src) {
+  let out = ''
+  let i = 0
+  const n = src.length
+
+  while (i < n) {
+    const c = src[i]
+    const next = src[i + 1]
+
+    // line comment
+    if (c === '/' && next === '/') {
+      while (i < n && src[i] !== '\n') i++
+      continue
+    }
+
+    // block comment
+    if (c === '/' && next === '*') {
+      i += 2
+      while (i < n && !(src[i] === '*' && src[i + 1] === '/')) i++
+      i += 2
+      continue
+    }
+
+    // string or template literal. Templates may contain ${...} with real code,
+    // but a gate call inside an interpolation is not a call site worth
+    // crediting, so the whole literal is dropped.
+    if (c === '"' || c === "'" || c === '`') {
+      const quote = c
+      i++
+      while (i < n) {
+        if (src[i] === '\\') { i += 2; continue }
+        if (src[i] === quote) { i++; break }
+        i++
+      }
+      // preserve a separator so `a"x"b` cannot fuse into one identifier
+      out += ' '
+      continue
+    }
+
+    out += c
+    i++
+  }
+
+  return out
+}
+
+/** True when the source contains a real call, not a mention of one. */
+function callsWriteGate(src) {
+  const code = stripCommentsAndStrings(src)
+  // An import alone is not a call; require an invocation.
+  return /\brequireWriteAccess\s*\(/.test(code)
+}
+
 function walk(dir, out = []) {
   for (const e of readdirSync(dir)) {
     const p = join(dir, e)
@@ -64,7 +134,7 @@ const gated = []
 for (const r of mutating) {
   if (EXEMPT[r]) continue
   const src = readFileSync(r, 'utf8')
-  if (/requireWriteAccess\s*\(/.test(src)) gated.push(r)
+  if (callsWriteGate(src)) gated.push(r)
   else ungated.push(r)
 }
 
@@ -136,6 +206,83 @@ try {
   }
 } catch {
   fail(`${helper} not found`)
+}
+
+// --------------------------------------------------------------------------
+// Negative control for the detector itself.
+//
+// This check exists because the detector was wrong once and still reported
+// PASS. It tested the raw source for /requireWriteAccess\s*\(/, which a
+// COMMENT satisfies, so a route carrying
+//     // NOTE: deliberately no requireWriteAccess() gate here
+// and no import at all counted as gated.
+//
+// The fixtures below are inline rather than files on disk: a fixture route
+// under app/api/ would be picked up by the real scan, and one anywhere else
+// would eventually be deleted as dead code by someone who could not see what
+// it was for.
+// --------------------------------------------------------------------------
+{
+  const mustNotCount = {
+    'line comment': `
+      export async function POST() {
+        // NOTE: deliberately no requireWriteAccess() gate here, unlike the
+        // org-level route.
+        return Response.json({ ok: true })
+      }`,
+    'block comment': `
+      export async function PATCH() {
+        /* requireWriteAccess() is intentionally absent */
+        return Response.json({ ok: true })
+      }`,
+    'string literal': `
+      export async function DELETE() {
+        console.log('requireWriteAccess(supabase) was skipped')
+        return Response.json({ ok: true })
+      }`,
+    'template literal': `
+      export async function PUT() {
+        const msg = \`requireWriteAccess(\${x}) not called\`
+        return Response.json({ msg })
+      }`,
+    'import without a call': `
+      import { requireWriteAccess } from '@/lib/server/require-write-access'
+      export async function POST() { return Response.json({ ok: true }) }`,
+  }
+
+  const mustCount = {
+    'plain call': `
+      import { requireWriteAccess } from '@/lib/server/require-write-access'
+      export async function POST() {
+        const gate = await requireWriteAccess(supabase)
+        if (gate.denied) return gate.denied
+        return Response.json({ ok: true })
+      }`,
+    'call after a comment that mentions it': `
+      export async function POST() {
+        // requireWriteAccess() below, see the header
+        const gate = await requireWriteAccess(supabase)
+        if (gate.denied) return gate.denied
+        return Response.json({ ok: true })
+      }`,
+  }
+
+  const wrong = []
+  for (const [name, src] of Object.entries(mustNotCount)) {
+    if (callsWriteGate(src)) wrong.push(`${name} counted as a call`)
+  }
+  for (const [name, src] of Object.entries(mustCount)) {
+    if (!callsWriteGate(src)) wrong.push(`${name} NOT counted as a call`)
+  }
+
+  if (wrong.length === 0) {
+    pass(
+      `detector rejects ${Object.keys(mustNotCount).length} mention-only fixture(s) ` +
+      `and accepts ${Object.keys(mustCount).length} real call(s)`
+    )
+  } else {
+    fail('the write-gate detector miscounts its own fixtures', wrong.join('\n      '))
+  }
 }
 
 console.log(`\n--- ${checks - failures}/${checks} checks passed ---`)
