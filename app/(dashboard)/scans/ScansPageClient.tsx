@@ -1,25 +1,39 @@
 'use client'
 
-import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useEffect, useState, useCallback } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { QrCode, Search, MapPin, Loader2, ArrowRightLeft, ClipboardCheck, LogIn, LogOut } from 'lucide-react'
+import { QrCode, Search, MapPin, Loader2, ArrowRightLeft, ClipboardCheck, LogIn, LogOut, AlertTriangle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
+import { useDebounce } from '@/lib/search/useDebounce'
+import { resolveScanTypes } from '@/lib/search/scanTypes'
 
 const PAGE_SIZE = 50
 
 type RangeFilter = '7d' | '30d' | 'all'
 type TypeFilter = 'all' | 'check' | 'inventory' | 'checkout' | 'return'
 
+/**
+ * A row as `search_scans` returns it: already flattened, already joined, and
+ * carrying the provenance of the match.
+ *
+ * The page no longer receives nested `assets`/`users` objects, because it no
+ * longer selects from `scans` directly -- the RPC does the joining, after
+ * paging, so the browser is never sent rows it will not display.
+ */
 interface ScanRow {
   id: string
   asset_id: string
+  asset_name: string | null
+  asset_serial: string | null
   scan_type: string | null
   location_name: string | null
   scanned_at: string
-  assets: { name: string | null; serial_number: string | null } | null
-  users: { first_name: string | null; last_name: string | null } | null
+  scanned_by_name: string | null
+  matches: Array<{ source_type: string; source_id: string; matched_field: string }>
+  total_count: number
 }
 
 /** Visual treatment per scan type, keyed to the same palette as the rest of the app. */
@@ -35,57 +49,110 @@ const TYPE_STYLES: Record<string, { bg: string; color: string; icon: typeof QrCo
 export default function ScansPageClient() {
   const { language } = useLanguage()
   const t = createTranslator(language)
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
+  // Search, filters and paging are seeded from the URL (spec section 25), so a
+  // refresh keeps the view, back/forward behave, and a colleague can be sent a
+  // link to what you are looking at.
   const [scans, setScans] = useState<ScanRow[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
-  const [hasMore, setHasMore] = useState(false)
-  const [search, setSearch] = useState('')
-  const [range, setRange] = useState<RangeFilter>('30d')
-  const [type, setType] = useState<TypeFilter>('all')
+  const [error, setError] = useState(false)
+  const [totalCount, setTotalCount] = useState(0)
+  const [search, setSearch] = useState(searchParams.get('q') ?? '')
+  const [range, setRange] = useState<RangeFilter>(
+    (['7d', '30d', 'all'] as const).includes(searchParams.get('range') as RangeFilter)
+      ? (searchParams.get('range') as RangeFilter)
+      : '30d'
+  )
+  const [type, setType] = useState<TypeFilter>(
+    (['all', 'check', 'inventory', 'checkout', 'return'] as const).includes(
+      searchParams.get('type') as TypeFilter
+    )
+      ? (searchParams.get('type') as TypeFilter)
+      : 'all'
+  )
+
+  // The search now hits the server, so it is debounced with the shared hook
+  // rather than a copy of the same setTimeout.
+  const debouncedSearch = useDebounce(search)
+
+  const hasMore = scans.length < totalCount
+
+  /**
+   * Build the RPC parameters from the current UI state.
+   *
+   * The scan-type resolution happens here, on the client, because the client
+   * owns the locale dictionary: a typed "sortie" becomes the enum `checkout`,
+   * and the RPC filters on the enum, never on a label. A term that resolves to
+   * no type stays a text term rather than being dropped.
+   *
+   * A type chosen from the filter chips wins over one inferred from the query:
+   * an explicit click is a stronger signal than a guess at what a word meant.
+   */
+  const buildParams = useCallback(() => {
+    const resolved = resolveScanTypes(debouncedSearch)
+
+    const scanTypes =
+      type !== 'all' ? [type] : resolved.types.length > 0 ? resolved.types : null
+
+    let since: string | null = null
+    if (range !== 'all') {
+      const d = new Date()
+      d.setDate(d.getDate() - (range === '7d' ? 7 : 30))
+      since = d.toISOString()
+    }
+
+    return {
+      p_query: resolved.textTerms.length > 0 ? resolved.textTerms.join(' ') : null,
+      p_scan_types: scanTypes,
+      p_since: since,
+    }
+  }, [debouncedSearch, range, type])
 
   const load = useCallback(
     async (offset: number, replace: boolean) => {
       const supabase = createClient()
+      const params = buildParams()
 
-      // RLS scopes scans to the caller's organization.
-      let query = supabase
-        .from('scans')
-        .select(`
-          id,
-          asset_id,
-          scan_type,
-          location_name,
-          scanned_at,
-          assets ( name, serial_number ),
-          users ( first_name, last_name )
-        `)
-        .order('scanned_at', { ascending: false })
-        .range(offset, offset + PAGE_SIZE - 1)
+      // One call. The server searches the WHOLE authorized dataset, filters,
+      // sorts, counts and slices -- the browser receives one page of rows that
+      // are already joined and already carry their provenance. Replaces a
+      // client-side filter over the 50 rows that happened to be loaded.
+      const { data, error: rpcError } = await supabase.rpc('search_scans', {
+        ...params,
+        p_limit: PAGE_SIZE,
+        p_offset: offset,
+      })
 
-      if (range !== 'all') {
-        const since = new Date()
-        since.setDate(since.getDate() - (range === '7d' ? 7 : 30))
-        query = query.gte('scanned_at', since.toISOString())
-      }
-
-      if (type !== 'all') {
-        query = query.eq('scan_type', type)
-      }
-
-      const { data, error } = await query
-
-      if (error) {
-        console.error('Scan fetch error:', error)
-        setHasMore(false)
+      if (rpcError) {
+        // An expired session reads as a permission failure here, because the
+        // function is granted to authenticated only.
+        if (rpcError.code === '42501') {
+          router.push('/login')
+          return
+        }
+        console.error('Scan search failed:', rpcError)
+        // Surface it. A failed search must never render as "no results", or
+        // the user concludes the scan does not exist.
+        setError(true)
+        if (replace) {
+          setScans([])
+          setTotalCount(0)
+        }
         return
       }
 
-      const rows = (data || []) as unknown as ScanRow[]
-      setHasMore(rows.length === PAGE_SIZE)
+      setError(false)
+      const rows = (data || []) as ScanRow[]
+      // total_count is a window function over the whole match set, repeated on
+      // every row. An empty page legitimately means zero matches (spec 21) --
+      // never rows.length, which is the page size.
+      setTotalCount(rows.length > 0 ? Number(rows[0].total_count) : 0)
       setScans((prev) => (replace ? rows : [...prev, ...rows]))
     },
-    [range, type]
+    [buildParams, router]
   )
 
   useEffect(() => {
@@ -93,24 +160,25 @@ export default function ScansPageClient() {
     load(0, true).finally(() => setLoading(false))
   }, [load])
 
+  // Mirror search, filters and range into the URL. replace() rather than
+  // push() so typing does not fill the history with one entry per keystroke.
+  useEffect(() => {
+    const params = new URLSearchParams()
+    if (debouncedSearch.trim()) params.set('q', debouncedSearch.trim())
+    if (range !== '30d') params.set('range', range)
+    if (type !== 'all') params.set('type', type)
+    const qs = params.toString()
+    router.replace(qs ? `/scans?${qs}` : '/scans', { scroll: false })
+  }, [debouncedSearch, range, type, router])
+
   async function loadMore() {
     setLoadingMore(true)
     await load(scans.length, false)
     setLoadingMore(false)
   }
 
-  // Search is applied client-side over the loaded page: it spans the joined
-  // asset name and the location, which a single server-side filter cannot cover.
-  const visible = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    if (!q) return scans
-    return scans.filter((s) => {
-      const name = s.assets?.name?.toLowerCase() || ''
-      const serial = s.assets?.serial_number?.toLowerCase() || ''
-      const loc = s.location_name?.toLowerCase() || ''
-      return name.includes(q) || serial.includes(q) || loc.includes(q)
-    })
-  }, [scans, search])
+  // No client-side filtering. `scans` IS the server's answer for the current
+  // query -- the page renders what came back, nothing more.
 
   const typeLabel = (v: string | null) => {
     switch (v) {
@@ -130,11 +198,8 @@ export default function ScansPageClient() {
       minute: '2-digit',
     })
 
-  const userName = (u: ScanRow['users']) => {
-    if (!u) return null
-    const full = [u.first_name, u.last_name].filter(Boolean).join(' ').trim()
-    return full || null
-  }
+  // The RPC already returns the scanning user as one trimmed string, and
+  // searches it, so there is nothing left to assemble here.
 
   const ranges: { key: RangeFilter; label: string }[] = [
     { key: '7d', label: t('scans.last7Days') },
@@ -213,6 +278,36 @@ export default function ScansPageClient() {
         <div className="flex justify-center py-16">
           <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
         </div>
+      ) : error ? (
+        /* A failed search is NOT "no results". Conflating the two is what
+           makes someone conclude a scan does not exist and act on it. */
+        <div className="text-center py-16">
+          <div
+            className="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4"
+            style={{ backgroundColor: '#fdf1e7' }}
+          >
+            <AlertTriangle className="w-8 h-8" style={{ color: '#8a4b03' }} />
+          </div>
+          <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+            {t('scans.searchFailedTitle')}
+          </h3>
+          <p className="text-[15px] max-w-md mx-auto mb-4" style={{ color: 'var(--text-muted, #777)' }}>
+            {t('scans.searchFailedBody')}
+          </p>
+          <button
+            onClick={() => { setLoading(true); load(0, true).finally(() => setLoading(false)) }}
+            className="px-4 py-2.5 rounded-md text-[14px] font-medium"
+            style={{ backgroundColor: 'var(--accent-fill, #a84605)', color: '#fff' }}
+          >
+            {t('scans.retry')}
+          </button>
+        </div>
+      ) : scans.length === 0 && (debouncedSearch.trim() || type !== 'all') ? (
+        /* Searched or filtered, genuinely nothing matched -- across the whole
+           dataset now, not merely the loaded page. */
+        <p className="text-[14px] py-12 text-center" style={{ color: 'var(--text-muted, #777)' }}>
+          {t('scans.noResults')}
+        </p>
       ) : scans.length === 0 ? (
         <div className="text-center py-16">
           <div
@@ -228,21 +323,22 @@ export default function ScansPageClient() {
             {t('scans.noScansDescription')}
           </p>
         </div>
-      ) : visible.length === 0 ? (
-        <p className="text-[14px] py-12 text-center" style={{ color: 'var(--text-muted, #777)' }}>
-          {t('scans.noResults')}
-        </p>
       ) : (
         <>
+          {/* The real total for this query, not the number of loaded rows
+              (spec 20/21). "50 of 327" is the honest statement; "50 results"
+              when 327 match is the bug this replaces. */}
           <p className="text-[12px] mb-2" style={{ color: 'var(--text-hint, #888)' }}>
-            {visible.length} {t('scans.totalScans')}
+            {scans.length < totalCount
+              ? `${scans.length} ${t('scans.ofTotal')} ${totalCount} ${t('scans.totalScans')}`
+              : `${totalCount} ${t('scans.totalScans')}`}
           </p>
 
           <div className="space-y-1.5 animate-enter" key={`${range}-${type}`}>
-            {visible.map((s) => {
+            {scans.map((s) => {
               const style = TYPE_STYLES[s.scan_type || ''] || TYPE_STYLES.check
               const Icon = style.icon
-              const who = userName(s.users)
+              const who = s.scanned_by_name
 
               return (
                 // Whole row links to the asset - the scan itself has no detail page.
@@ -261,7 +357,7 @@ export default function ScansPageClient() {
 
                   <div className="min-w-0 flex-1">
                     <p className="text-[14px] font-medium truncate" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
-                      {s.assets?.name || '-'}
+                      {s.asset_name || '-'}
                     </p>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
                       <span
@@ -290,7 +386,11 @@ export default function ScansPageClient() {
             })}
           </div>
 
-          {hasMore && !search && (
+          {/* No `&& !search` any more. Hiding this during a search was the
+              worst part of the old behaviour: it searched 50 loaded rows and
+              then removed the only way to reach the rest. Paging is now over
+              the full match set, so it applies to searches too. */}
+          {hasMore && (
             <div className="flex justify-center mt-4">
               <button
                 onClick={loadMore}

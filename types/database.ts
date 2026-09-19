@@ -1071,6 +1071,36 @@ export type Database = {
         Args: Record<string, never>
         Returns: { id: string; name: string; count: number }[]
       }
+      /**
+       * One page of scans matching a folded multi-term query.
+       *
+       * No p_organization_id, deliberately: the tenant boundary is the RLS
+       * policy, and this function is SECURITY INVOKER. See
+       * supabase/generated/search_scans.sql.
+       */
+      search_scans: {
+        Args: {
+          p_query?: string | null
+          p_scan_types?: string[] | null
+          p_since?: string | null
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: {
+          id: string
+          asset_id: string
+          asset_name: string | null
+          asset_serial: string | null
+          scan_type: string | null
+          location_name: string | null
+          scanned_at: string
+          scanned_by_name: string | null
+          /** Why this row matched (spec section 6). */
+          matches: { source_type: string; source_id: string; matched_field: string }[]
+          /** Exact total for this query, not the page size. */
+          total_count: number
+        }[]
+      }
     }
   }
 }

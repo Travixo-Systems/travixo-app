@@ -3933,7 +3933,12 @@ export const translations = {
       en: "Where your equipment was last seen, and by whom",
       fr: "Où votre matériel a été vu pour la dernière fois, et par qui",
     },
-    searchPlaceholder: { en: "Search equipment or location...", fr: "Rechercher un équipement ou un lieu..." },
+    // The placeholder must match what is actually searched (spec section 9).
+    // Serial and scanner were added in block 4 along with the server-side RPC.
+    searchPlaceholder: {
+      en: "Equipment, serial, location, who scanned...",
+      fr: "Équipement, n° de série, lieu, qui a scanné...",
+    },
     noScans: { en: "No scans yet", fr: "Aucun scan pour le moment" },
     noScansDescription: {
       en: "Scans appear here when someone scans a QR code on a piece of equipment.",
@@ -3952,7 +3957,14 @@ export const translations = {
     unknownUser: { en: "Unknown user", fr: "Utilisateur inconnu" },
     noLocation: { en: "No location", fr: "Sans lieu" },
     totalScans: { en: "scans", fr: "scans" },
+    ofTotal: { en: "of", fr: "sur" },
     loadMore: { en: "Load more", fr: "Charger plus" },
+    searchFailedTitle: { en: "Search unavailable", fr: "Recherche indisponible" },
+    searchFailedBody: {
+      en: "We could not reach the search service, so we cannot tell you whether any scans match. This is not a result — please try again.",
+      fr: "Le service de recherche est injoignable : impossible de dire si des scans correspondent. Ce n'est pas un résultat — veuillez réessayer.",
+    },
+    retry: { en: "Try again", fr: "Réessayer" },
   },
 
   // ============================================================================
