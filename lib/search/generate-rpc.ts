@@ -267,10 +267,10 @@ ${branches}  ),
   -- Section 24, structurally: a record survives only if EVERY term found some
   -- field on it. Intersection is on root_id.
   matched_ids AS (
-    SELECT c.root_id
-    FROM candidates c
-    GROUP BY c.root_id
-    HAVING count(DISTINCT c.term) = (SELECT count(*) FROM terms)
+    SELECT cand.root_id
+    FROM candidates cand
+    GROUP BY cand.root_id
+    HAVING count(DISTINCT cand.term) = (SELECT count(*) FROM terms)
   ),
 
   -- Structured filters apply to ids only -- still no joins to display data.
@@ -299,17 +299,16 @@ ${filterClauses}
 ${selectExprs},
     COALESCE((
       SELECT jsonb_agg(DISTINCT jsonb_build_object(
-               'source_type',   c.source_type,
-               'source_id',     c.source_id,
-               'matched_field', c.matched_field))
-      FROM candidates c
-      WHERE c.root_id = ${root.alias}.id
+               'source_type',   prov.source_type,
+               'source_id',     prov.source_id,
+               'matched_field', prov.matched_field))
+      FROM candidates prov
+      WHERE prov.root_id = ${root.alias}.id
     ), '[]'::jsonb),
     (SELECT n FROM counted)
   FROM page p
   JOIN ${root.table} ${root.alias} ON ${root.alias}.id = p.id
-${opts.displayJoins.map((j) => `  ${j}`).join('\n')}
-  ORDER BY ${root.alias}.${root.orderBy} DESC, ${root.alias}.id DESC;
+${opts.displayJoins.map((j) => `  ${j}\n`).join('')}  ORDER BY ${root.alias}.${root.orderBy} DESC, ${root.alias}.id DESC;
 $function$;
 
 REVOKE ALL ON FUNCTION public.${root.fn}(${signature}) FROM PUBLIC;

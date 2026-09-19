@@ -262,6 +262,86 @@ export const normalisationVariants = [
 ] as const
 
 /**
+ * Clients -- block 5. Spec section 11.
+ *
+ * All five fields section 11 lists. `company` was already searched before this
+ * refactor, so omitting it would have been a silent removal of working
+ * behaviour; `email` and `phone` are the two the audit found rendered on the
+ * card but unsearchable; `notes` is the first long free-text field in any
+ * surface, which has consequences for provenance noise and selectivity --
+ * measured and recorded in docs/search-clients-block5.md.
+ */
+export const clientsRoot: SurfaceRoot = {
+  fn: 'search_clients',
+  table: 'public.clients',
+  alias: 'c',
+  orderBy: 'created_at',
+}
+
+export const clientsFields: SurfaceManifest = {
+  name: {
+    visible: true, searchable: true, filterable: false, sortable: true,
+    sql: {
+      table: 'public.clients', alias: 'c', column: 'name',
+      sourceType: 'client', matchedField: 'name',
+      join: null,
+    },
+  },
+  company: {
+    visible: true, searchable: true, filterable: false, sortable: true,
+    sql: {
+      table: 'public.clients', alias: 'c', column: 'company',
+      sourceType: 'client', matchedField: 'company',
+      join: null,
+    },
+  },
+  // Rendered on the client card and in the checkout selector rows, but not
+  // searchable before this block -- so "find the client who emailed me" had no
+  // answer. Section 11 names both explicitly.
+  email: {
+    visible: true, searchable: true, filterable: false, sortable: false,
+    sql: {
+      table: 'public.clients', alias: 'c', column: 'email',
+      sourceType: 'client', matchedField: 'email',
+      join: null,
+    },
+  },
+  phone: {
+    visible: true, searchable: true, filterable: false, sortable: false,
+    sql: {
+      table: 'public.clients', alias: 'c', column: 'phone',
+      sourceType: 'client', matchedField: 'phone',
+      join: null,
+    },
+  },
+  notes: {
+    visible: true, searchable: true, filterable: false, sortable: false,
+    note: 'Long free text. Least selective branch on this surface and the noisiest in provenance -- a common word can match notes on many clients. Kept searchable because section 11 names it and it is rendered on the card, but it is the first candidate to reconsider if provenance becomes unreadable.',
+    sql: {
+      table: 'public.clients', alias: 'c', column: 'notes',
+      sourceType: 'client', matchedField: 'notes',
+      join: null,
+    },
+  },
+
+  address: {
+    visible: false,
+    searchable: false,
+    filterable: false,
+    sortable: false,
+    note: 'Column exists but is not selected or rendered by any clients surface, and section 11 does not list it. Not searchable while invisible, per section 23 -- revisit if it is ever displayed.',
+  },
+
+  createdAt: {
+    visible: true,
+    searchable: false,
+    filterable: false,
+    sortable: true,
+    note: 'Date, not text. Orders the list; free-text date parsing is deliberately out of scope.',
+  },
+}
+
+/**
  * Register of every field that is `searchable: true` but emits no SQL branch.
  *
  * WHY THIS LIST EXISTS SEPARATELY FROM THE FIELD ENTRIES

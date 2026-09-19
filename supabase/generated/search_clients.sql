@@ -1,4 +1,4 @@
--- search_scans: server-side search over public.scans.
+-- search_clients: server-side search over public.clients.
 --
 -- GENERATED FILE -- do not edit by hand.
 -- Source:    lib/search/manifest.ts
@@ -37,22 +37,19 @@
 -- Same rule in docs/search-perf-decisions.md and in the header of the
 -- hand-written search_scans migration.
 
-CREATE OR REPLACE FUNCTION public.search_scans (
-  p_query      text        DEFAULT NULL,
-  p_scan_types text[]      DEFAULT NULL,
-  p_since      timestamptz DEFAULT NULL,
-  p_limit      integer     DEFAULT 50,
-  p_offset     integer     DEFAULT 0
+CREATE OR REPLACE FUNCTION public.search_clients (
+  p_query  text    DEFAULT NULL,
+  p_limit  integer DEFAULT 50,
+  p_offset integer DEFAULT 0
 )
   RETURNS TABLE (
     id               uuid,
-    asset_id         uuid,
-    asset_name       text,
-    asset_serial     text,
-    scan_type        text,
-    location_name    text,
-    scanned_at       timestamptz,
-    scanned_by_name  text,
+    name             text,
+    company          text,
+    email            text,
+    phone            text,
+    notes            text,
+    created_at       timestamptz,
     matches          jsonb,
     total_count      bigint
   )
@@ -78,49 +75,45 @@ CREATE OR REPLACE FUNCTION public.search_scans (
   -- One branch per searchable field, each a single-column predicate the
   -- planner can serve from that column's trigram index.
   candidates AS (
-    -- public.assets.name
-    SELECT t.term, s.id AS root_id, 'asset'::text AS source_type,
-           a.id AS source_id, 'name'::text AS matched_field
+    -- public.clients.name (root)
+    SELECT t.term, c.id AS root_id, 'client'::text AS source_type,
+           c.id AS source_id, 'name'::text AS matched_field
     FROM terms t
-    JOIN public.assets a
-      ON public.search_fold(a.name)
-         LIKE t.pat ESCAPE '\'
-    JOIN public.scans s ON s.asset_id = a.id
-
-    UNION ALL
-    -- public.assets.serial_number
-    SELECT t.term, s.id, 'asset', a.id, 'serial_number'
-    FROM terms t
-    JOIN public.assets a
-      ON public.search_fold(a.serial_number)
-         LIKE t.pat ESCAPE '\'
-    JOIN public.scans s ON s.asset_id = a.id
-
-    UNION ALL
-    -- public.scans.location_name (root)
-    SELECT t.term, s.id, 'scan', s.id, 'location_name'
-    FROM terms t
-    JOIN public.scans s
-      ON public.search_fold(s.location_name)
+    JOIN public.clients c
+      ON public.search_fold(c.name)
          LIKE t.pat ESCAPE '\'
 
     UNION ALL
-    -- public.users.first_name
-    SELECT t.term, s.id, 'user', u.id, 'first_name'
+    -- public.clients.company (root)
+    SELECT t.term, c.id, 'client', c.id, 'company'
     FROM terms t
-    JOIN public.users u
-      ON public.search_fold(u.first_name)
+    JOIN public.clients c
+      ON public.search_fold(c.company)
          LIKE t.pat ESCAPE '\'
-    JOIN public.scans s ON s.scanned_by = u.id
 
     UNION ALL
-    -- public.users.last_name
-    SELECT t.term, s.id, 'user', u.id, 'last_name'
+    -- public.clients.email (root)
+    SELECT t.term, c.id, 'client', c.id, 'email'
     FROM terms t
-    JOIN public.users u
-      ON public.search_fold(u.last_name)
+    JOIN public.clients c
+      ON public.search_fold(c.email)
          LIKE t.pat ESCAPE '\'
-    JOIN public.scans s ON s.scanned_by = u.id
+
+    UNION ALL
+    -- public.clients.phone (root)
+    SELECT t.term, c.id, 'client', c.id, 'phone'
+    FROM terms t
+    JOIN public.clients c
+      ON public.search_fold(c.phone)
+         LIKE t.pat ESCAPE '\'
+
+    UNION ALL
+    -- public.clients.notes (root)
+    SELECT t.term, c.id, 'client', c.id, 'notes'
+    FROM terms t
+    JOIN public.clients c
+      ON public.search_fold(c.notes)
+         LIKE t.pat ESCAPE '\'
   ),
 
   -- Section 24, structurally: a record survives only if EVERY term found some
@@ -134,12 +127,11 @@ CREATE OR REPLACE FUNCTION public.search_scans (
 
   -- Structured filters apply to ids only -- still no joins to display data.
   filtered AS (
-    SELECT s.id, s.scanned_at
-    FROM public.scans s
+    SELECT c.id, c.created_at
+    FROM public.clients c
     WHERE ((SELECT count(*) FROM terms) = 0
-           OR s.id IN (SELECT m.root_id FROM matched_ids m))
-      AND (p_scan_types IS NULL OR s.scan_type = ANY (p_scan_types))
-      AND (p_since IS NULL OR s.scanned_at >= p_since)
+           OR c.id IN (SELECT m.root_id FROM matched_ids m))
+
   ),
 
   -- Exact total for THIS query, over ids (section 21). Never rows.length.
@@ -150,38 +142,35 @@ CREATE OR REPLACE FUNCTION public.search_scans (
   page AS (
     SELECT f.id
     FROM filtered f
-    ORDER BY f.scanned_at DESC, f.id DESC
+    ORDER BY f.created_at DESC, f.id DESC
     LIMIT  GREATEST(1, LEAST(COALESCE(p_limit, 50), 200))
     OFFSET GREATEST(0, COALESCE(p_offset, 0))
   )
 
   SELECT
-    s.id,
-    s.asset_id,
-    a.name::text,
-    a.serial_number::text,
-    s.scan_type::text,
-    s.location_name::text,
-    s.scanned_at,
-    nullif(btrim(concat_ws(' ', u.first_name, u.last_name)), ''),
+    c.id,
+    c.name::text,
+    c.company::text,
+    c.email::text,
+    c.phone::text,
+    c.notes::text,
+    c.created_at,
     COALESCE((
       SELECT jsonb_agg(DISTINCT jsonb_build_object(
                'source_type',   prov.source_type,
                'source_id',     prov.source_id,
                'matched_field', prov.matched_field))
       FROM candidates prov
-      WHERE prov.root_id = s.id
+      WHERE prov.root_id = c.id
     ), '[]'::jsonb),
     (SELECT n FROM counted)
   FROM page p
-  JOIN public.scans s ON s.id = p.id
-  JOIN public.assets a ON a.id = s.asset_id
-  LEFT JOIN public.users u ON u.id = s.scanned_by
-  ORDER BY s.scanned_at DESC, s.id DESC;
+  JOIN public.clients c ON c.id = p.id
+  ORDER BY c.created_at DESC, c.id DESC;
 $function$;
 
-REVOKE ALL ON FUNCTION public.search_scans(text, text[], timestamptz, integer, integer) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.search_scans(text, text[], timestamptz, integer, integer) TO "authenticated", "service_role";
+REVOKE ALL ON FUNCTION public.search_clients(text, integer, integer) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.search_clients(text, integer, integer) TO "authenticated", "service_role";
 
 -- SQL functions default to procost 100, which is meant for something
 -- expensive. These are a regexp and a few replaces; left at the default,

@@ -11,7 +11,12 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { generateSearchRpc, ManifestError } from '../lib/search/generate-rpc'
-import { scansFields, scansRoot } from '../lib/search/manifest'
+import {
+  clientsFields,
+  clientsRoot,
+  scansFields,
+  scansRoot,
+} from '../lib/search/manifest'
 
 interface Target {
   out: string
@@ -63,6 +68,23 @@ function build(): Target[] {
             predicate: 's.scanned_at >= p_since',
           },
         ],
+      }),
+    },
+    {
+      out: 'supabase/generated/search_clients.sql',
+      sql: generateSearchRpc(clientsRoot, clientsFields, {
+        displayColumns: [
+          { name: 'id', type: 'uuid', expr: 'c.id' },
+          { name: 'name', type: 'text', expr: 'c.name::text' },
+          { name: 'company', type: 'text', expr: 'c.company::text' },
+          { name: 'email', type: 'text', expr: 'c.email::text' },
+          { name: 'phone', type: 'text', expr: 'c.phone::text' },
+          { name: 'notes', type: 'text', expr: 'c.notes::text' },
+          { name: 'created_at', type: 'timestamptz', expr: 'c.created_at' },
+        ],
+        // Every searchable column is on the root table, so the display needs
+        // no joins at all. The template handles that without special-casing.
+        displayJoins: [],
       }),
     },
   ]
