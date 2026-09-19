@@ -59,6 +59,8 @@ CREATE OR REPLACE FUNCTION public.search_assets (
     purchase_price   numeric,
     current_value    numeric,
     archived_at      timestamptz,
+    archive_reason   text,
+    vgp_status       text,
     matches          jsonb,
     total_count      bigint
   )
@@ -181,6 +183,19 @@ CREATE OR REPLACE FUNCTION public.search_assets (
     a.purchase_price,
     a.current_value,
     a.archived_at,
+    a.archive_reason::text,
+    CASE
+           WHEN (SELECT MIN(vs.next_due_date) FROM public.vgp_schedules vs
+                 WHERE vs.asset_id = a.id AND vs.archived_at IS NULL) IS NULL
+             THEN 'unknown'
+           WHEN (SELECT MIN(vs.next_due_date) FROM public.vgp_schedules vs
+                 WHERE vs.asset_id = a.id AND vs.archived_at IS NULL) < CURRENT_DATE
+             THEN 'overdue'
+           WHEN (SELECT MIN(vs.next_due_date) FROM public.vgp_schedules vs
+                 WHERE vs.asset_id = a.id AND vs.archived_at IS NULL) <= CURRENT_DATE + INTERVAL '30 days'
+             THEN 'upcoming'
+           ELSE 'compliant'
+         END::text,
     COALESCE((
       SELECT jsonb_agg(DISTINCT jsonb_build_object(
                'source_type',   prov.source_type,

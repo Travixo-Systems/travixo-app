@@ -8,8 +8,9 @@ import AddAssetButton from '@/components/assets/AddAssetButton'
 import ImportAssetsButton from '@/components/assets/ImportAssetsButton'
 import AssetsTableClient from '@/components/assets/AssetsTableClient'
 import Link from 'next/link'
-import { MagnifyingGlassIcon, FunnelIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
+import { MagnifyingGlassIcon, FunnelIcon, EyeIcon, EyeSlashIcon, ClockIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { useLanguage } from '@/lib/LanguageContext'
+import { resolveAssetStatuses } from '@/lib/search/assetStatuses'
 import { createTranslator } from '@/lib/i18n'
 
 interface Asset {
@@ -37,6 +38,13 @@ interface Asset {
         id: string
         next_due_date: string
     }[] | null
+    /**
+     * Why this row matched (spec section 6). Empty on the instant path, where
+     * the match is self-evident from the row itself; populated on the history
+     * path, where it is the whole point -- a machine found via a certificate
+     * number must say so, or the result looks arbitrary.
+     */
+    matches?: { source_type: string; source_id: string; matched_field: string }[]
 }
 
 const VALID_STATUSES = ['all', 'available', 'in_use', 'maintenance', 'retired']
@@ -71,10 +79,21 @@ export default function AssetsPageClient() {
     const [categories, setCategories] = useState<{ id: string; name: string; count: number }[]>([])
 
     // Search and filter states
-    const [searchQuery, setSearchQuery] = useState('')
+    const [searchQuery, setSearchQuery] = useState(searchParams.get('q') ?? '')
     // Debounced copy of searchQuery. The search now hits the server, so firing
     // on every keystroke would be a request per character.
-    const [debouncedSearch, setDebouncedSearch] = useState('')
+    const [debouncedSearch, setDebouncedSearch] = useState(searchParams.get('q') ?? '')
+
+    // Whether this query also reaches the relational history: inspections,
+    // schedules, rentals, scans and audits.
+    //
+    // Opt-in, and in the URL, because it costs about a second where the
+    // instant path costs about a tenth. Splitting it this way keeps spec
+    // section 5's promise -- nothing unfindable -- without charging every
+    // keystroke for reach almost none of them need. See
+    // docs/search-perf-decisions.md.
+    const [searchHistory, setSearchHistory] = useState(searchParams.get('history') === '1')
+    const [lookupFailed, setLookupFailed] = useState(false)
     // Seeded from ?status= so links like "view rentals" land on a real filtered
     // list instead of an unfiltered page the user has to re-filter by hand.
     const [statusFilter, setStatusFilter] = useState<string>(initialStatus)
@@ -93,7 +112,21 @@ export default function AssetsPageClient() {
     // a query parameter rather than an in-memory filter.
     useEffect(() => {
         loadAssets()
-    }, [debouncedSearch, statusFilter, categoryFilter, showArchived, currentPage])
+    }, [debouncedSearch, statusFilter, categoryFilter, showArchived, currentPage, searchHistory])
+
+    // Mirror the query and the history toggle into the URL (spec section 25),
+    // so a history result is shareable -- which matters more here than on the
+    // instant path, because a colleague receiving "found via certificate
+    // VGP-2026-00481" needs the same search to reproduce it.
+    useEffect(() => {
+        const params = new URLSearchParams()
+        if (debouncedSearch.trim()) params.set('q', debouncedSearch.trim())
+        if (searchHistory) params.set('history', '1')
+        if (statusFilter !== 'all') params.set('status', statusFilter)
+        if (categoryFilter !== 'all') params.set('category', categoryFilter)
+        const qs = params.toString()
+        router.replace(qs ? `/assets?${qs}` : '/assets', { scroll: false })
+    }, [debouncedSearch, searchHistory, statusFilter, categoryFilter, router])
 
     // Fleet-wide aggregates change only when rows are added, removed or
     // archived, so they are refreshed on mount and after a mutation rather
@@ -104,18 +137,33 @@ export default function AssetsPageClient() {
 
     async function loadAssets() {
         try {
-            // One call: the server filters, searches, computes vgp_status and
-            // slices. Everything the table needs arrives already reduced to the
-            // visible page, instead of the whole fleet arriving so the browser
-            // can throw most of it away.
-            const { data, error } = await supabase.rpc('assets_page', {
-                p_search: debouncedSearch.trim() || null,
-                p_status: statusFilter,
-                p_category_id: categoryFilter === 'all' ? null : categoryFilter,
-                p_show_archived: showArchived,
-                p_limit: itemsPerPage,
-                p_offset: (currentPage - 1) * itemsPerPage,
-            })
+            // Which surface answers depends on whether the user asked for the
+            // history. Both return the same row shape, so nothing below cares.
+            //
+            // The typed term is resolved against the locale's status labels
+            // first: "disponible" becomes the enum `available` and is passed
+            // as a structured filter, never text-matched, because the stored
+            // value is English and the label is not. A term that resolves to
+            // no status stays a text term rather than being dropped.
+            const resolved = resolveAssetStatuses(debouncedSearch)
+            const statuses =
+                statusFilter !== 'all'
+                    ? [statusFilter]
+                    : resolved.statuses.length > 0
+                        ? resolved.statuses
+                        : null
+
+            const { data, error } = await supabase.rpc(
+                searchHistory ? 'search_assets_history' : 'search_assets',
+                {
+                    p_query: resolved.textTerms.length > 0 ? resolved.textTerms.join(' ') : null,
+                    p_statuses: statuses,
+                    p_category_id: categoryFilter === 'all' ? null : categoryFilter,
+                    p_show_archived: showArchived,
+                    p_limit: itemsPerPage,
+                    p_offset: (currentPage - 1) * itemsPerPage,
+                }
+            )
 
             if (error) {
                 // A 42501 here means the session is gone: the function is
@@ -126,11 +174,16 @@ export default function AssetsPageClient() {
                     return
                 }
                 console.error('Failed to load assets:', error)
+                // Surface it. A failed search must never render as "no
+                // equipment matches" -- that is how someone concludes a machine
+                // is not in the fleet and acts on it.
+                setLookupFailed(true)
                 setAssets([])
                 setTotalMatching(0)
                 return
             }
 
+            setLookupFailed(false)
             const rows = data || []
 
             // total_count is a window function on every row, so it is the same
@@ -158,6 +211,9 @@ export default function AssetsPageClient() {
                 asset_categories: r.category_id
                     ? { id: r.category_id, name: r.category_name }
                     : null,
+                // Only meaningful on the history path; the instant path
+                // matches on the row's own fields, which the row already shows.
+                matches: searchHistory ? r.matches : undefined,
             })) as Asset[])
         } finally {
             setLoading(false)
@@ -360,14 +416,93 @@ export default function AssetsPageClient() {
                     </div>
 
                     {/* Assets Table */}
-                    {totalMatching === 0 ? (
+                    {lookupFailed ? (
+                        /* A failed search is NOT "no equipment matches". */
+                        <div className="text-center py-12 rounded-lg" style={{ backgroundColor: '#fdf1e7' }}>
+                            <ExclamationTriangleIcon className="h-8 w-8 mx-auto mb-3" style={{ color: '#8a4b03' }} />
+                            <h3 className="text-[15px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>
+                                {language === 'fr' ? 'Recherche indisponible' : 'Search unavailable'}
+                            </h3>
+                            <p className="mt-1 text-[15px] max-w-md mx-auto" style={{ color: 'var(--text-muted, #777777)' }}>
+                                {language === 'fr'
+                                    ? "Impossible de dire si du matériel correspond. Ce n'est pas un résultat."
+                                    : 'We cannot tell whether any equipment matches. This is not a result.'}
+                            </p>
+                            <button
+                                onClick={() => loadAssets()}
+                                className="mt-4 px-4 py-2 rounded-md text-[14px] font-medium"
+                                style={{ backgroundColor: 'var(--accent-fill, #a84605)', color: '#fff' }}
+                            >
+                                {language === 'fr' ? 'Réessayer' : 'Try again'}
+                            </button>
+                        </div>
+                    ) : totalMatching === 0 ? (
                         <div className="text-center py-12 rounded-lg" style={{ backgroundColor: 'var(--card-bg, #edeff2)' }}>
                             <h3 className="text-[15px] font-semibold" style={{ color: 'var(--text-primary, #1a1a1a)' }}>{t('assets.noAssetsFound')}</h3>
-                            <p className="mt-1 text-[15px]" style={{ color: 'var(--text-muted, #777777)' }}>{t('assets.adjustFilters')}</p>
+                            <p className="mt-1 text-[15px]" style={{ color: 'var(--text-muted, #777777)' }}>
+                                {searchHistory
+                                    ? t('assets.adjustFilters')
+                                    : (language === 'fr'
+                                        ? "Aucun matériel ne correspond par son identité."
+                                        : 'No equipment matches by its own identity.')}
+                            </p>
+                            {/* On zero results the history search becomes the
+                                PRIMARY action, not a footnote. */}
+                            {!searchHistory && debouncedSearch.trim() && (
+                                <button
+                                    onClick={() => { setCurrentPage(1); setSearchHistory(true) }}
+                                    className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-md text-[14px] font-medium"
+                                    style={{ backgroundColor: 'var(--accent-fill, #a84605)', color: '#fff' }}
+                                >
+                                    <ClockIcon className="h-4 w-4" />
+                                    {language === 'fr'
+                                        ? "Chercher dans l'historique (inspections, locations, scans)"
+                                        : 'Search the history (inspections, rentals, scans)'}
+                                </button>
+                            )}
                         </div>
                     ) : (
                         <>
                             <AssetsTableClient assets={assets} onRefresh={refreshAll} />
+
+                            {/* Persistent, not conditional on result count.
+                                Gating this on "few results" would hide it in
+                                exactly the case that needs it: typing "Norma"
+                                returns 0 assets by identity and 194 through
+                                inspections, and a screen showing 0 with no
+                                offer looks like it worked. */}
+                            {debouncedSearch.trim() && (
+                                <div className="mt-3 text-[13px] flex items-center gap-2 flex-wrap">
+                                    {searchHistory ? (
+                                        <>
+                                            <ClockIcon className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--text-muted, #777)' }} />
+                                            <span style={{ color: 'var(--text-muted, #777)' }}>
+                                                {language === 'fr'
+                                                    ? "Recherche étendue à l'historique."
+                                                    : 'Search extended to the history.'}
+                                            </span>
+                                            <button
+                                                onClick={() => { setCurrentPage(1); setSearchHistory(false) }}
+                                                className="underline font-medium"
+                                                style={{ color: 'var(--accent-fill, #a84605)' }}
+                                            >
+                                                {language === 'fr' ? "Revenir à l'identité seule" : 'Back to identity only'}
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <button
+                                            onClick={() => { setCurrentPage(1); setSearchHistory(true) }}
+                                            className="inline-flex items-center gap-2 underline font-medium"
+                                            style={{ color: 'var(--accent-fill, #a84605)' }}
+                                        >
+                                            <ClockIcon className="h-4 w-4" />
+                                            {language === 'fr'
+                                                ? "Chercher aussi dans l'historique (inspections, locations, scans)"
+                                                : 'Also search the history (inspections, rentals, scans)'}
+                                        </button>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Pagination */}
                             {totalPages > 1 && (

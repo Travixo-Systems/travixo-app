@@ -20,6 +20,8 @@ interface Asset {
     id: string
     name: string
     serial_number: string | null
+    /** Why this row matched, when it was found through its history. */
+    matches?: { source_type: string; source_id: string; matched_field: string }[]
     description: string | null
     status: string
     current_location: string | null
@@ -44,6 +46,37 @@ const REASON_LABELS: Record<string, { fr: string; en: string }> = {
     ferraille: { fr: 'Ferraillé', en: 'Scrapped' },
     transfere: { fr: 'Transféré', en: 'Transferred' },
     hors_service: { fr: 'Hors service', en: 'Out of service' },
+}
+
+/**
+ * Turn a provenance entry into something a yard manager reads.
+ *
+ * "Trouvé via certificat VGP" rather than "vgp_inspection.certification_number":
+ * the point of spec section 6 is that a relational hit is explainable, and a
+ * column name does not explain it.
+ */
+function matchLabel(
+    m: { source_type: string; matched_field: string },
+    language: string
+): string {
+    const fr = language === 'fr'
+    const key = `${m.source_type}.${m.matched_field}`
+    const labels: Record<string, [string, string]> = {
+        'vgp_inspection.certification_number': ['certificat VGP', 'VGP certificate'],
+        'vgp_inspection.inspector_name': ['inspecteur', 'inspector'],
+        'vgp_inspection.inspector_company': ['organisme de contrôle', 'inspection body'],
+        'vgp_inspection.observations': ["observations d'inspection", 'inspection observations'],
+        'vgp_inspection.findings': ['constatations', 'findings'],
+        'vgp_schedule.notes': ["notes d'échéancier", 'schedule notes'],
+        'rental.client_name': ['client (location)', 'client (rental)'],
+        'scan.location_name': ['lieu de scan', 'scan location'],
+        'audit.name': ['audit', 'audit'],
+    }
+    const pair = labels[key]
+    if (pair) return fr ? pair[0] : pair[1]
+    // Unknown combination: show something honest rather than nothing. A new
+    // branch added to the manifest without a label here still explains itself.
+    return `${m.source_type} · ${m.matched_field}`
 }
 
 export default function AssetsTableClient({ assets, onRefresh }: { assets: Asset[]; onRefresh?: () => void }) {
@@ -168,6 +201,21 @@ export default function AssetsTableClient({ assets, onRefresh }: { assets: Asset
                             <p className="text-[11px] sm:text-[12px] font-mono mt-0.5" style={{ color: 'var(--text-hint, #888)' }}>
                                 {asset.serial_number || '-'}
                             </p>
+
+                            {/* Provenance (spec section 6). A machine found
+                                through its history must say how, or the result
+                                reads as arbitrary. */}
+                            {asset.matches && asset.matches.length > 0 && (
+                                <p className="text-[11px] sm:text-[12px] mt-0.5" style={{ color: 'var(--accent-fill, #a84605)' }}>
+                                    {language === 'fr' ? 'Trouvé via ' : 'Found via '}
+                                    {matchLabel(asset.matches[0], language)}
+                                    {asset.matches.length > 1 && (
+                                        <span style={{ color: 'var(--text-hint, #888)' }}>
+                                            {' '}+{asset.matches.length - 1}
+                                        </span>
+                                    )}
+                                </p>
+                            )}
 
                             {/* Line 3: Category */}
                             {asset.asset_categories?.name && (

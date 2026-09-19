@@ -15,6 +15,36 @@ export type VGPClassificationStatus =
   | 'requires_confirmation'
   | 'manual_only'
 
+/**
+ * One asset as either Fleet search surface returns it.
+ *
+ * Shared deliberately: the page renders one list, so a history result must sit
+ * beside an instant one without reshaping. Only `matches` differs in content
+ * -- a history row's provenance names the relation it was found through.
+ */
+export interface AssetSearchRow {
+  id: string
+  name: string
+  serial_number: string | null
+  description: string | null
+  status: string | null
+  current_location: string | null
+  category_id: string | null
+  category_name: string | null
+  qr_code: string | null
+  purchase_date: string | null
+  purchase_price: number | null
+  current_value: number | null
+  archived_at: string | null
+  archive_reason: string | null
+  /** Compliance badge, computed server-side from the soonest live schedule. */
+  vgp_status: 'overdue' | 'upcoming' | 'compliant' | 'unknown'
+  /** Why this row matched (spec section 6). */
+  matches: { source_type: string; source_id: string; matched_field: string }[]
+  /** Exact match count for the query, not the page size. */
+  total_count: number
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -1101,6 +1131,34 @@ export type Database = {
           matches: { source_type: string; source_id: string; matched_field: string }[]
           total_count: number
         }[]
+      }
+      /**
+       * Fleet instant path: asset identity only. See
+       * docs/search-perf-decisions.md for why the relational half of spec
+       * section 5 is a separate surface.
+       */
+      search_assets: {
+        Args: {
+          p_query?: string | null
+          p_statuses?: string[] | null
+          p_category_id?: string | null
+          p_show_archived?: boolean
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: AssetSearchRow[]
+      }
+      /** Fleet history path: inspections, schedules, rentals, scans, audits. */
+      search_assets_history: {
+        Args: {
+          p_query?: string | null
+          p_statuses?: string[] | null
+          p_category_id?: string | null
+          p_show_archived?: boolean
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: AssetSearchRow[]
       }
       search_scans: {
         Args: {

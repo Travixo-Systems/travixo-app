@@ -48,6 +48,27 @@ const ASSET_DISPLAY_COLUMNS = [
   { name: 'purchase_price', type: 'numeric', expr: 'a.purchase_price' },
   { name: 'current_value', type: 'numeric', expr: 'a.current_value' },
   { name: 'archived_at', type: 'timestamptz', expr: 'a.archived_at' },
+  { name: 'archive_reason', type: 'text', expr: 'a.archive_reason::text' },
+  // The compliance badge on every row. Computed here rather than in the
+  // browser so the page never has to fetch schedules separately, and kept
+  // identical to what assets_page returned so the table's contract is
+  // unchanged. Only the most urgent non-archived schedule decides the badge.
+  {
+    name: 'vgp_status',
+    type: 'text',
+    expr: `CASE
+           WHEN (SELECT MIN(vs.next_due_date) FROM public.vgp_schedules vs
+                 WHERE vs.asset_id = a.id AND vs.archived_at IS NULL) IS NULL
+             THEN 'unknown'
+           WHEN (SELECT MIN(vs.next_due_date) FROM public.vgp_schedules vs
+                 WHERE vs.asset_id = a.id AND vs.archived_at IS NULL) < CURRENT_DATE
+             THEN 'overdue'
+           WHEN (SELECT MIN(vs.next_due_date) FROM public.vgp_schedules vs
+                 WHERE vs.asset_id = a.id AND vs.archived_at IS NULL) <= CURRENT_DATE + INTERVAL '30 days'
+             THEN 'upcoming'
+           ELSE 'compliant'
+         END::text`,
+  },
 ]
 
 // LEFT: category_id is nullable with ON DELETE SET NULL, so an uncategorised
