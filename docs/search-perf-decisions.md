@@ -221,6 +221,62 @@ field, so trimming fields is a scope decision rather than a fix.
 
 `status` IS a localised enum and is `resolvedClientSide`, like `scan_type`.
 
+## OPEN — real-device latency on the instant path is NOT yet measured
+
+The instant path is **145 ms at the database, on localhost**. That is a query
+time, not a user-perceived one, and every decision resting on the
+instant/history boundary rests on the perceived number.
+
+**Status: blocked, not skipped.** The measurement needs a deployed build and a
+phone on mobile data. Neither exists yet.
+
+### One component, clearly labelled as such
+
+Round trip from a **dev machine on a wired connection** to the production
+Supabase edge, calling the existing `assets_page`:
+
+```
+samples (ms): 37, 49, 50, 54, 57, 66, 105
+p50 54 ms    p95 105 ms    n=7
+```
+
+**This is not a device measurement and it is not the answer to the 400 ms
+question.** It is one component of it. It says the network leg alone is
+~50–105 ms from a wired dev machine; a phone on 4G pays radio wake-up on top,
+commonly 100–300 ms, plus render on mid-range hardware.
+
+Taken together the wired total is already near 200–250 ms before render. That
+is an inference, not a result, and the decision must not be made on it.
+
+### What the real measurement must be
+
+Debounce-fire → results painted, **p50 and p95, from a phone on mobile data**,
+against a deployed build. Not a throttled desktop tab: that models bandwidth
+but not radio wake-up, carrier latency, or mobile paint cost, which are the
+terms that decide whether 145 ms becomes 400 ms.
+
+**If it lands near 400 ms the instant/history boundary moves**, and any surface
+built on the current assumption would need revisiting. That is why the
+remaining surfaces are not being built until this is answered.
+
+## FINDING — this work existed in one place only
+
+Separate from the measurement, and more urgent when it was found:
+
+At the time of the block 7 check, `feat/search-server-side` had **22 commits,
+no upstream, and had never been pushed**. None of `search_scans`,
+`search_clients`, `search_assets` or `search_assets_history` existed in
+production (all HTTP 404 via PostgREST; the old `assets_page` answered 200).
+
+**That is a backup problem first and a measurement problem second.** Every
+block from the kernel onwards — the parity suite, the generator, four
+generated RPCs, the measured decisions in this document — lived on one
+machine, in one worktree, with no remote copy.
+
+The measurement being blocked is a consequence: there is nothing deployed to
+point a phone at. But the exposure was the real issue, and pushing the branch
+is the fix regardless of the measurement.
+
 ## REJECTED — materialised search document
 
 Raised again after the Fleet measurements and rejected again. The three
