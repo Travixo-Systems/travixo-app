@@ -181,6 +181,65 @@ opening that table for a performance reason, which is the wrong trigger.
 
 ---
 
+## DECIDED — Fleet §5 is split, not reduced
+
+Measured under production's real policies for all nine tables, at the Business
+tier ceiling (2,000 assets, 68,000 related rows) and at 5×:
+
+| shape | 2,000 assets | 10,000 assets (5×) |
+|---|---|---|
+| full §5, 16 branches across 6 relations | **958 ms** | **5,055 ms** |
+| assets + inspections | 203 ms | 1,026 ms |
+| **assets only, the 6 real branches** | **98 ms** | **311 ms** |
+
+§5 works — `VGP-2026-00481` returns its machine via a certificate number that
+is not an assets column, `Norma Controle` returns 194 machines. It is correct
+but not interactive, and it scales worse than linearly because each branch
+re-pays the RLS cost.
+
+**The split:**
+
+- **Instant path** (`search_assets`): asset identity only — name, serial,
+  description, location, QR, category name. 6 branches. **138 ms** at the
+  ceiling for a live query.
+- **History path** (`search_assets_history`): inspections, schedules, rentals,
+  scans, audits. 9 branches. **1,342 ms**, charged only when the user asks.
+
+Inspections were deliberately **not** put in the instant path despite being
+§5's headline example and 203 ms at the ceiling: they are 1,026 ms at 5×, so
+the boundary would move under customers as they grew. Assets-only is the
+conservative choice and the boundary can only move outward, which is invisible
+to anyone who liked it fast.
+
+**A correction to an earlier number in this document.** The instant path was
+first quoted at 60 ms for 3 branches. What ships has 6 — `description` and
+`qr_code` are real columns and `category` is a joined table of org-authored
+free text, not a localised enum. Re-measured honestly: 98 ms at the ceiling,
+311 ms at 5×. The 5× figure is over the 300 ms target before network and
+render, which is worth knowing; per-branch cost is ~50 ms regardless of which
+field, so trimming fields is a scope decision rather than a fix.
+
+`status` IS a localised enum and is `resolvedClientSide`, like `scan_type`.
+
+## REJECTED — materialised search document
+
+Raised again after the Fleet measurements and rejected again. The three
+original objections are untouched by the new numbers:
+
+1. It cannot carry per-field provenance, which is exactly what makes history
+   search usable — "Trouvé via certificat VGP-2026-00481" is the feature.
+2. Write amplification on Fleet is severe: every scan, inspection and rental
+   would rewrite its asset's document.
+3. A missed trigger path leaves a machine silently unfindable — the failure
+   the whole spec exists to prevent.
+
+**And the framing that motivated revisiting it was wrong.** A denormalised
+column on `assets` does **not** restore index usage:
+`search_fold(doc) LIKE '%x%'` is still non-leakproof, so it still cannot reach
+the trigram index under RLS. The win would be fewer RLS re-evaluations, not
+index access — a tenfold, not a hundredfold. Recorded explicitly so a future
+session does not revisit this expecting the wrong order of magnitude.
+
 ## REJECTED — `SECURITY DEFINER` search functions
 
 Would restore index usage by letting the function apply the tenant predicate

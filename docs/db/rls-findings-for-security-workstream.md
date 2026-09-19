@@ -63,6 +63,35 @@ Consolidating would roughly halve this. It would **not** restore the trigram
 index — see below — so this is a clarity fix with a performance side effect,
 not a performance fix.
 
+### Quantified again by the Fleet work, and it is now the best number here
+
+Fleet's full §5 search runs 16 UNION branches. Every branch that touches
+`assets` re-evaluates all four policies, so the plan contains **three separate
+sequential scans of `users` per branch** — the same three predicates, computed
+from scratch, sixteen times over:
+
+```
+->  Seq Scan on assets a_3   (actual rows=2000)
+      ->  Seq Scan on users u          (2.5 ms)
+      ->  Seq Scan on users users_1    (2.5 ms)
+      ->  Seq Scan on users users_2    (2.6 ms)
+```
+
+That is the dominant cost in a 958 ms query at the Business tier ceiling, and
+it is why §5 had to be split into an instant path and an explicit history
+action (`docs/search-perf-decisions.md`).
+
+**Consolidating the three redundant `assets` SELECT policies into one is
+therefore now a large search win on top of the clarity fix and the 2.65×
+InitPlan result in §3.** Fleet is not blocked on it — the split ships without
+it — but if it lands, the instant/history boundary moves outward, which is the
+direction that costs nothing: users who liked the fast path keep it, and more
+becomes reachable without waiting.
+
+Three items in this document now compound: consolidate the redundant policies,
+wrap bare `STABLE` calls in `(SELECT ...)`, and the `users` scans above are
+the same scans in all three findings.
+
 ## 2. `users` and `scans` have the same pattern, smaller
 
 - `users`: three SELECT policies — `auth.uid() = id`, `is_super_admin()`,

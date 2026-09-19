@@ -342,6 +342,216 @@ export const clientsFields: SurfaceManifest = {
 }
 
 /**
+ * Fleet / assets -- block 6. Spec section 5, SPLIT.
+ *
+ * Section 5 asks Fleet to reach inspections, schedules, rentals, clients,
+ * scans and audits. Measured at the Business tier ceiling (2,000 assets,
+ * 68,000 related rows) under production's real policies, the full contract is
+ * 958 ms, and 5,055 ms at five times that. It is correct but not interactive,
+ * and the cost is RLS re-evaluation per branch rather than the relations
+ * themselves -- assets carries four OR'd SELECT policies, so each of its
+ * branches runs three separate scans of `users`.
+ *
+ * So the contract is split, not reduced:
+ *
+ *   INSTANT (this manifest)   asset's own identity. 98 ms at the tier
+ *                             ceiling, 311 ms at 5x. Typed from memory while
+ *                             walking: name, serial, location, category.
+ *   HISTORY (searchAssetsHistoryFields, below)  everything relational. An
+ *                             explicit "chercher aussi dans l'historique"
+ *                             action where a second is acceptable because the
+ *                             user asked for it.
+ *
+ * Nothing becomes unfindable -- section 32's promise holds. What changes is
+ * that the relational reach is opt-in rather than on every keystroke.
+ *
+ * Deliberately conservative: the boundary can only move outward later, which
+ * is invisible to anyone who liked it fast and a gift to everyone else.
+ */
+export const assetsRoot: SurfaceRoot = {
+  fn: 'search_assets',
+  table: 'public.assets',
+  alias: 'a',
+  orderBy: 'created_at',
+}
+
+export const assetsFields: SurfaceManifest = {
+  name: {
+    visible: true, searchable: true, filterable: false, sortable: true,
+    sql: {
+      table: 'public.assets', alias: 'a', column: 'name',
+      sourceType: 'asset', matchedField: 'name', join: null,
+    },
+  },
+  serialNumber: {
+    visible: true, searchable: true, filterable: false, sortable: true,
+    sql: {
+      table: 'public.assets', alias: 'a', column: 'serial_number',
+      sourceType: 'asset', matchedField: 'serial_number', join: null,
+    },
+  },
+  description: {
+    visible: true, searchable: true, filterable: false, sortable: false,
+    sql: {
+      table: 'public.assets', alias: 'a', column: 'description',
+      sourceType: 'asset', matchedField: 'description', join: null,
+    },
+  },
+  currentLocation: {
+    visible: true, searchable: true, filterable: true, sortable: true,
+    sql: {
+      table: 'public.assets', alias: 'a', column: 'current_location',
+      sourceType: 'asset', matchedField: 'current_location', join: null,
+    },
+  },
+  // Section 5 names the QR identifier explicitly. Someone reading a damaged
+  // label types the fragment they can make out.
+  qrCode: {
+    visible: true, searchable: true, filterable: false, sortable: false,
+    sql: {
+      table: 'public.assets', alias: 'a', column: 'qr_code',
+      sourceType: 'asset', matchedField: 'qr_code', join: null,
+    },
+  },
+  // Free text the organization authors itself, so a real branch rather than a
+  // localised enum: "Chariot télescopique" is their words, not ours.
+  categoryName: {
+    visible: true, searchable: true, filterable: true, sortable: false,
+    sql: {
+      table: 'public.asset_categories', alias: 'ac', column: 'name',
+      sourceType: 'category', matchedField: 'name',
+      join: { rootAlias: 'a', on: 'a.category_id = ac.id' },
+    },
+  },
+
+  // Stored as an English enum (available/in_use/maintenance/retired) and
+  // rendered as a translated label -- the same shape as scans.scanType.
+  status: {
+    visible: true,
+    searchable: true,
+    filterable: true,
+    sortable: false,
+    note: 'Label resolved to enum values client-side; the RPC filters on the enum, never on a label.',
+    resolvedClientSide: {
+      reason: 'localised-enum',
+      justification:
+        'Stored as an English enum (available/in_use/maintenance/retired), rendered as "Disponible", "En location", "En maintenance", "Retiré". An ILIKE on the stored enum fails for a French user and an ILIKE on a label fails for an English one; a label table would duplicate the i18n dictionary and make adding a locale a migration.',
+      parameter: 'p_statuses',
+    },
+  },
+
+  purchasePrice: {
+    visible: true, searchable: false, filterable: false, sortable: true,
+    note: 'Money. No retrieval value as free text, and a partial numeric match would be misleading rather than useful.',
+  },
+  currentValue: {
+    visible: true, searchable: false, filterable: false, sortable: true,
+    note: 'As purchasePrice.',
+  },
+  purchaseDate: {
+    visible: true, searchable: false, filterable: false, sortable: true,
+    note: 'Date, not text. Free-text date parsing is deliberately out of scope.',
+  },
+  archivedAt: {
+    visible: true, searchable: false, filterable: true, sortable: false,
+    note: 'Archived state is a filter (p_show_archived), not a text field.',
+  },
+}
+
+/**
+ * Fleet history -- the relational half of section 5, behind an explicit
+ * action. Same root (assets), reached through six related tables.
+ *
+ * Measured at 958 ms at the tier ceiling. That is the price of the reach, and
+ * it is charged only when the user asks for it.
+ */
+export const assetsHistoryRoot: SurfaceRoot = {
+  fn: 'search_assets_history',
+  table: 'public.assets',
+  alias: 'a',
+  orderBy: 'created_at',
+}
+
+export const assetsHistoryFields: SurfaceManifest = {
+  inspectorName: {
+    visible: true, searchable: true, filterable: false, sortable: false,
+    sql: {
+      table: 'public.vgp_inspections', alias: 'vi', column: 'inspector_name',
+      sourceType: 'vgp_inspection', matchedField: 'inspector_name',
+      join: { rootAlias: 'a', on: 'a.id = vi.asset_id' },
+    },
+  },
+  inspectorCompany: {
+    visible: true, searchable: true, filterable: false, sortable: false,
+    sql: {
+      table: 'public.vgp_inspections', alias: 'vi', column: 'inspector_company',
+      sourceType: 'vgp_inspection', matchedField: 'inspector_company',
+      join: { rootAlias: 'a', on: 'a.id = vi.asset_id' },
+    },
+  },
+  // Section 5's own worked example: searching VGP-2026-00481 must return the
+  // machine, with provenance saying it was found via the certificate.
+  certificationNumber: {
+    visible: true, searchable: true, filterable: false, sortable: false,
+    sql: {
+      table: 'public.vgp_inspections', alias: 'vi', column: 'certification_number',
+      sourceType: 'vgp_inspection', matchedField: 'certification_number',
+      join: { rootAlias: 'a', on: 'a.id = vi.asset_id' },
+    },
+  },
+  inspectionObservations: {
+    visible: true, searchable: true, filterable: false, sortable: false,
+    sql: {
+      table: 'public.vgp_inspections', alias: 'vi', column: 'observations',
+      sourceType: 'vgp_inspection', matchedField: 'observations',
+      join: { rootAlias: 'a', on: 'a.id = vi.asset_id' },
+    },
+  },
+  inspectionFindings: {
+    visible: true, searchable: true, filterable: false, sortable: false,
+    sql: {
+      table: 'public.vgp_inspections', alias: 'vi', column: 'findings',
+      sourceType: 'vgp_inspection', matchedField: 'findings',
+      join: { rootAlias: 'a', on: 'a.id = vi.asset_id' },
+    },
+  },
+  scheduleNotes: {
+    visible: true, searchable: true, filterable: false, sortable: false,
+    sql: {
+      table: 'public.vgp_schedules', alias: 'vs', column: 'notes',
+      sourceType: 'vgp_schedule', matchedField: 'notes',
+      join: { rootAlias: 'a', on: 'a.id = vs.asset_id' },
+    },
+  },
+  // Section 5: a machine must be findable by a client it was rented to, not
+  // only its current one.
+  rentalClientName: {
+    visible: true, searchable: true, filterable: false, sortable: false,
+    sql: {
+      table: 'public.rentals', alias: 'r', column: 'client_name',
+      sourceType: 'rental', matchedField: 'client_name',
+      join: { rootAlias: 'a', on: 'a.id = r.asset_id' },
+    },
+  },
+  scanLocation: {
+    visible: true, searchable: true, filterable: false, sortable: false,
+    sql: {
+      table: 'public.scans', alias: 'sc', column: 'location_name',
+      sourceType: 'scan', matchedField: 'location_name',
+      join: { rootAlias: 'a', on: 'a.id = sc.asset_id' },
+    },
+  },
+  auditName: {
+    visible: true, searchable: true, filterable: false, sortable: false,
+    sql: {
+      table: 'public.audits', alias: 'au', column: 'name',
+      sourceType: 'audit', matchedField: 'name',
+      join: { rootAlias: 'a', on: 'a.id IN (SELECT ai.asset_id FROM public.audit_items ai WHERE ai.audit_id = au.id)' },
+    },
+  },
+}
+
+/**
  * Register of every field that is `searchable: true` but emits no SQL branch.
  *
  * WHY THIS LIST EXISTS SEPARATELY FROM THE FIELD ENTRIES
@@ -367,5 +577,14 @@ export const resolvedClientSideRegister = [
     ifRemoved:
       'Typing "sortie" would match nothing: an ILIKE on the stored English enum cannot match a French label. Making it a SQL branch would require either a label table duplicating the i18n dictionary -- which makes adding a locale a migration -- or accepting that search works in one language only.',
     reviewed: '2026-09-18',
+  },
+  {
+    surface: 'assets',
+    field: 'status',
+    reason: 'localised-enum' as const,
+    parameter: 'p_statuses',
+    ifRemoved:
+      'Typing "disponible" would match nothing: the stored value is the English enum "available". Same trade as scans.scanType -- a SQL branch would need a label table duplicating the i18n dictionary, or search that works in one language only.',
+    reviewed: '2026-09-19',
   },
 ] as const

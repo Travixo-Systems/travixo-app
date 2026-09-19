@@ -145,8 +145,23 @@ export interface GenerateOptions {
   displayColumns: Array<{ name: string; type: string; expr: string }>
   /** Joins needed by the display SELECT, after paging. */
   displayJoins: string[]
-  /** Optional structured filters, injected into the `filtered` CTE. */
-  extraFilters?: Array<{ param: string; type: string; predicate: string }>
+  /**
+   * Optional structured filters, injected into the `filtered` CTE.
+   *
+   * By default a filter is nullable and skipped when null
+   * (`param IS NULL OR predicate`), which suits "narrow to these statuses".
+   *
+   * A filter with an explicit `default` is always applied instead, with the
+   * predicate used as written. That is for the opposite shape: archived assets
+   * are excluded UNLESS asked for, so there is no null state that means
+   * "no filter".
+   */
+  extraFilters?: Array<{
+    param: string
+    type: string
+    predicate: string
+    default?: string
+  }>
 }
 
 /**
@@ -164,7 +179,7 @@ export function generateSearchRpc(
 
   const params = [
     ['p_query', 'text', 'NULL'],
-    ...(opts.extraFilters ?? []).map((f) => [f.param, f.type, 'NULL']),
+    ...(opts.extraFilters ?? []).map((f) => [f.param, f.type, f.default ?? 'NULL']),
     ['p_limit', 'integer', '50'],
     ['p_offset', 'integer', '0'],
   ]
@@ -190,7 +205,11 @@ export function generateSearchRpc(
     .join('\n')
 
   const filterClauses = (opts.extraFilters ?? [])
-    .map((f) => `      AND (${f.param} IS NULL OR ${f.predicate})`)
+    .map((f) =>
+      f.default !== undefined
+        ? `      AND (${f.predicate})`
+        : `      AND (${f.param} IS NULL OR ${f.predicate})`
+    )
     .join('\n')
 
   const selectExprs = opts.displayColumns.map((c) => `    ${c.expr}`).join(',\n')

@@ -12,6 +12,10 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { generateSearchRpc, ManifestError } from '../lib/search/generate-rpc'
 import {
+  assetsFields,
+  assetsHistoryFields,
+  assetsHistoryRoot,
+  assetsRoot,
   clientsFields,
   clientsRoot,
   scansFields,
@@ -22,6 +26,57 @@ interface Target {
   out: string
   sql: string
 }
+
+/**
+ * Shared by both Fleet surfaces.
+ *
+ * The instant and history paths return the SAME row shape deliberately: the
+ * page renders one list, and a history result has to sit beside an instant one
+ * without the caller reshaping it. Only the branches differ.
+ */
+const ASSET_DISPLAY_COLUMNS = [
+  { name: 'id', type: 'uuid', expr: 'a.id' },
+  { name: 'name', type: 'text', expr: 'a.name::text' },
+  { name: 'serial_number', type: 'text', expr: 'a.serial_number::text' },
+  { name: 'description', type: 'text', expr: 'a.description::text' },
+  { name: 'status', type: 'text', expr: 'a.status::text' },
+  { name: 'current_location', type: 'text', expr: 'a.current_location::text' },
+  { name: 'category_id', type: 'uuid', expr: 'a.category_id' },
+  { name: 'category_name', type: 'text', expr: 'ac.name::text' },
+  { name: 'qr_code', type: 'text', expr: 'a.qr_code::text' },
+  { name: 'purchase_date', type: 'date', expr: 'a.purchase_date' },
+  { name: 'purchase_price', type: 'numeric', expr: 'a.purchase_price' },
+  { name: 'current_value', type: 'numeric', expr: 'a.current_value' },
+  { name: 'archived_at', type: 'timestamptz', expr: 'a.archived_at' },
+]
+
+// LEFT: category_id is nullable with ON DELETE SET NULL, so an uncategorised
+// asset must still appear.
+const ASSET_DISPLAY_JOINS = [
+  'LEFT JOIN public.asset_categories ac ON ac.id = a.category_id',
+]
+
+const ASSET_FILTERS = [
+  {
+    param: 'p_statuses',
+    type: 'text[]',
+    // Resolved client-side from the locale's labels, exactly as scan_type is.
+    predicate: 'a.status = ANY (p_statuses)',
+  },
+  {
+    param: 'p_category_id',
+    type: 'uuid',
+    predicate: 'a.category_id = p_category_id',
+  },
+  {
+    param: 'p_show_archived',
+    type: 'boolean',
+    // Always applied: archived assets are hidden unless explicitly asked for,
+    // so there is no null state meaning "no filter".
+    default: 'false',
+    predicate: 'p_show_archived OR a.archived_at IS NULL',
+  },
+]
 
 function build(): Target[] {
   return [
@@ -85,6 +140,26 @@ function build(): Target[] {
         // Every searchable column is on the root table, so the display needs
         // no joins at all. The template handles that without special-casing.
         displayJoins: [],
+      }),
+    },
+    // Fleet, instant path. Asset identity only -- see the manifest for why the
+    // relational half of section 5 is a separate, explicit surface.
+    {
+      out: 'supabase/generated/search_assets.sql',
+      sql: generateSearchRpc(assetsRoot, assetsFields, {
+        displayColumns: ASSET_DISPLAY_COLUMNS,
+        displayJoins: ASSET_DISPLAY_JOINS,
+        extraFilters: ASSET_FILTERS,
+      }),
+    },
+    // Fleet, history path. Same root and same display shape, reached through
+    // the six related tables; the only difference is which branches exist.
+    {
+      out: 'supabase/generated/search_assets_history.sql',
+      sql: generateSearchRpc(assetsHistoryRoot, assetsHistoryFields, {
+        displayColumns: ASSET_DISPLAY_COLUMNS,
+        displayJoins: ASSET_DISPLAY_JOINS,
+        extraFilters: ASSET_FILTERS,
       }),
     },
   ]
