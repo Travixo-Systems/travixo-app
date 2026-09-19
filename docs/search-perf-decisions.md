@@ -71,9 +71,40 @@ scan, not one simple comparison.
 > 4×10¹⁰ the planner still scans it. So the curve and this threshold stand
 > exactly as measured in block 3.6.
 >
-> That `unnest` shape is a **generator template problem, fixable by us**, and
-> is the most promising unexplored lead for `scans`: a CTE supplying a plain
-> scalar uses the index in 0.24 ms. Not attempted yet.
+> **Block 3.8 attempted the `unnest` fix. It does not recover the index, and
+> the 0.24 ms reading that motivated it was mismeasured.**
+>
+> That reading was taken while the functions were still marked `LEAKPROOF`
+> from the preceding test. Re-measured cleanly, with the two variables
+> separated:
+>
+> | pattern shape | leakproof | plan | time |
+> |---|---|---|---|
+> | scalar expression | yes | Bitmap Index Scan | **0.21 ms** |
+> | scalar expression | **no** | Seq Scan | 38.7 ms |
+> | `unnest`-joined | yes | Seq Scan | 59.0 ms |
+> | `unnest`-joined | no | Seq Scan | 59.0 ms |
+>
+> **Leakproof is a necessary condition; the scalar shape is not sufficient
+> without it.** Since leakproof needs superuser and `postgres` is not one, the
+> index is unreachable in production by any query rewrite available to us.
+>
+> The template change was still worth making: hoisting the folded, escaped
+> pattern into a `MATERIALIZED` CTE stops both kernel functions running per
+> candidate row. Measured on one branch, 59.0 ms → 39.9 ms. End to end:
+
+### Curve after the block 3.8 template fix
+
+| total rows in `scans` | block 3.6 | block 3.8 | gain |
+|---|---|---|---|
+| 20,122 | 544 ms | **507 ms** | 7% |
+| 50,122 | 1,034 ms | **936 ms** | 9% |
+| 200,122 | 3,360 ms | **3,127 ms** | 7% |
+
+Real but modest, and it does not move the threshold: 120,000 rows still
+projects to ~1.9 s. **Optimisation stops here.** LEAKPROOF is closed (not
+deployable), the four options are not being revisited, and the remaining cost
+is inherent to searching across RLS-protected joins without index access.
 
 The old 400,000 figure was chosen as "~2.3 s on this curve". On the real curve
 400,000 projects to **~6.7 s**, which is not a threshold, it is an outage. The

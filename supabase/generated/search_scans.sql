@@ -61,10 +61,16 @@ CREATE OR REPLACE FUNCTION public.search_scans (
   SECURITY INVOKER
   AS $function$
   WITH
-  -- Terms are folded once here, not once per row. No terms means no text
-  -- filter, rather than matching nothing.
-  terms AS (
-    SELECT public.search_fold(t) AS term
+  -- Terms are folded and escaped ONCE here, not once per candidate row, and
+  -- the complete LIKE pattern is built here too. MATERIALIZED stops the
+  -- planner inlining the expression back into each branch, which is what made
+  -- search_fold and search_escape_like run per row: 59.0ms against 39.9ms for
+  -- a single branch.
+  --
+  -- No terms means no text filter, rather than matching nothing.
+  terms AS MATERIALIZED (
+    SELECT public.search_fold(t)                                       AS term,
+           '%' || public.search_escape_like(public.search_fold(t)) || '%' AS pat
     FROM unnest(string_to_array(coalesce(btrim(p_query), ''), ' ')) AS t
     WHERE public.search_fold(t) <> ''
   ),
@@ -78,7 +84,7 @@ CREATE OR REPLACE FUNCTION public.search_scans (
     FROM terms t
     JOIN public.assets a
       ON public.search_fold(a.name)
-         LIKE '%' || public.search_escape_like(t.term) || '%' ESCAPE '\'
+         LIKE t.pat ESCAPE '\'
     JOIN public.scans s ON s.asset_id = a.id
 
     UNION ALL
@@ -87,7 +93,7 @@ CREATE OR REPLACE FUNCTION public.search_scans (
     FROM terms t
     JOIN public.assets a
       ON public.search_fold(a.serial_number)
-         LIKE '%' || public.search_escape_like(t.term) || '%' ESCAPE '\'
+         LIKE t.pat ESCAPE '\'
     JOIN public.scans s ON s.asset_id = a.id
 
     UNION ALL
@@ -96,7 +102,7 @@ CREATE OR REPLACE FUNCTION public.search_scans (
     FROM terms t
     JOIN public.scans s
       ON public.search_fold(s.location_name)
-         LIKE '%' || public.search_escape_like(t.term) || '%' ESCAPE '\'
+         LIKE t.pat ESCAPE '\'
 
     UNION ALL
     -- public.users.first_name
@@ -104,7 +110,7 @@ CREATE OR REPLACE FUNCTION public.search_scans (
     FROM terms t
     JOIN public.users u
       ON public.search_fold(u.first_name)
-         LIKE '%' || public.search_escape_like(t.term) || '%' ESCAPE '\'
+         LIKE t.pat ESCAPE '\'
     JOIN public.scans s ON s.scanned_by = u.id
 
     UNION ALL
@@ -113,7 +119,7 @@ CREATE OR REPLACE FUNCTION public.search_scans (
     FROM terms t
     JOIN public.users u
       ON public.search_fold(u.last_name)
-         LIKE '%' || public.search_escape_like(t.term) || '%' ESCAPE '\'
+         LIKE t.pat ESCAPE '\'
     JOIN public.scans s ON s.scanned_by = u.id
   ),
 
