@@ -47,4 +47,4 @@ CREATE POLICY "Users can view their org invitations" ON "public"."team_invitatio
    FROM public.users
   WHERE (users.id = auth.uid()))));
 
-GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."team_invitations" TO "anon", "authenticated", "postgres", "service_role";
+GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."team_invitations" TO "authenticated", "postgres", "service_role";

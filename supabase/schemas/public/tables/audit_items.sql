@@ -34,4 +34,4 @@ CREATE POLICY "Users can view audit items for their audits" ON "public"."audit_i
            FROM public.users
           WHERE (users.id = auth.uid()))))));
 
-GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."audit_items" TO "anon", "authenticated", "postgres", "service_role";
+GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."audit_items" TO "authenticated", "postgres", "service_role";

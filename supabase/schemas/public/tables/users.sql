@@ -56,10 +56,7 @@ CREATE POLICY "Users can update own profile" ON "public"."users"
   FOR UPDATE
   TO PUBLIC
   USING ((id = auth.uid()))
-  WITH
-    CHECK
-    (((id = auth.uid()) AND ((role)::text = ANY ((ARRAY['owner'::character varying, 'admin'::character varying, 'member'::character varying, 'viewer'::character
-    varying])::text[]))));
+  WITH CHECK (((id = auth.uid()) AND (NOT ((role)::text IS DISTINCT FROM public.get_my_role())) AND (NOT (organization_id IS DISTINCT FROM public.get_my_organization_id()))));
 
 CREATE POLICY "Users can view own profile" ON "public"."users"
   FOR SELECT
@@ -81,7 +78,7 @@ CREATE POLICY "users_select_same_org" ON "public"."users"
   TO PUBLIC
   USING ((organization_id = public.get_my_organization_id()));
 
-GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."users" TO "anon", "authenticated", "postgres", "service_role";
+GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."users" TO "postgres", "service_role";
 
 COMMENT ON COLUMN "public"."users"."avatar_url" IS 'URL to user profile photo (UploadThing)';
 
@@ -96,3 +93,23 @@ COMMENT ON COLUMN "public"."users"."updated_at" IS 'Timestamp of last profile up
 COMMENT ON POLICY "Users can insert own profile" ON "public"."users" IS 'Allow user creation during signup process';
 
 COMMENT ON POLICY "Users can view own profile" ON "public"."users" IS 'Users can only read their own profile data';
+
+REVOKE ALL ("avatar_url") ON TABLE "public"."users" FROM "authenticated";
+
+GRANT UPDATE ("avatar_url") ON TABLE "public"."users" TO "authenticated";
+
+REVOKE ALL ("first_name") ON TABLE "public"."users" FROM "authenticated";
+
+GRANT UPDATE ("first_name") ON TABLE "public"."users" TO "authenticated";
+
+REVOKE ALL ("language") ON TABLE "public"."users" FROM "authenticated";
+
+GRANT UPDATE ("language") ON TABLE "public"."users" TO "authenticated";
+
+REVOKE ALL ("last_name") ON TABLE "public"."users" FROM "authenticated";
+
+GRANT UPDATE ("last_name") ON TABLE "public"."users" TO "authenticated";
+
+REVOKE ALL ON TABLE "public"."users" FROM "authenticated";
+
+GRANT DELETE, INSERT, SELECT ON TABLE "public"."users" TO "authenticated";

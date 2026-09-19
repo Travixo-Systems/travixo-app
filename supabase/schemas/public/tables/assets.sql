@@ -126,7 +126,7 @@ CREATE POLICY "super_admin_read_all_assets" ON "public"."assets"
   TO PUBLIC
   USING (public.is_super_admin());
 
-GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."assets" TO "anon", "authenticated", "postgres", "service_role";
+GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."assets" TO "authenticated", "postgres", "service_role";
 
 COMMENT ON COLUMN "public"."assets"."last_seen_at" IS 'Timestamp of last QR scan';
 

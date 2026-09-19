@@ -73,4 +73,4 @@ CREATE POLICY "super_admin_read_all_rentals" ON "public"."rentals"
   TO PUBLIC
   USING (public.is_super_admin());
 
-GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."rentals" TO "anon", "authenticated", "postgres", "service_role";
+GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."rentals" TO "authenticated", "postgres", "service_role";

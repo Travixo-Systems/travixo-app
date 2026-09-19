@@ -13,7 +13,24 @@ CREATE OR REPLACE FUNCTION public.create_organization_and_user (
 DECLARE
   v_org_id   UUID;
   v_plan_id  UUID;
+  -- H-5: the profile is bound to the CALLER. p_user_id is ignored.
+  v_actor    UUID := auth.uid();
 BEGIN
+  -- H-5: no session, no signup. Previously a NULL id reached the INSERT and
+  -- failed on a constraint with an opaque message.
+  IF v_actor IS NULL THEN
+    RAISE EXCEPTION 'signup_requires_session: create_organization_and_user must be called with an authenticated session; the profile is bound to auth.uid().'
+      USING ERRCODE = '42501';
+  END IF;
+
+  -- H-5: a caller who already has a profile cannot create a second one. This
+  -- previously surfaced as a raw 23505 duplicate-key error through PostgREST,
+  -- leaking the constraint name; it is now named and intentional.
+  IF EXISTS (SELECT 1 FROM public.users WHERE id = v_actor) THEN
+    RAISE EXCEPTION 'signup_already_completed: this account already has a profile and cannot create another organisation.'
+      USING ERRCODE = '23505';
+  END IF;
+
   -- Create organization with pilot fields
   INSERT INTO public.organizations (
     name, slug, subscription_tier, subscription_status,
@@ -30,9 +47,16 @@ BEGIN
   )
   RETURNING id INTO v_org_id;
 
-  -- Create user profile linked to org
+  -- Create user profile linked to org.
+  -- H-5: id and email come from the session, never from the arguments.
   INSERT INTO public.users (id, email, full_name, organization_id, role)
-  VALUES (p_user_id, p_user_email, p_user_full_name, v_org_id, 'owner');
+  VALUES (
+    v_actor,
+    COALESCE((SELECT u.email FROM auth.users u WHERE u.id = v_actor), p_user_email),
+    p_user_full_name,
+    v_org_id,
+    'owner'
+  );
 
   -- The single plan row
   SELECT id INTO v_plan_id
@@ -54,16 +78,14 @@ BEGIN
     ON CONFLICT (organization_id) DO NOTHING;
   END IF;
 
-  -- No entitlement_overrides seeding. A pilot is not granted features one by
-  -- one any more: every feature ships on the one plan, and the pilot window
-  -- governs duration while org_max_assets() governs capacity.
-
   RETURN v_org_id;
 END;
 $function$;
 
-GRANT EXECUTE ON FUNCTION "public"."create_organization_and_user"(text, text, uuid, text, text) TO "authenticated", "postgres", "service_role";
+GRANT EXECUTE ON FUNCTION "public"."create_organization_and_user"(text, text, uuid, text, text) TO "authenticated";
 
-COMMENT ON FUNCTION "public"."create_organization_and_user"(text, text, uuid, text, text) IS 'Signup: creates the org, owner profile and trialing subscription. Pilot window is 30 days -- must match PILOT_FULL_DAYS in lib/billing/pilot-window.ts and the "30-day trial" claim on the website. No feature grants: one plan carries every feature.';
+COMMENT ON FUNCTION "public"."create_organization_and_user"(text, text, uuid, text, text) IS 'Signup: creates the org, owner profile and trialing subscription. H-5: the profile is bound to auth.uid(); p_user_id is accepted for signature compatibility but IGNORED. Refuses without a session, and refuses a caller that already has a profile. Pilot window is 30 days -- must match PILOT_FULL_DAYS in lib/billing/pilot-window.ts and the "30-day trial" claim on the website. No feature grants: one plan carries every feature.';
 
 REVOKE ALL ON FUNCTION "public"."create_organization_and_user"(text, text, uuid, text, text) FROM PUBLIC;
+
+REVOKE ALL ON FUNCTION "public"."create_organization_and_user"(text, text, uuid, text, text) FROM "postgres";

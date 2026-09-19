@@ -113,7 +113,7 @@ CREATE POLICY "super_admin_all_access" ON "public"."organizations"
   USING (public.is_super_admin())
   WITH CHECK (public.is_super_admin());
 
-GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."organizations" TO "anon", "authenticated", "postgres", "service_role";
+GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."organizations" TO "postgres", "service_role";
 
 COMMENT ON COLUMN "public"."organizations"."demo_alert_sent" IS 'True once the one-time demo showcase alert email has been claimed for this org. Claimed via a conditional UPDATE before the send, so it is a one-shot guard rather than a delivery receipt.';
 
@@ -122,3 +122,75 @@ COMMENT ON COLUMN "public"."organizations"."vgp_alert_days" IS 'Array of day val
 COMMENT ON COLUMN "public"."organizations"."vgp_alerts_enabled" IS 'Whether VGP email alerts are enabled for this organization';
 
 COMMENT ON COLUMN "public"."organizations"."welcome_email_sent" IS 'True once the welcome onboarding email has been claimed for this org. Claimed via a conditional UPDATE before the send, so it is a one-shot guard rather than a delivery receipt.';
+
+REVOKE ALL ("address") ON TABLE "public"."organizations" FROM "authenticated";
+
+GRANT UPDATE ("address") ON TABLE "public"."organizations" TO "authenticated";
+
+REVOKE ALL ("branding_colors") ON TABLE "public"."organizations" FROM "authenticated";
+
+GRANT UPDATE ("branding_colors") ON TABLE "public"."organizations" TO "authenticated";
+
+REVOKE ALL ("city") ON TABLE "public"."organizations" FROM "authenticated";
+
+GRANT UPDATE ("city") ON TABLE "public"."organizations" TO "authenticated";
+
+REVOKE ALL ("company_size") ON TABLE "public"."organizations" FROM "authenticated";
+
+GRANT UPDATE ("company_size") ON TABLE "public"."organizations" TO "authenticated";
+
+REVOKE ALL ("country") ON TABLE "public"."organizations" FROM "authenticated";
+
+GRANT UPDATE ("country") ON TABLE "public"."organizations" TO "authenticated";
+
+REVOKE ALL ("currency") ON TABLE "public"."organizations" FROM "authenticated";
+
+GRANT UPDATE ("currency") ON TABLE "public"."organizations" TO "authenticated";
+
+REVOKE ALL ("industry_sector") ON TABLE "public"."organizations" FROM "authenticated";
+
+GRANT UPDATE ("industry_sector") ON TABLE "public"."organizations" TO "authenticated";
+
+REVOKE ALL ("logo_url") ON TABLE "public"."organizations" FROM "authenticated";
+
+GRANT UPDATE ("logo_url") ON TABLE "public"."organizations" TO "authenticated";
+
+REVOKE ALL ("name") ON TABLE "public"."organizations" FROM "authenticated";
+
+GRANT UPDATE ("name") ON TABLE "public"."organizations" TO "authenticated";
+
+REVOKE ALL ("notification_preferences") ON TABLE "public"."organizations" FROM "authenticated";
+
+GRANT UPDATE ("notification_preferences") ON TABLE "public"."organizations" TO "authenticated";
+
+REVOKE ALL ("onboarding_completed") ON TABLE "public"."organizations" FROM "authenticated";
+
+GRANT UPDATE ("onboarding_completed") ON TABLE "public"."organizations" TO "authenticated";
+
+REVOKE ALL ("phone") ON TABLE "public"."organizations" FROM "authenticated";
+
+GRANT UPDATE ("phone") ON TABLE "public"."organizations" TO "authenticated";
+
+REVOKE ALL ("postal_code") ON TABLE "public"."organizations" FROM "authenticated";
+
+GRANT UPDATE ("postal_code") ON TABLE "public"."organizations" TO "authenticated";
+
+REVOKE ALL ("timezone") ON TABLE "public"."organizations" FROM "authenticated";
+
+GRANT UPDATE ("timezone") ON TABLE "public"."organizations" TO "authenticated";
+
+REVOKE ALL ("vgp_alert_days") ON TABLE "public"."organizations" FROM "authenticated";
+
+GRANT UPDATE ("vgp_alert_days") ON TABLE "public"."organizations" TO "authenticated";
+
+REVOKE ALL ("vgp_alerts_enabled") ON TABLE "public"."organizations" FROM "authenticated";
+
+GRANT UPDATE ("vgp_alerts_enabled") ON TABLE "public"."organizations" TO "authenticated";
+
+REVOKE ALL ("website") ON TABLE "public"."organizations" FROM "authenticated";
+
+GRANT UPDATE ("website") ON TABLE "public"."organizations" TO "authenticated";
+
+REVOKE ALL ON TABLE "public"."organizations" FROM "authenticated";
+
+GRANT DELETE, INSERT, SELECT ON TABLE "public"."organizations" TO "authenticated";

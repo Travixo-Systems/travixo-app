@@ -113,7 +113,7 @@ CREATE POLICY "super_admin_read_all_vgp_schedules" ON "public"."vgp_schedules"
   TO PUBLIC
   USING (public.is_super_admin());
 
-GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."vgp_schedules" TO "anon", "authenticated", "postgres", "service_role";
+GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."vgp_schedules" TO "authenticated", "postgres", "service_role";
 
 COMMENT ON COLUMN "public"."vgp_schedules"."archive_reason" IS 'Reason for archiving (required for compliance)';
 

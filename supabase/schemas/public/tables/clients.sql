@@ -49,4 +49,4 @@ CREATE POLICY "super_admin_read_all_clients" ON "public"."clients"
   TO PUBLIC
   USING (public.is_super_admin());
 
-GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."clients" TO "anon", "authenticated", "postgres", "service_role";
+GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."clients" TO "authenticated", "postgres", "service_role";
