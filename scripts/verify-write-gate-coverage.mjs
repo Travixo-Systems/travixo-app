@@ -29,6 +29,7 @@ const EXEMPT = {
   'app/api/scan/update/route.ts': 'public QR scan logging; anonymous by design, service role',
   'app/api/assets/preview-import/route.ts': 'parses an uploaded file and returns a preview; writes nothing',
   'app/api/settings/onboarding/route.ts': 'dismisses a banner; freezing it would leave an expired pilot unable to close a prompt it can no longer act on',
+  'app/api/settings/notifications/preferences/route.ts': 'per-user notification preferences, not tenant business data; gating it would leave an expired trial unable to stop email. user_notification_preferences is one of only two tables that never carried the anon grant',
 }
 
 const MUTATING = /export\s+async\s+function\s+(POST|PATCH|PUT|DELETE)\b/
