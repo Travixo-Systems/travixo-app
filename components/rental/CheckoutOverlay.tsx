@@ -1,11 +1,17 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { X, Loader2, ShieldAlert, ShieldCheck, UserPlus, Users } from 'lucide-react'
+import { X, Loader2, ShieldAlert, ShieldCheck, UserPlus, Users, AlertTriangle } from 'lucide-react'
 import { useLanguage } from '@/lib/LanguageContext'
 import { createTranslator } from '@/lib/i18n'
 import { useVGPBlockStatus } from './VGPComplianceBadge'
 import { rentalCheckoutSchema } from '@/lib/validations/schemas'
+import { createClient } from '@/lib/supabase/client'
+import { SEARCH_DEBOUNCE_MS } from '@/lib/search/useDebounce'
+import { foldSearchValue } from '@/lib/search/fold'
+
+/** How many clients the picker shows per page. */
+const CLIENT_PAGE_SIZE = 10
 
 interface Client {
   id: string
@@ -13,6 +19,8 @@ interface Client {
   email: string | null
   phone: string | null
   company: string | null
+  /** Exact match count for the query, repeated on every row by the RPC. */
+  total_count?: number
 }
 
 interface CheckoutOverlayProps {
@@ -36,6 +44,11 @@ export default function CheckoutOverlay({
   // Client selection
   const [mode, setMode] = useState<'select' | 'new'>('select')
   const [clients, setClients] = useState<Client[]>([])
+  // True when the lookup itself failed, as opposed to genuinely matching
+  // nothing. Keeps "we could not check" distinct from "no such client".
+  const [clientLookupFailed, setClientLookupFailed] = useState(false)
+  const [clientTotal, setClientTotal] = useState(0)
+  const [loadingMoreClients, setLoadingMoreClients] = useState(false)
   const [clientSearch, setClientSearch] = useState('')
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null)
   const [clientName, setClientName] = useState('')
@@ -52,32 +65,58 @@ export default function CheckoutOverlay({
 
   const { blocked: vgpBlocked, loading: vgpLoading } = useVGPBlockStatus(assetId)
 
-  // Fetch clients for search
-  const fetchClients = useCallback(async (q: string) => {
-    try {
-      const params = new URLSearchParams()
-      if (q) params.set('q', q)
-      params.set('limit', '10')
-      const res = await fetch(`/api/clients?${params}`)
-      if (res.ok) {
-        const data = await res.json()
-        setClients(data.clients || [])
+  // Search the whole organization's clients, server-side.
+  //
+  // Was /api/clients, which stripped %, _, comma and parentheses out of the
+  // query rather than escaping them -- so "TP_Loc" became "TPLoc" and matched
+  // nothing -- and searched only name and company, never the email or phone
+  // shown in these very rows. search_clients folds accents, escapes
+  // metacharacters literally, and searches all five fields.
+  const fetchClients = useCallback(async (q: string, offset: number, append: boolean) => {
+    setClientLookupFailed(false)
+    const supabase = createClient()
+
+    const { data, error: rpcError } = await supabase.rpc('search_clients', {
+      p_query: q.trim() || null,
+      p_limit: CLIENT_PAGE_SIZE,
+      p_offset: offset,
+    })
+
+    if (rpcError) {
+      console.error('Client search failed:', rpcError)
+      // A failed lookup must NOT render as "no such client": that is what
+      // makes someone create a duplicate of a client that already exists.
+      setClientLookupFailed(true)
+      if (!append) {
+        setClients([])
+        setClientTotal(0)
       }
-    } catch {
-      // Silent fail
+      return
     }
+
+    const rows = (data || []) as Client[]
+    // The true number of matches, not the page size -- so the picker can say
+    // "10 of 87" and offer the rest instead of implying there are only 10.
+    setClientTotal(rows.length > 0 ? Number(rows[0].total_count) : 0)
+    setClients((prev) => (append ? [...prev, ...rows] : rows))
   }, [])
 
   useEffect(() => {
-    fetchClients('')
+    fetchClients('', 0, false)
   }, [fetchClients])
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (mode === 'select') fetchClients(clientSearch)
-    }, 300)
+      if (mode === 'select') fetchClients(clientSearch, 0, false)
+    }, SEARCH_DEBOUNCE_MS)
     return () => clearTimeout(timer)
   }, [clientSearch, mode, fetchClients])
+
+  async function loadMoreClients() {
+    setLoadingMoreClients(true)
+    await fetchClients(clientSearch, clients.length, true)
+    setLoadingMoreClients(false)
+  }
 
   function selectClient(client: Client) {
     setSelectedClientId(client.id)
@@ -168,17 +207,35 @@ export default function CheckoutOverlay({
           // it rather than creating an orphaned rental with no client_id, which
           // would silently break recall notices and rental history.
           if (createData.error === 'client_exists') {
-            const lookup = await fetch(
-              `/api/clients?q=${encodeURIComponent(clientName.trim())}&limit=10`
+            const supabase = createClient()
+            const { data: matches } = await supabase.rpc('search_clients', {
+              p_query: clientName.trim() || null,
+              p_limit: CLIENT_PAGE_SIZE,
+              p_offset: 0,
+            })
+            // Compare on the shared fold, the same normalisation the search
+            // itself uses. A plain toLowerCase() could miss the very record
+            // that caused the rejection -- "Dupont Negoce" typed against a
+            // stored "Dupont Négoce" -- and we would fall through to a rental
+            // with no client_id, the orphan this branch exists to prevent.
+            const typed = foldSearchValue(clientName)
+            const exact = (matches || []).find(
+              (c: Client) => foldSearchValue(c.name) === typed
             )
-            if (lookup.ok) {
-              const { clients: matches } = await lookup.json()
-              const exact = (matches || []).find(
-                (c: Client) =>
-                  c.name.trim().toLowerCase() === clientName.trim().toLowerCase()
-              )
-              if (exact) clientId = exact.id
-            }
+            if (exact) clientId = exact.id
+          }
+
+          // The server says this client exists but we could not resolve which
+          // one. Proceeding would write a rental with client_id null, which
+          // silently breaks recall notices and rental history for the real
+          // client. Stop and let the user pick it explicitly.
+          if (!clientId) {
+            setError(
+              language === 'fr'
+                ? "Ce client existe déjà mais n'a pas pu être retrouvé automatiquement. Utilisez « Sélectionner un client » pour le choisir."
+                : 'This client already exists but could not be matched automatically. Use "Select a client" to choose it.'
+            )
+            return
           }
         }
       }
@@ -326,6 +383,26 @@ export default function CheckoutOverlay({
                   className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f26f00] focus:border-[#f26f00] font-medium"
                   style={{ fontSize: '16px' }}
                 />
+                {!selectedClientId && clientLookupFailed && (
+                  <div
+                    role="alert"
+                    className="mt-2 px-3 py-2 rounded-lg border border-amber-300 bg-amber-50 text-[13px] text-amber-900 flex items-start gap-2"
+                  >
+                    <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <span>
+                      {language === 'fr'
+                        ? "La recherche de clients a échoué. Ne créez pas de nouveau client sans avoir vérifié : il existe peut-être déjà."
+                        : 'Client lookup failed. Do not create a new client before checking — it may already exist.'}
+                    </span>
+                  </div>
+                )}
+                {!selectedClientId && !clientLookupFailed && clientSearch.trim() && clients.length === 0 && (
+                  <p className="mt-2 px-1 text-[13px] text-gray-500">
+                    {language === 'fr'
+                      ? 'Aucun client ne correspond, dans toute votre organisation.'
+                      : 'No client matches, across your whole organization.'}
+                  </p>
+                )}
                 {!selectedClientId && clients.length > 0 && (
                   <div className="mt-2 border border-gray-200 rounded-lg max-h-40 overflow-y-auto">
                     {clients.map((client) => (
@@ -346,6 +423,24 @@ export default function CheckoutOverlay({
                         )}
                       </button>
                     ))}
+                    {/* The picker used to stop at 10 with no indication there
+                        were more, so a client at position 11 was unreachable
+                        and looked absent. It now says how many matched and
+                        offers the rest. */}
+                    {clients.length < clientTotal && (
+                      <button
+                        type="button"
+                        onClick={loadMoreClients}
+                        disabled={loadingMoreClients}
+                        className="w-full text-center px-4 py-2 text-[13px] font-medium text-[#00252b] hover:bg-gray-50 disabled:opacity-50"
+                      >
+                        {loadingMoreClients
+                          ? (language === 'fr' ? 'Chargement…' : 'Loading…')
+                          : (language === 'fr'
+                              ? `Afficher plus (${clients.length} sur ${clientTotal})`
+                              : `Show more (${clients.length} of ${clientTotal})`)}
+                      </button>
+                    )}
                   </div>
                 )}
                 {selectedClientId && (

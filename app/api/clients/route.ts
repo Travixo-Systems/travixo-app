@@ -26,33 +26,54 @@ export async function GET(request: NextRequest) {
     const q = searchParams.get('q')?.trim()
     const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
 
-    let query = supabase
-      .from('clients')
-      .select('id, name, email, phone, company, notes, created_at, updated_at')
-      .eq('organization_id', userData.organization_id)
-      .order('name', { ascending: true })
-      .limit(limit)
-
-    if (q) {
-      // Match either the contact name or the company: the card leads with the
-      // company, so searching for it has to work.
-      const escaped = q.replace(/[%_,()]/g, '')
-      if (escaped) {
-        query = query.or(`name.ilike.%${escaped}%,company.ilike.%${escaped}%`)
-      }
-    }
-
-    const { data, error } = await query
+    // Search goes through search_clients. The previous implementation built a
+    // PostgREST .or() filter by DELETING %, _, comma and parentheses from the
+    // query instead of escaping them, so "TP_Loc" became "TPLoc" and matched
+    // nothing, a query of only special characters stripped to '' and silently
+    // returned the entire unfiltered list, and accents never matched. It also
+    // searched name and company only, while the card renders email and phone.
+    //
+    // The RPC folds accents, escapes LIKE metacharacters literally, searches
+    // all five fields from spec section 11, and derives the tenant from RLS
+    // rather than a parameter.
+    //
+    // total_count is returned so the caller can tell "100 shown" from "100 of
+    // 340 matched" -- the old route capped at 100 with no way to know.
+    const { data: searched, error } = await supabase.rpc('search_clients', {
+      p_query: q || null,
+      p_limit: limit,
+      p_offset: Math.max(0, parseInt(searchParams.get('offset') || '0')),
+    })
 
     if (error) {
-      console.error('Clients fetch error:', error)
+      console.error('Clients search error:', error)
       return NextResponse.json({ error: 'fetch_failed' }, { status: 500 })
     }
+
+    // Reshape to the contract the callers already expect. The RPC orders by
+    // created_at (newest first, the generator's default); this list has always
+    // read alphabetically, so it is sorted here over the returned page.
+    const data = (searched || [])
+      .map((c) => ({
+        id: c.id,
+        name: c.name,
+        email: c.email,
+        phone: c.phone,
+        company: c.company,
+        notes: c.notes,
+        created_at: c.created_at,
+        updated_at: c.created_at,
+      }))
+      .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'fr'))
+
+    const totalCount = (searched || []).length > 0
+      ? Number((searched as { total_count: number }[])[0].total_count)
+      : 0
 
     const clients = data || []
 
     if (clients.length === 0) {
-      return NextResponse.json({ clients: [] })
+      return NextResponse.json({ clients: [], total_count: totalCount })
     }
 
     // Attach active-rental counts and the soonest VGP deadline among the
@@ -121,7 +142,7 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    return NextResponse.json({ clients: enriched })
+    return NextResponse.json({ clients: enriched, total_count: totalCount })
   } catch (error) {
     console.error('Clients API error:', error)
     return NextResponse.json({ error: 'internal_error' }, { status: 500 })

@@ -1078,6 +1078,30 @@ export type Database = {
        * policy, and this function is SECURITY INVOKER. See
        * supabase/generated/search_scans.sql.
        */
+      /**
+       * One page of clients matching a folded multi-term query across name,
+       * company, email, phone and notes. SECURITY INVOKER; tenant scope comes
+       * from the clients RLS policy.
+       */
+      search_clients: {
+        Args: {
+          p_query?: string | null
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: {
+          id: string
+          /** clients.name is NOT NULL in the schema. */
+          name: string
+          company: string | null
+          email: string | null
+          phone: string | null
+          notes: string | null
+          created_at: string
+          matches: { source_type: string; source_id: string; matched_field: string }[]
+          total_count: number
+        }[]
+      }
       search_scans: {
         Args: {
           p_query?: string | null
